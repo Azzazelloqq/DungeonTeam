@@ -11,7 +11,9 @@ public abstract class FireballModelBase : Model
 	public abstract float FireballSpeed { get; }
 	public abstract Vector3 TargetPosition { get; }
 	public abstract Vector3 CurrentPosition { get; protected set; }
-	public abstract void ChargeFireball();
+    public abstract bool IsFollowToTarget { get; protected set; }
+
+    public abstract void ChargeFireball();
 	public abstract void ActivateFireball();
 	public abstract void UpdateTarget(ISkillAttackable skillAttackable);
 	public abstract bool IsTargetReached();

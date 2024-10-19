@@ -4,6 +4,5 @@ namespace Code.DungeonTeam.CharacterSkill.Core.Skills.Base
 {
 public interface ITargetSkill<in TAffectable> : ISkill<TAffectable> where TAffectable : ISkillAffectable
 {
-	public void UpdateTarget(TAffectable target);
 }
 }

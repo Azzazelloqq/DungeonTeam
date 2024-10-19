@@ -14,10 +14,12 @@ public class FireballModel : FireballModelBase
 	public override Vector3 TargetPosition => _currentTarget.GetTargetPosition();
 
 	public override Vector3 CurrentPosition { get; protected set; }
-	
-	private ISkillAttackable _currentTarget;
+    public override bool IsFollowToTarget { get; protected set; }
 
-	public FireballModel(float fireballSpeed)
+    private ISkillAttackable _currentTarget;
+    private bool _isTargetReached;
+
+    public FireballModel(float fireballSpeed)
 	{
 		FireballSpeed = fireballSpeed;
 	}
@@ -40,7 +42,9 @@ public class FireballModel : FireballModelBase
 	public override void FollowToTarget(Vector3 currentPosition)
 	{
 		CurrentPosition = currentPosition;
-	}
+        IsFollowToTarget = true;
+        _isTargetReached = false;
+    }
 
 	public override void FireballExploded()
 	{
@@ -56,17 +60,25 @@ public class FireballModel : FireballModelBase
 	{
 		var direction = (TargetPosition - CurrentPosition).normalized;
 		CurrentPosition += direction * FireballSpeed * frameDeltaTime;
-	}
+
+        _isTargetReached = CheckTargetReached();
+        IsFollowToTarget = false;
+    }
 	
 	public override bool IsTargetReached()
-	{
-		var distance = Vector3.Distance(CurrentPosition, TargetPosition);
-		if (distance <= ThresholdToTarget)
-		{
-			return true;
-		}
+    {
+        return _isTargetReached;
+    }
 
-		return false;
-	}
+    private bool CheckTargetReached()
+    {
+        var distance = Vector3.Distance(CurrentPosition, TargetPosition);
+        if (distance <= ThresholdToTarget)
+        {
+            return true;
+        }
+
+        return false;
+    }
 }
 }

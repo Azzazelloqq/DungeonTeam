@@ -1,4 +1,5 @@
-﻿using Code.DungeonTeam.CharacterSkill.Core.SkillAffectable;
+﻿using System;
+using Code.DungeonTeam.CharacterSkill.Core.SkillAffectable;
 using Code.DungeonTeam.CharacterSkill.Core.Skills.Heal;
 using MVP;
 
@@ -6,7 +7,8 @@ namespace Code.DungeonTeam.CharacterSkill.Skills.InstantHealSkill.Base
 {
 public abstract class InstantHealSkillPresenterBase : Presenter<InstantHealViewBase, InstantHealSkillModelBase>, IInstantHealSkill
 {
-	public string Name => "InstantHeal";
+    public abstract event Action ChargeCompleted;
+    public string Name => "InstantHeal";
 
 	public int HealPoints => model.HealPoints;
 
@@ -14,9 +16,8 @@ public abstract class InstantHealSkillPresenterBase : Presenter<InstantHealViewB
 	{
 	}
 
-	public void Activate(IHealable skillAttackable)
-	{
-		skillAttackable.Heal(HealPoints);
-	}
+    public abstract void StartChargeSkill(IHealable skillAttackable);
+    public abstract void Activate(IHealable skillAffectable);
+    public abstract void CancelActivateSkill();
 }
 }

@@ -34,7 +34,12 @@ public class BasicFireballSkillView : FireballSkillViewBase
 		PlayChargeSkillEffect();
 	}
 
-	private void PlayChargeSkillEffect()
+    public override void CancelChargeSkill()
+    {
+        
+    }
+
+    private void PlayChargeSkillEffect()
 	{
 		
 	}

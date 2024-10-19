@@ -8,8 +8,9 @@ namespace Code.DungeonTeam.CharacterSkill.Skills.FireballSkill.Fireball
 public class FireballPresenter : FireballPresenterBase
 {
 	public override bool IsActive => model.IsActive;
-	
-	private readonly ITickHandler _tickHandler;
+    public override bool IsFollowToTarget => model.IsFollowToTarget;
+
+    private readonly ITickHandler _tickHandler;
 	private Action<ISkillAttackable> _onTargetReached;
 
 	public FireballPresenter(FireballViewBase view, FireballModelBase model, ITickHandler tickHandler) : base(view, model)

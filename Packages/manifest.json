@@ -2,6 +2,7 @@
   "dependencies": {
     "com.azzazello.disposable": "https://github.com/Azzazelloqq/Disposable.git",
     "com.azzazello.localsavesystem": "https://github.com/Azzazelloqq/LocalSave.git",
+    "com.azzazello.logger": "https://github.com/Azzazelloqq/InGameLogger.git",
     "com.azzazello.mvp": "https://github.com/Azzazelloqq/MVP-pattern.git",
     "com.azzazello.mvvm": "https://github.com/Azzazelloqq/MVVM.git",
     "com.azzazello.resourceloader": "https://github.com/Azzazelloqq/ResourceLoader.git",
@@ -9,7 +10,7 @@
     "com.azzazello.tickhandler": "https://github.com/Azzazelloqq/TickHandler.git",
     "com.azzazello.utils": "https://github.com/Azzazelloqq/Utils.git",
     "com.unity.ai.navigation": "2.0.4",
-    "com.unity.collab-proxy": "2.5.1",
+    "com.unity.collab-proxy": "2.5.2",
     "com.unity.ide.rider": "3.0.31",
     "com.unity.ide.visualstudio": "2.0.22",
     "com.unity.ide.vscode": "1.2.5",

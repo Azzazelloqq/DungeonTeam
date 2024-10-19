@@ -1,5 +1,4 @@
-﻿using Code.DungeonTeam.CharacterSkill.Core.SkillAffectable;
-using MVP;
+﻿using MVP;
 
 namespace Code.DungeonTeam.CharacterSkill.Skills.FireballSkill.Base
 {

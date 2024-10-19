@@ -11,6 +11,7 @@ public abstract class FireballPresenterBase : Presenter<FireballViewBase, Fireba
 	}
 
 	public abstract bool IsActive { get; }
+    public abstract bool IsFollowToTarget { get; }
 
 	public abstract void Activate(ISkillAttackable skillAffectable, Action<ISkillAttackable> onTargetReached);
 	public abstract void ChargeFireball();

@@ -14,6 +14,13 @@
       "dependencies": {},
       "hash": "cd224d33ac1dcdef3e5eda651701e57d844b5069"
     },
+    "com.azzazello.logger": {
+      "version": "https://github.com/Azzazelloqq/InGameLogger.git",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "2d4dbfd7512b1b29d3ca7c3e43298a3f236a0489"
+    },
     "com.azzazello.mvp": {
       "version": "https://github.com/Azzazelloqq/MVP-pattern.git",
       "depth": 0,
@@ -91,7 +98,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.burst": {
-      "version": "1.8.17",
+      "version": "1.8.18",
       "depth": 2,
       "source": "registry",
       "dependencies": {
@@ -101,19 +108,19 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.collab-proxy": {
-      "version": "2.5.1",
+      "version": "2.5.2",
       "depth": 0,
       "source": "registry",
       "dependencies": {},
       "url": "https://packages.unity.com"
     },
     "com.unity.collections": {
-      "version": "2.4.3",
+      "version": "2.5.1",
       "depth": 2,
       "source": "registry",
       "dependencies": {
-        "com.unity.burst": "1.8.13",
-        "com.unity.test-framework": "1.4.3",
+        "com.unity.burst": "1.8.17",
+        "com.unity.test-framework": "1.4.5",
         "com.unity.nuget.mono-cecil": "1.11.4",
         "com.unity.test-framework.performance": "3.0.3"
       },
@@ -260,7 +267,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.textmeshpro": {
-      "version": "5.0.0",
+      "version": "3.0.6",
       "depth": 1,
       "source": "builtin",
       "dependencies": {

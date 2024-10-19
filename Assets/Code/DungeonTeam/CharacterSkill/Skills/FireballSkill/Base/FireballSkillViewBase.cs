@@ -11,5 +11,6 @@ public abstract class FireballSkillViewBase : ViewMonoBehaviour<FireballSkillPre
 	public abstract void OnTargetReached();
 	public abstract FireballViewBase CreateFireballView();
 	public abstract void ChargeSkill();
+    public abstract void CancelChargeSkill();
 }
 }

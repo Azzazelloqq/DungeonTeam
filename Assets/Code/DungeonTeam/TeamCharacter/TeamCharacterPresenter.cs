@@ -9,8 +9,6 @@ public class TeamCharacterPresenter : TeamCharacterPresenterBase, ICharacterBeha
 {
 	private readonly Transform _target;
 	private readonly ITickHandler _tickHandler;
-	private readonly TeamCharacterViewBase _view;
-	private readonly TeamCharacterModelBase _model;
 
 	public TeamCharacterPresenter(
 		TeamCharacterViewBase view,
@@ -21,27 +19,6 @@ public class TeamCharacterPresenter : TeamCharacterPresenterBase, ICharacterBeha
 	{
 		_target = target;
 		_tickHandler = tickHandler;
-
-		_model = model;
-		_view = view;
-	}
-
-	protected override void OnInitialize()
-	{
-		_model.Initialize();
-		_view.Initialize(this);
-		
-		_tickHandler.SubscribeOnFrameUpdate(OnFrameUpdate);
-	}
-
-	public override void Dispose()
-	{
-		base.Dispose();
-		
-		_model.Dispose();
-		_view.Dispose();
-		
-		_tickHandler.UnsubscribeOnFrameUpdate(OnFrameUpdate);
 	}
 
 	public bool IsAvailableAttackSkill()
@@ -87,11 +64,6 @@ public class TeamCharacterPresenter : TeamCharacterPresenterBase, ICharacterBeha
 	public void FollowToDirection()
 	{
 		throw new System.NotImplementedException();
-	}
-	
-	private void OnFrameUpdate(float deltaTime)
-	{
-		_view.UpdateTargetPlace(_target.position);
 	}
 }
 }
