@@ -11,12 +11,12 @@ public class FireballModel : FireballModelBase
 
 	public override bool IsActive { get; protected set; }
 	public override float FireballSpeed { get; }
-	public override Vector3 TargetPosition => _currentTarget.GetTargetPosition();
+	public override Vector3 TargetPosition => _currentTarget.GetPosition();
 
 	public override Vector3 CurrentPosition { get; protected set; }
     public override bool IsFollowToTarget { get; protected set; }
 
-    private ISkillAttackable _currentTarget;
+    private IFireballAffectable _currentTarget;
     private bool _isTargetReached;
 
     public FireballModel(float fireballSpeed)
@@ -34,7 +34,7 @@ public class FireballModel : FireballModelBase
 		IsActive = true;
 	}
 
-	public override void UpdateTarget(ISkillAttackable target)
+	public override void UpdateTarget(IFireballAffectable target)
 	{
 		_currentTarget = target;
 	}
@@ -51,7 +51,7 @@ public class FireballModel : FireballModelBase
 		IsActive = false;
 	}
 
-	public override ISkillAttackable GetTarget()
+	public override IFireballAffectable GetTarget()
 	{
 		return _currentTarget;
 	}

@@ -1,12 +1,13 @@
-﻿using Code.BehaviourTree;
+﻿using Code.AI.CharacterBehaviourTree.Agents;
+using Code.BehaviourTree;
 
 namespace Code.AI.CharacterBehaviourTree.BehaviourTreeNodes
 {
 public class MoveToEnemyNode : IBehaviourTreeNode
 {
-	private readonly ICharacterBehaviourTreeAgent _agent;
+	private readonly IMoveToEnemyAgent _agent;
 
-	public MoveToEnemyNode(ICharacterBehaviourTreeAgent agent)
+	public MoveToEnemyNode(IMoveToEnemyAgent agent)
 	{
 		_agent = agent;
 	}

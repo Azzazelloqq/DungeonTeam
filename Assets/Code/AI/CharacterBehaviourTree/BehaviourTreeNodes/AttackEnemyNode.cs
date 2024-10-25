@@ -1,12 +1,13 @@
-﻿using Code.BehaviourTree;
+﻿using Code.AI.CharacterBehaviourTree.Agents;
+using Code.BehaviourTree;
 
 namespace Code.AI.CharacterBehaviourTree.BehaviourTreeNodes
 {
 public class AttackEnemyNode : IBehaviourTreeNode
 {
-	private readonly ICharacterBehaviourTreeAgent _agent;
+	private readonly IAttackEnemyAgent _agent;
 
-	public AttackEnemyNode(ICharacterBehaviourTreeAgent agent)
+	public AttackEnemyNode(IAttackEnemyAgent agent)
 	{
 		_agent = agent;
 	}

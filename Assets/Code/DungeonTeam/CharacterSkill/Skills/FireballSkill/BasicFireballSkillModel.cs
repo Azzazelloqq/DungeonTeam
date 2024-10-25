@@ -7,7 +7,7 @@ namespace Code.DungeonTeam.CharacterSkill.Skills.FireballSkill
 public class BasicFireballSkillModel : FireballSkillModelBase
 {
 	public override float FireballSpeed => _fireballData.FireballSpeed;
-	public override float FireballDamage => _fireballData.Damage;
+	public override int FireballDamage => _fireballData.Damage;
     public override bool IsReadyToActivate => !_cooldownSkillTimer.IsInProgress && !_chargeSkillTimer.IsInProgress;
 	public override string SkillName { get; }
 

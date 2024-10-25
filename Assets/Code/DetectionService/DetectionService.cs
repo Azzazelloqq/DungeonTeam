@@ -14,11 +14,14 @@ public class DetectionService : IDetectionService
     /// Dictionary mapping grid cell coordinates to a list of objects in that cell.
     /// </summary>
     private readonly Dictionary<Vector2Int, List<IDetectable>> _grid = new();
+	
+	private List<IDetectable> _detectedObjectsCash;
 
-    /// <summary>
+	/// <summary>
     /// Constructs a new instance of the DetectionService.
     /// </summary>
     /// <param name="cellSize">Size of each grid cell in Unity units.</param>
+	
     public DetectionService(float cellSize)
     {
         _cellSize = cellSize;
@@ -57,8 +60,16 @@ public class DetectionService : IDetectionService
     public List<IDetectable> DetectObjectsInView(Vector3 observerPosition, Vector3 observerForward, float viewAngle,
         float viewDistance, LayerMask obstacleLayer)
     {
-        var detectedObjects = new List<IDetectable>();
 
+		if (_detectedObjectsCash == null)
+		{
+			_detectedObjectsCash = new List<IDetectable>();
+		}
+		else
+		{
+			_detectedObjectsCash.Clear();
+		}
+		
         var centerCell = GetCellCoords(observerPosition);
         var cellsRange = Mathf.CeilToInt(viewDistance / _cellSize);
 
@@ -96,13 +107,13 @@ public class DetectionService : IDetectionService
                     if (!Physics.Raycast(observerPosition, directionToObject.normalized,
                             distanceToObject, obstacleLayer))
                     {
-                        detectedObjects.Add(obj);
+                        _detectedObjectsCash.Add(obj);
                     }
                 }
             }
         }
 
-        return detectedObjects;
+        return _detectedObjectsCash;
     }
 
     /// <summary>

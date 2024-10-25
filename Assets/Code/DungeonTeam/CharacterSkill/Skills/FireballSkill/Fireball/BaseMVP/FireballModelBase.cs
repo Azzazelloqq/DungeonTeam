@@ -15,11 +15,11 @@ public abstract class FireballModelBase : Model
 
     public abstract void ChargeFireball();
 	public abstract void ActivateFireball();
-	public abstract void UpdateTarget(ISkillAttackable skillAttackable);
+	public abstract void UpdateTarget(IFireballAffectable attackable);
 	public abstract bool IsTargetReached();
 	public abstract void UpdatePosition(float frameDeltaTime);
 	public abstract void FollowToTarget(Vector3 currentPosition);
 	public abstract void FireballExploded();
-	public abstract ISkillAttackable GetTarget();
+	public abstract IFireballAffectable GetTarget();
 }
 }

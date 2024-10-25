@@ -11,7 +11,7 @@ public class FireballPresenter : FireballPresenterBase
     public override bool IsFollowToTarget => model.IsFollowToTarget;
 
     private readonly ITickHandler _tickHandler;
-	private Action<ISkillAttackable> _onTargetReached;
+	private Action<IFireballAffectable> _onTargetReached;
 
 	public FireballPresenter(FireballViewBase view, FireballModelBase model, ITickHandler tickHandler) : base(view, model)
 	{
@@ -25,9 +25,9 @@ public class FireballPresenter : FireballPresenterBase
 		_tickHandler.FrameUpdate -= FollowToTarget;
 	}
 
-	public override void Activate(ISkillAttackable skillAffectable, Action<ISkillAttackable> onTargetReached)
+	public override void Activate(IFireballAffectable affectable, Action<IFireballAffectable> onTargetReached)
 	{
-		model.UpdateTarget(skillAffectable);
+		model.UpdateTarget(affectable);
 		
 		model.ActivateFireball();
 		view.ActivateFireball();
@@ -53,7 +53,9 @@ public class FireballPresenter : FireballPresenterBase
 		view.BlowUpFireball();
 
 		_tickHandler.FrameUpdate -= FollowToTarget;
-		_onTargetReached?.Invoke(model.GetTarget());
+        var target = model.GetTarget();
+        
+        _onTargetReached?.Invoke(target);
 	}
 
 	public override void ChargeFireball()

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Code.DungeonTeam.CharacterSkill.Core.SkillAffectable;
+using Code.DungeonTeam.CharacterSkill.Core.SkillAffectable.Base;
 using Code.DungeonTeam.CharacterSkill.Core.Skills.Attack;
 using Code.DungeonTeam.CharacterSkill.Skills.FireballSkill.Base;
 using Code.DungeonTeam.CharacterSkill.Skills.FireballSkill.Fireball;
@@ -15,7 +16,7 @@ public class BasicFireballSkillPresenter : FireballSkillPresenterBase, IBasicFir
 {
     public event Action ChargeCompleted;
     public string Name => model.SkillName;
-	public bool IsReadyToActivate => model.IsReadyToActivate;
+    public bool IsReadyToActivate => model.IsReadyToActivate;
 
 	private readonly ITickHandler _tickHandler;
     private readonly IInGameLogger _logger;
@@ -41,43 +42,42 @@ public class BasicFireballSkillPresenter : FireballSkillPresenterBase, IBasicFir
 		_fireballPresentersCash.Clear();
 	}
 
-
-    public void StartChargeSkill(IFireballAffectable skillAttackable)
+    public void StartChargeSkill(IFireballAffectable skillAffectable)
     {
-        if (!model.IsReadyToActivate)
-        {
-            return;
-        }
+		if (!model.IsReadyToActivate)
+		{
+			return;
+		}
         
-        var fireball = CreateFireball();
-        fireball.ChargeFireball();
+		var fireball = CreateFireball();
+		fireball.ChargeFireball();
 		
-        model.ChargeSkill(() => OnChargeCompleted(fireball));
-        view.ChargeSkill();
+		model.ChargeSkill(() => OnChargeCompleted(fireball));
+		view.ChargeSkill(); 
     }
 
-    public void Activate(IFireballAffectable skillAffectable)
+	public void Activate(IFireballAffectable skillAffectable)
 	{
 		if (!model.IsReadyToActivate)
 		{
 			return;
 		}
         
-        if (!model.IsReadyToActivate)
-        {
-            return;
-        }
+		if (!model.IsReadyToActivate)
+		{
+			return;
+		}
 		
-        model.ActivateSkill();
-        view.ActivateSkill();
+		model.ActivateSkill();
+		view.ActivateSkill();
 
-        _chargedFireball.Activate(skillAffectable, OnTargetReached);
-        _fireballPresentersCash.Add(_chargedFireball);
+		_chargedFireball.Activate(skillAffectable, OnTargetReached);
+		_fireballPresentersCash.Add(_chargedFireball);
 
-        _chargedFireball = null;
-    }
+		_chargedFireball = null;	
+	}
 
-    public void CancelActivateSkill()
+	public void CancelActivateSkill()
     {
         model.CancelChargeSkill();
         view.CancelChargeSkill();
@@ -118,10 +118,10 @@ public class BasicFireballSkillPresenter : FireballSkillPresenterBase, IBasicFir
 		return fireballPresenter;
 	}
 
-	private void OnTargetReached(ISkillAttackable target)
+	private void OnTargetReached(IFireballAffectable target)
 	{
 		var damage = model.FireballDamage;
-		target.Attack(damage);
+		target.TakeFireballDamage(damage);
 	}
 }
 }

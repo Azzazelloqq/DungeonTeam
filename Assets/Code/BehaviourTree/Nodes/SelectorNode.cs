@@ -1,10 +1,10 @@
 ﻿namespace Code.BehaviourTree.Nodes
 {
-public class Selector : IBehaviourTreeNode
+public class SelectorNode : IBehaviourTreeNode
 {
 	private readonly IBehaviourTreeNode[] _children;
 	
-	public Selector(IBehaviourTreeNode[] children)
+	public SelectorNode(IBehaviourTreeNode[] children)
 	{
 		_children = children;
 	}

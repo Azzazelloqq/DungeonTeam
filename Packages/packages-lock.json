@@ -28,7 +28,7 @@
       "dependencies": {
         "com.azzazello.disposable": "https://github.com/Azzazelloqq/Disposable.git#main"
       },
-      "hash": "25a3ff02cdda086e7c3b7fd02265b6dc3d3af310"
+      "hash": "bae4a99514616b10c00f6aff6e2d446bbb60a2b7"
     },
     "com.azzazello.mvvm": {
       "version": "https://github.com/Azzazelloqq/MVVM.git",
@@ -37,7 +37,7 @@
       "dependencies": {
         "com.azzazello.disposable": "https://github.com/Azzazelloqq/Disposable.git#v1.0.1"
       },
-      "hash": "a064a9154135acba4eb42a7f600c7fc3279479f7"
+      "hash": "714ac9939ec332ec38b0b4e2004dcb3aab66645c"
     },
     "com.azzazello.resourceloader": {
       "version": "https://github.com/Azzazelloqq/ResourceLoader.git",

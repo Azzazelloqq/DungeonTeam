@@ -1,6 +1,8 @@
-﻿namespace Code.DungeonTeam.CharacterSkill.Core.SkillAffectable
+﻿using Code.DungeonTeam.CharacterSkill.Core.SkillAffectable.Base;
+
+namespace Code.DungeonTeam.CharacterSkill.Core.SkillAffectable
 {
-public interface IFireballAffectable : ISkillAttackable
+public interface IFireballAffectable : ISkillAffectable
 {
     public void TakeFireballDamage(int damage);
 }

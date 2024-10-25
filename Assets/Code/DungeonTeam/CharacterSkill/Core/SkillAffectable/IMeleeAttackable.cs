@@ -2,8 +2,8 @@
 
 namespace Code.DungeonTeam.CharacterSkill.Core.SkillAffectable
 {
-public interface ISkillAttackable : ISkillAffectable
+public interface IMeleeAttackable : ISkillAffectable
 {
-	public void Attack(float damage);
+	public void TakeCommonAttackDamage(int damage);
 }
 }

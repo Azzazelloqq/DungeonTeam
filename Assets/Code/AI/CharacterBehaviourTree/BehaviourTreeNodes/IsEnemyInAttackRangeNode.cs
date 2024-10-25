@@ -1,12 +1,14 @@
-﻿using Code.BehaviourTree;
+﻿using Code.AI.CharacterBehaviourTree.Agents;
+using Code.AI.CharacterBehaviourTree.Trees.Character;
+using Code.BehaviourTree;
 
 namespace Code.AI.CharacterBehaviourTree.BehaviourTreeNodes
 {
 public class IsEnemyInAttackRangeNode : IBehaviourTreeNode
 {
-	private readonly ICharacterBehaviourTreeAgent _agent;
+	private readonly ITrackEnemyInAttackRangeAgent _agent;
 
-	public IsEnemyInAttackRangeNode(ICharacterBehaviourTreeAgent agent)
+	public IsEnemyInAttackRangeNode(ITrackEnemyInAttackRangeAgent agent)
 	{
 		_agent = agent;
 	}
