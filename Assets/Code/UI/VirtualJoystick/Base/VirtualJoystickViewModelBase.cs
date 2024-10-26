@@ -1,56 +1,24 @@
-﻿using Code.ModelStructs;
+﻿using System;
 using MVVM.MVVM.System.Base.ViewModel;
+using UnityEngine;
 using Vector3 = UnityEngine.Vector3;
 
 namespace Code.UI.VirtualJoystick.Base
 {
-public abstract class VirtualJoystickViewModelBase : ViewModelBase<VirtualJoystickModel>
+public abstract class VirtualJoystickViewModelBase : ViewModelBase<VirtualJoystickModelBase>
 {
-	public event System.Action<Vector3> OnDirectionChanged;
-	public event System.Action<bool> OnActiveStateChanged;
+	public abstract event Action<Vector3> DirectionChanged;
+	public abstract event Action<bool> InputStateChanged;
 	
-	public Vector3 Direction => model.Direction.ToUnityVector();
-
-	public bool IsActive => model.IsActive;
-
-	protected VirtualJoystickViewModelBase(VirtualJoystickModel model) : base(model)
+	public abstract Vector3 Direction { get; }
+	public abstract bool IsActive { get; }
+	
+	public abstract void OnInputMoved(Vector2 inputPosition, Vector2 centerPosition);
+	public abstract void OnInputStarted();
+	public abstract void OnInputEnded();
+	
+	protected VirtualJoystickViewModelBase(VirtualJoystickModelBase model) : base(model)
 	{
-	}
-
-	protected override void OnInitialize()
-	{
-		base.OnInitialize();
-	}
-
-	private void HandleDirectionChanged(Vector3 direction)
-	{
-		OnDirectionChanged?.Invoke(direction);
-	}
-
-	private void HandleActiveStateChanged(bool isActive)
-	{
-		OnActiveStateChanged?.Invoke(isActive);
-	}
-
-	public void OnInputMoved(UnityEngine.Vector2 inputPosition, UnityEngine.Vector2 centerPosition)
-	{
-		var delta = inputPosition - centerPosition;
-		var direction = new UnityEngine.Vector3(delta.x, 0, delta.y).normalized;
-
-		model.SetDirection(direction.ToModelVector());
-	}
-
-	public void OnInputStarted()
-	{
-		model.SetActiveState(true);
-	}
-
-	public void OnInputEnded()
-	{
-		model.SetActiveState(false);
-		
-		var zeroDirection = Code.ModelStructs.Vector3.Zero;
-		model.SetDirection(zeroDirection);
 	}
 }
 }

@@ -7,5 +7,8 @@ public abstract class TeamCharacterPresenterBase : Presenter<TeamCharacterViewBa
 	protected TeamCharacterPresenterBase(TeamCharacterViewBase view, TeamCharacterModelBase model) : base(view, model)
 	{
 	}
+
+	public abstract void OnTeamMoveStarted();
+	public abstract void OnTeamMoveEnded();
 }
 }

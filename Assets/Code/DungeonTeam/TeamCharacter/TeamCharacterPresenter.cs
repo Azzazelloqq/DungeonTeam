@@ -19,7 +19,7 @@ public class TeamCharacterPresenter : TeamCharacterPresenterBase, ICharacterBeha
 	public Vector3 Position => view.transform.position;
 	public bool IsDead => model.IsDead;
 
-	private readonly Transform _target;
+	private readonly Transform _teamMoveTarget;
 	private readonly ITickHandler _tickHandler;
 	private readonly IDetectionService _detectionService;
 	private readonly IInGameLogger _logger;
@@ -32,7 +32,7 @@ public class TeamCharacterPresenter : TeamCharacterPresenterBase, ICharacterBeha
 	public TeamCharacterPresenter(
 		TeamCharacterViewBase view,
 		TeamCharacterModelBase model,
-		Transform target,
+		Transform teamMoveTarget,
 		ITickHandler tickHandler,
         IDetectionService detectionService,
 		IInGameLogger logger,
@@ -41,7 +41,7 @@ public class TeamCharacterPresenter : TeamCharacterPresenterBase, ICharacterBeha
 		IHealable[] allyToHeal) : base(view,
 		model)
 	{
-		_target = target;
+		_teamMoveTarget = teamMoveTarget;
 		_tickHandler = tickHandler;
         _detectionService = detectionService;
 		_logger = logger;
@@ -191,12 +191,24 @@ public class TeamCharacterPresenter : TeamCharacterPresenterBase, ICharacterBeha
 
 	public void FollowToDirection()
 	{
-		throw new NotImplementedException();
+		if (!model.IsTeamMoving)
+		{
+			_logger.LogError("Can't move to target place in team, because is not moving state");
+		}
+		
+		_tickHandler.FrameUpdate += MoveCharacterWithTeam;
 	}
 
 	public bool IsNeedFollowToDirection()
 	{
-		return false;
+		var isNeedFollowToDirection = model.IsTeamMoving;
+
+		if (!isNeedFollowToDirection)
+		{
+			_tickHandler.FrameUpdate -= MoveCharacterWithTeam;
+		}
+		
+		return isNeedFollowToDirection;
 	}
 
 	public bool TryFindEnemyTarget()
@@ -219,7 +231,22 @@ public class TeamCharacterPresenter : TeamCharacterPresenterBase, ICharacterBeha
 		_currentTargetToAttack = detectedObjects[0];
 			
 		return true;
+	}
 
+	public override void OnTeamMoveStarted()
+	{
+		model.OnTeamModeStarted();
+	}
+
+	public override void OnTeamMoveEnded()
+	{
+		model.OnTeamModeEnded();
+	}
+	
+	private void MoveCharacterWithTeam(float deltaTime)
+	{
+		var teamMovePosition = _teamMoveTarget.position;
+		view.UpdateTargetPlace(teamMovePosition);
 	}
 }
 }

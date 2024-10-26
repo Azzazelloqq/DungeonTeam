@@ -12,9 +12,12 @@ public abstract class TeamCharacterModelBase : Model
 	public abstract float ViewDistance { get; }
 	public abstract int AttackLayer { get; }
 	public abstract bool IsTargetInSkillAttackRange { get; protected set; }
+	public abstract bool IsTeamMoving { get; protected set; }
 
 	public abstract void MoveToTarget();
 	public abstract void UpdateAttackTargetPosition(Vector3 targetPosition);
 	public abstract void UpdatePosition(Vector3 modelPosition);
+	public abstract void OnTeamModeStarted();
+	public abstract void OnTeamModeEnded();
 }
 }

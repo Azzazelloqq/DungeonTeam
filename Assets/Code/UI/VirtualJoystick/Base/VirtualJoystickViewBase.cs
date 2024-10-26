@@ -2,7 +2,7 @@
 
 namespace Code.UI.VirtualJoystick.Base
 {
-public abstract class VirtualJoystickViewBase : ViewBase<VirtualJoystickViewModelBase>
+public abstract class VirtualJoystickViewBase : ViewMonoBehavior<VirtualJoystickViewModelBase>
 {
 	
 }

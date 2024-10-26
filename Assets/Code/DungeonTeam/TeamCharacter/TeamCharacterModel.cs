@@ -10,6 +10,7 @@ public class TeamCharacterModel : TeamCharacterModelBase
 	public override bool IsMovingToAttackTarget { get; protected set; }
 	public override bool IsTargetInAttackRange { get; protected set; }
 	public override bool IsTargetInSkillAttackRange { get; protected set; }
+	public override bool IsTeamMoving { get; protected set; }
 	public override int AttackLayer { get; }
 	public override float ViewDistance { get; }
 	public override float ViewAngel { get; }
@@ -53,6 +54,16 @@ public class TeamCharacterModel : TeamCharacterModelBase
 		_currentPosition = modelPosition;
 
 		CheckDistanceToTarget();
+	}
+
+	public override void OnTeamModeStarted()
+	{
+		IsTeamMoving = true;
+	}
+
+	public override void OnTeamModeEnded()
+	{
+		IsTeamMoving = false;
 	}
 
 	private void CheckDistanceToTarget()
