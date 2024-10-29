@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace Code.ConfigParsers.ScriptableObjectParser
+namespace Code.GameConfig.ScriptableObjectParser
 {
 public class ScriptableObjectConfig : ScriptableObject
 {

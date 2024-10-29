@@ -18,32 +18,5 @@ public class MovementNavigatorPresenter : MovementNavigatorPresenterBase
 	{
 		_tickHandler = tickHandler;
 	}
-	
-	protected override void OnInitialize()
-	{
-		base.OnInitialize();
-		
-		model.Initialize();
-		view.Initialize(this);
-		
-		InitializeCharacters();
-	}
-
-	public override void Dispose()
-	{
-		base.Dispose();
-		
-		model.Dispose();
-		view.Dispose();
-	}
-
-	public void OnCharactersCountChanged(int charactersCount) {
-		model.UpdateCharactersCount(charactersCount);
-	}
-
-	private void InitializeCharacters()
-	{
-	
-	}
 }
 }
