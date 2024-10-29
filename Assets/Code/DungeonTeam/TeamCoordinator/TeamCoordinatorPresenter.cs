@@ -9,8 +9,11 @@ public class TeamCoordinatorPresenter : TeamCoordinatorPresenterBase
 	private readonly IResourceLoader _resourceLoader;
 	private MovementNavigatorPresenter _movementNavigator;
 
-	public TeamCoordinatorPresenter(TeamCoordinatorViewBase view, TeamCoordinatorModelBase model,
-		IResourceLoader resourceLoader) : base(view, model)
+	public TeamCoordinatorPresenter(
+		TeamCoordinatorViewBase view,
+		TeamCoordinatorModelBase model,
+		IResourceLoader resourceLoader) : base(view,
+		model)
 	{
 		_resourceLoader = resourceLoader;
 	}
