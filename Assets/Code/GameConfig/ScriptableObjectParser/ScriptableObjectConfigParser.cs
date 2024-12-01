@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Code.Config;
@@ -61,7 +62,7 @@ public class ScriptableObjectConfigParser : IConfigParser
 				return ParseCharacterRemote(characterRemote);
 			case SkillRemote skillRemote:
 				return ParseSkillRemote(skillRemote);
-			case CharacterTeamPlaceRemote characterTeamPlaceRemote:
+			case CharacterTeamPlacesRemote characterTeamPlaceRemote:
 				return ParseCharacterTeamPlace(characterTeamPlaceRemote);
 			default:
 				_logger.LogException(new Exception($"Need add parse for {remoteData.GetType().Name}"));
@@ -69,26 +70,18 @@ public class ScriptableObjectConfigParser : IConfigParser
 		}
 	}
 
-	private IConfigData ParseCharacterTeamPlace(CharacterTeamPlaceRemote characterTeamPlaceRemote)
+	private IConfigData ParseCharacterTeamPlace(CharacterTeamPlacesRemote characterTeamPlacesRemote)
 	{
-		var classesRemote = characterTeamPlaceRemote.ClassesForPlace;
-		var placeNumberRemote = characterTeamPlaceRemote.PlaceNumber;
-		var classes = new CharacterClass[classesRemote.Length];
-		for (var i = 0; i < classesRemote.Length; i++)
+		var placeLocalConfigs = new PlaceConfig[characterTeamPlacesRemote.Places.Length];
+		for (var i = 0; i < characterTeamPlacesRemote.Places.Length; i++)
 		{
-			var classRemote = classesRemote[i];
-			if (classRemote == CharacterClassType.None)
-			{
-				_logger.LogError($"Class type in remote config {characterTeamPlaceRemote.GetType().Name} is None");
-				continue;
-			}
-			
-			var characterClass = (CharacterClass)classRemote;
-
-			classes[i] = characterClass;
+			var remotePlace = characterTeamPlacesRemote.Places[i];
+			var localPlace = new PlaceConfig(remotePlace.PlaceNumber, (CharacterClass)remotePlace.PreferredClass);
+			placeLocalConfigs[i] = localPlace;
 		}
 
-		var config = new CharacterTeamPlaceConfig(classes, placeNumberRemote);
+		var teamSpeed = characterTeamPlacesRemote.TeamSpeed;
+		var config = new CharacterTeamMoveConfig(placeLocalConfigs, teamSpeed);
 
 		return config;
 	}

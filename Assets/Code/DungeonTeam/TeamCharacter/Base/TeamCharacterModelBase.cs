@@ -1,5 +1,5 @@
-﻿using MVP;
-using Vector3 = Code.ModelStructs.Vector3;
+﻿using Code.ModelStructs;
+using MVP;
 
 namespace Code.DungeonTeam.TeamCharacter.Base
 {
@@ -15,9 +15,9 @@ public abstract class TeamCharacterModelBase : Model
 	public abstract bool IsTeamMoving { get; protected set; }
 
 	public abstract void MoveToTarget();
-	public abstract void UpdateAttackTargetPosition(Vector3 targetPosition);
-	public abstract void UpdatePosition(Vector3 modelPosition);
-	public abstract void OnTeamModeStarted();
-	public abstract void OnTeamModeEnded();
+	public abstract void UpdateAttackTargetPosition(ModelVector3 targetPosition);
+	public abstract void UpdatePosition(ModelVector3 modelPosition);
+	public abstract void OnTeamMoveStarted();
+	public abstract void OnTeamMoveEnded();
 }
 }

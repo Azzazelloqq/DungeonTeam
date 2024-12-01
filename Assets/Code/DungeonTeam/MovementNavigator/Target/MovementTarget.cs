@@ -1,13 +1,15 @@
 ﻿using System;
 using UnityEngine;
 
-namespace Code.DungeonTeam.MovementNavigator.Target {
+namespace Code.DungeonTeam.MovementNavigator.Target
+{
 	[Serializable]
-	public struct MovementTarget {
+	public struct MovementTarget
+	{
 		[field: SerializeField]
-		public int CharactersCount { get; private set; }
+		public int PlaceNum { get; private set; }
 		
 		[field: SerializeField]
-		public TargetPlace[] Targets { get; private set; }
+		public Transform Place { get; private set; }
 	}
 }

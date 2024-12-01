@@ -11,7 +11,8 @@ public interface ICharacterBehaviourTreeAgent :
     IMoveToEnemyAgent,
     IUseAttackSkillAgent,
     IUseHealSkillAgent,
-	IFindEnemyTargetAgent
+	IFindEnemyTargetAgent,
+	IStayAgent
 {
 }
 }

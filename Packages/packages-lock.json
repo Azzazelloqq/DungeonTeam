@@ -62,7 +62,7 @@
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "0a1800b0d6ede9f47beb44623b490c044cc43fc8"
+      "hash": "a9baf356016accb677741977ce0ae3ea399de2e6"
     },
     "com.azzazello.utils": {
       "version": "https://github.com/Azzazelloqq/Utils.git",

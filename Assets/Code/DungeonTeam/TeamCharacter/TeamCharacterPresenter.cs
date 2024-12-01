@@ -1,9 +1,9 @@
-﻿using System;
-using Code.AI.CharacterBehaviourTree.Trees.Character;
+﻿using Code.AI.CharacterBehaviourTree.Trees.Character;
 using Code.DetectionService;
 using Code.DungeonTeam.CharacterSkill.Core.SkillAffectable;
 using Code.DungeonTeam.CharacterSkill.Core.SkillAffectable.Base;
 using Code.DungeonTeam.CharacterSkill.Core.Skills.Base;
+using Code.DungeonTeam.MovementNavigator;
 using Code.DungeonTeam.TeamCharacter.Base;
 using Code.ModelStructs;
 using InGameLogger;
@@ -18,21 +18,22 @@ public class TeamCharacterPresenter : TeamCharacterPresenterBase, ICharacterBeha
 {
 	public Vector3 Position => view.transform.position;
 	public bool IsDead => model.IsDead;
+	public override string CharacterId { get; }
+	public override CharacterClass CharacterClassType { get; }
 
-	private readonly Transform _teamMoveTarget;
 	private readonly ITickHandler _tickHandler;
 	private readonly IDetectionService _detectionService;
 	private readonly IInGameLogger _logger;
 	private readonly ISkill<ISkillAffectable>[] _attackSkills;
 	private readonly ISkill<ISkillAffectable>[] _healSkills;
 	private readonly IHealable[] _allyToHeal;
+	private Transform _teamMoveTarget;
 	private IDetectable _currentTargetToAttack;
 	private IHealable _currentTargetToHeal;
 
 	public TeamCharacterPresenter(
 		TeamCharacterViewBase view,
 		TeamCharacterModelBase model,
-		Transform teamMoveTarget,
 		ITickHandler tickHandler,
         IDetectionService detectionService,
 		IInGameLogger logger,
@@ -41,7 +42,6 @@ public class TeamCharacterPresenter : TeamCharacterPresenterBase, ICharacterBeha
 		IHealable[] allyToHeal) : base(view,
 		model)
 	{
-		_teamMoveTarget = teamMoveTarget;
 		_tickHandler = tickHandler;
         _detectionService = detectionService;
 		_logger = logger;
@@ -108,23 +108,6 @@ public class TeamCharacterPresenter : TeamCharacterPresenterBase, ICharacterBeha
 		_tickHandler.FrameUpdate += FollowToAttackTarget;
 	}
 
-	private void FollowToAttackTarget(float deltaTime)
-	{
-		if (model.IsTargetInAttackRange)
-		{
-			_tickHandler.FrameUpdate -= FollowToAttackTarget;
-			return;
-		}
-		
-		var targetPosition = _currentTargetToAttack.Position;
-		var modelVector = targetPosition.ToModelVector();
-		var modelPosition = view.transform.position.ToModelVector();
-		
-		model.UpdateAttackTargetPosition(modelVector);
-		model.UpdatePosition(modelPosition);
-		view.UpdateTargetPlace(targetPosition);
-	}
-
 	public void AttackEnemy()
 	{
 		if (_currentTargetToAttack == null)
@@ -172,23 +155,6 @@ public class TeamCharacterPresenter : TeamCharacterPresenterBase, ICharacterBeha
 		}
 	}
 
-	private bool TryGetNeedHealTeamCharacter(out IHealable healable)
-	{
-		foreach (var teamCharacter in _allyToHeal)
-		{
-			if (!teamCharacter.IsNeedHeal)
-			{
-				continue;
-			}
-
-			healable = teamCharacter;
-			return true;
-		}
-
-		healable = null;
-		return false;
-	}
-
 	public void FollowToDirection()
 	{
 		if (!model.IsTeamMoving)
@@ -205,7 +171,11 @@ public class TeamCharacterPresenter : TeamCharacterPresenterBase, ICharacterBeha
 
 		if (!isNeedFollowToDirection)
 		{
-			_tickHandler.FrameUpdate -= MoveCharacterWithTeam;
+			StopMoveCharacterWithTeam();
+		}
+		else
+		{
+			StopStay();
 		}
 		
 		return isNeedFollowToDirection;
@@ -233,20 +203,95 @@ public class TeamCharacterPresenter : TeamCharacterPresenterBase, ICharacterBeha
 		return true;
 	}
 
-	public override void OnTeamMoveStarted()
+	public override void OnTargetChanged(Transform target)
 	{
-		model.OnTeamModeStarted();
+		_teamMoveTarget = target;
 	}
 
-	public override void OnTeamMoveEnded()
+	public override void OnTeamMove()
 	{
-		model.OnTeamModeEnded();
+		model.OnTeamMoveStarted();
+	}
+
+	public override void OnTeamStay()
+	{
+		model.OnTeamMoveEnded();
+	}
+
+	public void Stay()
+	{
+		if (model.IsTeamMoving)
+		{
+			_logger.LogError("Can't stay in team, because is moving state");
+			
+			return;
+		}
+		
+		_tickHandler.FrameUpdate += FollowToStayPlace;
 	}
 	
+	private void StopStay()
+	{
+		if (!model.IsTeamMoving)
+		{
+			_logger.LogError("Can't stop stay in team, because is not moving state");
+			
+			return;
+		}
+		
+		_tickHandler.FrameUpdate -= FollowToStayPlace;
+	}
+
+	private void FollowToStayPlace(float deltaTime)
+	{
+		var targetPosition = _teamMoveTarget.position;
+		view.UpdatePointToFollow(targetPosition);
+	}
+
 	private void MoveCharacterWithTeam(float deltaTime)
 	{
-		var teamMovePosition = _teamMoveTarget.position;
-		view.UpdateTargetPlace(teamMovePosition);
+		var targetPosition = _teamMoveTarget.position;
+		view.UpdatePointToFollow(targetPosition);
+	}
+
+	private void StopMoveCharacterWithTeam()
+	{
+		_tickHandler.FrameUpdate -= MoveCharacterWithTeam;
+		view.StopFollowToTarget();
+	}
+
+	private bool TryGetNeedHealTeamCharacter(out IHealable healable)
+	{
+		foreach (var teamCharacter in _allyToHeal)
+		{
+			if (!teamCharacter.IsNeedHeal)
+			{
+				continue;
+			}
+
+			healable = teamCharacter;
+			return true;
+		}
+
+		healable = null;
+		return false;
+	}
+
+	private void FollowToAttackTarget(float deltaTime)
+	{
+		if (model.IsTargetInAttackRange)
+		{
+			_tickHandler.FrameUpdate -= FollowToAttackTarget;
+			return;
+		}
+		
+		var targetPosition = _currentTargetToAttack.Position;
+		var modelVector = targetPosition.ToModelVector();
+		var modelPosition = view.transform.position.ToModelVector();
+		
+		model.UpdateAttackTargetPosition(modelVector);
+		model.UpdatePosition(modelPosition);
+		view.UpdatePointToFollow(targetPosition);
 	}
 }
 }

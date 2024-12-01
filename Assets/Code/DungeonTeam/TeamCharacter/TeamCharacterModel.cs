@@ -1,5 +1,5 @@
 ﻿using Code.DungeonTeam.TeamCharacter.Base;
-using Vector3 = Code.ModelStructs.Vector3;
+using Code.ModelStructs;
 
 namespace Code.DungeonTeam.TeamCharacter
 {
@@ -18,8 +18,8 @@ public class TeamCharacterModel : TeamCharacterModelBase
 	private readonly float _attackSkillDistance;
 	private readonly float _attackDistance;
 	
-	private Vector3 _currentPosition;
-	private Vector3 _attackTargetPosition;
+	private ModelVector3 _currentPosition;
+	private ModelVector3 _attackTargetPosition;
 
 	public TeamCharacterModel(
 		CharacterClass heroClass,
@@ -42,33 +42,33 @@ public class TeamCharacterModel : TeamCharacterModelBase
 		IsMovingToAttackTarget = true;
 	}
 
-	public override void UpdateAttackTargetPosition(Vector3 targetPosition)
+	public override void UpdateAttackTargetPosition(ModelVector3 targetPosition)
 	{
 		_attackTargetPosition = targetPosition;
 		
 		CheckDistanceToTarget();
 	}
 
-	public override void UpdatePosition(Vector3 modelPosition)
+	public override void UpdatePosition(ModelVector3 modelPosition)
 	{
 		_currentPosition = modelPosition;
 
 		CheckDistanceToTarget();
 	}
 
-	public override void OnTeamModeStarted()
+	public override void OnTeamMoveStarted()
 	{
 		IsTeamMoving = true;
 	}
 
-	public override void OnTeamModeEnded()
+	public override void OnTeamMoveEnded()
 	{
 		IsTeamMoving = false;
 	}
 
 	private void CheckDistanceToTarget()
 	{
-		var distanceToAttackTarget = Vector3.Distance(_currentPosition, _attackTargetPosition);
+		var distanceToAttackTarget = ModelVector3.Distance(_currentPosition, _attackTargetPosition);
 
 		if (distanceToAttackTarget <= _attackDistance)
 		{
