@@ -15,7 +15,6 @@ public static class AddressableKeysGenerator
 	private const string NamespaceName = "Code.Generated.Addressables";
 	private const string MainClassName = "ResourceIdsContainer";
 
-
 	[MenuItem("Tools/Generate Addressable Groups (CamelCase)")]
 	public static void Generate()
 	{
@@ -61,7 +60,7 @@ public static class AddressableKeysGenerator
 			foreach (var entry in entries)
 			{
 				var fieldName = ToCamelCaseIdentifier(entry.address);
-				sb.AppendLine($"        public const string {fieldName} = \"{entry.address}\";");
+				sb.AppendLine($"        public string {fieldName} = \"{entry.address}\";");
 			}
 
 			sb.AppendLine("    }");
