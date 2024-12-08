@@ -1,5 +1,4 @@
 ﻿using System;
-using Code.DungeonTeam.TeamCharacter;
 using UnityEngine;
 
 namespace Code.GameConfig.ScriptableObjectParser.RemoteData.CharacterTeamPlace

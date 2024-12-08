@@ -1,0 +1,11 @@
+﻿{
+  "name": "EnemiesCore",
+  "references":[
+    "GUID:1f479669ac344197a28280f8705300a5",
+    "GUID:5b1d99d5a9b84611b15c22e533a82392",
+    "GUID:d273da7f6076476bb07bad86e0fb33f1",
+    "MVP",
+    "TickHandler",
+    "Disposable"
+  ]
+}

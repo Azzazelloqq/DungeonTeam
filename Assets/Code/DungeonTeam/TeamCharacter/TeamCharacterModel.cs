@@ -1,5 +1,6 @@
 ﻿using Code.DungeonTeam.TeamCharacter.Base;
-using Code.ModelStructs;
+using Code.GameConfig.ScriptableObjectParser.ConfigData.CharacterTeamPlace;
+using Code.Utils.ModelUtils;
 
 namespace Code.DungeonTeam.TeamCharacter
 {

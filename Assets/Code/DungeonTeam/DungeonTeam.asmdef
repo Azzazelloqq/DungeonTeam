@@ -1,0 +1,17 @@
+﻿{
+  "name": "DungeonTeam",
+  "references":[ 
+    "GUID:2e7c70008d314b2e9344b00ee95abe0c", 
+    "GUID:6b6516276a074964a53ebaeb65ad82bc",
+    "GUID:d273da7f6076476bb07bad86e0fb33f1",
+    "GUID:1f479669ac344197a28280f8705300a5",
+    "GUID:5b1d99d5a9b84611b15c22e533a82392", 
+    "GUID:00bc31e4b9904d4ea9ab839cff555c80",
+    "TickHandler",
+    "MVP",
+    "Disposable",
+    "Logger",
+    "ResourceLoader",
+    "LocalSaveSystem"
+  ]
+}

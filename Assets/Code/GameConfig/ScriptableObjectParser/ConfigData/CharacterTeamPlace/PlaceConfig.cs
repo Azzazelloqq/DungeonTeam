@@ -1,6 +1,4 @@
-﻿using Code.DungeonTeam.TeamCharacter;
-
-namespace Code.GameConfig.ScriptableObjectParser.ConfigData.CharacterTeamPlace
+﻿namespace Code.GameConfig.ScriptableObjectParser.ConfigData.CharacterTeamPlace
 {
 	public struct PlaceConfig
 	{

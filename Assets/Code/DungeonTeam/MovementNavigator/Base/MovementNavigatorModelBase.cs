@@ -1,5 +1,5 @@
 ﻿using System.Collections.Generic;
-using Code.ModelStructs;
+using Code.Utils.ModelUtils;
 using MVP;
 using UnityEngine;
 

@@ -1,4 +1,5 @@
-﻿using MVP;
+﻿using Code.GameConfig.ScriptableObjectParser.ConfigData.CharacterTeamPlace;
+using MVP;
 using UnityEngine;
 
 namespace Code.DungeonTeam.TeamCharacter.Base

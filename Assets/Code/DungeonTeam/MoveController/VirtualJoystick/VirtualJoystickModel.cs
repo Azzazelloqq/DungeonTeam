@@ -1,6 +1,6 @@
 ﻿
 using Code.DungeonTeam.MoveController.Base;
-using Code.ModelStructs;
+using Code.Utils.ModelUtils;
 
 namespace Code.DungeonTeam.MoveController.VirtualJoystick
 {

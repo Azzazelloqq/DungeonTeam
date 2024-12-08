@@ -1,11 +1,11 @@
 ﻿using Code.AI.CharacterBehaviourTree.Trees.Character;
 using Code.DetectionService;
-using Code.DungeonTeam.CharacterSkill.Core.SkillAffectable;
-using Code.DungeonTeam.CharacterSkill.Core.SkillAffectable.Base;
-using Code.DungeonTeam.CharacterSkill.Core.Skills.Base;
-using Code.DungeonTeam.MovementNavigator;
 using Code.DungeonTeam.TeamCharacter.Base;
-using Code.ModelStructs;
+using Code.GameConfig.ScriptableObjectParser.ConfigData.CharacterTeamPlace;
+using Code.Skills.CharacterSkill.Core.SkillAffectable;
+using Code.Skills.CharacterSkill.Core.SkillAffectable.Base;
+using Code.Skills.CharacterSkill.Core.Skills.Base;
+using Code.Utils.ModelUtils;
 using InGameLogger;
 using TickHandler;
 using UnityEngine;

@@ -1,4 +1,5 @@
 ﻿using Code.DungeonTeam.TeamCharacter;
+using Code.GameConfig.ScriptableObjectParser.ConfigData.CharacterTeamPlace;
 
 namespace Code.DungeonTeam.MovementNavigator {
 	public struct ModelCharacterContainer {

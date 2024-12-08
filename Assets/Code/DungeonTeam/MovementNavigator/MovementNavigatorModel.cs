@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Code.DungeonTeam.MovementNavigator.Base;
 using Code.DungeonTeam.TeamCharacter;
 using Code.GameConfig.ScriptableObjectParser.ConfigData.CharacterTeamPlace;
-using Code.ModelStructs;
+using Code.Utils.ModelUtils;
 using InGameLogger;
 using UnityEngine;
 

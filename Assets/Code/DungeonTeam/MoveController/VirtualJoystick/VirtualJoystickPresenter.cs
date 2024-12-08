@@ -1,6 +1,6 @@
 ﻿using System;
 using Code.DungeonTeam.MoveController.Base;
-using Code.ModelStructs;
+using Code.Utils.ModelUtils;
 using UnityEngine;
 
 namespace Code.DungeonTeam.MoveController.VirtualJoystick

@@ -1,4 +1,4 @@
-﻿using Code.ModelStructs;
+﻿using Code.Utils.ModelUtils;
 using MVP;
 
 namespace Code.DungeonTeam.TeamCharacter.Base

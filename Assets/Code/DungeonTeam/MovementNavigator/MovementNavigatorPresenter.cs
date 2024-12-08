@@ -3,7 +3,7 @@ using Code.Config;
 using Code.DungeonTeam.MoveController.Base;
 using Code.DungeonTeam.MovementNavigator.Base;
 using Code.DungeonTeam.TeamCharacter.Base;
-using Code.ModelStructs;
+using Code.Utils.ModelUtils;
 using InGameLogger;
 using TickHandler;
 using UnityEngine;
@@ -40,7 +40,7 @@ public class MovementNavigatorPresenter : MovementNavigatorPresenterBase
 		var modelCharacters = GetModelCharactersContainers();
 		model.InitializeCharacters(modelCharacters);
 		
-		UpdateTeamTargets();
+		UpdateTeamNavigationTargets();
 
 		var viewTeamParentPosition = view.TeamParentPosition;
 		var teamParentPositionModel = viewTeamParentPosition.ToModelVector();
@@ -60,23 +60,23 @@ public class MovementNavigatorPresenter : MovementNavigatorPresenterBase
 		_moveController.DirectionChanged += OnControllerDirectionChanged;
 	}
 
-	public void AddCharacter(TeamCharacterPresenterBase character)
+	public override void AddCharacter(TeamCharacterPresenterBase character)
 	{
 		_characters.Add(character);
 
 		var modelCharacterContainer = GetModelCharacterContainer(character);
 		model.AddCharacter(modelCharacterContainer);
 		
-		UpdateTeamTargets();
+		UpdateTeamNavigationTargets();
 	}
 
-	public void RemoveCharacter(string characterId)
+	public override void RemoveCharacter(string characterId)
 	{
 		RemoveCharacterFromCache(characterId);
 
 		model.RemoveCharacter(characterId);
 		
-		UpdateTeamTargets();
+		UpdateTeamNavigationTargets();
 	}
 
 	private void RemoveCharacterFromCache(string characterId)
@@ -147,7 +147,7 @@ public class MovementNavigatorPresenter : MovementNavigatorPresenterBase
 		}
 	}
 
-	private void UpdateTeamTargets()
+	private void UpdateTeamNavigationTargets()
 	{
 		foreach (var teamCharacterPresenterBase in _characters)
 		{

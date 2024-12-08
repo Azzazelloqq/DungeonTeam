@@ -1,7 +1,7 @@
 ﻿using Code.AI.CharacterBehaviourTree.Trees.Enemy;
 using Code.DetectionService;
-using Code.DungeonTeam.CharacterSkill.Core.SkillAffectable;
 using Code.EnemiesCore.Enemies.GoblinEnemy.BaseMVP;
+using Code.Skills.CharacterSkill.Core.SkillAffectable;
 using TickHandler;
 using UnityEngine;
 
