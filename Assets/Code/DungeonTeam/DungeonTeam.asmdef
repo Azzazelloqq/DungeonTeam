@@ -12,6 +12,7 @@
     "Disposable",
     "Logger",
     "ResourceLoader",
-    "LocalSaveSystem"
+    "LocalSaveSystem",
+    "GUID:77845bff39714a25a2a7d84b24160c5a"
   ]
 }
