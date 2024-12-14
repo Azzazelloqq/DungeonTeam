@@ -5,7 +5,7 @@ namespace Code.Config
 {
 public interface IConfigParser
 {
-	public IConfigData[] Parse();
-	public Task<IConfigData[]> ParseAsync(CancellationToken token);
+	public IConfigPage[] Parse();
+	public Task<IConfigPage[]> ParseAsync(CancellationToken token);
 }
 }

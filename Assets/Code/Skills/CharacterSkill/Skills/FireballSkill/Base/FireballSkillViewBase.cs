@@ -8,6 +8,7 @@ public abstract class FireballSkillViewBase : ViewMonoBehaviour<FireballSkillPre
 {
 	public abstract void ActivateSkill();
 	public abstract Vector3 Position { get; }
+	public abstract float FireballSpeed { get; protected set; }
 	public abstract void OnTargetReached();
 	public abstract FireballViewBase CreateFireballView();
 	public abstract void ChargeSkill();

@@ -2,16 +2,14 @@
 {
 public struct FireballData
 {
-	public float FireballSpeed { get; }
 	public int Damage { get; }
-	public float Cooldown { get; }
+	public float CooldownPerMilliseconds { get; }
 	public int ChargeTimeMilliseconds { get; }
 	
-	public FireballData(float fireballSpeed, int damage, float cooldown, int chargeTimeMilliseconds)
+	public FireballData(int damage, int cooldownPerMilliseconds, int chargeTimeMilliseconds)
 	{
-		FireballSpeed = fireballSpeed;
 		Damage = damage;
-		Cooldown = cooldown;
+		CooldownPerMilliseconds = cooldownPerMilliseconds;
 		ChargeTimeMilliseconds = chargeTimeMilliseconds;
 	}
 }

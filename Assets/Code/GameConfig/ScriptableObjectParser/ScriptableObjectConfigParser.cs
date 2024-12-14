@@ -15,18 +15,18 @@ namespace Code.GameConfig.ScriptableObjectParser
 {
 public class ScriptableObjectConfigParser : IConfigParser
 {
-	private readonly IRemoteData[] _remoteData;
+	private readonly IRemotePage[] _remoteData;
 	private readonly IInGameLogger _logger;
 
-	public ScriptableObjectConfigParser(IRemoteData[] remoteData, IInGameLogger logger)
+	public ScriptableObjectConfigParser(IRemotePage[] remoteData, IInGameLogger logger)
 	{
 		_remoteData = remoteData;
 		_logger = logger;
 	}
 	
-	public IConfigData[] Parse()
+	public IConfigPage[] Parse()
 	{
-		var configData = new IConfigData[_remoteData.Length];
+		var configData = new IConfigPage[_remoteData.Length];
 		
 		for (var i = 0; i < _remoteData.Length; i++)
 		{
@@ -37,9 +37,9 @@ public class ScriptableObjectConfigParser : IConfigParser
 		return configData;
 	}
 
-	public async Task<IConfigData[]> ParseAsync(CancellationToken token)
+	public async Task<IConfigPage[]> ParseAsync(CancellationToken token)
 	{
-		var configData = new IConfigData[_remoteData.Length];
+		var configData = new IConfigPage[_remoteData.Length];
 
 		await Task.Run(() =>
 		{
@@ -53,64 +53,114 @@ public class ScriptableObjectConfigParser : IConfigParser
 		return configData;
 	}
 
-	private IConfigData GetConfig(IRemoteData remoteData)
+	private IConfigPage GetConfig(IRemotePage remotePage)
 	{
-		switch (remoteData)
+		switch (remotePage)
 		{
-			case CharacterRemote characterRemote:
+			case CharactersRemotePage characterRemote:
 				return ParseCharacterRemote(characterRemote);
-			case SkillRemote skillRemote:
+			case SkillsRemotePage skillRemote:
 				return ParseSkillRemote(skillRemote);
-			case CharacterTeamPlacesRemote characterTeamPlaceRemote:
+			case CharacterTeamPlacesRemotePage characterTeamPlaceRemote:
 				return ParseCharacterTeamPlace(characterTeamPlaceRemote);
 			default:
-				_logger.LogException(new Exception($"Need add parse for {remoteData.GetType().Name}"));
+				_logger.LogException(new Exception($"Need add parse for {remotePage.GetType().Name}"));
 				return null;
 		}
 	}
 
-	private IConfigData ParseCharacterTeamPlace(CharacterTeamPlacesRemote characterTeamPlacesRemote)
+	private IConfigPage ParseCharacterTeamPlace(CharacterTeamPlacesRemotePage characterTeamPlacesRemotePage)
 	{
-		var placeLocalConfigs = new PlaceConfig[characterTeamPlacesRemote.Places.Length];
-		for (var i = 0; i < characterTeamPlacesRemote.Places.Length; i++)
+		var placeLocalConfigs = new PlaceConfig[characterTeamPlacesRemotePage.Places.Length];
+		for (var i = 0; i < characterTeamPlacesRemotePage.Places.Length; i++)
 		{
-			var remotePlace = characterTeamPlacesRemote.Places[i];
+			var remotePlace = characterTeamPlacesRemotePage.Places[i];
 			var localPlace = new PlaceConfig(remotePlace.PlaceNumber, (CharacterClass)remotePlace.PreferredClass);
 			placeLocalConfigs[i] = localPlace;
 		}
 
-		var teamSpeed = characterTeamPlacesRemote.TeamSpeed;
-		var config = new CharacterTeamMoveConfig(placeLocalConfigs, teamSpeed);
+		var teamSpeed = characterTeamPlacesRemotePage.TeamSpeed;
+		var config = new CharacterTeamMoveConfigPage(placeLocalConfigs, teamSpeed);
 
 		return config;
 	}
 
-	private IConfigData ParseCharacterRemote(CharacterRemote characterRemote)
+	private IConfigPage ParseCharacterRemote(CharactersRemotePage characterRemotePage)
 	{
-		var characterRemoteId = characterRemote.Id;
-		var characterRemoteSkills = characterRemote.Skills;
-		
-		var characterConfig = new CharacterConfig(characterRemoteId, characterRemoteSkills);
+		var charactersData = new Dictionary<string, CharacterConfig>();
 
-		return characterConfig;
+		foreach (var characterGroup in characterRemotePage.CharactersGroups)
+		{
+			foreach (var characterRemote in characterGroup.Characters)
+			{
+				var healthByLevelRemote = characterRemote.HealthByLevel;
+				var healthByLevel = new CharacterHealthByLevelConfig[healthByLevelRemote.Length];
+				for (var i = 0; i < healthByLevelRemote.Length; i++)
+				{
+					var healthByLevelRemoteItem = healthByLevelRemote[i];
+					var healthByLevelItem = new CharacterHealthByLevelConfig(
+						healthByLevelRemoteItem.Level,
+						healthByLevelRemoteItem.Health);
+					
+					healthByLevel[i] = healthByLevelItem;
+				}
+				
+				var characterId = characterRemote.Id;
+				var characterSkills = characterRemote.Skills;
+				var characterClass = (CharacterClass)characterRemote.CharacterClass;
+				var attackConfig = new CharacterAttackConfig(characterRemote.AttackInfo);
+				var characterData = new CharacterConfig(characterId, characterSkills, characterClass, attackConfig, healthByLevel);
+				
+				charactersData[characterId] = characterData;
+			}
+		}
+
+		var charactersConfigPage = new CharactersConfigPage(charactersData);
+
+		return charactersConfigPage;
 	}
 
-	private IConfigData ParseSkillRemote(SkillRemote skillRemote)
+	private IConfigPage ParseSkillRemote(SkillsRemotePage skillRemote)
 	{
-		var skillRemoteId = skillRemote.Id;
-		var skillRemoteImpact = skillRemote.ImpactsByLevel;
-
-		var skillImpactByLevelConfig = new SkillImpact[skillRemoteImpact.Length];
+		var skillsGroups = new Dictionary<SkillType, SkillsGroupConfig>();
 		
-		for (var i = 0; i < skillRemoteImpact.Length; i++)
+		foreach (var skillsGroupRemote in skillRemote.Skills)
 		{
-			var impactRemote = skillRemoteImpact[i];
-			skillImpactByLevelConfig[i] = new SkillImpact(impactRemote.Level, impactRemote.Impact);
+			var skillsConfig = new Dictionary<string, SkillConfig>();
+			var skillGroupTypeRemote = skillsGroupRemote.Type;
+			var skillType = (SkillType)skillGroupTypeRemote;
+			
+			foreach (var skillsInGroupRemote in skillsGroupRemote.Skills)
+			{
+				var skillImpacts = new SkillImpactConfig[skillsInGroupRemote.ImpactsByLevel.Length];
+				var skillId = skillsInGroupRemote.SkillId;
+
+				for (var i = 0; i < skillsInGroupRemote.ImpactsByLevel.Length; i++)
+				{
+					var skillImpactRemote = skillsInGroupRemote.ImpactsByLevel[i];
+					var cooldownPerMilliseconds = (int)skillImpactRemote.CooldownPerSeconds * 1000;
+					var chargePerMilliseconds = (int)skillImpactRemote.ChargePerSeconds * 1000;
+					
+					var impact = new SkillImpactConfig(
+						skillImpactRemote.Level,
+						skillImpactRemote.Impact,
+						cooldownPerMilliseconds,
+						chargePerMilliseconds);
+					
+					skillImpacts[i] = impact;
+				}
+
+				skillsConfig[skillId] = new SkillConfig(skillId, skillImpacts, skillType);
+			}
+
+			var skillsGroup = new SkillsGroupConfig(skillType, skillsConfig);
+
+			skillsGroups[skillType] = skillsGroup;
 		}
-		
-		var skillConfig = new SkillConfig(skillRemoteId, skillRemoteImpact);
-		
-		return skillConfig;
+
+		var skillsConfigPage = new SkillsConfigPage(skillsGroups);
+
+		return skillsConfigPage;
 	}
 }
 }

@@ -9,7 +9,7 @@ public interface ISkill<in TSkillAffectable> where TSkillAffectable : ISkillAffe
 	
 	public bool IsReadyToActivate { get; }
 	
-	public string Name { get; }
+	public string SkillId { get; }
 	public void StartChargeSkill(TSkillAffectable skillAffectable);
 	public void Activate(TSkillAffectable skillAffectable);
 	public void CancelActivateSkill();

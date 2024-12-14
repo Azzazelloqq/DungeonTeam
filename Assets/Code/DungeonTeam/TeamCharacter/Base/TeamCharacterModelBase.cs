@@ -13,6 +13,7 @@ public abstract class TeamCharacterModelBase : Model
 	public abstract int AttackLayer { get; }
 	public abstract bool IsTargetInSkillAttackRange { get; protected set; }
 	public abstract bool IsTeamMoving { get; protected set; }
+	public abstract ModelVector3 Position { get; }
 
 	public abstract void MoveToTarget();
 	public abstract void UpdateAttackTargetPosition(ModelVector3 targetPosition);

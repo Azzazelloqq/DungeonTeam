@@ -9,7 +9,7 @@ public class Config : IConfig
 {
 	public bool IsInitialized { get; private set; }
 	
-	private Dictionary<Type, IConfigData> _configDataContainer;
+	private Dictionary<Type, IConfigPage> _configDataContainer;
 	private readonly IConfigParser _configParser;
 
 	public Config(IConfigParser configParser)
@@ -41,7 +41,7 @@ public class Config : IConfig
 		_configDataContainer = await ParseConfigAsync(token);
 	}
 	
-	public T GetData<T>() where T : IConfigData
+	public T GetConfigPage<T>() where T : IConfigPage
 	{
 		if (!_configDataContainer.TryGetValue(typeof(T), out var data))
 		{
@@ -57,10 +57,10 @@ public class Config : IConfig
 
 	}
 
-	private Dictionary<Type, IConfigData> ParseConfig()
+	private Dictionary<Type, IConfigPage> ParseConfig()
 	{
 		var configData = _configParser.Parse();
-		var parsedData = new Dictionary<Type, IConfigData>(configData.Length);
+		var parsedData = new Dictionary<Type, IConfigPage>(configData.Length);
 		
 		foreach (var data in configData)
 		{
@@ -71,10 +71,10 @@ public class Config : IConfig
 		return parsedData;
 	}
 
-	private async Task<Dictionary<Type, IConfigData>> ParseConfigAsync(CancellationToken token)
+	private async Task<Dictionary<Type, IConfigPage>> ParseConfigAsync(CancellationToken token)
 	{
 		var configData = await _configParser.ParseAsync(token);
-		var parsedData = new Dictionary<Type, IConfigData>(configData.Length);
+		var parsedData = new Dictionary<Type, IConfigPage>(configData.Length);
 		
 		foreach (var data in configData)
 		{

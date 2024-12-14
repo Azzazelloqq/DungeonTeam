@@ -23,10 +23,10 @@ public class MovementNavigatorModel : MovementNavigatorModelBase
 	private string[] _placeAssignments;
 	private ModelVector3 _teamPosition;
 
-	public MovementNavigatorModel(CharacterTeamMoveConfig characterTeamMoveConfig, IInGameLogger logger)
+	public MovementNavigatorModel(CharacterTeamMoveConfigPage characterTeamMoveConfigPage, IInGameLogger logger)
 	{
-		_placeConfigs = characterTeamMoveConfig.PlaceConfigs;
-		_teamMoveSpeed = characterTeamMoveConfig.TeamSpeed;
+		_placeConfigs = characterTeamMoveConfigPage.PlaceConfigs;
+		_teamMoveSpeed = characterTeamMoveConfigPage.TeamSpeed;
 		_logger = logger;
 		_characterPlaceNumById = new Dictionary<string, int>();
 	}

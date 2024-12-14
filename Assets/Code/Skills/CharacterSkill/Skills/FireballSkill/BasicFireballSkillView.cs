@@ -6,15 +6,22 @@ namespace Code.Skills.CharacterSkill.Skills.FireballSkill
 {
 public class BasicFireballSkillView : FireballSkillViewBase
 {
-	[SerializeField] private FireballViewBase _fireballViewPrefab;
-	[SerializeField] private Transform _fireballsParent;
-	[SerializeField] private ParticleSystem _activateSkillEffect;
-	
+	[field: SerializeField]
+	public override float FireballSpeed { get; protected set; }
+
+	[SerializeField]
+	private FireballViewBase _fireballViewPrefab;
+
+	[SerializeField]
+	private Transform _fireballsParent;
+
+	[SerializeField]
+	private ParticleSystem _activateSkillEffect;
+
 	public override Vector3 Position => transform.position;
 
 	public override void ActivateSkill()
 	{
-		
 	}
 
 	public override void OnTargetReached()
@@ -33,14 +40,12 @@ public class BasicFireballSkillView : FireballSkillViewBase
 		PlayChargeSkillEffect();
 	}
 
-    public override void CancelChargeSkill()
-    {
-        
-    }
-
-    private void PlayChargeSkillEffect()
+	public override void CancelChargeSkill()
 	{
-		
+	}
+
+	private void PlayChargeSkillEffect()
+	{
 	}
 }
 }

@@ -1,4 +1,5 @@
 ﻿using Code.DungeonTeam.TeamCharacter.Base;
+using Code.GameConfig.ScriptableObjectParser.ConfigData.Characters;
 using Code.GameConfig.ScriptableObjectParser.ConfigData.CharacterTeamPlace;
 using Code.Utils.ModelUtils;
 
@@ -15,7 +16,8 @@ public class TeamCharacterModel : TeamCharacterModelBase
 	public override int AttackLayer { get; }
 	public override float ViewDistance { get; }
 	public override float ViewAngel { get; }
-
+	public override ModelVector3 Position => _currentPosition;
+	
 	private readonly float _attackSkillDistance;
 	private readonly float _attackDistance;
 	
@@ -24,18 +26,14 @@ public class TeamCharacterModel : TeamCharacterModelBase
 
 	public TeamCharacterModel(
 		CharacterClass heroClass,
-		int attackLayer, 
-		float viewDistance,
-		float viewAngel,
-		float attackSkillDistance,
-		float attackDistance)
+		CharacterAttackConfig attackConfig)
 	{
 		HeroClass = heroClass;
-		AttackLayer = attackLayer;
-		ViewDistance = viewDistance;
-		ViewAngel = viewAngel;
-		_attackSkillDistance = attackSkillDistance;
-		_attackDistance = attackDistance;
+		AttackLayer = attackConfig.AttackLayer;
+		ViewDistance = attackConfig.ViewDistance;
+		ViewAngel = attackConfig.ViewAngel;
+		_attackSkillDistance = attackConfig.AttackSkillDistance;
+		_attackDistance = attackConfig.AttackDistance;
 	}
 
 	public override void MoveToTarget()

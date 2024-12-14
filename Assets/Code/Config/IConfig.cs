@@ -9,6 +9,6 @@ public interface IConfig
 	
 	public void Initialize();
 	public Task InitializeAsync(CancellationToken token);
-	public T GetData<T>() where T : IConfigData;
+	public T GetConfigPage<T>() where T : IConfigPage;
 }
 }

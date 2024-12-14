@@ -1,17 +1,16 @@
-﻿using Code.Config;
-using Code.GameConfig.ScriptableObjectParser.RemoteData.Skills;
-
-namespace Code.GameConfig.ScriptableObjectParser.ConfigData.Skills
+﻿namespace Code.GameConfig.ScriptableObjectParser.ConfigData.Skills
 {
-public struct SkillConfig : IConfigData
+public readonly struct SkillConfig
 {
 	public string Id { get; }
-	public SkillImpact[] Impact { get; }
+	public SkillImpactConfig[] Impact { get; }
+	public SkillType Type { get; }
 
-	public SkillConfig(string id, SkillImpact[] impact)
+	public SkillConfig(string id, SkillImpactConfig[] impact, SkillType type)
 	{
 		Id = id;
 		Impact = impact;
+		Type = type;
 	}
 }
 }

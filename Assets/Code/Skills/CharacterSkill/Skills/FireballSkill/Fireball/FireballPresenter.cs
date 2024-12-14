@@ -1,6 +1,7 @@
 ﻿using System;
 using Code.Skills.CharacterSkill.Core.SkillAffectable;
 using Code.Skills.CharacterSkill.Skills.FireballSkill.Fireball.BaseMVP;
+using Code.Utils.ModelUtils;
 using TickHandler;
 
 namespace Code.Skills.CharacterSkill.Skills.FireballSkill.Fireball
@@ -12,6 +13,7 @@ public class FireballPresenter : FireballPresenterBase
 
     private readonly ITickHandler _tickHandler;
 	private Action<IFireballAffectable> _onTargetReached;
+	private IFireballAffectable _currentTarget;
 
 	public FireballPresenter(FireballViewBase view, FireballModelBase model, ITickHandler tickHandler) : base(view, model)
 	{
@@ -27,23 +29,29 @@ public class FireballPresenter : FireballPresenterBase
 
 	public override void Activate(IFireballAffectable affectable, Action<IFireballAffectable> onTargetReached)
 	{
-		model.UpdateTarget(affectable);
+		_currentTarget = affectable;
 		
 		model.ActivateFireball();
 		view.ActivateFireball();
 
 		_onTargetReached = onTargetReached;
 
-		model.FollowToTarget(view.CurrentPosition);
+		var modelCurrentPosition = view.CurrentPosition.ToModelVector();
+		model.StartFollowToTarget(modelCurrentPosition);
 		
+		_tickHandler.FrameUpdate -= FollowToTarget;
 		_tickHandler.FrameUpdate += FollowToTarget;
 	}
 
 	private void FollowToTarget(float deltaTime)
 	{
-		model.UpdatePosition(deltaTime);
-		var currentPosition = model.CurrentPosition;
-		view.UpdatePosition(currentPosition, deltaTime);
+		var targetPosition = _currentTarget.GetPosition().ToModelVector();
+		var direction = (targetPosition - model.CurrentPosition).Normalized;
+		var newModelPosition = model.CurrentPosition + direction * model.FireballSpeed * deltaTime;
+		model.UpdatePosition(newModelPosition, targetPosition);
+		
+		var viewCurrentPosition = model.CurrentPosition.ToUnityVector();
+		view.UpdatePosition(viewCurrentPosition, deltaTime);
 
 		if (!model.IsTargetReached())
 		{
@@ -53,9 +61,8 @@ public class FireballPresenter : FireballPresenterBase
 		view.BlowUpFireball();
 
 		_tickHandler.FrameUpdate -= FollowToTarget;
-        var target = model.GetTarget();
         
-        _onTargetReached?.Invoke(target);
+        _onTargetReached?.Invoke(_currentTarget);
 	}
 
 	public override void ChargeFireball()

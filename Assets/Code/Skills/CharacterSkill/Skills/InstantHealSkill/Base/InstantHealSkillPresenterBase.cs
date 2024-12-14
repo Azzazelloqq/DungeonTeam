@@ -7,7 +7,7 @@ namespace Code.Skills.CharacterSkill.Skills.InstantHealSkill.Base
 {
 public abstract class InstantHealSkillPresenterBase : Presenter<InstantHealViewBase, InstantHealSkillModelBase>, IInstantHealSkill
 {
-	public string Name => "InstantHeal";
+	public string SkillId => "InstantHeal";
 	public abstract event Action ChargeCompleted;
 	public abstract bool IsReadyToActivate { get; }
 

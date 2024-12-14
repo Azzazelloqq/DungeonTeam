@@ -1,4 +1,5 @@
-﻿using Code.AI.CharacterBehaviourTree.Trees.Character;
+﻿using System;
+using Code.AI.CharacterBehaviourTree.Trees.Character;
 using Code.DetectionService;
 using Code.DungeonTeam.TeamCharacter.Base;
 using Code.GameConfig.ScriptableObjectParser.ConfigData.CharacterTeamPlace;
@@ -14,19 +15,20 @@ using Vector3 = UnityEngine.Vector3;
 namespace Code.DungeonTeam.TeamCharacter
 {
 //todo: think about separate class by skills type
-public class TeamCharacterPresenter : TeamCharacterPresenterBase, ICharacterBehaviourTreeAgent, IDetectable
+public class TeamCharacterPresenter : TeamCharacterPresenterBase, ICharacterBehaviourTreeAgent, IDetectable, IHealable
 {
 	public Vector3 Position => view.transform.position;
 	public bool IsDead => model.IsDead;
 	public override string CharacterId { get; }
 	public override CharacterClass CharacterClassType { get; }
+	public bool IsNeedHeal { get; }
 
 	private readonly ITickHandler _tickHandler;
 	private readonly IDetectionService _detectionService;
 	private readonly IInGameLogger _logger;
 	private readonly ISkill<ISkillAffectable>[] _attackSkills;
 	private readonly ISkill<ISkillAffectable>[] _healSkills;
-	private readonly IHealable[] _allyToHeal;
+	private readonly Func<IHealable[]> _getAllyToHeal;
 	private Transform _teamMoveTarget;
 	private IDetectable _currentTargetToAttack;
 	private IHealable _currentTargetToHeal;
@@ -39,7 +41,7 @@ public class TeamCharacterPresenter : TeamCharacterPresenterBase, ICharacterBeha
 		IInGameLogger logger,
 		ISkill<ISkillAffectable>[] attackSkills,
 		ISkill<ISkillAffectable>[] healSkills,
-		IHealable[] allyToHeal) : base(view,
+		Func<IHealable[]> getAllyToHeal) : base(view,
 		model)
 	{
 		_tickHandler = tickHandler;
@@ -47,7 +49,7 @@ public class TeamCharacterPresenter : TeamCharacterPresenterBase, ICharacterBeha
 		_logger = logger;
 		_attackSkills = attackSkills;
 		_healSkills = healSkills;
-		_allyToHeal = allyToHeal;
+		_getAllyToHeal = getAllyToHeal;
 	}
 
     protected override void OnInitialize()
@@ -230,6 +232,16 @@ public class TeamCharacterPresenter : TeamCharacterPresenterBase, ICharacterBeha
 		_tickHandler.FrameUpdate += FollowToStayPlace;
 	}
 	
+	public Vector3 GetPosition()
+	{
+		return model.Position.ToUnityVector();
+	}
+
+	public void Heal(int healPoints)
+	{
+		throw new NotImplementedException();
+	}
+	
 	private void StopStay()
 	{
 		if (!model.IsTeamMoving)
@@ -262,7 +274,9 @@ public class TeamCharacterPresenter : TeamCharacterPresenterBase, ICharacterBeha
 
 	private bool TryGetNeedHealTeamCharacter(out IHealable healable)
 	{
-		foreach (var teamCharacter in _allyToHeal)
+		var allyToHeal = _getAllyToHeal.Invoke();
+		
+		foreach (var teamCharacter in allyToHeal)
 		{
 			if (!teamCharacter.IsNeedHeal)
 			{

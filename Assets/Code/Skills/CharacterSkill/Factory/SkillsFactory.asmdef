@@ -1,0 +1,16 @@
+﻿{
+  "name": "SkillsFactory",
+  "references":[
+    "Logger",
+    "ResourceLoader",
+    "MVP",
+    "Disposable",
+    "TickHandler",
+    "GUID:890f7af401604734865250c13ed165a7",
+    "GUID:5b1d99d5a9b84611b15c22e533a82392",
+    "GUID:40f79bddb68d4c80aa1dd6d3ef001bad",
+    "GUID:2e7c70008d314b2e9344b00ee95abe0c",
+    "GUID:6b6516276a074964a53ebaeb65ad82bc",
+    "AsyncUtils"
+  ]
+}

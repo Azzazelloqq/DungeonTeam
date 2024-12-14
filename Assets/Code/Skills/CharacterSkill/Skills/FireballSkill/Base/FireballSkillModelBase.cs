@@ -5,8 +5,7 @@ namespace Code.Skills.CharacterSkill.Skills.FireballSkill.Base
 {
 public abstract class FireballSkillModelBase : Model
 {
-	public abstract string SkillName { get; }
-	public abstract float FireballSpeed { get; }
+	public abstract string SkillId { get; }
 	public abstract bool IsReadyToActivate { get; }
 	public abstract int FireballDamage { get; }
 

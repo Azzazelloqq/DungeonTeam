@@ -14,7 +14,7 @@ namespace Code.Skills.CharacterSkill.Skills.FireballSkill
 public class BasicFireballSkillPresenter : FireballSkillPresenterBase, IBasicFireballSkill
 {
     public event Action ChargeCompleted;
-    public string Name => model.SkillName;
+    public string SkillId => model.SkillId;
     public bool IsReadyToActivate => model.IsReadyToActivate;
 
 	private readonly ITickHandler _tickHandler;
@@ -108,9 +108,10 @@ public class BasicFireballSkillPresenter : FireballSkillPresenterBase, IBasicFir
 
 			return fireball;
 		}
-		
+
+		var fireballSpeed = view.FireballSpeed;
 		var fireballView = view.CreateFireballView();
-		var fireballModel = new FireballModel(model.FireballSpeed);
+		var fireballModel = new FireballModel(fireballSpeed);
 		var fireballPresenter = new FireballPresenter(fireballView, fireballModel, _tickHandler);
 		fireballPresenter.Initialize();
 		

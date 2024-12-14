@@ -6,21 +6,18 @@ namespace Code.Skills.CharacterSkill.Skills.FireballSkill
 {
 public class BasicFireballSkillModel : FireballSkillModelBase
 {
-	public override float FireballSpeed => _fireballData.FireballSpeed;
 	public override int FireballDamage => _fireballData.Damage;
     public override bool IsReadyToActivate => !_cooldownSkillTimer.IsInProgress && !_chargeSkillTimer.IsInProgress;
-	public override string SkillName { get; }
+	public override string SkillId { get; }
 
 	private FireballData _fireballData;
-    private readonly float _skillCooldown;
     private readonly ActionTimer _chargeSkillTimer = new();
     private readonly ActionTimer _cooldownSkillTimer = new();
 
-	protected BasicFireballSkillModel(string skillName, FireballData fireballData, float skillCooldown)
+	protected BasicFireballSkillModel(string skillId, FireballData fireballData)
 	{
 		_fireballData = fireballData;
-        _skillCooldown = skillCooldown;
-        SkillName = skillName;
+        SkillId = skillId;
 	}
 
 	public override void Dispose()
@@ -59,7 +56,7 @@ public class BasicFireballSkillModel : FireballSkillModelBase
             return;
         }
         
-        _cooldownSkillTimer.StartTimer(_skillCooldown);
+        _cooldownSkillTimer.StartTimer(_fireballData.CooldownPerMilliseconds);
 	}
 }
 }
