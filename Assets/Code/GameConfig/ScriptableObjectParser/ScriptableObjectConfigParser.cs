@@ -132,7 +132,7 @@ public class ScriptableObjectConfigParser : IConfigParser
 			
 			foreach (var skillsInGroupRemote in skillsGroupRemote.Skills)
 			{
-				var skillImpacts = new SkillImpactConfig[skillsInGroupRemote.ImpactsByLevel.Length];
+				var skillImpacts = new Dictionary<int, SkillStatsConfig>(skillsInGroupRemote.ImpactsByLevel.Length);
 				var skillId = skillsInGroupRemote.SkillId;
 
 				for (var i = 0; i < skillsInGroupRemote.ImpactsByLevel.Length; i++)
@@ -140,14 +140,16 @@ public class ScriptableObjectConfigParser : IConfigParser
 					var skillImpactRemote = skillsInGroupRemote.ImpactsByLevel[i];
 					var cooldownPerMilliseconds = (int)skillImpactRemote.CooldownPerSeconds * 1000;
 					var chargePerMilliseconds = (int)skillImpactRemote.ChargePerSeconds * 1000;
+					var level = skillImpactRemote.Level;
+					var impact = skillImpactRemote.Impact;
 					
-					var impact = new SkillImpactConfig(
-						skillImpactRemote.Level,
-						skillImpactRemote.Impact,
+					var skillStatsConfig = new SkillStatsConfig(
+						level,
+						impact,
 						cooldownPerMilliseconds,
 						chargePerMilliseconds);
 					
-					skillImpacts[i] = impact;
+					skillImpacts[level] = skillStatsConfig;
 				}
 
 				skillsConfig[skillId] = new SkillConfig(skillId, skillImpacts, skillType);

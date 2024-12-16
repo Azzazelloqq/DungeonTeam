@@ -2,7 +2,7 @@
 
 namespace Code.Skills.CharacterSkill.Core.Skills.Base
 {
-public interface ITargetSkill<TAffectable> : ISkill<TAffectable> where TAffectable : ISkillAffectable
+public interface IAttackSkill<in TAffectable> : ISkill<TAffectable> where TAffectable : ISkillAffectable
 {
 	
 }

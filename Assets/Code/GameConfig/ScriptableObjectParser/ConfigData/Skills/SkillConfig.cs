@@ -1,15 +1,17 @@
-﻿namespace Code.GameConfig.ScriptableObjectParser.ConfigData.Skills
+﻿using System.Collections.Generic;
+
+namespace Code.GameConfig.ScriptableObjectParser.ConfigData.Skills
 {
 public readonly struct SkillConfig
 {
 	public string Id { get; }
-	public SkillImpactConfig[] Impact { get; }
+	public Dictionary<int, SkillStatsConfig> ImpactByLevel { get; }
 	public SkillType Type { get; }
 
-	public SkillConfig(string id, SkillImpactConfig[] impact, SkillType type)
+	public SkillConfig(string id, Dictionary<int, SkillStatsConfig> impactByLevel, SkillType type)
 	{
 		Id = id;
-		Impact = impact;
+		ImpactByLevel = impactByLevel;
 		Type = type;
 	}
 }

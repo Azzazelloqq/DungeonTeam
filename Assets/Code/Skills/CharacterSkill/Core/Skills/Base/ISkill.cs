@@ -3,6 +3,7 @@ using Code.Skills.CharacterSkill.Core.SkillAffectable.Base;
 
 namespace Code.Skills.CharacterSkill.Core.Skills.Base
 {
+//todo: надо подумать, как организовать скиллы, какая-то хуйня получается
 public interface ISkill<in TSkillAffectable> where TSkillAffectable : ISkillAffectable
 {
 	public event Action ChargeCompleted;

@@ -1,18 +1,20 @@
 ﻿using System;
 
-namespace Code.SavesContainers
+namespace Code.SavesContainers.TeamSave
 {
-public struct CharacterSave : IEquatable<CharacterSave>
+public readonly struct CharacterSave : IEquatable<CharacterSave>
 {
 	public string Id { get; }
 	public int CurrentHealth { get; }
 	public int CurrentLevel { get; }
-
-	public CharacterSave(string id, int currentLevel, int currentHealth)
+	public CharacterSkillSave[] Skills { get; }
+	
+	public CharacterSave(string id, int currentLevel, int currentHealth, CharacterSkillSave[] skills)
 	{
 		Id = id;
 		CurrentLevel = currentLevel;
 		CurrentHealth = currentHealth;
+		Skills = skills;
 	}
 
 	public bool Equals(CharacterSave other)

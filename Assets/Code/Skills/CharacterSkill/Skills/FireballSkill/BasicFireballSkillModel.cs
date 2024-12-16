@@ -14,7 +14,7 @@ public class BasicFireballSkillModel : FireballSkillModelBase
     private readonly ActionTimer _chargeSkillTimer = new();
     private readonly ActionTimer _cooldownSkillTimer = new();
 
-	protected BasicFireballSkillModel(string skillId, FireballData fireballData)
+	public BasicFireballSkillModel(string skillId, FireballData fireballData)
 	{
 		_fireballData = fireballData;
         SkillId = skillId;
