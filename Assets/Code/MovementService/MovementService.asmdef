@@ -1,0 +1,4 @@
+﻿{
+  "name": "MovementService",
+  "references":[ "TickHandler", "Logger", "TransformUtils" ]
+}

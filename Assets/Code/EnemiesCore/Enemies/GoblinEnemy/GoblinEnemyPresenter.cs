@@ -2,6 +2,7 @@
 using Code.DetectionService;
 using Code.EnemiesCore.Enemies.GoblinEnemy.BaseMVP;
 using Code.Skills.CharacterSkill.Core.SkillAffectable;
+using Code.Utils.TransformUtils;
 using TickHandler;
 using UnityEngine;
 
@@ -41,6 +42,11 @@ public class GoblinEnemyPresenter : GoblinEnemyPresenterBase, IDetectable, IDama
     public Vector3 GetPosition()
     {
         return view.transform.position;
+    }
+
+    public ReadOnlyTransform GetTransform()
+    {
+        return new ReadOnlyTransform(view.transform);
     }
 
     public void TakeDamage(int damage)

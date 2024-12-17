@@ -15,6 +15,7 @@
     "LocalSaveSystem",
     "GUID:77845bff39714a25a2a7d84b24160c5a",
     "GUID:40f79bddb68d4c80aa1dd6d3ef001bad",
-    "DataContainers"
+    "DataContainers",
+    "TransformUtils"
   ]
 }

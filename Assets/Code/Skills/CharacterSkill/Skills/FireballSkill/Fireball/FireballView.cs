@@ -6,8 +6,12 @@ namespace Code.Skills.CharacterSkill.Skills.FireballSkill.Fireball
 {
 public class FireballView : FireballViewBase
 {
-	[SerializeField] private float _blowUpDuration;
-	
+	[field: SerializeField]
+	public override Rigidbody Rigidbody { get; protected set; }
+
+	[SerializeField]
+	private float _blowUpDuration;
+
 	public override Vector3 CurrentPosition => transform.position;
 
 	private Coroutine _blowUpEffectRoutine;
@@ -58,7 +62,6 @@ public class FireballView : FireballViewBase
 
 	private void PlayChargeEffect()
 	{
-		
 	}
 
 	private void PlayBlowUpEffect()
@@ -70,7 +73,7 @@ public class FireballView : FireballViewBase
 
 		_blowUpEffectRoutine = StartCoroutine(BlowUpEffectWaiter());
 	}
-	
+
 	private IEnumerator BlowUpEffectWaiter()
 	{
 		yield return _waitBlowUp;

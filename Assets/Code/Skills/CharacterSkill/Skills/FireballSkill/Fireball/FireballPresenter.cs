@@ -1,34 +1,35 @@
 ﻿using System;
+using Code.MovementService;
 using Code.Skills.CharacterSkill.Core.SkillAffectable;
 using Code.Skills.CharacterSkill.Skills.FireballSkill.Fireball.BaseMVP;
-using Code.Utils.ModelUtils;
-using TickHandler;
+using InGameLogger;
 
 namespace Code.Skills.CharacterSkill.Skills.FireballSkill.Fireball
 {
 public class FireballPresenter : FireballPresenterBase
 {
-	public override bool IsActive => model.IsActive;
+	private readonly IMovementService _movementService;
+	private readonly IInGameLogger _logger;
+	public override bool IsFree => model.IsFree;
     public override bool IsFollowToTarget => model.IsFollowToTarget;
 
-    private readonly ITickHandler _tickHandler;
-	private Action<IFireballAffectable> _onTargetReached;
-	private IFireballAffectable _currentTarget;
+	private Action<IDamageable> _onTargetReached;
+	private IDamageable _currentTarget;
 
-	public FireballPresenter(FireballViewBase view, FireballModelBase model, ITickHandler tickHandler) : base(view, model)
+	public FireballPresenter(FireballViewBase view, FireballModelBase model, IMovementService movementService, IInGameLogger logger) : base(view, model)
 	{
-		_tickHandler = tickHandler;
+		_movementService = movementService;
+		_logger = logger;
 	}
 
-	public override void Dispose()
+	public override void Activate(IDamageable affectable, Action<IDamageable> onTargetReached)
 	{
-		base.Dispose();
+		if (model.IsActive)
+		{
+			_logger.LogError("Fireball is already active");
+			return;
+		}
 		
-		_tickHandler.FrameUpdate -= FollowToTarget;
-	}
-
-	public override void Activate(IFireballAffectable affectable, Action<IFireballAffectable> onTargetReached)
-	{
 		_currentTarget = affectable;
 		
 		model.ActivateFireball();
@@ -36,39 +37,31 @@ public class FireballPresenter : FireballPresenterBase
 
 		_onTargetReached = onTargetReached;
 
-		var modelCurrentPosition = view.CurrentPosition.ToModelVector();
-		model.StartFollowToTarget(modelCurrentPosition);
-		
-		_tickHandler.FrameUpdate -= FollowToTarget;
-		_tickHandler.FrameUpdate += FollowToTarget;
+		var fireballSpeed = model.FireballSpeed;
+		var targetTransform = affectable.GetTransform();
+		var thresholdToTarget = model.ThresholdToTarget;
+		_movementService.StartMoveRigidbodyWithVelocity(
+			view.Rigidbody,
+			targetTransform,
+			fireballSpeed,
+			thresholdToTarget,
+			OnTargetReached);
+
+		model.StartFollowToTarget();
 	}
 
-	private void FollowToTarget(float deltaTime)
+	private void OnTargetReached()
 	{
-		var targetPosition = _currentTarget.GetPosition().ToModelVector();
-		var direction = (targetPosition - model.CurrentPosition).Normalized;
-		var newModelPosition = model.CurrentPosition + direction * model.FireballSpeed * deltaTime;
-		model.UpdatePosition(newModelPosition, targetPosition);
-		
-		var viewCurrentPosition = model.CurrentPosition.ToUnityVector();
-		view.UpdatePosition(viewCurrentPosition, deltaTime);
-
-		if (!model.IsTargetReached())
-		{
-			return;
-		}
-
+		model.OnTargetReached();
 		view.BlowUpFireball();
 
-		_tickHandler.FrameUpdate -= FollowToTarget;
-        
         _onTargetReached?.Invoke(_currentTarget);
 	}
 
 	public override void ChargeFireball()
 	{
-		model.ChargeFireball();
 		view.ChargeFireball();
+		model.ChargeFireball();
 	}
 
 	public override void OnBlowUpEffectCompleted()

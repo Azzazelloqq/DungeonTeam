@@ -11,7 +11,8 @@ public interface ISkill : IDisposable
 	public string SkillId { get; }
 	public bool IsReadyToActivate { get; }
 	public bool IsCharging { get; }
-
+	public bool IsOnCooldown { get; }
+	
 	public void StartChargeSkill(ISkillAffectable skillAffectable);
 	public void Activate(ISkillAffectable skillAffectable);
 	public void AddEffect(ISkillEffect skillEffect);

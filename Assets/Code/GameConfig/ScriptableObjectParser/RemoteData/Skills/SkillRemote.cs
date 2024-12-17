@@ -10,7 +10,7 @@ public struct SkillRemote
 	public string SkillId { get; private set; }
 
 	[field: SerializeField]
-	public SkillImpactRemote[] ImpactsByLevel { get; private set; }
+	public SkillStatsRemote[] ImpactsByLevel { get; private set; }
 
 }
 }

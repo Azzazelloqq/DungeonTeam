@@ -1,17 +1,11 @@
-﻿using System;
-using MVP;
+﻿using MVP;
 
 namespace Code.Skills.CharacterSkill.Skills.FireballSkill.Base
 {
 public abstract class FireballSkillModelBase : Model
 {
 	public abstract string SkillId { get; }
-	public abstract bool IsReadyToActivate { get; }
-	public abstract int FireballDamage { get; }
-
-    public abstract void ActivateSkill();
-	public abstract void UpdateFireballData(FireballData fireballData);
-	public abstract void ChargeSkill(Action onChargeCompleted);
-    public abstract void CancelChargeSkill();
+	public abstract bool IsCharging { get; protected set; }
+	public abstract void ChargeSkill();
 }
 }

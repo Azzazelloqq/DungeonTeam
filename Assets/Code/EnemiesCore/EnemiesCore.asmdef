@@ -6,6 +6,7 @@
     "GUID:d273da7f6076476bb07bad86e0fb33f1",
     "MVP",
     "TickHandler",
-    "Disposable"
+    "Disposable",
+    "TransformUtils"
   ]
 }

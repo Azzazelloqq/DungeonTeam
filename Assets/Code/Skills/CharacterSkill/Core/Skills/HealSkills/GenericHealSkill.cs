@@ -15,7 +15,8 @@ public class GenericHealSkill : ISkill
 	
 	public string SkillId { get; }
 	
-	public bool IsReadyToActivate => !_cooldownTimer.IsInProgress;
+	public bool IsReadyToActivate => !_cooldownTimer.IsInProgress && !_chargeTimer.IsInProgress;
+	public bool IsOnCooldown => _cooldownTimer.IsInProgress;
 	public bool IsCharging => _chargeTimer.IsInProgress;
 
 	private readonly IInGameLogger _logger;

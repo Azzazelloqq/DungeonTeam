@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Code.Skills.CharacterSkill.Core.EffectsCore;
 using Code.Skills.CharacterSkill.Core.EffectsCore.Base;
 using Code.Skills.CharacterSkill.Core.SkillAffectable;
 using Code.Skills.CharacterSkill.Core.SkillAffectable.Base;
@@ -10,24 +11,27 @@ using InGameLogger;
 
 namespace Code.Skills.CharacterSkill.Effects
 {
-public class DamageOverTimeSkillEffect : ISkillEffect
+public class DamageOverTimeSkillEffect : IDamageSkillEffect
 {
 	public event Action EffectApplied;
 	
+	public string EffectId { get; }
+	public int TotalDamageAmount { get; }
+
 	private readonly IInGameLogger _logger;
 	private readonly int _timeBetweenDamage;
 	private readonly int _damageByTick;
 	private readonly List<CancellationTokenSource> _damageOverTimeTokens = new();
-	private readonly int _totalDamage;
 
-	public DamageOverTimeSkillEffect(IInGameLogger logger, int durationInMilliseconds, int totalDamage, int timeBetweenDamage)
+	public DamageOverTimeSkillEffect(string effectId, IInGameLogger logger, int durationInMilliseconds, int totalTotalDamage, int timeBetweenDamage)
 	{
+		EffectId = effectId;
 		_logger = logger;
 		_timeBetweenDamage = timeBetweenDamage;
-		_totalDamage = totalDamage;
-		_damageByTick = totalDamage / (durationInMilliseconds / timeBetweenDamage);
+		TotalDamageAmount = totalTotalDamage;
+		_damageByTick = totalTotalDamage / (durationInMilliseconds / timeBetweenDamage);
 	}
-
+	
 	public bool TryApplyEffect(ISkillAffectable target)
 	{
 		if (target.IsDead)
@@ -60,7 +64,7 @@ public class DamageOverTimeSkillEffect : ISkillEffect
 		{
 			if (_damageByTick == 0)
 			{
-				damageable.TakeDamage(_totalDamage);
+				damageable.TakeDamage(TotalDamageAmount);
 				return;
 			}
 			
@@ -78,7 +82,7 @@ public class DamageOverTimeSkillEffect : ISkillEffect
 				
 				EffectApplied?.Invoke();
 				
-				if(takenDamage >= _totalDamage)
+				if(takenDamage >= TotalDamageAmount)
 				{
 					break;
 				}

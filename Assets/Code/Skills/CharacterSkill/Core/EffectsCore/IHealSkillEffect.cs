@@ -4,6 +4,6 @@ namespace Code.Skills.CharacterSkill.Core.EffectsCore
 {
 public interface IHealSkillEffect : ISkillEffect
 {
-	public int HealAmount { get; }
+	public int TotalHealAmount { get; }
 }
 }

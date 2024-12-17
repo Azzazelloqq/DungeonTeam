@@ -9,18 +9,20 @@ public class HealSkillEffect : IHealSkillEffect
 {
 	public event Action EffectApplied;
 	
-	public int HealAmount { get; }
+	public string EffectId { get; }
+	public int TotalHealAmount { get; }
 
-	public HealSkillEffect(int healAmount)
+	public HealSkillEffect(string effectId, int totalHealAmount)
 	{
-		HealAmount = healAmount;
+		EffectId = effectId;
+		TotalHealAmount = totalHealAmount;
 	}
 
 	public void Dispose()
 	{
 		EffectApplied = null;
 	}
-
+	
 	public bool TryApplyEffect(ISkillAffectable target)
 	{
 		if (target.IsDead)
@@ -30,7 +32,7 @@ public class HealSkillEffect : IHealSkillEffect
 		
 		if (target is IHealable healable)
 		{
-			healable.Heal(HealAmount);
+			healable.Heal(TotalHealAmount);
 			EffectApplied?.Invoke();
 			
 			return true;

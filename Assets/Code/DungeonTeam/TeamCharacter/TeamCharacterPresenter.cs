@@ -7,6 +7,7 @@ using Code.Skills.CharacterSkill.Core.SkillAffectable;
 using Code.Skills.CharacterSkill.Core.SkillAffectable.Base;
 using Code.Skills.CharacterSkill.Core.Skills.Base;
 using Code.Utils.ModelUtils;
+using Code.Utils.TransformUtils;
 using InGameLogger;
 using TickHandler;
 using UnityEngine;
@@ -26,8 +27,8 @@ public class TeamCharacterPresenter : TeamCharacterPresenterBase, ICharacterBeha
 	private readonly ITickHandler _tickHandler;
 	private readonly IDetectionService _detectionService;
 	private readonly IInGameLogger _logger;
-	private readonly ISkill<ISkillAffectable>[] _attackSkills;
-	private readonly ISkill<ISkillAffectable>[] _healSkills;
+	private readonly ISkill[] _attackSkills;
+	private readonly ISkill[] _healSkills;
 	private readonly Func<IHealable[]> _getAllyToHeal;
 	private Transform _teamMoveTarget;
 	private IDetectable _currentTargetToAttack;
@@ -39,8 +40,8 @@ public class TeamCharacterPresenter : TeamCharacterPresenterBase, ICharacterBeha
 		ITickHandler tickHandler,
         IDetectionService detectionService,
 		IInGameLogger logger,
-		ISkill<ISkillAffectable>[] attackSkills,
-		ISkill<ISkillAffectable>[] healSkills,
+		ISkill[] attackSkills,
+		ISkill[] healSkills,
 		Func<IHealable[]> getAllyToHeal) : base(view,
 		model)
 	{
@@ -235,6 +236,11 @@ public class TeamCharacterPresenter : TeamCharacterPresenterBase, ICharacterBeha
 	public Vector3 GetPosition()
 	{
 		return model.Position.ToUnityVector();
+	}
+
+	public ReadOnlyTransform GetTransform()
+	{
+		return new ReadOnlyTransform(view.transform);
 	}
 
 	public void Heal(int healPoints)

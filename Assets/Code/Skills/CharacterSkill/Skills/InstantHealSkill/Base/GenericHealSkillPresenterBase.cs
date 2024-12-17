@@ -5,7 +5,7 @@ using MVP;
 
 namespace Code.Skills.CharacterSkill.Skills.InstantHealSkill.Base
 {
-public abstract class GenericHealSkillPresenterBase : Presenter<InstantHealViewBase, InstantHealSkillModelBase>, Core.Skills.HealSkills.GenericHealSkill
+public abstract class GenericHealSkillPresenterBase : Presenter<InstantHealViewBase, InstantHealSkillModelBase>
 {
 	public string SkillId => "InstantHeal";
 	public abstract event Action ChargeCompleted;

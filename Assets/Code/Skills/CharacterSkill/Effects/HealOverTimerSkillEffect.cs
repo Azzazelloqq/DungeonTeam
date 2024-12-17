@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Code.Skills.CharacterSkill.Core.EffectsCore;
 using Code.Skills.CharacterSkill.Core.EffectsCore.Base;
 using Code.Skills.CharacterSkill.Core.SkillAffectable;
 using Code.Skills.CharacterSkill.Core.SkillAffectable.Base;
@@ -10,24 +11,27 @@ using InGameLogger;
 
 namespace Code.Skills.CharacterSkill.Effects
 {
-public class HealOverTimerSkillEffect : ISkillEffect
+public class HealOverTimerSkillEffect : IHealSkillEffect
 {
 	public event Action EffectApplied;
-	
+
+	public string EffectId { get; }
+	public int TotalHealAmount { get; }
+
 	private readonly IInGameLogger _logger;
 	private readonly int _timeBetweenHeal;
 	private readonly int _healByTick;
 	private readonly List<CancellationTokenSource> _healOverTimeTokens = new();
-	private readonly int _totalHeal;
 
-	public HealOverTimerSkillEffect(IInGameLogger logger, int durationInMilliseconds, int totalHeal, int timeBetweenHeal)
+	public HealOverTimerSkillEffect(string effectId, IInGameLogger logger, int durationInMilliseconds, int totalTotalHeal, int timeBetweenHeal)
 	{
 		_logger = logger;
 		_timeBetweenHeal = timeBetweenHeal;
-		_totalHeal = totalHeal;
-		_healByTick = totalHeal / (durationInMilliseconds / timeBetweenHeal);
+		EffectId = effectId;
+		TotalHealAmount = totalTotalHeal;
+		_healByTick = totalTotalHeal / (durationInMilliseconds / timeBetweenHeal);
 	}
-
+	
 	public bool TryApplyEffect(ISkillAffectable target)
 	{
 		if (target.IsDead)
@@ -58,7 +62,7 @@ public class HealOverTimerSkillEffect : ISkillEffect
 		{
 			if (_healByTick == 0)
 			{
-				healable.Heal(_totalHeal);
+				healable.Heal(TotalHealAmount);
 				return;
 			}
 			
@@ -76,7 +80,7 @@ public class HealOverTimerSkillEffect : ISkillEffect
 				
 				EffectApplied?.Invoke();
 				
-				if(healAmount >= _totalHeal)
+				if(healAmount >= TotalHealAmount)
 				{
 					break;
 				}

@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using Code.MovementService;
 using Code.Skills.CharacterSkill.Core.SkillAffectable;
-using Code.Skills.CharacterSkill.Core.Skills.Attack;
+using Code.Skills.CharacterSkill.Core.Skills.Base;
 using Code.Skills.CharacterSkill.Skills.FireballSkill.Base;
 using Code.Skills.CharacterSkill.Skills.FireballSkill.Fireball;
 using Code.Skills.CharacterSkill.Skills.FireballSkill.Fireball.BaseMVP;
@@ -11,27 +12,37 @@ using TickHandler;
 
 namespace Code.Skills.CharacterSkill.Skills.FireballSkill
 {
-public class BasicFireballSkillPresenter : FireballSkillPresenterBase, IBasicFireballSkill
+public class BasicFireballSkillPresenter : FireballSkillPresenterBase
 {
-    public event Action ChargeCompleted;
     public string SkillId => model.SkillId;
-    public bool IsReadyToActivate => model.IsReadyToActivate;
 
 	private readonly ITickHandler _tickHandler;
     private readonly IInGameLogger _logger;
-    private readonly List<FireballPresenterBase> _fireballPresentersCash = new();
-    private FireballPresenterBase _chargedFireball;
+	private readonly ISkill _fireballSkill;
+	private readonly List<FireballPresenterBase> _fireballPresentersCash = new();
+	private readonly IMovementService _movementService;
+	private FireballPresenterBase _chargedFireball;
 
-    public BasicFireballSkillPresenter(
+	public BasicFireballSkillPresenter(
 		FireballSkillViewBase view,
 		FireballSkillModelBase skillModel,
 		ITickHandler tickHandler,
-        IInGameLogger logger
-        ) : base(view, skillModel)
+        IInGameLogger logger,
+		ISkill fireballSkill,
+		IMovementService movementService) : base(view, skillModel)
     {
         _tickHandler = tickHandler;
         _logger = logger;
-    }
+		_fireballSkill = fireballSkill;
+		_movementService = movementService;
+	}
+
+	protected override void OnInitialize()
+	{
+		base.OnInitialize();
+		
+		_fireballSkill.ChargeCompleted += OnChargeCompleted;
+	}
 
 	public override void Dispose()
 	{
@@ -39,11 +50,12 @@ public class BasicFireballSkillPresenter : FireballSkillPresenterBase, IBasicFir
 		
 		_fireballPresentersCash.DisposeAll();
 		_fireballPresentersCash.Clear();
+		_fireballSkill.ChargeCompleted -= OnChargeCompleted;
 	}
 
-    public void StartChargeSkill(IFireballAffectable skillAffectable)
-    {
-		if (!model.IsReadyToActivate)
+	public void ActivateSkill(IDamageable target)
+	{
+		if (_fireballSkill.IsReadyToActivate)
 		{
 			return;
 		}
@@ -51,57 +63,21 @@ public class BasicFireballSkillPresenter : FireballSkillPresenterBase, IBasicFir
 		var fireball = CreateFireball();
 		fireball.ChargeFireball();
 		
-		model.ChargeSkill(() => OnChargeCompleted(fireball));
+		_fireballSkill.StartChargeSkill(target);
+		model.ChargeSkill();
 		view.ChargeSkill(); 
-    }
-
-	public void Activate(IFireballAffectable skillAffectable)
-	{
-		if (!model.IsReadyToActivate)
-		{
-			return;
-		}
-        
-		if (!model.IsReadyToActivate)
-		{
-			return;
-		}
-		
-		model.ActivateSkill();
-		view.ActivateSkill();
-
-		_chargedFireball.Activate(skillAffectable, OnTargetReached);
-		_fireballPresentersCash.Add(_chargedFireball);
-
-		_chargedFireball = null;	
 	}
-
-	public void CancelActivateSkill()
-    {
-        model.CancelChargeSkill();
-        view.CancelChargeSkill();
-    }
-
-    private void OnChargeCompleted(FireballPresenterBase fireball)
-    {
-        if (_chargedFireball != null)
-        {
-            _logger.LogError("Charged fireball already exists");
-            
-            _chargedFireball.Dispose();
-            _chargedFireball = null;
-        }
-        
-        _chargedFireball = fireball;
-        
-        ChargeCompleted?.Invoke();
-    }
+	
+	private void OnChargeCompleted()
+	{
+		
+	}
 
 	private FireballPresenterBase CreateFireball()
 	{
 		foreach (var fireball in _fireballPresentersCash)
 		{
-			if (!fireball.IsActive)
+			if (!fireball.IsFree)
 			{
 				continue;
 			}
@@ -112,16 +88,12 @@ public class BasicFireballSkillPresenter : FireballSkillPresenterBase, IBasicFir
 		var fireballSpeed = view.FireballSpeed;
 		var fireballView = view.CreateFireballView();
 		var fireballModel = new FireballModel(fireballSpeed);
-		var fireballPresenter = new FireballPresenter(fireballView, fireballModel, _tickHandler);
+		var fireballPresenter = new FireballPresenter(fireballView, fireballModel, _movementService, _logger);
 		fireballPresenter.Initialize();
 		
+		_fireballPresentersCash.Add(fireballPresenter);
+		
 		return fireballPresenter;
-	}
-
-	private void OnTargetReached(IFireballAffectable target)
-	{
-		var damage = model.FireballDamage;
-		target.TakeFireballDamage(damage);
 	}
 }
 }

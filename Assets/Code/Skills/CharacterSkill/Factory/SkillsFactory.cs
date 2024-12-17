@@ -43,11 +43,9 @@ public class SkillsFactory : ISkillsFactory
 		_skillsConfigPage = _config.GetConfigPage<SkillsConfigPage>();
 	}
 
-	public async Task<TSkill> GetSkillAsync<TSkill, TAffectable>(string skillId, Transform parent, CancellationToken token)
-		where TSkill : ISkill<TAffectable>
-		where TAffectable : ISkillAffectable
+	public async Task<TSkill> GetSkillAsync<TSkill>(string skillId, Transform parent, CancellationToken token)
 	{
-		if (typeof(TSkill) == typeof(BasicFireballSkillPresenter))
+		if (typeof(TSkill) == typeof(FireballSkillPresenter))
 		{
 		}
 
@@ -58,7 +56,7 @@ public class SkillsFactory : ISkillsFactory
 	{
 	}
 
-	private async Task<BasicFireballSkillPresenter> GetCharacterGetBasicFireballSkill(
+	private async Task<FireballSkillPresenter> GetCharacterGetBasicFireballSkill(
 		string characterId,
 		string skillId,
 		Transform parent,
@@ -74,10 +72,10 @@ public class SkillsFactory : ISkillsFactory
 		var fireballData = new FireballData(skillStats.Impact, skillStats.CooldownPerMilliseconds,
 			skillStats.ChargeTimePerMilliseconds);
 
-		var model = new BasicFireballSkillModel(skillId, fireballData);
+		var model = new BasicFireballSkillModel(skillId);
 		var tickHandler = _skillDependencies.TickHandler;
 
-		return new BasicFireballSkillPresenter(basicFireballSkillView, model, tickHandler, _logger);
+		return new FireballSkillPresenter(basicFireballSkillView, model, tickHandler, _logger);
 	}
 
 	private SkillStatsConfig GetSkillStatsByCharacterId(string characterId, SkillType skillType, string skillId)

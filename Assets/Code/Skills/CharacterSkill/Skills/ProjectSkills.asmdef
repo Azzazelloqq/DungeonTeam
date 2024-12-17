@@ -1,4 +1,4 @@
 ﻿{
   "name": "ProjectSkills",
-  "references":[ "GUID:70ee12777b344a749a40250f551474e7", "GUID:5b1d99d5a9b84611b15c22e533a82392", "TickHandler", "MVP", "Disposable", "Logger", "GUID:00bc31e4b9904d4ea9ab839cff555c80" ]
+  "references":[ "GUID:70ee12777b344a749a40250f551474e7", "GUID:5b1d99d5a9b84611b15c22e533a82392", "TickHandler", "MVP", "Disposable", "Logger", "GUID:00bc31e4b9904d4ea9ab839cff555c80", "MovementService", "TransformUtils" ]
 }
