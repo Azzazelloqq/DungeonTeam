@@ -1,4 +1,8 @@
 ﻿{
   "name": "SkillsCore",
-  "references":[  ]
+  "references":[  
+    "GUID:70ee12777b344a749a40250f551474e7",
+    "Logger",
+    "Disposable"
+  ]
 }

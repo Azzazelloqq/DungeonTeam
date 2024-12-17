@@ -4,12 +4,12 @@ using Code.Skills.CharacterSkill.Skills.InstantHealSkill.Base;
 
 namespace Code.Skills.CharacterSkill.Skills.InstantHealSkill
 {
-public class InstantHealPresenter : InstantHealSkillPresenterBase
+public class GenericHealPresenter : GenericHealSkillPresenterBase
 {
 	public override event Action ChargeCompleted;
 	public override bool IsReadyToActivate => model.IsCanActivate;
 
-	public InstantHealPresenter(InstantHealViewBase view, InstantHealSkillModelBase model) : base(view, model)
+	public GenericHealPresenter(InstantHealViewBase view, InstantHealSkillModelBase model) : base(view, model)
 	{
 	}
 

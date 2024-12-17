@@ -1,0 +1,7 @@
+﻿{
+  "name": "SkillEffects",
+  "references":[ 
+    "GUID:5b1d99d5a9b84611b15c22e533a82392",
+    "GUID:ae050f2342a94254ba51bbb652678452", 
+    "Logger"]
+}

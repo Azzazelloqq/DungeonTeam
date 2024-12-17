@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace Code.EnemiesCore.Enemies.GoblinEnemy
 {
-public class GoblinEnemyPresenter : GoblinEnemyPresenterBase, IDetectable, IFireballAffectable, IMeleeAttackable, IEnemyBehaviourTreeAgent
+public class GoblinEnemyPresenter : GoblinEnemyPresenterBase, IDetectable, IDamageable, IEnemyBehaviourTreeAgent
 {
     private readonly ITickHandler _tickHandler;
     private readonly IDetectionService _detectionService;
@@ -43,7 +43,7 @@ public class GoblinEnemyPresenter : GoblinEnemyPresenterBase, IDetectable, IFire
         return view.transform.position;
     }
 
-    public void TakeCommonAttackDamage(int damage)
+    public void TakeDamage(int damage)
     {
         view.TakeCommonAttackDamage();
         model.TakeCommonAttackDamage(damage);

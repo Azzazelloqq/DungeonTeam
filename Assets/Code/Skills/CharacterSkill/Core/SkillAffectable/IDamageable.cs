@@ -2,8 +2,8 @@
 
 namespace Code.Skills.CharacterSkill.Core.SkillAffectable
 {
-public interface IFireballAffectable : ISkillAffectable
+public interface IDamageable : ISkillAffectable
 {
-    public void TakeFireballDamage(int damage);
+	public void TakeDamage(int damage);
 }
 }
