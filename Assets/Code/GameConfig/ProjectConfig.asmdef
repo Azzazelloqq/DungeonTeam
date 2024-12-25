@@ -2,6 +2,7 @@
   "name": "ProjectConfig",
   "references":[ 
     "GUID:2e7c70008d314b2e9344b00ee95abe0c",
-    "Logger" 
+    "Logger",
+    "FloatUtils"
   ]
 }

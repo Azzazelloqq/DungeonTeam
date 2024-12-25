@@ -1,18 +1,20 @@
-﻿namespace Code.GameConfig.ScriptableObjectParser.ConfigData.Skills
+﻿using Code.GameConfig.ScriptableObjectParser.ConfigData.Effect;
+
+namespace Code.GameConfig.ScriptableObjectParser.ConfigData.Skills
 {
 public struct SkillStatsConfig
 {
 	public int Level { get; }
-	public int Impact { get; }
 	public int CooldownPerMilliseconds { get; }
 	public int ChargeTimePerMilliseconds { get; }
+	public IEffectConfig[] Effects { get; }
 	
-	public SkillStatsConfig(int level, int impact, int cooldownPerMilliseconds, int chargeTimePerMilliseconds)
+	public SkillStatsConfig(int level, int cooldownPerMilliseconds, int chargeTimePerMilliseconds, IEffectConfig[] effects)
 	{
 		Level = level;
-		Impact = impact;
 		CooldownPerMilliseconds = cooldownPerMilliseconds;
 		ChargeTimePerMilliseconds = chargeTimePerMilliseconds;
+		Effects = effects;
 	}
 }
 }

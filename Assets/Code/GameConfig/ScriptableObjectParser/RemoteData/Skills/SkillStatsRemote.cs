@@ -11,9 +11,6 @@ public struct SkillStatsRemote
 	public int Level { get; private set; }
 
 	[field: SerializeField]
-	public int Impact { get; private set; }
-
-	[field: SerializeField]
 	public float CooldownPerSeconds { get; private set; }
 
 	[field: SerializeField]

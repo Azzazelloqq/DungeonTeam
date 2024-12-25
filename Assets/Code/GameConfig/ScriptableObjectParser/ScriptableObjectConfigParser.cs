@@ -5,10 +5,13 @@ using System.Threading.Tasks;
 using Code.Config;
 using Code.GameConfig.ScriptableObjectParser.ConfigData.Characters;
 using Code.GameConfig.ScriptableObjectParser.ConfigData.CharacterTeamPlace;
+using Code.GameConfig.ScriptableObjectParser.ConfigData.Effect;
 using Code.GameConfig.ScriptableObjectParser.ConfigData.Skills;
 using Code.GameConfig.ScriptableObjectParser.RemoteData.Characters;
 using Code.GameConfig.ScriptableObjectParser.RemoteData.CharacterTeamPlace;
 using Code.GameConfig.ScriptableObjectParser.RemoteData.Skills;
+using Code.GameConfig.ScriptableObjectParser.RemoteData.Skills.Effect;
+using Code.Utils.FloatUtils;
 using InGameLogger;
 
 namespace Code.GameConfig.ScriptableObjectParser
@@ -135,19 +138,17 @@ public class ScriptableObjectConfigParser : IConfigParser
 				var skillImpacts = new Dictionary<int, SkillStatsConfig>(skillsInGroupRemote.ImpactsByLevel.Length);
 				var skillId = skillsInGroupRemote.SkillId;
 
-				for (var i = 0; i < skillsInGroupRemote.ImpactsByLevel.Length; i++)
-				{
-					var skillImpactRemote = skillsInGroupRemote.ImpactsByLevel[i];
-					var cooldownPerMilliseconds = (int)skillImpactRemote.CooldownPerSeconds * 1000;
-					var chargePerMilliseconds = (int)skillImpactRemote.ChargePerSeconds * 1000;
+				foreach (var skillImpactRemote in skillsInGroupRemote.ImpactsByLevel) {
+					var cooldownPerMilliseconds = skillImpactRemote.CooldownPerSeconds.ToMilliseconds();
+					var chargePerMilliseconds = skillImpactRemote.ChargePerSeconds.ToMilliseconds();
 					var level = skillImpactRemote.Level;
-					var impact = skillImpactRemote.Impact;
-					
+
+					var effectsConfig = ParseEffects(skillImpactRemote.Effects);
 					var skillStatsConfig = new SkillStatsConfig(
 						level,
-						impact,
 						cooldownPerMilliseconds,
-						chargePerMilliseconds);
+						chargePerMilliseconds,
+						effectsConfig);
 					
 					skillImpacts[level] = skillStatsConfig;
 				}
@@ -163,6 +164,46 @@ public class ScriptableObjectConfigParser : IConfigParser
 		var skillsConfigPage = new SkillsConfigPage(skillsGroups);
 
 		return skillsConfigPage;
+	}
+
+	private IEffectConfig[] ParseEffects(SkillEffectRemote[] effectsRemote)
+	{
+		var effectsConfig = new IEffectConfig[effectsRemote.Length];
+
+		for (var i = 0; i < effectsRemote.Length; i++)
+		{
+			var effectRemote = effectsRemote[i];
+			var effectConfig = ParseEffect(effectRemote);
+			effectsConfig[i] = effectConfig;
+		}
+
+		return effectsConfig;
+	}
+
+	private IEffectConfig ParseEffect(SkillEffectRemote effectRemote)
+	{
+		var effectId = effectRemote.EffectId;
+		var effectIntervalRemote = effectRemote.Interval.ToMilliseconds();
+		var effectDurationRemote = effectRemote.EffectDuration.ToMilliseconds();
+		var effectImpactRemote = effectRemote.EffectImpact;
+		
+		switch (effectRemote.EffectType) {
+			case EffectType.None:
+				_logger.LogError("Effect type is None");
+				return null;
+			case EffectType.InstantHeal:
+				return new InstantHealEffectConfig(effectId, effectImpactRemote);
+			case EffectType.InstantDamage:
+				return new InstantDamageEffectConfig(effectId, effectImpactRemote);
+			case EffectType.InstantBuff:
+				return new PercentBuffAttackEffectConfig(effectId, effectImpactRemote, effectDurationRemote);
+			case EffectType.OverTimeHeal:
+				return new OverTimeHealEffectConfig(effectId, effectImpactRemote, effectDurationRemote, effectIntervalRemote);
+			case EffectType.OverTimeDamage:
+				return new OverTimeDamageEffectConfig(effectId, effectImpactRemote, effectDurationRemote, effectIntervalRemote);
+			default:
+				throw new ArgumentOutOfRangeException();
+		}
 	}
 }
 }

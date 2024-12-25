@@ -50,8 +50,7 @@ public class GenericHealSkill : ISkill
 		ChargeCompleted = null;
 	}
 
-	public void StartChargeSkill(ISkillAffectable skillAffectable)
-	{
+	public void StartChargeSkill() {
 		if (_chargeTimer.IsInProgress)
 		{
 			_chargeTimer.StopTimer();
@@ -78,7 +77,7 @@ public class GenericHealSkill : ISkill
 			effect.TryApplyEffect(skillAffectable);
 		}
 		
-		_cooldownTimer.StartTimer(_cooldownInMilliseconds, null);
+		_cooldownTimer.StartTimer(_cooldownInMilliseconds);
 	}
 
 	private void OnChargeCompleted()

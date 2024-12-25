@@ -7,37 +7,36 @@ using Code.Timer;
 using Disposable.Utils;
 using InGameLogger;
 
-namespace Code.Skills.CharacterSkill.Core.Skills.DamageSkills
+namespace Code.Skills.CharacterSkill.Core.Skills.BuffSkills
 {
-public class GenericDamageSkill : ISkill
+public class BuffSkill : ISkill
 {
 	public event Action ChargeCompleted;
+
 	public string SkillId { get; }
 	public bool IsReadyToActivate => !_cooldownTimer.IsInProgress && !_chargeTimer.IsInProgress;
 	public bool IsOnCooldown => _cooldownTimer.IsInProgress;
 	public bool IsCharging => _chargeTimer.IsInProgress;
-
-	private readonly IInGameLogger _logger;
+	
 	private readonly int _chargeInMilliseconds;
 	private readonly int _cooldownInMilliseconds;
 	private readonly List<ISkillEffect> _effects;
 	private readonly ActionTimer _chargeTimer;
 	private readonly ActionTimer _cooldownTimer;
-	
-	public GenericDamageSkill(
+	private readonly IInGameLogger _logger;
+
+	public BuffSkill(
+		string skillId,
 		IInGameLogger logger,
 		ISkillEffect[] effects,
-		string skillId,
 		int chargeInMilliseconds,
 		int cooldownInMilliseconds)
 	{
 		SkillId = skillId;
-		_logger = logger;
 		_chargeInMilliseconds = chargeInMilliseconds;
 		_cooldownInMilliseconds = cooldownInMilliseconds;
 		_effects = new List<ISkillEffect>(effects);
-		_chargeTimer = new ActionTimer();
-		_cooldownTimer = new ActionTimer();
+		_logger = logger;
 	}
 
 	public void Dispose()
@@ -45,29 +44,29 @@ public class GenericDamageSkill : ISkill
 		_chargeTimer.Dispose();
 		_cooldownTimer.Dispose();
 		_effects.DisposeAll();
-		ChargeCompleted = null;
+		_effects.Clear();
 	}
-
+	
 	public void StartChargeSkill()
 	{
 		if (_chargeTimer.IsInProgress)
 		{
 			_chargeTimer.StopTimer();
 		}
-		
+
 		_chargeTimer.StartTimer(_chargeInMilliseconds, OnChargeCompleted);
+	}
+
+	private void OnChargeCompleted()
+	{
+		ChargeCompleted?.Invoke();
 	}
 
 	public void Activate(ISkillAffectable skillAffectable)
 	{
-		if (_chargeTimer.IsInProgress)
-		{
-			_chargeTimer.StopTimer();
-		}
-		
-		if (_cooldownTimer.IsInProgress)
-		{
-			_logger.LogError("Skill is on cooldown");
+		if (!IsReadyToActivate) {
+			_logger.LogError("Skill is not ready to activate");
+			
 			return;
 		}
 		
@@ -77,11 +76,6 @@ public class GenericDamageSkill : ISkill
 		}
 		
 		_cooldownTimer.StartTimer(_cooldownInMilliseconds);
-	}
-
-	private void OnChargeCompleted()
-	{
-		ChargeCompleted?.Invoke();
 	}
 
 	public void AddEffect(ISkillEffect skillEffect)
