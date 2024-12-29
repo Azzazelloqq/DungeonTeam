@@ -8,15 +8,29 @@ using InGameLogger;
 
 namespace Code.Skills.CharacterSkill.Factory.Effects
 {
+/// <summary>
+/// Concrete implementation of <see cref="ISkillEffectsFactory"/> that creates various skill effects,
+/// such as damage, heal, and buffs, based on the provided configuration.
+/// </summary>
 internal class SkillEffectsFactory : ISkillEffectsFactory
 {
 	private readonly IInGameLogger _logger;
 
+	/// <summary>
+	/// Initializes a new instance of the <see cref="SkillEffectsFactory"/> class.
+	/// </summary>
+	/// <param name="logger">Logger to record any warnings or errors regarding skill effects.</param>
 	internal SkillEffectsFactory(IInGameLogger logger)
 	{
 		_logger = logger;
 	}
 
+	/// <inheritdoc />
+	/// <remarks>
+	/// Iterates over all configured effects in <paramref name="skillConfig"/> and attempts
+	/// to create an appropriate <see cref="ISkillEffect"/> for each one. If the skill has no
+	/// effects, a warning is logged.
+	/// </remarks>
 	ISkillEffect[] ISkillEffectsFactory.GetSkillEffects(SkillStatsConfig skillConfig)
 	{
 		var effectConfigs = skillConfig.Effects;

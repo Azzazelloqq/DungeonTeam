@@ -1,21 +1,25 @@
 ﻿{
   "name": "DungeonTeam",
-  "references":[ 
-    "GUID:2e7c70008d314b2e9344b00ee95abe0c", 
-    "GUID:6b6516276a074964a53ebaeb65ad82bc",
-    "GUID:d273da7f6076476bb07bad86e0fb33f1",
-    "GUID:1f479669ac344197a28280f8705300a5",
-    "GUID:5b1d99d5a9b84611b15c22e533a82392", 
-    "GUID:00bc31e4b9904d4ea9ab839cff555c80",
+  "references":[
     "TickHandler",
     "MVP",
     "Disposable",
     "Logger",
     "ResourceLoader",
     "LocalSaveSystem",
+    "DataContainers",
+    "TransformUtils",
+    "DOTween.Modules",
+    "GUID:2e7c70008d314b2e9344b00ee95abe0c", 
+    "GUID:6b6516276a074964a53ebaeb65ad82bc",
+    "GUID:d273da7f6076476bb07bad86e0fb33f1",
+    "GUID:1f479669ac344197a28280f8705300a5",
+    "GUID:5b1d99d5a9b84611b15c22e533a82392", 
+    "GUID:00bc31e4b9904d4ea9ab839cff555c80",
     "GUID:77845bff39714a25a2a7d84b24160c5a",
     "GUID:40f79bddb68d4c80aa1dd6d3ef001bad",
-    "DataContainers",
-    "TransformUtils"
+    "GUID:890f7af401604734865250c13ed165a7",
+    "GUID:cb10f8449fe1402b9880c7163af8cc0a",
+    "GUID:0a5c125d11774a42a299179611756008"
   ]
 }

@@ -1,4 +1,4 @@
-﻿using Code.Skills.CharacterSkill.Skills.FireballSkill.Fireball.BaseMVP;
+﻿using Code.Skills.CharacterSkill.SkillPresenters.FireballSkill.Fireball.BaseMVP;
 using MVP;
 using UnityEngine;
 

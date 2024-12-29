@@ -10,7 +10,7 @@ using UnityEngine;
 
 namespace Code.DungeonTeam.MovementNavigator
 {
-public class MovementNavigatorPresenter : MovementNavigatorPresenterBase
+public class TeamMovementNavigatorPresenter : MovementNavigatorPresenterBase
 {
 	private readonly IInGameLogger _logger;
 	private readonly ITickHandler _tickHandler;
@@ -18,7 +18,7 @@ public class MovementNavigatorPresenter : MovementNavigatorPresenterBase
 	private readonly IConfig _config;
 	private readonly List<TeamCharacterPresenterBase> _characters;
 
-	public MovementNavigatorPresenter(
+	public TeamMovementNavigatorPresenter(
 		MovementNavigatorViewBase view,
 		MovementNavigatorModelBase model,
 		IInGameLogger logger,

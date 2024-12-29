@@ -1,7 +1,7 @@
 ﻿using MVP;
 using UnityEngine;
 
-namespace Code.Skills.CharacterSkill.Skills.FireballSkill.Fireball.BaseMVP
+namespace Code.Skills.CharacterSkill.SkillPresenters.FireballSkill.Fireball.BaseMVP
 {
 public abstract class FireballViewBase : ViewMonoBehaviour<FireballPresenterBase>
 {

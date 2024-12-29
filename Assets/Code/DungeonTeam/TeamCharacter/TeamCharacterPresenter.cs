@@ -6,6 +6,7 @@ using Code.GameConfig.ScriptableObjectParser.ConfigData.CharacterTeamPlace;
 using Code.Skills.CharacterSkill.Core.SkillAffectable;
 using Code.Skills.CharacterSkill.Core.SkillAffectable.Base;
 using Code.Skills.CharacterSkill.Core.Skills.Base;
+using Code.Skills.CharacterSkill.SkillPresenters.Base;
 using Code.Utils.ModelUtils;
 using Code.Utils.TransformUtils;
 using InGameLogger;
@@ -27,9 +28,9 @@ public class TeamCharacterPresenter : TeamCharacterPresenterBase, ICharacterBeha
 	private readonly ITickHandler _tickHandler;
 	private readonly IDetectionService _detectionService;
 	private readonly IInGameLogger _logger;
-	private readonly ISkill[] _attackSkills;
-	private readonly ISkill[] _healSkills;
-	private readonly Func<IHealable[]> _getAllyToHeal;
+	private readonly SkillPresenterBase[] _attackSkills;
+	private readonly SkillPresenterBase[] _healSkills;
+	private readonly Func<IHealable> _getNeedToHealCharacter;
 	private Transform _teamMoveTarget;
 	private IDetectable _currentTargetToAttack;
 	private IHealable _currentTargetToHeal;
@@ -40,9 +41,9 @@ public class TeamCharacterPresenter : TeamCharacterPresenterBase, ICharacterBeha
 		ITickHandler tickHandler,
         IDetectionService detectionService,
 		IInGameLogger logger,
-		ISkill[] attackSkills,
-		ISkill[] healSkills,
-		Func<IHealable[]> getAllyToHeal) : base(view,
+		SkillPresenterBase[] attackSkills,
+		SkillPresenterBase[] healSkills,
+		Func<IHealable> getNeedToHealCharacter) : base(view,
 		model)
 	{
 		_tickHandler = tickHandler;
@@ -50,7 +51,7 @@ public class TeamCharacterPresenter : TeamCharacterPresenterBase, ICharacterBeha
 		_logger = logger;
 		_attackSkills = attackSkills;
 		_healSkills = healSkills;
-		_getAllyToHeal = getAllyToHeal;
+		_getNeedToHealCharacter = getNeedToHealCharacter;
 	}
 
     protected override void OnInitialize()
@@ -96,7 +97,7 @@ public class TeamCharacterPresenter : TeamCharacterPresenterBase, ICharacterBeha
 				continue;
 			}
 
-			attackSkill.Activate(skillAffectable);
+			attackSkill.ActivateSkill(skillAffectable);
 		}
 	}
 
@@ -151,10 +152,7 @@ public class TeamCharacterPresenter : TeamCharacterPresenterBase, ICharacterBeha
 		
 		foreach (var supportSkill in _healSkills)
 		{
-			if (supportSkill.IsReadyToActivate)
-			{
-				supportSkill.Activate(_currentTargetToHeal);
-			}
+			supportSkill.ActivateSkill(_currentTargetToHeal);
 		}
 	}
 
@@ -280,21 +278,9 @@ public class TeamCharacterPresenter : TeamCharacterPresenterBase, ICharacterBeha
 
 	private bool TryGetNeedHealTeamCharacter(out IHealable healable)
 	{
-		var allyToHeal = _getAllyToHeal.Invoke();
+		healable = _getNeedToHealCharacter.Invoke();
 		
-		foreach (var teamCharacter in allyToHeal)
-		{
-			if (!teamCharacter.IsNeedHeal)
-			{
-				continue;
-			}
-
-			healable = teamCharacter;
-			return true;
-		}
-
-		healable = null;
-		return false;
+		return healable != null;
 	}
 
 	private void FollowToAttackTarget(float deltaTime)

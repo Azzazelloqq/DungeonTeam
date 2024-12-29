@@ -1,10 +1,10 @@
 ﻿using System;
 using Code.MovementService;
 using Code.Skills.CharacterSkill.Core.SkillAffectable;
-using Code.Skills.CharacterSkill.Skills.FireballSkill.Fireball.BaseMVP;
+using Code.Skills.CharacterSkill.SkillPresenters.FireballSkill.Fireball.BaseMVP;
 using InGameLogger;
 
-namespace Code.Skills.CharacterSkill.Skills.FireballSkill.Fireball
+namespace Code.Skills.CharacterSkill.SkillPresenters.FireballSkill.Fireball
 {
 public class FireballPresenter : FireballPresenterBase
 {

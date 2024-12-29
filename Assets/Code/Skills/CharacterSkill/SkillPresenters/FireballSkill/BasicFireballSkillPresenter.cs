@@ -1,19 +1,21 @@
 ﻿using System.Collections.Generic;
 using Code.MovementService;
 using Code.Skills.CharacterSkill.Core.SkillAffectable;
+using Code.Skills.CharacterSkill.Core.SkillAffectable.Base;
 using Code.Skills.CharacterSkill.Core.Skills.Base;
 using Code.Skills.CharacterSkill.SkillPresenters.Base;
-using Code.Skills.CharacterSkill.Skills.FireballSkill.Fireball;
-using Code.Skills.CharacterSkill.Skills.FireballSkill.Fireball.BaseMVP;
+using Code.Skills.CharacterSkill.SkillPresenters.FireballSkill.Fireball;
+using Code.Skills.CharacterSkill.SkillPresenters.FireballSkill.Fireball.BaseMVP;
 using Disposable.Utils;
 using InGameLogger;
 using TickHandler;
 
-namespace Code.Skills.CharacterSkill.Skills.FireballSkill
+namespace Code.Skills.CharacterSkill.SkillPresenters.FireballSkill
 {
 public class BasicFireballSkillPresenter : SkillPresenterBase
 {
     public string SkillId => model.SkillId;
+	public override bool IsReadyToActivate => _fireballSkill.IsReadyToActivate;
 
 	private readonly ITickHandler _tickHandler;
     private readonly IInGameLogger _logger;
@@ -52,15 +54,22 @@ public class BasicFireballSkillPresenter : SkillPresenterBase
 		_fireballPresentersCash.Clear();
 		_fireballSkill.ChargeCompleted -= OnChargeCompleted;
 	}
-
-	public override void ActivateSkill(IDamageable target)
+	
+	public override void ActivateSkill(ISkillAffectable target)
 	{
+		if (target is not IDamageable damageable)
+		{
+			_logger.LogError($"Target is not {typeof(IDamageable).FullName}");
+			
+			return;
+		}
+		
 		if (_fireballSkill.IsReadyToActivate)
 		{
 			return;
 		}
 
-		_currentTarget = target;
+		_currentTarget = damageable;
         
 		var fireball = CreateFireball();
 		fireball.ChargeFireball();

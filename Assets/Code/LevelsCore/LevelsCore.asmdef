@@ -1,0 +1,7 @@
+﻿{
+  "name": "LevelsCore",
+  "references":[
+    "SceneSwitcher",
+    "GUID:ae050f2342a94254ba51bbb652678452"
+  ]
+}

@@ -1,7 +1,6 @@
 ﻿using Code.Skills.CharacterSkill.SkillPresenters.Base;
-using Code.Utils.ModelUtils;
 
-namespace Code.Skills.CharacterSkill.Skills.FireballSkill
+namespace Code.Skills.CharacterSkill.SkillPresenters.FireballSkill
 {
 public class BasicFireballSkillModel : SkillModelBase
 {

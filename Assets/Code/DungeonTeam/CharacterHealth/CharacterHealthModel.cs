@@ -11,16 +11,20 @@ public class CharacterHealthModel : CharacterHealthModelBase
 {
 	private readonly IInGameLogger _logger;
 	private readonly CharacterHealthByLevelConfig[] _healthByLevelConfig;
-	private int _currentLevel;
-	private int _currentHealth;
-	private int _maxHealth;
+	public override int CurrentLevel { get; protected set; }
+	public override int MaxHealth {get; protected set;}
+	public override int CurrentHealth {get; protected set;}
 
-	public CharacterHealthModel(IInGameLogger logger, CharacterHealthByLevelConfig[] healthByLevelConfig, int currentLevel, int currentHealth)
+	public CharacterHealthModel(
+		IInGameLogger logger,
+		CharacterHealthByLevelConfig[] healthByLevelConfig,
+		int currentLevel,
+		int currentHealth)
 	{
 		_logger = logger;
 		_healthByLevelConfig = healthByLevelConfig;
-		_currentLevel = currentLevel;
-		_currentHealth = currentHealth;
+		CurrentLevel = currentLevel;
+		CurrentHealth = currentHealth;
 	}
 
 	protected override void OnInitialize()
@@ -41,8 +45,8 @@ public class CharacterHealthModel : CharacterHealthModelBase
 	{
 		base.OnDispose();
 
-		_currentHealth = 0;
-		_currentLevel = 0;
+		CurrentHealth = 0;
+		CurrentLevel = 0;
 	}
 
 	public override void TakeDamage(int damage)
@@ -54,7 +58,9 @@ public class CharacterHealthModel : CharacterHealthModelBase
 			return;
 		}
 		
-		_currentHealth -= damage;
+		var newCurrentHealthValue = CurrentHealth - damage;
+		
+		CurrentHealth = CurrentHealth <= 0 ? 0 : newCurrentHealthValue;
 	}
 
 	public override void Heal(int heal)
@@ -66,37 +72,39 @@ public class CharacterHealthModel : CharacterHealthModelBase
 			return;
 		}
 		
-		_currentHealth += heal;
+		var newCurrentHealthValue = CurrentHealth + heal;
+		
+		CurrentHealth = newCurrentHealthValue > MaxHealth ? MaxHealth : newCurrentHealthValue;
 	}
 
 	public override void IncreaseLevel()
 	{
 		var lastLevel = _healthByLevelConfig[^1];
-		if (lastLevel.Level == _currentLevel)
+		if (lastLevel.Level == CurrentLevel)
 		{
 			_logger.LogError("Character has reached the maximum level");
 			
 			return;
 		}
 		
-		_currentLevel++;
+		CurrentLevel++;
 	}
 
 	private void UpdateMaxHealth()
 	{
 		foreach (var healthByLevelConfig in _healthByLevelConfig)
 		{
-			if (healthByLevelConfig.Level != _currentLevel)
+			if (healthByLevelConfig.Level != CurrentLevel)
 			{
 				continue;
 			}
 			
-			_maxHealth = healthByLevelConfig.MaxHealth;
+			MaxHealth = healthByLevelConfig.MaxHealth;
 			
 			return;
 		}
 		
-		_logger.LogError($"Character level {_currentLevel} not found in config");
+		_logger.LogError($"Character level {CurrentLevel} not found in config");
 	}
 }
 }

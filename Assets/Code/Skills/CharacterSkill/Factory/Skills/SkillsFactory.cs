@@ -7,6 +7,10 @@ using InGameLogger;
 
 namespace Code.Skills.CharacterSkill.Factory.Skills
 {
+/// <summary>
+/// Concrete implementation of <see cref="ISkillsFactory"/> responsible for
+/// creating skill instances such as damage or heal skills.
+/// </summary>
 internal class SkillsFactory : ISkillsFactory
 {
 	private readonly IInGameLogger _logger;
@@ -14,6 +18,13 @@ internal class SkillsFactory : ISkillsFactory
 	private readonly PlayerTeamSave _playerTeamSave;
 	private readonly SkillsConfigPage _skillsConfigPage;
 	
+	/// <summary>
+	/// Initializes a new instance of the <see cref="SkillsFactory"/> class.
+	/// </summary>
+	/// <param name="logger">A logger to record skill-related messages.</param>
+	/// <param name="skillEffectsFactory">Factory to create skill effects (e.g., damage, heal, buffs).</param>
+	/// <param name="playerTeamSave">Contains data about the player's team composition and skill levels.</param>
+	/// <param name="skillsConfigPage">A configuration page holding skill configuration data.</param>
 	public SkillsFactory(
 		IInGameLogger logger,
 		ISkillEffectsFactory skillEffectsFactory,
@@ -26,6 +37,19 @@ internal class SkillsFactory : ISkillsFactory
 		_skillsConfigPage = skillsConfigPage;
 	}
 
+	/// <inheritdoc />
+	/// <remarks>
+	/// Depending on <typeparamref name="TSkill"/>, different skill types are created:
+	/// <list type="bullet">
+	/// <item>
+	/// <description><see cref="GenericHealSkill"/> for healing abilities.</description>
+	/// </item>
+	/// <item>
+	/// <description><see cref="GenericDamageSkill"/> for damage abilities.</description>
+	/// </item>
+	/// </list>
+	/// If the type does not match a known skill type, an error is logged and the default value is returned.
+	/// </remarks>
 	TSkill ISkillsFactory.GetSkill<TSkill>(string skillId, string characterId)
 	{
 		var skillType = typeof(TSkill);

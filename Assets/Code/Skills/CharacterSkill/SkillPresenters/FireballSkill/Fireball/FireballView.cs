@@ -1,8 +1,8 @@
 ﻿using System.Collections;
-using Code.Skills.CharacterSkill.Skills.FireballSkill.Fireball.BaseMVP;
+using Code.Skills.CharacterSkill.SkillPresenters.FireballSkill.Fireball.BaseMVP;
 using UnityEngine;
 
-namespace Code.Skills.CharacterSkill.Skills.FireballSkill.Fireball
+namespace Code.Skills.CharacterSkill.SkillPresenters.FireballSkill.Fireball
 {
 public class FireballView : FireballViewBase
 {

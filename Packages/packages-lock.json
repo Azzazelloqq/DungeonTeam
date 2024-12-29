@@ -55,7 +55,7 @@
       "dependencies": {
         "com.unity.addressables": "1.21.20"
       },
-      "hash": "7f7321d1f478d1ae6d47c64ce42139d147429172"
+      "hash": "e4e31afb7ffe822264ca103940856aaf19ce8c4a"
     },
     "com.azzazello.tickhandler": {
       "version": "https://github.com/Azzazelloqq/TickHandler.git",

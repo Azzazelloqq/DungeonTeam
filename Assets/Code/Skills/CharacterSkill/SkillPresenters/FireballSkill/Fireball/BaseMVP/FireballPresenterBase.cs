@@ -2,7 +2,7 @@
 using Code.Skills.CharacterSkill.Core.SkillAffectable;
 using MVP;
 
-namespace Code.Skills.CharacterSkill.Skills.FireballSkill.Fireball.BaseMVP
+namespace Code.Skills.CharacterSkill.SkillPresenters.FireballSkill.Fireball.BaseMVP
 {
 public abstract class FireballPresenterBase : Presenter<FireballViewBase, FireballModelBase>
 {

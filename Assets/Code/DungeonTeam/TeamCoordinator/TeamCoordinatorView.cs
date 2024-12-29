@@ -12,5 +12,8 @@ public class TeamCoordinatorView : TeamCoordinatorViewBase
 	
 	[field: SerializeField]
 	public override TeamCharacterViewBase CharacterViewPrefab { get; protected set; }
+	
+	[field: SerializeField]
+	public override Transform SkillsParent { get; protected set; }
 }
 }

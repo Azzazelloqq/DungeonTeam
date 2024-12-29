@@ -13,8 +13,11 @@ using Code.GameConfig.ScriptableObjectParser.ConfigData.Characters;
 using Code.GameConfig.ScriptableObjectParser.ConfigData.CharacterTeamPlace;
 using Code.GameConfig.ScriptableObjectParser.ConfigData.Skills;
 using Code.Generated.Addressables;
-using Code.SavesContainers;
+using Code.MovementService;
 using Code.SavesContainers.TeamSave;
+using Code.Skills.CharacterSkill.Core.SkillAffectable;
+using Code.Skills.CharacterSkill.Factory.SkillsPresenter;
+using Code.Skills.CharacterSkill.SkillPresenters.Base;
 using Code.Utils.DataContainers;
 using Disposable.Utils;
 using InGameLogger;
@@ -28,15 +31,17 @@ public class TeamCoordinatorPresenter : TeamCoordinatorPresenterBase
 {
 	private readonly IResourceLoader _resourceLoader;
 	private readonly IConfig _config;
-	private MovementNavigatorPresenter _movementNavigator;
+	private TeamMovementNavigatorPresenter _teamMovementNavigator;
 	private readonly IInGameLogger _logger;
 	private readonly ITickHandler _tickHandler;
 	private readonly ILocalSaveSystem _saveSystem;
 	private readonly ResourceMappingData _resourceMappingData;
 	private readonly IDetectionService _detectionService;
+	private MoveControllerPresenterBase _moveController;
 	private readonly CharactersConfigPage _charactersConfigPage;
-	private readonly SkillsConfigPage _skillsConfigPage;
 	private readonly List<TeamCharacterPresenterBase> _temCharacters = new();
+	private readonly ISkillsPresenterFactory _skillsFactory;
+	private readonly List<IHealable> _healableCharacters;
 	
 	public TeamCoordinatorPresenter(
 		TeamCoordinatorViewBase view,
@@ -47,8 +52,9 @@ public class TeamCoordinatorPresenter : TeamCoordinatorPresenterBase
 		ITickHandler tickHandler,
 		ILocalSaveSystem saveSystem,
 		ResourceMappingData resourceMappingData,
-		IDetectionService detectionService) : base(view,
-		model) {
+		IDetectionService detectionService,
+		IMovementService movementService) : base(view, model)
+	{
 		_resourceLoader = resourceLoader;
 		_config = config;
 		_logger = logger;
@@ -57,17 +63,27 @@ public class TeamCoordinatorPresenter : TeamCoordinatorPresenterBase
 		_resourceMappingData = resourceMappingData;
 		_detectionService = detectionService;
 		_charactersConfigPage = _config.GetConfigPage<CharactersConfigPage>();
-		_skillsConfigPage = _config.GetConfigPage<SkillsConfigPage>();
+		
+		var skillDependencies = new SkillDependencies(_tickHandler, movementService);
+		_skillsFactory = new SkillsPresenterFactory(skillDependencies, resourceLoader, logger, config, saveSystem);
 	}
 
-	protected override Task OnInitializeAsync(CancellationToken token) {
-		return base.OnInitializeAsync(token);
-		
+	protected override async Task OnInitializeAsync(CancellationToken token) {
 		var moveConfig = _config.GetConfigPage<CharacterTeamMoveConfigPage>();
 		var movementNavigatorModelBase = new MovementNavigatorModel(moveConfig, _logger);
+
+		_moveController = await InitMoveControllerAsync(token);
 		
-		var team = InitTeamCharacters();
-		//_movementNavigator = new MovementNavigatorPresenter(view.MovementNavigatorView, movementNavigatorModelBase, _logger, _tickHandler, team, );
+		var team = await InitTeamCharactersAsync(token);
+		_teamMovementNavigator = new TeamMovementNavigatorPresenter(view.MovementNavigatorView,
+			movementNavigatorModelBase,
+			_logger,
+			_tickHandler,
+			team, 
+			_moveController);
+
+		await _teamMovementNavigator.InitializeAsync(token);
+		
 		_temCharacters.AddRange(team);
 	}
 
@@ -79,16 +95,26 @@ public class TeamCoordinatorPresenter : TeamCoordinatorPresenterBase
 		_temCharacters.Clear();
 	}
 
-	private TeamCharacterPresenterBase[] InitTeamCharacters()
+	private async Task<TeamCharacterPresenterBase[]> InitTeamCharactersAsync(CancellationToken token)
 	{
 		var playerTeamSave = _saveSystem.Load<PlayerTeamSave>();
-		
-		foreach (var characterId in playerTeamSave.SelectedPlayerTeam)
+		var teamPresenters = new TeamCharacterPresenterBase[playerTeamSave.SelectedPlayerTeam.Count];
+
+		for (var i = 0; i < playerTeamSave.SelectedPlayerTeam.Count; i++)
 		{
+			var characterSave = playerTeamSave.SelectedPlayerTeam[i];
+			var characterSaveId = characterSave.Id;
+			var character = await InitTeamCharacterAsync(characterSaveId, token);
 			
+			teamPresenters[i] = character;
+			
+			if (character is IHealable healableCharacter)
+			{
+				_healableCharacters.Add(healableCharacter);
+			}
 		}
 
-		return null;
+		return teamPresenters;
 	}
 	
 	private async Task<MoveControllerPresenterBase> InitMoveControllerAsync(CancellationToken token)
@@ -115,46 +141,51 @@ public class TeamCoordinatorPresenter : TeamCoordinatorPresenterBase
 		var characterClass = characterData.CharacterClass;
 		var attackConfig = characterData.AttackConfig;
 		var skills = characterData.Skills;
-		var healSkills = GetSkillsByType(skills, SkillType.Heal);
-		var attackSkills = GetSkillsByType(skills, SkillType.Attack);
+		var healSkillsGetTask = GetSkillsByTypeAsync(characterId, skills, token);
+		var attackSkillsGetTask = GetSkillsByTypeAsync(characterId, skills, token);
+
+		await Task.WhenAll(healSkillsGetTask, attackSkillsGetTask);
+		var healSkills = healSkillsGetTask.Result;
+		var attackSkills = attackSkillsGetTask.Result;
+		
 		var characterModel = new TeamCharacterModel(characterClass, attackConfig);
-		return null;
-		// var character = new TeamCharacterPresenter(characterView, characterModel, _tickHandler, _detectionService, _logger, attackSkills, healSkills,  );
-		//
-		// await character.InitializeAsync(token);
-		//
-		// return character;
+		var character = new TeamCharacterPresenter(characterView, characterModel, _tickHandler, _detectionService, _logger,
+			attackSkills, healSkills, GetNeedToHealCharacter);
+		
+		await character.InitializeAsync(token);
+		
+		return character;
 	}
 
-	private string[] GetSkillsByType(string[] skillIds, SkillType skillType)
+	private async Task<SkillPresenterBase[]> GetSkillsByTypeAsync(string characterId, string[] skillIds, CancellationToken token)
 	{
-		var skillsGroup = _skillsConfigPage.SkillsGroups[skillType];
-		
-		var count = 0;
-		foreach (var skillId in skillIds)
+		var charactersParent = view.SkillsParent;
+    
+		var tasks = new Task<SkillPresenterBase>[skillIds.Length];
+		for (var i = 0; i < skillIds.Length; i++)
 		{
-			if (skillsGroup.Skills.ContainsKey(skillId))
-			{
-				count++;
-			}
-			else
-			{
-				_logger.LogError($"Skill {skillId} not found in config by type {skillType}");
-			}
+			var skillId = skillIds[i];
+			tasks[i] = _skillsFactory.GetAsync(characterId, skillId, charactersParent, token);
 		}
-		
-		var skillsByType = new string[count];
-		
-		var index = 0;
-		foreach (var skillId in skillIds)
-		{
-			if (skillsGroup.Skills.TryGetValue(skillId, out var skillConfig))
-			{
-				skillsByType[index++] = skillConfig.Id;
-			}
-		}
+    
+		var skills = await Task.WhenAll(tasks);
 
-		return skillsByType;
+		return skills;
+	}
+	
+	private IHealable GetNeedToHealCharacter()
+	{
+		foreach (var healableCharacter in _healableCharacters)
+		{
+			if (!healableCharacter.IsNeedHeal)
+			{
+				continue;
+			}
+			
+			return healableCharacter;
+		}
+		
+		return null;
 	}
 }
 }
