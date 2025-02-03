@@ -20,5 +20,8 @@ internal struct CharacterAttackRemote
 
 	[field: SerializeField]
 	public float AttackDistance { get; private set; }
+
+	[field: SerializeField]
+	public CharacterAttackByLevelRemote[] AttackByLevels { get; private set; }
 }
 }

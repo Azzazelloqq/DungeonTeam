@@ -16,12 +16,15 @@ public abstract class TeamCharacterModelBase : Model
 	public abstract bool IsTeamMoving { get; protected set; }
 	public abstract string CharacterId { get; }
 	public abstract CharacterClass HeroClass { get; }
-	public abstract int CurrentLevel { get; protected set; }
+	public abstract int CurrentLevel { get; }
+	public abstract int AttackDamage { get; }
 
 	public abstract void MoveToTarget();
 	public abstract void StopMoveToTarget();
 	public abstract void OnTeamMoveStarted();
 	public abstract void OnTeamMoveEnded();
 	public abstract void CheckAttackDistanceToTarget(ModelVector3 currentPosition, ModelVector3 targetPosition);
+	public abstract bool TryAttack();
+	public abstract void IncreaseLevel();
 }
 }

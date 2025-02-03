@@ -1,6 +1,6 @@
 ﻿namespace Code.GameConfig.ScriptableObjectParser.ConfigData.Characters
 {
-public struct CharacterHealthByLevelConfig
+public readonly struct CharacterHealthByLevelConfig
 {
 	public int Level { get; }
 	public int MaxHealth { get; }

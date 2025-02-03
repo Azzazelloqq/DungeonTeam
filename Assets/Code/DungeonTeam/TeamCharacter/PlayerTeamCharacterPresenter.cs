@@ -151,7 +151,22 @@ public class PlayerTeamCharacterPresenter : TeamCharacterPresenterBase, ICharact
 		if (_currentTargetToAttack == null)
 		{
 			_logger.LogError("Need find target to attack, before attack");
+			return;
 		}
+
+		if (_currentTargetToAttack is not IDamageable damageable)
+		{
+			_logger.LogError("Target to attack is not damageable");
+			return;
+		}
+
+		var isSuccess = model.TryAttack();
+		if (!isSuccess)
+		{
+			return;
+		}
+		
+		damageable.TakeDamage(model.AttackDamage);
 	}
 
 	public bool TryFindTargetToHeal()

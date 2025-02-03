@@ -92,6 +92,7 @@ public class GameRoot : MonoBehaviour
 		_teamCoordinator.Dispose();
 	}
 
+	//just for testing
 	private async Task InitializeRoot()
 	{
 		var cancellationToken = _turnOffGameCancellationTokenSource.Token;
@@ -126,7 +127,7 @@ public class GameRoot : MonoBehaviour
 
 			var id = characterConfig.Id;
 			var health = characterConfig.CharacterHealthByLevelConfig[0].MaxHealth;
-			var characterSave = new CharacterSave(id, 1, health, skillSaves);
+			var characterSave = new CharacterSave(id, 0, health, skillSaves);
 			playerTeamSave.AddCharacter(characterSave);
 			
 		}

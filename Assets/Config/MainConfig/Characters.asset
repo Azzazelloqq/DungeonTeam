@@ -27,8 +27,12 @@ MonoBehaviour:
         <ViewAngel>k__BackingField: 70
         <AttackSkillDistance>k__BackingField: 0
         <AttackDistance>k__BackingField: 1
+        <AttackByLevels>k__BackingField:
+        - <Level>k__BackingField: 0
+          <ReloadAttackPerSeconds>k__BackingField: 1
+          <AttackDamage>k__BackingField: 1
       <HealthByLevel>k__BackingField:
-      - <Level>k__BackingField: 1
+      - <Level>k__BackingField: 0
         <Health>k__BackingField: 150
     - <Id>k__BackingField: Warrior
       <Skills>k__BackingField: []
@@ -39,8 +43,12 @@ MonoBehaviour:
         <ViewAngel>k__BackingField: 70
         <AttackSkillDistance>k__BackingField: 0
         <AttackDistance>k__BackingField: 1
+        <AttackByLevels>k__BackingField:
+        - <Level>k__BackingField: 0
+          <ReloadAttackPerSeconds>k__BackingField: 1
+          <AttackDamage>k__BackingField: 1
       <HealthByLevel>k__BackingField:
-      - <Level>k__BackingField: 1
+      - <Level>k__BackingField: 0
         <Health>k__BackingField: 70
     - <Id>k__BackingField: Mage
       <Skills>k__BackingField: []
@@ -51,8 +59,12 @@ MonoBehaviour:
         <ViewAngel>k__BackingField: 70
         <AttackSkillDistance>k__BackingField: 10
         <AttackDistance>k__BackingField: 10
+        <AttackByLevels>k__BackingField:
+        - <Level>k__BackingField: 0
+          <ReloadAttackPerSeconds>k__BackingField: 1
+          <AttackDamage>k__BackingField: 1
       <HealthByLevel>k__BackingField:
-      - <Level>k__BackingField: 1
+      - <Level>k__BackingField: 0
         <Health>k__BackingField: 50
     - <Id>k__BackingField: Archer
       <Skills>k__BackingField: []
@@ -63,8 +75,12 @@ MonoBehaviour:
         <ViewAngel>k__BackingField: 70
         <AttackSkillDistance>k__BackingField: 20
         <AttackDistance>k__BackingField: 10
+        <AttackByLevels>k__BackingField:
+        - <Level>k__BackingField: 0
+          <ReloadAttackPerSeconds>k__BackingField: 1
+          <AttackDamage>k__BackingField: 1
       <HealthByLevel>k__BackingField:
-      - <Level>k__BackingField: 1
+      - <Level>k__BackingField: 0
         <Health>k__BackingField: 50
     - <Id>k__BackingField: Archer
       <Skills>k__BackingField: []
@@ -75,6 +91,10 @@ MonoBehaviour:
         <ViewAngel>k__BackingField: 70
         <AttackSkillDistance>k__BackingField: 20
         <AttackDistance>k__BackingField: 10
+        <AttackByLevels>k__BackingField:
+        - <Level>k__BackingField: 0
+          <ReloadAttackPerSeconds>k__BackingField: 1
+          <AttackDamage>k__BackingField: 1
       <HealthByLevel>k__BackingField:
-      - <Level>k__BackingField: 1
+      - <Level>k__BackingField: 0
         <Health>k__BackingField: 20

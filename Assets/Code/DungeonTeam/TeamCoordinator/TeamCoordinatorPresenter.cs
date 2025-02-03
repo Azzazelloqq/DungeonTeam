@@ -182,8 +182,10 @@ public class TeamCoordinatorPresenter : TeamCoordinatorPresenterBase
 		var attackSkills = attackSkillsGetTask.Result;
 		var characterHealth = characterHealthTask.Result;
 		var characterTeamMoveConfigPage = _config.GetConfigPage<CharacterTeamMoveConfigPage>();
+
+		var characterLevel = characterSave.CurrentLevel;
 		
-		var characterModel = new TeamCharacterModel(characterId, characterClass, attackConfig);
+		var characterModel = new TeamCharacterModel(_logger, characterId, characterClass, attackConfig, characterLevel);
 		var character = new PlayerTeamCharacterPresenter(
 			characterView,
 			characterModel,
