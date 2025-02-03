@@ -181,6 +181,7 @@ public class TeamCoordinatorPresenter : TeamCoordinatorPresenterBase
 		var healSkills = healSkillsGetTask.Result;
 		var attackSkills = attackSkillsGetTask.Result;
 		var characterHealth = characterHealthTask.Result;
+		var characterTeamMoveConfigPage = _config.GetConfigPage<CharacterTeamMoveConfigPage>();
 		
 		var characterModel = new TeamCharacterModel(characterId, characterClass, attackConfig);
 		var character = new PlayerTeamCharacterPresenter(
@@ -192,6 +193,7 @@ public class TeamCoordinatorPresenter : TeamCoordinatorPresenterBase
 			characterHealth,
 			attackSkills,
 			healSkills,
+			characterTeamMoveConfigPage,
 			GetNeedToHealAnyCharacter);
 		
 		await character.InitializeAsync(token);

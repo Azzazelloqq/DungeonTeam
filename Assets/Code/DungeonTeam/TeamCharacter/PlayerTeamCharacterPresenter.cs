@@ -29,21 +29,26 @@ public class PlayerTeamCharacterPresenter : TeamCharacterPresenterBase, ICharact
 	public bool IsDead => model.IsDead;
 	public override string CharacterId => model.CharacterId;
 	public override CharacterClass CharacterClassType => model.HeroClass;
+	public override float VisionViewAngel => model.ViewAngel;
+	public override float VisionViewDistance => model.ViewDistance;
+	public override Vector3 VisionDirection => view.transform.forward;
 	public bool IsNeedHeal => _characterHealth.IsNeedHeal;
+	public bool IsOnTeamPlace => Vector3.Distance(_teamMoveTarget.position, view.transform.position) < 0.1f; 
 
 	private readonly ITickHandler _tickHandler;
 	private readonly IDetectionService _detectionService;
 	private readonly IInGameLogger _logger;
 	private readonly SkillPresenterBase[] _attackSkills;
 	private readonly SkillPresenterBase[] _healSkills;
+	private readonly CharacterTeamMoveConfigPage _moveConfig;
 	private readonly Func<IHealable> _getNeedToHealCharacter;
-	private Transform _teamMoveTarget;
-	private IDetectable _currentTargetToAttack;
-	private IHealable _currentTargetToHeal;
 	private readonly IBehaviourTree _characterBehaviourTree;
 	private readonly ActionTimer _aiTickTimer;
 	private readonly CharacterHealthPresenterBase _characterHealth;
-
+	private Transform _teamMoveTarget;
+	private IDetectable _currentTargetToAttack;
+	private IHealable _currentTargetToHeal;
+	
 	public PlayerTeamCharacterPresenter(
 		TeamCharacterViewBase view,
 		TeamCharacterModelBase model,
@@ -53,6 +58,7 @@ public class PlayerTeamCharacterPresenter : TeamCharacterPresenterBase, ICharact
 		CharacterHealthPresenterBase health,
 		SkillPresenterBase[] attackSkills,
 		SkillPresenterBase[] healSkills,
+		CharacterTeamMoveConfigPage moveConfig,
 		Func<IHealable> getNeedToHealCharacter) : base(view,
 		model)
 	{
@@ -61,6 +67,7 @@ public class PlayerTeamCharacterPresenter : TeamCharacterPresenterBase, ICharact
 		_logger = logger;
 		_attackSkills = attackSkills;
 		_healSkills = healSkills;
+		_moveConfig = moveConfig;
 		_characterHealth = health;
 		_getNeedToHealCharacter = getNeedToHealCharacter;
 		_characterBehaviourTree = new CharacterBehaviourTree(this);
@@ -73,6 +80,8 @@ public class PlayerTeamCharacterPresenter : TeamCharacterPresenterBase, ICharact
         
         _detectionService.RegisterObject(this);
 		_aiTickTimer.StartLoopTickTimer(TickTreeAgent, _characterBehaviourTree.Tick);
+		
+		view.UpdateMoveSpeed(_moveConfig.TeamSpeed);
 	}
 
 	protected override async Task OnInitializeAsync(CancellationToken token)
@@ -81,6 +90,7 @@ public class PlayerTeamCharacterPresenter : TeamCharacterPresenterBase, ICharact
 		
 		_detectionService.RegisterObject(this);
 		_aiTickTimer.StartLoopTickTimer(TickTreeAgent, _characterBehaviourTree.Tick);
+		view.UpdateMoveSpeed(_moveConfig.TeamSpeed);
 	}
 
 	protected override void OnDispose()
@@ -129,8 +139,8 @@ public class PlayerTeamCharacterPresenter : TeamCharacterPresenterBase, ICharact
 	{
 		return model.IsTargetInAttackRange;
 	}
-
-	public void MoveToEnemy()
+	
+	public void MoveToEnemyForAttack()
 	{
 		model.MoveToTarget();
 		_tickHandler.FrameUpdate += FollowToAttackTarget;
@@ -195,7 +205,7 @@ public class PlayerTeamCharacterPresenter : TeamCharacterPresenterBase, ICharact
 		var targetPosition = _teamMoveTarget.position;
 		view.UpdatePointToFollow(targetPosition);
 	}
-
+	
 	public bool IsNeedFollowToDirection()
 	{
 		var isNeedFollowToDirection = model.IsTeamMoving;
@@ -215,6 +225,16 @@ public class PlayerTeamCharacterPresenter : TeamCharacterPresenterBase, ICharact
 	public bool TryFindEnemyTarget()
 	{
 		var heroPosition = view.transform.position;
+		
+		if (_currentTargetToAttack != null)
+		{
+			model.CheckAttackDistanceToTarget(heroPosition.ToModelVector(), _currentTargetToAttack.Position.ToModelVector());
+			if (model.IsTargetInAttackRange)
+			{
+				return true;
+			}
+		}
+
 		var heroForward = view.transform.forward;
 
 		var viewAngel = model.ViewAngel;
@@ -227,6 +247,8 @@ public class PlayerTeamCharacterPresenter : TeamCharacterPresenterBase, ICharact
 
 		if (!isAnyDetected)
 		{
+			_currentTargetToAttack = null;
+			
 			return false;
 		}
 		
@@ -282,7 +304,7 @@ public class PlayerTeamCharacterPresenter : TeamCharacterPresenterBase, ICharact
 
 	public Vector3 GetPosition()
 	{
-		return model.Position.ToUnityVector();
+		return view.transform.position;
 	}
 
 	public ReadOnlyTransform GetTransform()
@@ -341,11 +363,9 @@ public class PlayerTeamCharacterPresenter : TeamCharacterPresenterBase, ICharact
 		}
 		
 		var targetPosition = _currentTargetToAttack.Position;
-		var modelVector = targetPosition.ToModelVector();
-		var modelPosition = view.transform.position.ToModelVector();
+		var position = view.transform.position;
 		
-		model.UpdateAttackTargetPosition(modelVector);
-		model.UpdatePosition(modelPosition);
+		model.CheckAttackDistanceToTarget(position.ToModelVector(), targetPosition.ToModelVector());
 		view.UpdatePointToFollow(targetPosition);
 	}
 }

@@ -1,10 +1,10 @@
 ﻿namespace Code.BehaviourTree.Nodes
 {
-public class Inverter : IBehaviourTreeNode
+public class InverterNode : IBehaviourTreeNode
 {
 	private readonly IBehaviourTreeNode _child;
 	
-	public Inverter(IBehaviourTreeNode child)
+	public InverterNode(IBehaviourTreeNode child)
 	{
 		_child = child;
 	}

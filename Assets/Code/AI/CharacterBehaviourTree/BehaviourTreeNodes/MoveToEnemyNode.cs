@@ -14,8 +14,8 @@ public class MoveToEnemyNode : IBehaviourTreeNode
 
 	public NodeState Tick()
 	{
-		_agent.MoveToEnemy();
-
+		_agent.MoveToEnemyForAttack();
+		
 		return NodeState.Running;
 	}
 

@@ -1,14 +1,14 @@
-﻿using Code.EnemiesCore.Enemies.GoblinEnemy.BaseMVP;
+﻿using Code.EnemiesCore.Enemies.Base.BaseEnemy;
 
 namespace Code.EnemiesCore.Enemies.GoblinEnemy
 {
-public class GoblinEnemyModel : GoblinEnemyModelBase
+public class EnemyModel : EnemyModelBase
 {
     public override bool IsDead { get; protected set; }
     
     private int _currentHealth;
 
-    public GoblinEnemyModel(int health)
+    public EnemyModel(int health)
     {
         _currentHealth = health;
     }

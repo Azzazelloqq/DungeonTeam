@@ -8,6 +8,9 @@ public abstract class TeamCharacterPresenterBase : Presenter<TeamCharacterViewBa
 {
 	public abstract string CharacterId { get; }
 	public abstract CharacterClass CharacterClassType { get; }
+	public abstract float VisionViewAngel { get; }
+	public abstract float VisionViewDistance { get; }
+	public abstract Vector3 VisionDirection { get; }
 
 	protected TeamCharacterPresenterBase(TeamCharacterViewBase view, TeamCharacterModelBase model) : base(view, model)
 	{

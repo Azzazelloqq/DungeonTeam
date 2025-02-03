@@ -15,7 +15,7 @@ public class CharacterBehaviourTree : IBehaviourTree
 		var supportSequence = InitHealNode(agent);
 		var followTeamDirectionNode = InitFollowTeamDirectionNode(agent);
 		var returnToTeamNode = InitReturnToTeamNode(agent);
-
+		
 		_root = new SelectorNode(new[]{
 			followTeamDirectionNode,
 			supportSequence,
@@ -36,28 +36,31 @@ public class CharacterBehaviourTree : IBehaviourTree
 
 	private IBehaviourTreeNode InitAttackEnemyNode(ICharacterBehaviourTreeAgent agent)
 	{
-		var useAttackSkillNode = InitUseAttackSkillNode(agent);
-		var moveToEnemyNode = new MoveToEnemyNode(agent);
+		var findEnemyInSightNode = new FindEnemyTargetInSightNode(agent);
 		var trackEnemyInAttackRangeNode = new TrackEnemyInAttackRangeNode(agent);
-		var chaseEnemySequence = new SequenceNode(new IBehaviourTreeNode[]{
+		var moveToEnemyNode = new MoveToEnemyNode(agent);
+		var attackEnemy = new AttackEnemyNode(agent);
+		var useAttackSkillNode = InitUseAttackSkillNode(agent);
+
+		var approachOrStaySelector = new SelectorNode(new IBehaviourTreeNode[]
+		{
 			trackEnemyInAttackRangeNode,
 			moveToEnemyNode
 		});
-		
-		var findTargetNode = new FindEnemyTargetInSightNode(agent);
-		var attackEnemy = new AttackEnemyNode(agent);
-		
-		var attackSelector = new SelectorNode(new[]{
+
+		var attackSelector = new SelectorNode(new[]
+		{
 			useAttackSkillNode,
-			attackEnemy,
+			attackEnemy
 		});
 
-		var attackEnemySequence = new SequenceNode(new IBehaviourTreeNode[]{
-			findTargetNode,
-			chaseEnemySequence,
+		var attackEnemySequence = new SequenceNode(new IBehaviourTreeNode[]
+		{
+			findEnemyInSightNode,
+			approachOrStaySelector,
 			attackSelector
 		});
-
+		
 		return attackEnemySequence;
 	}
 

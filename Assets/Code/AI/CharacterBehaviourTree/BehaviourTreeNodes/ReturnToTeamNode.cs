@@ -15,8 +15,8 @@ public class ReturnToTeamNode : IBehaviourTreeNode
 	public NodeState Tick()
 	{
 		_agent.ReturnToTeam();
-
-		return NodeState.Running;
+		
+		return _agent.IsOnTeamPlace ? NodeState.Success : NodeState.Running;
 	}
 
 	public void Dispose()

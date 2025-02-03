@@ -34,9 +34,9 @@ public interface IDetectionService
     /// <param name="observerForward">The observer's forward direction.</param>
     /// <param name="viewAngle">The observer's view angle in degrees.</param>
     /// <param name="viewDistance">The observer's view distance.</param>
-    /// <param name="targerLayer">Layer mask for obstacles.</param>
+    /// <param name="targetLayer">Layer mask for obstacles.</param>
     /// <returns>List of detected objects.</returns>
     public bool DetectObjectsInView(Vector3 observerPosition, Vector3 observerForward, float viewAngle,
-        float viewDistance, LayerMask targerLayer, out IEnumerable<IDetectable> detectables);
+        float viewDistance, LayerMask targetLayer, out IEnumerable<IDetectable> detectables);
 }
 }

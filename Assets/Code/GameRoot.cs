@@ -4,10 +4,10 @@ using System.Threading;
 using System.Threading.Tasks;
 using Code.Config;
 using Code.DetectionService;
-using Code.DungeonTeam.MoveController.Base;
-using Code.DungeonTeam.MoveController.VirtualJoystick;
 using Code.DungeonTeam.TeamCoordinator;
 using Code.DungeonTeam.TeamCoordinator.Base;
+using Code.EnemiesCore.Enemies.Base.BaseEnemy;
+using Code.EnemiesCore.Enemies.TestTeamEnemy;
 using Code.GameConfig.ScriptableObjectParser;
 using Code.GameConfig.ScriptableObjectParser.ConfigData.Characters;
 using Code.GameConfig.ScriptableObjectParser.ConfigData.Skills;
@@ -22,7 +22,6 @@ using LocalSaveSystem;
 using ResourceLoader.AddressableResourceLoader;
 using TickHandler;
 using TickHandler.UnityTickHandler;
-using Unity.VisualScripting;
 using UnityEngine;
 
 namespace Code
@@ -43,6 +42,9 @@ public class GameRoot : MonoBehaviour
 
 	[SerializeField]
 	private Transform _teamCoordinatorParent;
+
+	[SerializeField]
+	private Transform _testEnemyParent;
 	
 	private readonly CancellationTokenSource _turnOffGameCancellationTokenSource;
 	private readonly AddressableResourceLoader _resourceLoader;
@@ -131,6 +133,8 @@ public class GameRoot : MonoBehaviour
 		
 		_saveSystem.Save();
 		_teamCoordinator =  await InitializeTeamCoordinatorAsync(_config, cancellationToken);
+
+		var testEnemy = await InitializeTestEnemy(cancellationToken);
 	}
 
 	private async Task InitializeConfigAsync(CancellationToken token)
@@ -173,6 +177,19 @@ public class GameRoot : MonoBehaviour
 		await teamCoordinatorPresenter.InitializeAsync(token);
 		
 		return teamCoordinatorPresenter;
+	}
+
+	private async Task<EnemyPresenterBase> InitializeTestEnemy(CancellationToken token)
+	{
+		var testEnemyResourceId= ResourceIdsContainer.Test.TestEnemy;
+		var view = await _resourceLoader.LoadAndCreateAsync<EnemyViewBase, Transform>(testEnemyResourceId, _testEnemyParent, token);
+		var model = new TestTakeDamageEnemyModel();
+		
+		var presenter = new TestTakeDamageEnemyPresenter(view, model, _detectionService);
+		
+		await presenter.InitializeAsync(token);
+
+		return presenter;
 	}
 }
 }

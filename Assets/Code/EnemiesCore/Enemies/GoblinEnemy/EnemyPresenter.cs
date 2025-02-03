@@ -2,7 +2,7 @@
 using System.Threading.Tasks;
 using Code.AI.CharacterBehaviourTree.Trees.Enemy;
 using Code.DetectionService;
-using Code.EnemiesCore.Enemies.GoblinEnemy.BaseMVP;
+using Code.EnemiesCore.Enemies.Base.BaseEnemy;
 using Code.Skills.CharacterSkill.Core.SkillAffectable;
 using Code.Timer;
 using Code.Utils.TransformUtils;
@@ -12,7 +12,7 @@ using UnityEngine;
 
 namespace Code.EnemiesCore.Enemies.GoblinEnemy
 {
-public class GoblinEnemyPresenter : GoblinEnemyPresenterBase, IDetectable, IDamageable, IEnemyBehaviourTreeAgent
+public class EnemyPresenter : EnemyPresenterBase, IDetectable, IDamageable, IEnemyBehaviourTreeAgent
 {
     private const int TickTreeAgent = 200;
     
@@ -25,9 +25,9 @@ public class GoblinEnemyPresenter : GoblinEnemyPresenterBase, IDetectable, IDama
     private readonly ActionTimer _aiTickTimer;
     private readonly IInGameLogger _logger;
 
-    public GoblinEnemyPresenter(
-        GoblinEnemyViewBase view,
-        GoblinEnemyModelBase model,
+    public EnemyPresenter(
+        EnemyViewBase view,
+        EnemyModelBase model,
         ITickHandler tickHandler,
         IDetectionService detectionService,
         IInGameLogger logger) : base(view, model)
@@ -106,8 +106,8 @@ public class GoblinEnemyPresenter : GoblinEnemyPresenterBase, IDetectable, IDama
     {
         throw new System.NotImplementedException();
     }
-
-    public void MoveToEnemy()
+    
+    public void MoveToEnemyForAttack()
     {
         throw new System.NotImplementedException();
     }

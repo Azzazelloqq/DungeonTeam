@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections;
-using Code.EnemiesCore.Enemies.GoblinEnemy.BaseMVP;
+using Code.EnemiesCore.Enemies.Base.BaseEnemy;
 using UnityEngine;
 
 namespace Code.EnemiesCore.Enemies.GoblinEnemy
 {
-public class GoblinEnemyView : GoblinEnemyViewBase
+public class EnemyView : EnemyViewBase
 {
     private const float FLASH_DURATION = 0.1f;
     private const float BURN_DURATION = 0.1f;

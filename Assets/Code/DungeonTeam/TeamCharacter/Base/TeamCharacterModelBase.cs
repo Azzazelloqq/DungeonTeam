@@ -14,15 +14,14 @@ public abstract class TeamCharacterModelBase : Model
 	public abstract int AttackLayer { get; }
 	public abstract bool IsTargetInSkillAttackRange { get; protected set; }
 	public abstract bool IsTeamMoving { get; protected set; }
-	public abstract ModelVector3 Position { get; }
 	public abstract string CharacterId { get; }
 	public abstract CharacterClass HeroClass { get; }
 	public abstract int CurrentLevel { get; protected set; }
 
 	public abstract void MoveToTarget();
-	public abstract void UpdateAttackTargetPosition(ModelVector3 targetPosition);
-	public abstract void UpdatePosition(ModelVector3 modelPosition);
+	public abstract void StopMoveToTarget();
 	public abstract void OnTeamMoveStarted();
 	public abstract void OnTeamMoveEnded();
+	public abstract void CheckAttackDistanceToTarget(ModelVector3 currentPosition, ModelVector3 targetPosition);
 }
 }

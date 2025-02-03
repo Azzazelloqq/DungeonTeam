@@ -1,9 +1,8 @@
 ﻿using MVP;
-using UnityEngine;
 
-namespace Code.EnemiesCore.Enemies.GoblinEnemy.BaseMVP
+namespace Code.EnemiesCore.Enemies.Base.BaseEnemy
 {
-public abstract class GoblinEnemyViewBase : ViewMonoBehaviour<GoblinEnemyPresenterBase>
+public abstract class EnemyViewBase : ViewMonoBehaviour<EnemyPresenterBase>
 {
     public abstract void TakeCommonAttackDamage();
     public abstract void TakeFireballDamage();

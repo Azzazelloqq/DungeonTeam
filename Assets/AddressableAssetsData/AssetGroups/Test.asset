@@ -15,6 +15,11 @@ MonoBehaviour:
   m_GroupName: Test
   m_GUID: 1da2bd62165d813419a7501f813016b7
   m_SerializeEntries:
+  - m_GUID: 16ca3936fce5e1d43ab4e337a8220105
+    m_Address: TestEnemy
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 2c502c1e953e29b4c9c49dee1d33d583
     m_Address: TeamCoordinatorView
     m_ReadOnly: 0

@@ -1,4 +1,5 @@
-﻿using Code.DungeonTeam.MovementNavigator.Base;
+﻿using System;
+using Code.DungeonTeam.MovementNavigator.Base;
 using Code.DungeonTeam.MovementNavigator.Target;
 using UnityEngine;
 
@@ -18,5 +19,26 @@ public class MovementNavigatorView : MovementNavigatorViewBase
 	{
 		_targetsParent.position = teamPosition;
 	}
+
+	#if UNITY_EDITOR
+	private void OnDrawGizmos()
+	{
+		DrowMovementTargets();
+	}
+
+	private void DrowMovementTargets()
+	{
+		if (MovementTargets == null)
+		{
+			return;
+		}
+
+		foreach (var target in MovementTargets)
+		{
+			Gizmos.color = Color.red;
+			Gizmos.DrawSphere(target.Place.position, 0.5f);
+		}
+	}
+	#endif
 }
 }

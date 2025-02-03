@@ -58,7 +58,7 @@ public class DetectionService : IDetectionService
 
     /// <inheritdoc/>
     public bool DetectObjectsInView(Vector3 observerPosition, Vector3 observerForward, float viewAngle,
-        float viewDistance, LayerMask targerLayer, out IEnumerable<IDetectable> detectables)
+        float viewDistance, LayerMask targetLayer, out IEnumerable<IDetectable> detectables)
     {
 		if (_detectedObjectsCash == null)
 		{
@@ -104,7 +104,7 @@ public class DetectionService : IDetectionService
                     }
 
                     if (Physics.Raycast(observerPosition, directionToObject.normalized,
-                            distanceToObject, targerLayer))
+                            distanceToObject, targetLayer))
                     {
                         _detectedObjectsCash.Add(obj);
                     }

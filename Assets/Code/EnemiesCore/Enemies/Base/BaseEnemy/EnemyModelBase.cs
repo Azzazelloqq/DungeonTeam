@@ -1,9 +1,8 @@
 ﻿using MVP;
-using UnityEngine;
 
-namespace Code.EnemiesCore.Enemies.GoblinEnemy.BaseMVP
+namespace Code.EnemiesCore.Enemies.Base.BaseEnemy
 {
-public abstract class GoblinEnemyModelBase : Model
+public abstract class EnemyModelBase : Model
 {
     public abstract bool IsDead { get; protected set; }
     public abstract void TakeCommonAttackDamage(int damage);

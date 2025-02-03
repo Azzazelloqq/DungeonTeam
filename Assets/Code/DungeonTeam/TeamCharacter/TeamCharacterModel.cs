@@ -17,14 +17,11 @@ public class TeamCharacterModel : TeamCharacterModelBase
 	public override int AttackLayer { get; }
 	public override float ViewDistance { get; }
 	public override float ViewAngel { get; }
-	public override ModelVector3 Position => _currentPosition;
 	public override string CharacterId { get; }
 
 	private readonly float _attackSkillDistance;
 	private readonly float _attackDistance;
 	
-	private ModelVector3 _currentPosition;
-	private ModelVector3 _attackTargetPosition;
 
 	public TeamCharacterModel(
 		string id,
@@ -44,19 +41,10 @@ public class TeamCharacterModel : TeamCharacterModelBase
 	{
 		IsMovingToTarget = true;
 	}
-
-	public override void UpdateAttackTargetPosition(ModelVector3 targetPosition)
+	
+	public override void StopMoveToTarget()
 	{
-		_attackTargetPosition = targetPosition;
-		
-		CheckDistanceToTarget();
-	}
-
-	public override void UpdatePosition(ModelVector3 modelPosition)
-	{
-		_currentPosition = modelPosition;
-
-		CheckDistanceToTarget();
+		IsMovingToTarget = false;
 	}
 
 	public override void OnTeamMoveStarted()
@@ -69,20 +57,18 @@ public class TeamCharacterModel : TeamCharacterModelBase
 		IsTeamMoving = false;
 	}
 
-	private void CheckDistanceToTarget()
+	public override void CheckAttackDistanceToTarget(ModelVector3 currentPosition, ModelVector3 targetPosition)
 	{
-		var distanceToAttackTarget = ModelVector3.Distance(_currentPosition, _attackTargetPosition);
+		var distanceToAttackTarget = ModelVector3.Distance(currentPosition, targetPosition);
 
 		if (distanceToAttackTarget <= _attackDistance)
 		{
 			IsTargetInAttackRange = true;
-			IsMovingToTarget = false;
 		}
 
 		if (distanceToAttackTarget <= _attackSkillDistance)
 		{
 			IsTargetInSkillAttackRange = true;
-			IsMovingToTarget = false;
 		}
 	}
 }
