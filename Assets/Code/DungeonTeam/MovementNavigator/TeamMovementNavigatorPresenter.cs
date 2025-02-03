@@ -1,4 +1,6 @@
 ﻿using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 using Code.Config;
 using Code.DungeonTeam.MoveController.Base;
 using Code.DungeonTeam.MovementNavigator.Base;
@@ -23,7 +25,7 @@ public class TeamMovementNavigatorPresenter : MovementNavigatorPresenterBase
 		MovementNavigatorModelBase model,
 		IInGameLogger logger,
 		ITickHandler tickHandler,
-		TeamCharacterPresenterBase[] characterPresentersBase,
+		List<TeamCharacterPresenterBase> characterPresentersBase,
 		MoveControllerPresenterBase moveController)
 		: base(view, model)
 	{
@@ -48,16 +50,32 @@ public class TeamMovementNavigatorPresenter : MovementNavigatorPresenterBase
 
 		_moveController.MoveStarted += OnControllerMoveStarted;
 		_moveController.MoveEnded += OnControllerMoveEnded;
-		_moveController.DirectionChanged += OnControllerDirectionChanged;
+	}
+
+	protected override async Task OnInitializeAsync(CancellationToken token)
+	{
+		await base.OnInitializeAsync(token);
+		
+		var modelCharacters = GetModelCharactersContainers();
+		model.InitializeCharacters(modelCharacters);
+		
+		UpdateTeamNavigationTargets();
+
+		var viewTeamParentPosition = view.TeamParentPosition;
+		var teamParentPositionModel = viewTeamParentPosition.ToModelVector();
+		model.InitializeTeamParentPosition(teamParentPositionModel);
+
+		_moveController.MoveStarted += OnControllerMoveStarted;
+		_moveController.MoveEnded += OnControllerMoveEnded;
 	}
 
 	protected override void OnDispose()
 	{
 		base.OnDispose();
 
+		_tickHandler.FrameUpdate -= OnControllerDirectionChanged;
 		_moveController.MoveStarted += OnControllerMoveStarted;
 		_moveController.MoveEnded += OnControllerMoveEnded;
-		_moveController.DirectionChanged += OnControllerDirectionChanged;
 	}
 
 	public override void AddCharacter(TeamCharacterPresenterBase character)
@@ -111,7 +129,37 @@ public class TeamMovementNavigatorPresenter : MovementNavigatorPresenterBase
 		return new ModelCharacterContainer(character.CharacterId, character.CharacterClassType);
 	}
 
-	private void OnControllerDirectionChanged(Vector2 direction)
+	private void OnControllerMoveStarted()
+	{
+		if (!model.StartMoveTeam())
+		{
+			return;
+		}
+
+		foreach (var teamCharacterPresenterBase in _characters)
+		{
+			teamCharacterPresenterBase.OnTeamMove();
+		}
+		
+		_tickHandler.FrameUpdate += OnControllerDirectionChanged;
+	}
+
+	private void OnControllerMoveEnded()
+	{
+		if (!model.StopMoveTeamByDirection())
+		{
+			return;
+		}
+
+		foreach (var teamCharacterPresenterBase in _characters)
+		{
+			teamCharacterPresenterBase.OnTeamStay();
+		}
+		
+		_tickHandler.FrameUpdate -= OnControllerDirectionChanged;
+	}
+
+	private void OnControllerDirectionChanged(float deltaTime)
 	{
 		if (!model.IsMoving)
 		{
@@ -119,32 +167,13 @@ public class TeamMovementNavigatorPresenter : MovementNavigatorPresenterBase
 			return;
 		}
 
-		var deltaTime = _tickHandler.DeltaTime;
+		var direction = _moveController.Direction;
+		
 		var modelDirection = direction.ToModelVector();
 		model.MoveTeamByDirection(modelDirection, deltaTime);
 		var teamPosition = model.TeamPosition.ToUnityVector();
 		
 		view.MoveTeamToPosition(teamPosition);
-	}
-
-	private void OnControllerMoveEnded()
-	{
-		model.StopMoveTeamByDirection();
-
-		foreach (var teamCharacterPresenterBase in _characters)
-		{
-			teamCharacterPresenterBase.OnTeamStay();
-		}
-	}
-
-	private void OnControllerMoveStarted()
-	{
-		model.StartMoveTeam();
-
-		foreach (var teamCharacterPresenterBase in _characters)
-		{
-			teamCharacterPresenterBase.OnTeamMove();
-		}
 	}
 
 	private void UpdateTeamNavigationTargets()

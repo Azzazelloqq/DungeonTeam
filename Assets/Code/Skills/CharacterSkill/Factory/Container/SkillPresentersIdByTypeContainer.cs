@@ -10,9 +10,9 @@ internal class SkillPresentersIdByTypeContainer
 
 	internal SkillPresentersIdByTypeContainer()
 	{
-		_skillsIdByType = new Dictionary<string, Type>()
+		_skillsIdByType = new Dictionary<string, Type>
 		{
-			{ "BasicFireballSkillPresenter", typeof(BasicFireballSkillPresenter) },
+			{ "basicFireballAttackSkill", typeof(BasicFireballSkillPresenter) }
 		};
 	}
 

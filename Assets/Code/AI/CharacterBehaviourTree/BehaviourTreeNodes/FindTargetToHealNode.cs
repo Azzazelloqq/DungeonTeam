@@ -16,5 +16,9 @@ public class FindTargetToHealNode : IBehaviourTreeNode
 	{
 		return _agent.TryFindTargetToHeal() ? NodeState.Success : NodeState.Failure;
 	}
+
+	public void Dispose()
+	{
+	}
 }
 }

@@ -7,9 +7,9 @@ namespace Code.GameConfig.ScriptableObjectParser.RemoteData.CharacterTeamPlace
 public class CharacterTeamPlacesRemotePage : ScriptableObject, IRemotePage
 {
 	[field: SerializeField]
-	public PlaceRemote[] Places { get; private set; }
+	internal PlaceRemote[] Places { get; private set; }
 
 	[field: SerializeField]
-	public float TeamSpeed { get; private set; }
+	internal float TeamSpeed { get; private set; }
 }
 }

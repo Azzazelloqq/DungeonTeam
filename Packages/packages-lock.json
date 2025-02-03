@@ -12,7 +12,7 @@
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "cd224d33ac1dcdef3e5eda651701e57d844b5069"
+      "hash": "7e8123e31fbc09f9058904d6b3180131d6182e7a"
     },
     "com.azzazello.logger": {
       "version": "https://github.com/Azzazelloqq/InGameLogger.git",
@@ -28,7 +28,7 @@
       "dependencies": {
         "com.azzazello.disposable": "https://github.com/Azzazelloqq/Disposable.git#main"
       },
-      "hash": "bae4a99514616b10c00f6aff6e2d446bbb60a2b7"
+      "hash": "e5dfd58c109426fe491e90f23a90f85dbfebb972"
     },
     "com.azzazello.mvvm": {
       "version": "https://github.com/Azzazelloqq/MVVM.git",
@@ -37,7 +37,7 @@
       "dependencies": {
         "com.azzazello.disposable": "https://github.com/Azzazelloqq/Disposable.git#v1.0.1"
       },
-      "hash": "714ac9939ec332ec38b0b4e2004dcb3aab66645c"
+      "hash": "13b22ccb2a2e71e7c999ca06719268249f56b5c7"
     },
     "com.azzazello.resourceloader": {
       "version": "https://github.com/Azzazelloqq/ResourceLoader.git",
@@ -46,7 +46,7 @@
       "dependencies": {
         "com.unity.addressables": "1.21.20"
       },
-      "hash": "c35760770a74a595c6eb7d20c6950d742764b3f8"
+      "hash": "8100bd189b6a5617dc6c2a2840129f7abf39f360"
     },
     "com.azzazello.sceneswitcher": {
       "version": "https://github.com/Azzazelloqq/SceneSwitcher.git",
@@ -55,7 +55,7 @@
       "dependencies": {
         "com.unity.addressables": "1.21.20"
       },
-      "hash": "e4e31afb7ffe822264ca103940856aaf19ce8c4a"
+      "hash": "8d55169e7a0c62715521d172765524e2ef47c702"
     },
     "com.azzazello.tickhandler": {
       "version": "https://github.com/Azzazelloqq/TickHandler.git",
@@ -89,7 +89,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.ai.navigation": {
-      "version": "2.0.4",
+      "version": "2.0.5",
       "depth": 0,
       "source": "registry",
       "dependencies": {
@@ -134,7 +134,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.ide.rider": {
-      "version": "3.0.31",
+      "version": "3.0.34",
       "depth": 0,
       "source": "registry",
       "dependencies": {

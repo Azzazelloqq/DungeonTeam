@@ -1,0 +1,60 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 219517b401e341d48ddcd17c3f18de0e, type: 3}
+  m_Name: Skills
+  m_EditorClassIdentifier: 
+  <Skills>k__BackingField:
+  - <Type>k__BackingField: 1
+    <Skills>k__BackingField:
+    - <SkillId>k__BackingField: basicFireballAttackSkill
+      <ImpactsByLevel>k__BackingField:
+      - <Level>k__BackingField: 0
+        <CooldownPerSeconds>k__BackingField: 10
+        <ChargePerSeconds>k__BackingField: 3
+        <Effects>k__BackingField:
+        - _effectType: 2
+          _effectId: InstanceDamage
+          _effectImpact: 10
+          _effectDuration: 0
+          _interval: 0
+        - _effectType: 5
+          _effectId: OverTimeDamage
+          _effectImpact: 10
+          _effectDuration: 5
+          _interval: 1
+      - <Level>k__BackingField: 1
+        <CooldownPerSeconds>k__BackingField: 8
+        <ChargePerSeconds>k__BackingField: 3
+        <Effects>k__BackingField:
+        - _effectType: 2
+          _effectId: InstanceDamage
+          _effectImpact: 10
+          _effectDuration: 0
+          _interval: 0
+        - _effectType: 5
+          _effectId: OverTimeDamage
+          _effectImpact: 10
+          _effectDuration: 5
+          _interval: 1
+  - <Type>k__BackingField: 2
+    <Skills>k__BackingField:
+    - <SkillId>k__BackingField: instantHeal
+      <ImpactsByLevel>k__BackingField:
+      - <Level>k__BackingField: 0
+        <CooldownPerSeconds>k__BackingField: 10
+        <ChargePerSeconds>k__BackingField: 3
+        <Effects>k__BackingField:
+        - _effectType: 1
+          _effectId: InstantHeal
+          _effectImpact: 10
+          _effectDuration: 0
+          _interval: 0

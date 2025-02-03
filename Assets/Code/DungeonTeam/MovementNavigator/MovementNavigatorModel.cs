@@ -80,31 +80,38 @@ public class MovementNavigatorModel : MovementNavigatorModelBase
 		_characterClassById.Remove(characterId);
 	}
 
-	public override void StartMoveTeam()
+	public override bool StartMoveTeam()
 	{
+		_logger.Log("Move started");
 		if (IsMoving)
 		{
 			_logger.LogError("Move already started.");
-			return;
+			return false;
 		}
 		
 		IsMoving = true;
+		
+		return true;
 	}
 
-	public override void StopMoveTeamByDirection()
+	public override bool StopMoveTeamByDirection()
 	{
+		_logger.Log("Move ended");
+
 		if (!IsMoving)
 		{
 			_logger.LogError("Move already ended.");
-			return;
+			return false;
 		}
 		
 		IsMoving = false;
+		
+		return true;
 	}
 
 	public override void MoveTeamByDirection(ModelVector2 direction, float deltaTime)
 	{
-		_teamPosition += direction * _teamMoveSpeed * deltaTime;
+		_teamPosition += new ModelVector3(direction.X, _teamPosition.Y, direction.Y) * _teamMoveSpeed * deltaTime;
 	}
 
 	private void AssignCharacterToPreferredOrAnyPlace(ModelCharacterContainer character)

@@ -1,6 +1,6 @@
 ﻿namespace Code.GameConfig.ScriptableObjectParser.RemoteData.Skills.Effect
 {
-public enum EffectType
+internal enum EffectType
 {
 	None,
 	InstantHeal,

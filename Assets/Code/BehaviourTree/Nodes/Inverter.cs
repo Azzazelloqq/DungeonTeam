@@ -24,5 +24,10 @@ public class Inverter : IBehaviourTreeNode
 		
 		return NodeState.Failure;
 	}
+
+	public void Dispose()
+	{
+		_child.Dispose();
+	}
 }
 }

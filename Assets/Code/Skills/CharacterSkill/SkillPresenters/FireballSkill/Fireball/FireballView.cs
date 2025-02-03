@@ -24,9 +24,9 @@ public class FireballView : FireballViewBase
 		_waitBlowUp = new WaitForSeconds(_blowUpDuration);
 	}
 
-	public override void Dispose()
+	protected override void OnDispose()
 	{
-		base.Dispose();
+		base.OnDispose();
 
 		if (_blowUpEffectRoutine != null)
 		{

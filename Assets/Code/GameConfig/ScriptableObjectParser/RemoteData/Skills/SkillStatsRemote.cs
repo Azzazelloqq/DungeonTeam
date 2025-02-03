@@ -5,18 +5,18 @@ using UnityEngine;
 namespace Code.GameConfig.ScriptableObjectParser.RemoteData.Skills
 {
 [Serializable]
-public struct SkillStatsRemote
+internal struct SkillStatsRemote
 {
 	[field: SerializeField]
-	public int Level { get; private set; }
+	internal int Level { get; private set; }
 
 	[field: SerializeField]
-	public float CooldownPerSeconds { get; private set; }
+	internal float CooldownPerSeconds { get; private set; }
 
 	[field: SerializeField]
-	public float ChargePerSeconds { get; private set; }
+	internal float ChargePerSeconds { get; private set; }
 
 	[field: SerializeField]
-	public SkillEffectRemote[] Effects { get; private set; }
+	internal SkillEffectRemote[] Effects { get; private set; }
 }
 }

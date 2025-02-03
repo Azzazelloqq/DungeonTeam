@@ -1,6 +1,8 @@
-﻿namespace Code.BehaviourTree
+﻿using System;
+
+namespace Code.BehaviourTree
 {
-public interface IBehaviourTree
+public interface IBehaviourTree : IDisposable
 {
 	public void Tick();
 }

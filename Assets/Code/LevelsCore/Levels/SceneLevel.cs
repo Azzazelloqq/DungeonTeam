@@ -20,7 +20,8 @@ public class SceneLevel : ILevel
 	
 	public Task LoadLevelAsync(CancellationToken token)
 	{
-		_sceneSwitcher.SwitchToScene<>()
+		//_sceneSwitcher.SwitchToScene<>()
+		return Task.CompletedTask;
 	}
 
 	public Task UnloadLevelAsync(CancellationToken token)

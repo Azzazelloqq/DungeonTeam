@@ -12,9 +12,9 @@ public class BasicFireballSkillModel : SkillModelBase
         SkillId = skillId;
 	}
 
-	public override void Dispose()
+	protected override void OnDispose()
 	{
-		base.Dispose();
+		base.OnDispose();
 	}
 
 	public override void ChargeSkill()

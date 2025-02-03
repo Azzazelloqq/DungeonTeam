@@ -7,6 +7,7 @@ public abstract class CharacterHealthPresenterBase : Presenter<CharacterHealthVi
 	public abstract int MaxHealth {get;}
 	public abstract int CurrentHealth {get;}
 	public abstract int CurrentLevel {get;}
+	public abstract bool IsNeedHeal { get; }
 
 	protected CharacterHealthPresenterBase(CharacterHealthViewBase view, CharacterHealthModelBase model) : base(view, model)
 	{

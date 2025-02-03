@@ -1,6 +1,6 @@
 ﻿namespace Code.GameConfig.ScriptableObjectParser.RemoteData.Skills
 {
-public enum SkillTypeRemote
+internal enum SkillTypeRemote
 {
 	None = 0,
 	Attack = 1,

@@ -22,5 +22,13 @@ public class SelectorNode : IBehaviourTreeNode
 
 		return NodeState.Failure;
 	}
+
+	public void Dispose()
+	{
+		foreach (var child in _children)
+		{
+			child.Dispose();
+		}
+	}
 }
 }

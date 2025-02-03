@@ -4,12 +4,12 @@ using UnityEngine;
 namespace Code.GameConfig.ScriptableObjectParser.RemoteData.Characters
 {
 [Serializable]
-public struct CharactersGroup
+internal struct CharactersGroup
 {
 	[field: SerializeField]
-	public string CharactersGroupId { get; private set; }
+	internal string CharactersGroupId { get; private set; }
 	
 	[field: SerializeField]
-	public CharacterRemote[] Characters { get; private set; } 
+	internal CharacterRemote[] Characters { get; private set; } 
 }
 }

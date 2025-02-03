@@ -18,5 +18,9 @@ public class AttackEnemyNode : IBehaviourTreeNode
 
 		return NodeState.Success;
 	}
+
+	public void Dispose()
+	{
+	}
 }
 }

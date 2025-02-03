@@ -7,9 +7,9 @@ namespace Code.GameConfig.ScriptableObjectParser.RemoteData.Characters
 public struct CharacterHealthByLevelRemote
 {
 	[field: SerializeField]
-	public int Level { get; private set; }
+	internal int Level { get; private set; }
 
 	[field: SerializeField]
-	public int Health { get; private set; }
+	internal int Health { get; private set; }
 }
 }

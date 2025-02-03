@@ -4,12 +4,12 @@ using UnityEngine;
 namespace Code.GameConfig.ScriptableObjectParser.RemoteData.CharacterTeamPlace
 {
 [Serializable]
-public struct PlaceRemote
+internal struct PlaceRemote
 {
 	[field: SerializeField]
-	public int PlaceNumber { get; private set; }
+	internal int PlaceNumber { get; private set; }
 
 	[field: SerializeField]
-	public CharacterClassRemote PreferredClass { get; private set; }
+	internal CharacterClassRemote PreferredClass { get; private set; }
 }
 }

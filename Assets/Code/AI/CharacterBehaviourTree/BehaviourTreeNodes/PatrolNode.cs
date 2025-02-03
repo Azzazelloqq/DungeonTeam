@@ -18,5 +18,9 @@ public class PatrolNode : IBehaviourTreeNode
 
         return NodeState.Running;
     }
+
+    public void Dispose()
+    {
+    }
 }
 }

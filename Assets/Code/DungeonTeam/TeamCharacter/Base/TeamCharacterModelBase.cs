@@ -1,4 +1,5 @@
-﻿using Code.Utils.ModelUtils;
+﻿using Code.GameConfig.ScriptableObjectParser.ConfigData.CharacterTeamPlace;
+using Code.Utils.ModelUtils;
 using MVP;
 
 namespace Code.DungeonTeam.TeamCharacter.Base
@@ -6,7 +7,7 @@ namespace Code.DungeonTeam.TeamCharacter.Base
 public abstract class TeamCharacterModelBase : Model
 {
     public abstract bool IsDead { get; protected set; }
-	public abstract bool IsMovingToAttackTarget { get; protected set; }
+	public abstract bool IsMovingToTarget { get; protected set; }
 	public abstract bool IsTargetInAttackRange { get; protected set; }
 	public abstract float ViewAngel { get; }
 	public abstract float ViewDistance { get; }
@@ -14,6 +15,9 @@ public abstract class TeamCharacterModelBase : Model
 	public abstract bool IsTargetInSkillAttackRange { get; protected set; }
 	public abstract bool IsTeamMoving { get; protected set; }
 	public abstract ModelVector3 Position { get; }
+	public abstract string CharacterId { get; }
+	public abstract CharacterClass HeroClass { get; }
+	public abstract int CurrentLevel { get; protected set; }
 
 	public abstract void MoveToTarget();
 	public abstract void UpdateAttackTargetPosition(ModelVector3 targetPosition);

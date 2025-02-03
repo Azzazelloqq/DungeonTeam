@@ -1,12 +1,14 @@
 ﻿{
   "name": "EnemiesCore",
   "references":[
-    "GUID:1f479669ac344197a28280f8705300a5",
-    "GUID:5b1d99d5a9b84611b15c22e533a82392",
-    "GUID:d273da7f6076476bb07bad86e0fb33f1",
     "MVP",
     "TickHandler",
     "Disposable",
-    "TransformUtils"
+    "Logger",
+    "GUID:d06476e50cf34f35947c4321c0805b96",
+    "GUID:1f479669ac344197a28280f8705300a5",
+    "GUID:5b1d99d5a9b84611b15c22e533a82392",
+    "GUID:d273da7f6076476bb07bad86e0fb33f1",
+    "GUID:70ee12777b344a749a40250f551474e7"
   ]
 }

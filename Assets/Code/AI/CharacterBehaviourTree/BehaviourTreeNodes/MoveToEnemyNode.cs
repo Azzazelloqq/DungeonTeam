@@ -18,5 +18,9 @@ public class MoveToEnemyNode : IBehaviourTreeNode
 
 		return NodeState.Running;
 	}
+
+	public void Dispose()
+	{
+	}
 }
 }

@@ -122,7 +122,7 @@ internal class SkillsFactory : ISkillsFactory
 			return default;
 		}
 		
-		foreach (var characterSaveSkill in characterSave.Skills)
+		foreach (var characterSaveSkill in characterSave.ReadOnlySkills)
 		{
 			if (characterSaveSkill.Id != skillId)
 			{
@@ -139,19 +139,7 @@ internal class SkillsFactory : ISkillsFactory
 
 	private bool TryGetCharacterSave(string characterId, out CharacterSave character)
 	{
-		foreach (var characterSave in _playerTeamSave.SelectedPlayerTeam)
-		{
-			if (characterSave.Id != characterId)
-			{
-				continue;
-			}
-
-			character = characterSave;
-			return true;
-		}
-
-		character = default;
-		return false;
+		return _playerTeamSave.SelectedPlayerTeam.TryGetValue(characterId, out character);
 	}
 }
 }

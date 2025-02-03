@@ -15,10 +15,29 @@ MonoBehaviour:
   m_GroupName: Test
   m_GUID: 1da2bd62165d813419a7501f813016b7
   m_SerializeEntries:
+  - m_GUID: 2c502c1e953e29b4c9c49dee1d33d583
+    m_Address: TeamCoordinatorView
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - TEST
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 58641cf45db64b24ca31de28459eb98a
+    m_Address: MovementNavigatorView
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - TEST
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 94078c0989247a149a9084aa38aa0826
     m_Address: TestHero
     m_ReadOnly: 0
-    m_SerializedLabels: []
+    m_SerializedLabels:
+    - TEST
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c382c9a66c55e624cb5526545e3d956e
+    m_Address: CharacterHealthView
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - TEST
     FlaggedDuringContentUpdateRestriction: 0
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: 25708fb5857cace4992a2e00f8e041e6, type: 2}

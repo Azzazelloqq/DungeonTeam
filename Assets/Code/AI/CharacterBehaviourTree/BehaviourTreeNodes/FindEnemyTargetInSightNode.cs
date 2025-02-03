@@ -21,5 +21,9 @@ public class FindEnemyTargetInSightNode : IBehaviourTreeNode
 
 		return NodeState.Failure;
 	}
+
+	public void Dispose()
+	{
+	}
 }
 }

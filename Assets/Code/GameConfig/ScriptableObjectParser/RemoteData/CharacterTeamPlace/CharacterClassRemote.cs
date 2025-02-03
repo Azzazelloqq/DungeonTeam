@@ -1,6 +1,6 @@
 ﻿namespace Code.GameConfig.ScriptableObjectParser.RemoteData.CharacterTeamPlace
 {
-public enum CharacterClassRemote
+internal enum CharacterClassRemote
 {
 	None = 0,
 	Mage = 1,

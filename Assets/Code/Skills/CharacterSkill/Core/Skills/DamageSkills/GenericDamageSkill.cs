@@ -36,8 +36,8 @@ public class GenericDamageSkill : ISkill
 		_chargeInMilliseconds = chargeInMilliseconds;
 		_cooldownInMilliseconds = cooldownInMilliseconds;
 		_effects = new List<ISkillEffect>(effects);
-		_chargeTimer = new ActionTimer();
-		_cooldownTimer = new ActionTimer();
+		_chargeTimer = new ActionTimer(_logger);
+		_cooldownTimer = new ActionTimer(_logger);
 	}
 
 	public void Dispose()

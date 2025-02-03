@@ -18,7 +18,8 @@ MonoBehaviour:
   - m_GUID: b4856c2fbedd6fa469f172f0aa4b38bc
     m_Address: VirtualJoystickView
     m_ReadOnly: 0
-    m_SerializedLabels: []
+    m_SerializedLabels:
+    - default
     FlaggedDuringContentUpdateRestriction: 0
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: 25708fb5857cace4992a2e00f8e041e6, type: 2}

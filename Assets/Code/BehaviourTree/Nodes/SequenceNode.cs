@@ -22,5 +22,13 @@ public class SequenceNode : IBehaviourTreeNode
 		
 		return NodeState.Success;
 	}
+
+	public void Dispose()
+	{
+		foreach (var behaviourTreeNode in _children)
+		{
+			behaviourTreeNode.Dispose();
+		}
+	}
 }
 }

@@ -7,7 +7,8 @@ public class CharacterHealthPresenter : CharacterHealthPresenterBase
 	public override int MaxHealth => model.MaxHealth;
 	public override int CurrentHealth => model.CurrentHealth;
 	public override int CurrentLevel => model.CurrentLevel;
-	
+	public override bool IsNeedHeal => model.IsNeedHeal;
+
 	public CharacterHealthPresenter(CharacterHealthViewBase view, CharacterHealthModelBase model) : base(view, model)
 	{
 	}

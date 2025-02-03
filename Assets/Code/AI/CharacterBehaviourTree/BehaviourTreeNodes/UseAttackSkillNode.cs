@@ -18,5 +18,9 @@ public class UseAttackSkillNode: IBehaviourTreeNode
 		
 		return NodeState.Success;
 	}
+
+	public void Dispose()
+	{
+	}
 }
 }

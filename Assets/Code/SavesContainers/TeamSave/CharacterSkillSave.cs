@@ -1,5 +1,8 @@
-﻿namespace Code.SavesContainers.TeamSave
+﻿using System;
+
+namespace Code.SavesContainers.TeamSave
 {
+[Serializable]
 public readonly struct CharacterSkillSave
 {
 	public string Id { get; }

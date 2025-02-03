@@ -4,13 +4,13 @@ using UnityEngine;
 namespace Code.GameConfig.ScriptableObjectParser.RemoteData.Skills
 {
 [Serializable]
-public struct SkillRemote
+internal struct SkillRemote
 {
 	[field: SerializeField]
-	public string SkillId { get; private set; }
+	internal string SkillId { get; private set; }
 
 	[field: SerializeField]
-	public SkillStatsRemote[] ImpactsByLevel { get; private set; }
+	internal SkillStatsRemote[] ImpactsByLevel { get; private set; }
 
 }
 }

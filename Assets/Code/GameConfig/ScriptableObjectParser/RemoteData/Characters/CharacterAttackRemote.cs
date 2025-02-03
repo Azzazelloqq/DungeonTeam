@@ -4,7 +4,7 @@ using UnityEngine;
 namespace Code.GameConfig.ScriptableObjectParser.RemoteData.Characters
 {
 [Serializable]
-public struct CharacterAttackRemote
+internal struct CharacterAttackRemote
 {
 	[field: SerializeField]
 	public int AttackLayer { get; private set; }

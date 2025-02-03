@@ -1,5 +1,4 @@
-﻿using System;
-using Code.Config;
+﻿using Code.Config;
 using UnityEngine;
 
 namespace Code.GameConfig.ScriptableObjectParser.RemoteData.Skills
@@ -8,6 +7,6 @@ namespace Code.GameConfig.ScriptableObjectParser.RemoteData.Skills
 public class SkillsRemotePage : ScriptableObject, IRemotePage
 {
 	[field: SerializeField]
-	public SkillsGroup[] Skills { get; private set; }
+	internal SkillsGroup[] Skills { get; private set; }
 }
 }

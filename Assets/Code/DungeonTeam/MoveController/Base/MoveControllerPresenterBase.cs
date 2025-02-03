@@ -14,6 +14,8 @@ public abstract class MoveControllerPresenterBase : Presenter<MoveControllerView
 	{
 	}
 
+	public abstract Vector2 Direction { get; }
+
 	internal abstract void OnPointerDown(Vector2 dragPosition);
 	internal abstract void OnDrag(Vector2 dragPosition);
 	internal abstract void OnPointerUp();

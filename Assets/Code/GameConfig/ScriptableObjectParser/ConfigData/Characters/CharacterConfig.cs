@@ -1,5 +1,4 @@
 ﻿using Code.GameConfig.ScriptableObjectParser.ConfigData.CharacterTeamPlace;
-using UnityEngine.Experimental.GlobalIllumination;
 
 namespace Code.GameConfig.ScriptableObjectParser.ConfigData.Characters
 {

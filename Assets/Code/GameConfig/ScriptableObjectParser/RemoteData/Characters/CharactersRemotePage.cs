@@ -7,6 +7,6 @@ namespace Code.GameConfig.ScriptableObjectParser.RemoteData.Characters
 public class CharactersRemotePage : ScriptableObjectConfig, IRemotePage
 {
 	[field: SerializeField]
-	public CharactersGroup[] CharactersGroups { get; private set; }
+	internal CharactersGroup[] CharactersGroups { get; private set; }
 }
 }

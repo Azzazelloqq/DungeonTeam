@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using Code.Skills.CharacterSkill.Core.EffectsCore;
 using Code.Skills.CharacterSkill.Core.SkillAffectable;
 using Code.Skills.CharacterSkill.Core.SkillAffectable.Base;
-using Code.Timer;
 using Code.Utils.AsyncUtils;
 
 namespace Code.Skills.CharacterSkill.Effects.Buff
@@ -18,7 +17,7 @@ public class PercentBuffAttackSkillEffect : IBuffSkillEffect
 	public int BuffDuration { get; }
 	public int BuffAmount { get; }
 	
-	private List<CancellationTokenSource> _buffCancellationTokenSources = new();
+	private readonly List<CancellationTokenSource> _buffCancellationTokenSources = new();
 	
 	public PercentBuffAttackSkillEffect(string effectId, int buffDuration, int buffAmount)
 	{

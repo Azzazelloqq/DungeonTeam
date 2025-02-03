@@ -11,9 +11,10 @@ public class CharacterHealthModel : CharacterHealthModelBase
 {
 	private readonly IInGameLogger _logger;
 	private readonly CharacterHealthByLevelConfig[] _healthByLevelConfig;
-	public override int CurrentLevel { get; protected set; }
-	public override int MaxHealth {get; protected set;}
-	public override int CurrentHealth {get; protected set;}
+	public sealed override int CurrentLevel { get; protected set; }
+	public override int MaxHealth { get; protected set;}
+	public sealed override int CurrentHealth { get; protected set;}
+	public override bool IsNeedHeal => CurrentHealth < MaxHealth;
 
 	public CharacterHealthModel(
 		IInGameLogger logger,

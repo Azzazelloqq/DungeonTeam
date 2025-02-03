@@ -131,9 +131,8 @@ public class SkillsPresenterFactory : ISkillsPresenterFactory
 		CancellationToken token)
 	{
 		var basicFireballResourceId = ResourceIdsContainer.CharacterSkills.BasicFireball;
-		var viewPrefab = await _resourceLoader.LoadResourceAsync<BasicSkillView>(basicFireballResourceId, token);
-		var instantiateViewAsyncOperation = await Object.InstantiateAsync(viewPrefab, parent).AsTask();
-		var basicFireballSkillView = instantiateViewAsyncOperation[0];
+		var basicFireballSkillView =
+			await _resourceLoader.LoadAndCreateAsync<BasicSkillView, Transform>(basicFireballResourceId, parent, token);
 
 		var skill = _skillsFactory.GetSkill<GenericDamageSkill>(skillId, characterId);
 		var model = new BasicFireballSkillModel(skillId);

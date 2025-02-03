@@ -8,18 +8,18 @@ namespace Code.GameConfig.ScriptableObjectParser.RemoteData.Characters
 public struct CharacterRemote
 {
 	[field: SerializeField]
-	public string Id { get; private set; }
+	internal string Id { get; private set; }
 	
 	[field: SerializeField]
-	public string[] Skills { get; private set; }
+	internal string[] Skills { get; private set; }
 	
 	[field: SerializeField]
-	public CharacterClassRemote CharacterClass { get; private set; }
+	internal CharacterClassRemote CharacterClass { get; private set; }
 	
 	[field: SerializeField]
-	public CharacterAttackRemote AttackInfo { get; private set; }
+	internal CharacterAttackRemote AttackInfo { get; private set; }
 	
 	[field: SerializeField]
-	public CharacterHealthByLevelRemote[] HealthByLevel { get; private set; }
+	internal CharacterHealthByLevelRemote[] HealthByLevel { get; private set; }
 }
 }

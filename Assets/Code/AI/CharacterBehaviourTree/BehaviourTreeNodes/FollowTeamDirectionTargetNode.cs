@@ -25,5 +25,9 @@ public class FollowTeamDirectionTargetNode : IBehaviourTreeNode
 
 		return NodeState.Running;
 	}
+
+	public void Dispose()
+	{
+	}
 }
 }

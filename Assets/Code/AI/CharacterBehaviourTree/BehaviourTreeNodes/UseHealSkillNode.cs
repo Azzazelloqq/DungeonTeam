@@ -18,5 +18,9 @@ public class UseHealSkillNode: IBehaviourTreeNode
 
 		return NodeState.Success;
 	}
+
+	public void Dispose()
+	{
+	}
 }
 }

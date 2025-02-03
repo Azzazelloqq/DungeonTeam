@@ -14,8 +14,8 @@ public abstract class MovementNavigatorModelBase : Model {
 	public abstract void InitializeTeamParentPosition(ModelVector3 viewTeamParentPosition);
 	public abstract void AddCharacter(ModelCharacterContainer character);
 	public abstract void RemoveCharacter(string characterId);
-	public abstract void StartMoveTeam();
-	public abstract void StopMoveTeamByDirection();
+	public abstract bool StartMoveTeam();
+	public abstract bool StopMoveTeamByDirection();
 	public abstract void MoveTeamByDirection(ModelVector2 direction, float deltaTime);
 }
 }

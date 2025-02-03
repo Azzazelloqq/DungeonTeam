@@ -15,10 +15,17 @@ MonoBehaviour:
   m_GroupName: CharacterSkills
   m_GUID: 70301b054fbacb44494d1a941f955ae1
   m_SerializeEntries:
+  - m_GUID: 42f8bb89d16bc804dbf4f0dfa97631c0
+    m_Address: FireballView
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - default
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 91256efa21e4f3b4f8707f4c892ff56f
     m_Address: BasicFireball
     m_ReadOnly: 0
-    m_SerializedLabels: []
+    m_SerializedLabels:
+    - default
     FlaggedDuringContentUpdateRestriction: 0
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: 25708fb5857cace4992a2e00f8e041e6, type: 2}

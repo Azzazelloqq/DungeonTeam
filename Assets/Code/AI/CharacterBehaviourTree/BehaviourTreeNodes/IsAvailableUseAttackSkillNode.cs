@@ -1,5 +1,4 @@
 ﻿using Code.AI.CharacterBehaviourTree.Agents;
-using Code.AI.CharacterBehaviourTree.Trees.Character;
 using Code.BehaviourTree;
 
 namespace Code.AI.CharacterBehaviourTree.BehaviourTreeNodes
@@ -16,6 +15,10 @@ public class IsAvailableUseAttackSkillNode : IBehaviourTreeNode
 	public NodeState Tick()
 	{
 		return _agent.IsAvailableUseAttackSkill() ? NodeState.Success : NodeState.Failure;
+	}
+
+	public void Dispose()
+	{
 	}
 }
 }

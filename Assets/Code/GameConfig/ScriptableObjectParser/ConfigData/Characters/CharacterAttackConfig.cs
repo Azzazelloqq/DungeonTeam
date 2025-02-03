@@ -10,7 +10,7 @@ public struct CharacterAttackConfig
 	public float AttackSkillDistance { get; }
 	public float AttackDistance { get; }
 	
-	public CharacterAttackConfig(int attackLayer, float viewDistance, float viewAngel, float attackSkillDistance, float attackDistance)
+	internal CharacterAttackConfig(int attackLayer, float viewDistance, float viewAngel, float attackSkillDistance, float attackDistance)
 	{
 		AttackLayer = attackLayer;
 		ViewDistance = viewDistance;
@@ -19,7 +19,7 @@ public struct CharacterAttackConfig
 		AttackDistance = attackDistance;
 	}
 
-	public CharacterAttackConfig(CharacterAttackRemote remoteConfig)
+	internal CharacterAttackConfig(CharacterAttackRemote remoteConfig)
 	{
 		AttackLayer = remoteConfig.AttackLayer;
 		ViewDistance = remoteConfig.ViewDistance;

@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Threading;
+using System.Threading.Tasks;
 using Code.DungeonTeam.MoveController.Base;
 using Code.Utils.ModelUtils;
 using UnityEngine;
@@ -10,6 +12,7 @@ public class VirtualJoystickPresenter : MoveControllerPresenterBase
 	public override event Action<Vector2> DirectionChanged;
 	public override event Action MoveStarted;
 	public override event Action MoveEnded;
+	public override Vector2 Direction => model.Direction.ToUnityVector();
 	
 	public VirtualJoystickPresenter(MoveControllerViewBase view, MoveControllerModelBase model) : base(view, model)
 	{
@@ -26,8 +29,9 @@ public class VirtualJoystickPresenter : MoveControllerPresenterBase
 
 	internal override void OnPointerDown(Vector2 dragPosition)
 	{
-		OnDrag(dragPosition);
 		MoveStarted?.Invoke();
+		
+		OnDrag(dragPosition);
 	}
 
 	internal override void OnDrag(Vector2 dragPosition)

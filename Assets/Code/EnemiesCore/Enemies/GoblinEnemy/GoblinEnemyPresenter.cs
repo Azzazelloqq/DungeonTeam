@@ -1,8 +1,12 @@
-﻿using Code.AI.CharacterBehaviourTree.Trees.Enemy;
+﻿using System.Threading;
+using System.Threading.Tasks;
+using Code.AI.CharacterBehaviourTree.Trees.Enemy;
 using Code.DetectionService;
 using Code.EnemiesCore.Enemies.GoblinEnemy.BaseMVP;
 using Code.Skills.CharacterSkill.Core.SkillAffectable;
+using Code.Timer;
 using Code.Utils.TransformUtils;
+using InGameLogger;
 using TickHandler;
 using UnityEngine;
 
@@ -10,19 +14,30 @@ namespace Code.EnemiesCore.Enemies.GoblinEnemy
 {
 public class GoblinEnemyPresenter : GoblinEnemyPresenterBase, IDetectable, IDamageable, IEnemyBehaviourTreeAgent
 {
-    private readonly ITickHandler _tickHandler;
-    private readonly IDetectionService _detectionService;
+    private const int TickTreeAgent = 200;
+    
     public Vector3 Position => view.transform.position;
     public bool IsDead => model.IsDead;
+
+    private readonly ITickHandler _tickHandler;
+    private readonly IDetectionService _detectionService;
+    private readonly EnemyBehaviourTree _enemyBehaviourTree;
+    private readonly ActionTimer _aiTickTimer;
+    private readonly IInGameLogger _logger;
 
     public GoblinEnemyPresenter(
         GoblinEnemyViewBase view,
         GoblinEnemyModelBase model,
         ITickHandler tickHandler,
-        IDetectionService detectionService) : base(view, model)
+        IDetectionService detectionService,
+        IInGameLogger logger) : base(view, model)
     {
         _tickHandler = tickHandler;
         _detectionService = detectionService;
+        _logger = logger;
+
+        _enemyBehaviourTree = new EnemyBehaviourTree(this);
+        _aiTickTimer = new ActionTimer(_logger);
     }
 
     protected override void OnInitialize()
@@ -30,6 +45,15 @@ public class GoblinEnemyPresenter : GoblinEnemyPresenterBase, IDetectable, IDama
         base.OnInitialize();
         
         _detectionService.RegisterObject(this);
+        _aiTickTimer.StartLoopTickTimer(TickTreeAgent, _enemyBehaviourTree.Tick);
+    }
+
+    protected override Task OnInitializeAsync(CancellationToken token)
+    {
+        _detectionService.RegisterObject(this);
+        _aiTickTimer.StartLoopTickTimer(TickTreeAgent, _enemyBehaviourTree.Tick);
+        
+        return base.OnInitializeAsync(token);
     }
 
     protected override void OnDispose()
@@ -37,6 +61,8 @@ public class GoblinEnemyPresenter : GoblinEnemyPresenterBase, IDetectable, IDama
         base.OnDispose();
         
         _detectionService.UnregisterObject(this);
+        _aiTickTimer.Dispose();
+        _enemyBehaviourTree.Dispose();
     }
 
     public Vector3 GetPosition()

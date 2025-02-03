@@ -1,35 +1,23 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace Code.SavesContainers.TeamSave
 {
-public readonly struct CharacterSave : IEquatable<CharacterSave>
+[Serializable]
+public class CharacterSave
 {
 	public string Id { get; }
-	public int CurrentHealth { get; }
-	public int CurrentLevel { get; }
-	public CharacterSkillSave[] Skills { get; }
+	public int CurrentHealth { get; internal set; }
+	public int CurrentLevel { get; internal set; }
+	public IReadOnlyList<CharacterSkillSave> ReadOnlySkills => Skills;	
+	internal List<CharacterSkillSave> Skills { get; }
 	
 	public CharacterSave(string id, int currentLevel, int currentHealth, CharacterSkillSave[] skills)
 	{
 		Id = id;
 		CurrentLevel = currentLevel;
 		CurrentHealth = currentHealth;
-		Skills = skills;
-	}
-
-	public bool Equals(CharacterSave other)
-	{
-		return Id == other.Id;
-	}
-
-	public override bool Equals(object obj)
-	{
-		return obj is CharacterSave other && Equals(other);
-	}
-
-	public override int GetHashCode()
-	{
-		return HashCode.Combine(Id, CurrentHealth, CurrentLevel);
+		Skills = new List<CharacterSkillSave>(skills);
 	}
 }
 }

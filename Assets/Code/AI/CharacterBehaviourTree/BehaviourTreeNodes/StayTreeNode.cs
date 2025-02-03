@@ -3,7 +3,7 @@ using Code.BehaviourTree;
 
 namespace Code.AI.CharacterBehaviourTree.BehaviourTreeNodes
 {
-public class StayTreeNode : IBehaviourTree
+public class StayTreeNode : IBehaviourTreeNode
 {
 	private readonly IStayAgent _agent;
 
@@ -12,9 +12,15 @@ public class StayTreeNode : IBehaviourTree
 		_agent = agent;
 	}
 	
-	public void Tick()
+	public NodeState Tick()
 	{
 		_agent.Stay();
+
+		return NodeState.Running;
+	}
+
+	public void Dispose()
+	{
 	}
 }
 }

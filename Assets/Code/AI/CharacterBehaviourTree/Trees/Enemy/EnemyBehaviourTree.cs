@@ -1,5 +1,4 @@
 ﻿using Code.AI.CharacterBehaviourTree.BehaviourTreeNodes;
-using Code.AI.CharacterBehaviourTree.Trees.Character;
 using Code.BehaviourTree;
 using Code.BehaviourTree.Nodes;
 
@@ -27,6 +26,10 @@ public class EnemyBehaviourTree : IBehaviourTree
 		});
 	}
 
+	public void Dispose()
+	{
+	}
+
 	public void Tick()
 	{
 		_root.Tick();
@@ -36,7 +39,7 @@ public class EnemyBehaviourTree : IBehaviourTree
 	{
 		var useAttackSkillNode = InitUseAttackSkillNode(agent);
 		var findTargetNode = new FindEnemyTargetInSightNode(agent);
-		var isEnemyInAttackRange = new IsEnemyInAttackRangeNode(agent);
+		var isEnemyInAttackRange = new TrackEnemyInAttackRangeNode(agent);
 		var attackEnemy = new AttackEnemyNode(agent);
 		
 		var attackSelector = new SelectorNode(new[]{

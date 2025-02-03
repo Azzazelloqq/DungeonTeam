@@ -4,7 +4,8 @@ namespace Code.AI.CharacterBehaviourTree.Agents
 {
 public interface IFollowToTeamDirectionAgent : IBehaviourTreeAgent
 {
-    public void FollowToDirection();
 	public bool IsNeedFollowToDirection();
+	public void FollowToDirection();
+	public void ReturnToTeam();
 }
 }
