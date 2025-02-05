@@ -11,7 +11,6 @@ public abstract class TeamCharacterModelBase : Model
 	public abstract bool IsTargetInAttackRange { get; protected set; }
 	public abstract float ViewAngel { get; }
 	public abstract float ViewDistance { get; }
-	public abstract int AttackLayer { get; }
 	public abstract bool IsTargetInSkillAttackRange { get; protected set; }
 	public abstract bool IsTeamMoving { get; protected set; }
 	public abstract string CharacterId { get; }

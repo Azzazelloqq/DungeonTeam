@@ -4,15 +4,15 @@ public struct OverTimeHealEffectConfig : IEffectConfig
 {
 	public string EffectId { get; }
 	public int TotalHeal { get; }
-	public int IntervalPerMilliseconds { get; }
-	public int DurationPerMilliseconds { get; }
+	public int TimeBetweenHeal { get; }
+	public int EffectDuration { get; }
 
-	public OverTimeHealEffectConfig(string effectId, int totalHeal, int intervalPerMilliseconds, int durationPerMilliseconds)
+	public OverTimeHealEffectConfig(string effectId, int totalHeal, int timeBetweenHeal, int effectDuration)
 	{
 		EffectId = effectId;
 		TotalHeal = totalHeal;
-		IntervalPerMilliseconds = intervalPerMilliseconds;
-		DurationPerMilliseconds = durationPerMilliseconds;
+		TimeBetweenHeal = timeBetweenHeal;
+		EffectDuration = effectDuration;
 	}
 }
 }

@@ -57,8 +57,8 @@ public class DetectionService : IDetectionService
     }
 
     /// <inheritdoc/>
-    public bool DetectObjectsInView(Vector3 observerPosition, Vector3 observerForward, float viewAngle,
-        float viewDistance, LayerMask targetLayer, out IEnumerable<IDetectable> detectables)
+    public IReadOnlyList<IDetectable> DetectObjectsInView(Vector3 observerPosition, Vector3 observerForward, float viewAngle,
+        float viewDistance, LayerMask obstacleLayer)
     {
 		if (_detectedObjectsCash == null)
 		{
@@ -103,8 +103,8 @@ public class DetectionService : IDetectionService
                         continue;
                     }
 
-                    if (Physics.Raycast(observerPosition, directionToObject.normalized,
-                            distanceToObject, targetLayer))
+                    if (!Physics.Raycast(observerPosition, directionToObject.normalized,
+                            distanceToObject, obstacleLayer))
                     {
                         _detectedObjectsCash.Add(obj);
                     }
@@ -112,8 +112,7 @@ public class DetectionService : IDetectionService
             }
         }
 
-        detectables = _detectedObjectsCash;
-        return _detectedObjectsCash.Count > 0;
+        return _detectedObjectsCash;
     }
 
     /// <summary>

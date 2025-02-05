@@ -6,6 +6,7 @@ using Code.BehaviourTree;
 using Code.DetectionService;
 using Code.DungeonTeam.CharacterHealth.Base;
 using Code.DungeonTeam.TeamCharacter.Base;
+using Code.EnemiesCore.Enemies.Base;
 using Code.GameConfig.ScriptableObjectParser.ConfigData.CharacterTeamPlace;
 using Code.Skills.CharacterSkill.Core.SkillAffectable;
 using Code.Skills.CharacterSkill.Core.SkillAffectable.Base;
@@ -41,6 +42,7 @@ public class PlayerTeamCharacterPresenter : TeamCharacterPresenterBase, ICharact
 	private readonly SkillPresenterBase[] _attackSkills;
 	private readonly SkillPresenterBase[] _healSkills;
 	private readonly CharacterTeamMoveConfigPage _moveConfig;
+	private readonly LayerMask _obstacleLayerMask;
 	private readonly Func<IHealable> _getNeedToHealCharacter;
 	private readonly IBehaviourTree _characterBehaviourTree;
 	private readonly ActionTimer _aiTickTimer;
@@ -59,6 +61,7 @@ public class PlayerTeamCharacterPresenter : TeamCharacterPresenterBase, ICharact
 		SkillPresenterBase[] attackSkills,
 		SkillPresenterBase[] healSkills,
 		CharacterTeamMoveConfigPage moveConfig,
+		LayerMask obstacleLayerMask,
 		Func<IHealable> getNeedToHealCharacter) : base(view,
 		model)
 	{
@@ -68,6 +71,7 @@ public class PlayerTeamCharacterPresenter : TeamCharacterPresenterBase, ICharact
 		_attackSkills = attackSkills;
 		_healSkills = healSkills;
 		_moveConfig = moveConfig;
+		_obstacleLayerMask = obstacleLayerMask;
 		_characterHealth = health;
 		_getNeedToHealCharacter = getNeedToHealCharacter;
 		_characterBehaviourTree = new CharacterBehaviourTree(this);
@@ -79,9 +83,9 @@ public class PlayerTeamCharacterPresenter : TeamCharacterPresenterBase, ICharact
         base.OnInitialize();
         
         _detectionService.RegisterObject(this);
-		_aiTickTimer.StartLoopTickTimer(TickTreeAgent, _characterBehaviourTree.Tick);
-		
 		view.UpdateMoveSpeed(_moveConfig.TeamSpeed);
+		
+		_aiTickTimer.StartLoopTickTimer(TickTreeAgent, _characterBehaviourTree.Tick);
 	}
 
 	protected override async Task OnInitializeAsync(CancellationToken token)
@@ -89,8 +93,9 @@ public class PlayerTeamCharacterPresenter : TeamCharacterPresenterBase, ICharact
 		await base.OnInitializeAsync(token);
 		
 		_detectionService.RegisterObject(this);
-		_aiTickTimer.StartLoopTickTimer(TickTreeAgent, _characterBehaviourTree.Tick);
 		view.UpdateMoveSpeed(_moveConfig.TeamSpeed);
+		
+		_aiTickTimer.StartLoopTickTimer(TickTreeAgent, _characterBehaviourTree.Tick);
 	}
 
 	protected override void OnDispose()
@@ -217,6 +222,12 @@ public class PlayerTeamCharacterPresenter : TeamCharacterPresenterBase, ICharact
 
 	public void ReturnToTeam()
 	{
+		if (_teamMoveTarget == null)
+		{
+			_logger.LogError("Can't return to team, because team target is null");
+			return;
+		}
+		
 		var targetPosition = _teamMoveTarget.position;
 		view.UpdatePointToFollow(targetPosition);
 	}
@@ -254,22 +265,23 @@ public class PlayerTeamCharacterPresenter : TeamCharacterPresenterBase, ICharact
 
 		var viewAngel = model.ViewAngel;
 		var viewDistance = model.ViewDistance;
-		var attackLayer = model.AttackLayer;
 		
-		var isAnyDetected =
-			_detectionService.DetectObjectsInView(heroPosition, heroForward, viewAngel, viewDistance, attackLayer,
-				out var detectedObjects);
+		var detectedObjects =
+			_detectionService.DetectObjectsInView(heroPosition, heroForward, viewAngel, viewDistance, _obstacleLayerMask);
 
-		if (!isAnyDetected)
+		if (detectedObjects.Count <= 0)
 		{
-			_currentTargetToAttack = null;
-			
 			return false;
 		}
 		
 		IDetectable closestEnemy = null;
 		foreach (var detectable in detectedObjects)
 		{
+			if (detectable is not IEnemy)
+			{
+				continue;
+			}
+			
 			if (closestEnemy == null)
 			{
 				closestEnemy = detectable;
@@ -283,6 +295,11 @@ public class PlayerTeamCharacterPresenter : TeamCharacterPresenterBase, ICharact
 			{
 				closestEnemy = detectable;
 			}
+		}
+
+		if (closestEnemy == null)
+		{
+			return false;
 		}
 
 		_currentTargetToAttack = closestEnemy;

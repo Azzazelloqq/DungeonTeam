@@ -74,7 +74,7 @@ internal class SkillsFactory : ISkillsFactory
 
 		if(typeof(GenericDamageSkill) == skillType)
 		{
-			var skillConfig = GetSkillStatsByCharacterId(characterId, SkillType.Heal, skillId);
+			var skillConfig = GetSkillStatsByCharacterId(characterId, SkillType.Attack, skillId);
 			var effects = _skillEffectsFactory.GetSkillEffects(skillConfig);
 			var cooldownPerMilliseconds = skillConfig.CooldownPerMilliseconds;
 			var chargeTimePerMilliseconds = skillConfig.ChargeTimePerMilliseconds;

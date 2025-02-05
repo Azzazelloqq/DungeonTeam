@@ -64,7 +64,7 @@ public class BasicFireballSkillPresenter : SkillPresenterBase
 			return;
 		}
 		
-		if (_fireballSkill.IsReadyToActivate)
+		if (!_fireballSkill.IsReadyToActivate)
 		{
 			return;
 		}

@@ -5,7 +5,6 @@ namespace Code.GameConfig.ScriptableObjectParser.ConfigData.Characters
 {
 public readonly struct CharacterAttackConfig
 {
-	public int AttackLayer { get; }
 	public float ViewDistance { get; }
 	public float ViewAngel { get; }
 	public float AttackSkillDistance { get; }
@@ -13,14 +12,12 @@ public readonly struct CharacterAttackConfig
 	public Dictionary<int, CharacterAttack> AttackByLevels { get; }
 	
 	internal CharacterAttackConfig(
-		int attackLayer,
 		float viewDistance,
 		float viewAngel,
 		float attackSkillDistance,
 		float attackDistance,
 		CharacterAttackByLevelRemote[] attackByLevels)
 	{
-		AttackLayer = attackLayer;
 		ViewDistance = viewDistance;
 		ViewAngel = viewAngel;
 		AttackSkillDistance = attackSkillDistance;
@@ -38,7 +35,6 @@ public readonly struct CharacterAttackConfig
 
 	internal CharacterAttackConfig(CharacterAttackRemote remoteConfig)
 	{
-		AttackLayer = remoteConfig.AttackLayer;
 		ViewDistance = remoteConfig.ViewDistance;
 		ViewAngel = remoteConfig.ViewAngel;
 		AttackSkillDistance = remoteConfig.AttackSkillDistance;

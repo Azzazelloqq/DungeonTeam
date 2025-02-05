@@ -18,7 +18,6 @@ public class TeamCharacterModel : TeamCharacterModelBase
 	public override bool IsTargetInAttackRange { get; protected set; }
 	public override bool IsTargetInSkillAttackRange { get; protected set; }
 	public override bool IsTeamMoving { get; protected set; }
-	public override int AttackLayer { get; }
 	public override float ViewDistance { get; }
 	public override float ViewAngel { get; }
 	public override string CharacterId { get; }
@@ -43,7 +42,6 @@ public class TeamCharacterModel : TeamCharacterModelBase
 		HeroClass = heroClass;
 		_logger = logger;
 		_currentLevel = currentLevel;
-		AttackLayer = attackConfig.AttackLayer;
 		ViewDistance = attackConfig.ViewDistance;
 		ViewAngel = attackConfig.ViewAngel;
 		_attackSkillDistance = attackConfig.AttackSkillDistance;
@@ -90,15 +88,9 @@ public class TeamCharacterModel : TeamCharacterModelBase
 	{
 		var distanceToAttackTarget = ModelVector3.Distance(currentPosition, targetPosition);
 
-		if (distanceToAttackTarget <= _attackDistance)
-		{
-			IsTargetInAttackRange = true;
-		}
+		IsTargetInAttackRange = distanceToAttackTarget <= _attackDistance;
 
-		if (distanceToAttackTarget <= _attackSkillDistance)
-		{
-			IsTargetInSkillAttackRange = true;
-		}
+		IsTargetInSkillAttackRange = distanceToAttackTarget <= _attackSkillDistance;
 	}
 
 	public override bool TryAttack()

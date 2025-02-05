@@ -7,9 +7,6 @@ namespace Code.GameConfig.ScriptableObjectParser.RemoteData.Characters
 internal struct CharacterAttackRemote
 {
 	[field: SerializeField]
-	public int AttackLayer { get; private set; }
-
-	[field: SerializeField]
 	public float ViewDistance { get; private set; }
 
 	[field: SerializeField]

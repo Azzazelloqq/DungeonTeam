@@ -19,12 +19,13 @@ public class ActionTimer : IDisposable
 	
     public void Dispose()
 	{
-		if (!_cancelTimerTokenSource.IsCancellationRequested)
+		var isCancellationRequested = _cancelTimerTokenSource == null || _cancelTimerTokenSource.IsCancellationRequested;
+		if (!isCancellationRequested)
 		{
 			_cancelTimerTokenSource.Cancel();
 		}
 		
-		_cancelTimerTokenSource.Dispose();
+		_cancelTimerTokenSource?.Dispose();
         
         IsInProgress = false;
     }

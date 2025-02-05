@@ -5,7 +5,7 @@
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "50779bf2c98b602126f4c8c49b865a7a6ead7631"
+      "hash": "26cd27d6ecbed7c3e44ca38793a15a1c158b14e9"
     },
     "com.azzazello.localsavesystem": {
       "version": "https://github.com/Azzazelloqq/LocalSave.git",
@@ -37,7 +37,7 @@
       "dependencies": {
         "com.azzazello.disposable": "https://github.com/Azzazelloqq/Disposable.git#v1.0.1"
       },
-      "hash": "13b22ccb2a2e71e7c999ca06719268249f56b5c7"
+      "hash": "5ec8eb80abb44990a91615fbc8dd1708da3baeeb"
     },
     "com.azzazello.resourceloader": {
       "version": "https://github.com/Azzazelloqq/ResourceLoader.git",

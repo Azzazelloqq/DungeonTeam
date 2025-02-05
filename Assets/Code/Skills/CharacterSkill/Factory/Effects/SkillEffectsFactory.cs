@@ -67,8 +67,8 @@ internal class SkillEffectsFactory : ISkillEffectsFactory
 
 		if (effectConfig is OverTimeDamageEffectConfig overTimeDamageEffectConfig)
 		{
-			return new DamageOverTimeSkillEffect(effectId, _logger, overTimeDamageEffectConfig.DurationPerMilliseconds,
-				overTimeDamageEffectConfig.TotalDamage, overTimeDamageEffectConfig.IntervalPerMilliseconds);
+			return new DamageOverTimeSkillEffect(effectId, _logger, overTimeDamageEffectConfig.EffectDuration,
+				overTimeDamageEffectConfig.TotalDamage, overTimeDamageEffectConfig.TimeBetweenDamage);
 		}
 
 		if (effectConfig is InstantHealEffectConfig instantHealEffectConfig)
@@ -78,8 +78,8 @@ internal class SkillEffectsFactory : ISkillEffectsFactory
 
 		if (effectConfig is OverTimeHealEffectConfig overTimeHealEffectConfig)
 		{
-			return new HealOverTimerSkillEffect(effectId, _logger, overTimeHealEffectConfig.DurationPerMilliseconds,
-				overTimeHealEffectConfig.TotalHeal, overTimeHealEffectConfig.IntervalPerMilliseconds);
+			return new HealOverTimerSkillEffect(effectId, _logger, overTimeHealEffectConfig.EffectDuration,
+				overTimeHealEffectConfig.TotalHeal, overTimeHealEffectConfig.TimeBetweenHeal);
 		}
 		
 		_logger.LogError($"Effect with id {effectId} does not have implementation");

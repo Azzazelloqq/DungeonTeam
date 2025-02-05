@@ -29,6 +29,7 @@ public class DamageOverTimeSkillEffect : IDamageSkillEffect
 		_logger = logger;
 		_timeBetweenDamage = timeBetweenDamage;
 		TotalDamageAmount = totalTotalDamage;
+		
 		_damageByTick = totalTotalDamage / (durationInMilliseconds / timeBetweenDamage);
 	}
 	

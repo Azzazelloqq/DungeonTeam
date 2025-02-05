@@ -5,10 +5,12 @@ using System.Threading.Tasks;
 using Code.Config;
 using Code.GameConfig.ScriptableObjectParser.ConfigData.Characters;
 using Code.GameConfig.ScriptableObjectParser.ConfigData.CharacterTeamPlace;
+using Code.GameConfig.ScriptableObjectParser.ConfigData.DetectConfig;
 using Code.GameConfig.ScriptableObjectParser.ConfigData.Effect;
 using Code.GameConfig.ScriptableObjectParser.ConfigData.Skills;
 using Code.GameConfig.ScriptableObjectParser.RemoteData.Characters;
 using Code.GameConfig.ScriptableObjectParser.RemoteData.CharacterTeamPlace;
+using Code.GameConfig.ScriptableObjectParser.RemoteData.DetectPage;
 using Code.GameConfig.ScriptableObjectParser.RemoteData.Skills;
 using Code.GameConfig.ScriptableObjectParser.RemoteData.Skills.Effect;
 using Code.Utils.FloatUtils;
@@ -66,6 +68,8 @@ public class ScriptableObjectConfigParser : IConfigParser
 				return ParseSkillRemote(skillRemote);
 			case CharacterTeamPlacesRemotePage characterTeamPlaceRemote:
 				return ParseCharacterTeamPlace(characterTeamPlaceRemote);
+			case DetectRemotePage detectRemotePage:
+				return ParseDetectPage(detectRemotePage);
 			default:
 				_logger.LogException(new Exception($"Need add parse for {remotePage.GetType().Name}"));
 				return null;
@@ -165,6 +169,15 @@ public class ScriptableObjectConfigParser : IConfigParser
 
 		return skillsConfigPage;
 	}
+	
+	private IConfigPage ParseDetectPage(DetectRemotePage detectRemotePage)
+	{
+		var obstacleLayer = detectRemotePage.ObstacleLayer;
+
+		var detectConfigPage = new DetectConfigPage(obstacleLayer);
+		
+		return detectConfigPage;
+	}
 
 	private IEffectConfig[] ParseEffects(SkillEffectRemote[] effectsRemote)
 	{
@@ -198,9 +211,9 @@ public class ScriptableObjectConfigParser : IConfigParser
 			case EffectType.InstantBuff:
 				return new PercentBuffAttackEffectConfig(effectId, effectImpactRemote, effectDurationRemote);
 			case EffectType.OverTimeHeal:
-				return new OverTimeHealEffectConfig(effectId, effectImpactRemote, effectDurationRemote, effectIntervalRemote);
+				return new OverTimeHealEffectConfig(effectId, effectImpactRemote, effectIntervalRemote, effectDurationRemote);
 			case EffectType.OverTimeDamage:
-				return new OverTimeDamageEffectConfig(effectId, effectImpactRemote, effectDurationRemote, effectIntervalRemote);
+				return new OverTimeDamageEffectConfig(effectId, effectImpactRemote, effectIntervalRemote, effectDurationRemote);
 			default:
 				throw new ArgumentOutOfRangeException();
 		}

@@ -18,3 +18,5 @@ MonoBehaviour:
     type: 2}
   <CharactersRemotePage>k__BackingField: {fileID: 11400000, guid: c9265010538d15f42b8bd8394450a2ca,
     type: 2}
+  <DetectRemotePage>k__BackingField: {fileID: 11400000, guid: dda0d51b9895c0748b00ac5f3ecac925,
+    type: 2}

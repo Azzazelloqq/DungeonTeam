@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Code.Config;
@@ -15,6 +16,8 @@ using Code.DungeonTeam.TeamCharacter.Base;
 using Code.DungeonTeam.TeamCoordinator.Base;
 using Code.GameConfig.ScriptableObjectParser.ConfigData.Characters;
 using Code.GameConfig.ScriptableObjectParser.ConfigData.CharacterTeamPlace;
+using Code.GameConfig.ScriptableObjectParser.ConfigData.DetectConfig;
+using Code.GameConfig.ScriptableObjectParser.RemoteData.DetectPage;
 using Code.Generated.Addressables;
 using Code.MovementService;
 using Code.SavesContainers.TeamSave;
@@ -27,6 +30,7 @@ using InGameLogger;
 using LocalSaveSystem;
 using ResourceLoader;
 using TickHandler;
+using Unity.Collections;
 using UnityEngine;
 
 namespace Code.DungeonTeam.TeamCoordinator
@@ -77,10 +81,15 @@ public class TeamCoordinatorPresenter : TeamCoordinatorPresenterBase
 	protected override async Task OnInitializeAsync(CancellationToken token) {
 		_moveController = await InitMoveControllerAsync(token);
 
-		var team = await InitTeamCharactersAsync(token);
+		var team = await CreateTeamCharactersAsync(token);
 		_teamMovementNavigator = await InitializeMovementNavigatorAsync(team, token);
 		compositeDisposable.AddDisposable(_teamMovementNavigator);
 		
+		foreach (var teamCharacter in team)
+		{
+			await teamCharacter.InitializeAsync(token);
+		}
+
 		_temCharacters.AddRange(team);
 	}
 
@@ -117,7 +126,7 @@ public class TeamCoordinatorPresenter : TeamCoordinatorPresenterBase
 		return teamMovementNavigator;
 	}
 
-	private async Task<List<TeamCharacterPresenterBase>> InitTeamCharactersAsync(CancellationToken token)
+	private async Task<List<TeamCharacterPresenterBase>> CreateTeamCharactersAsync(CancellationToken token)
 	{
 		var playerTeamSave = _saveSystem.Load<PlayerTeamSave>();
 		var selectedPlayerTeam = playerTeamSave.SelectedPlayerTeam;
@@ -126,7 +135,7 @@ public class TeamCoordinatorPresenter : TeamCoordinatorPresenterBase
 		foreach (var characterSave in selectedPlayerTeam.Values)
 		{
 			var characterSaveId = characterSave.Id;
-			var character = await InitTeamCharacterAsync(characterSaveId, characterSave, token);
+			var character = await CreateTeamCharacterAsync(characterSaveId, characterSave, token);
 			
 			teamPresenters.Add(character);
 			
@@ -158,7 +167,7 @@ public class TeamCoordinatorPresenter : TeamCoordinatorPresenterBase
 		return moveController;
 	}
 	
-	private async Task<TeamCharacterPresenterBase> InitTeamCharacterAsync(
+	private async Task<TeamCharacterPresenterBase> CreateTeamCharacterAsync(
 		string characterId,
 		CharacterSave characterSave,
 		CancellationToken token)
@@ -182,7 +191,10 @@ public class TeamCoordinatorPresenter : TeamCoordinatorPresenterBase
 		var attackSkills = attackSkillsGetTask.Result;
 		var characterHealth = characterHealthTask.Result;
 		var characterTeamMoveConfigPage = _config.GetConfigPage<CharacterTeamMoveConfigPage>();
-
+		
+		var detectConfigPage = _config.GetConfigPage<DetectConfigPage>();
+		var detectLayerMask = detectConfigPage.DetectLayerMask;
+		
 		var characterLevel = characterSave.CurrentLevel;
 		
 		var characterModel = new TeamCharacterModel(_logger, characterId, characterClass, attackConfig, characterLevel);
@@ -196,9 +208,8 @@ public class TeamCoordinatorPresenter : TeamCoordinatorPresenterBase
 			attackSkills,
 			healSkills,
 			characterTeamMoveConfigPage,
+			detectLayerMask,
 			GetNeedToHealAnyCharacter);
-		
-		await character.InitializeAsync(token);
 		
 		return character;
 	}

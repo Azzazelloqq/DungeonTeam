@@ -16,12 +16,16 @@ public class BasicSkillView : SkillViewBase
 	private Transform _fireballsParent;
 
 	[SerializeField]
+	private ParticleSystem _chargeSkillEffect;
+	
+	[SerializeField]
 	private ParticleSystem _activateSkillEffect;
 
 	public override Vector3 Position => transform.position;
 
 	public override void ActivateSkill()
 	{
+		_activateSkillEffect.Play();
 	}
 
 	public override void OnTargetReached()
@@ -42,10 +46,12 @@ public class BasicSkillView : SkillViewBase
 
 	public override void CancelChargeSkill()
 	{
+		_chargeSkillEffect.Stop();
 	}
 
 	private void PlayChargeSkillEffect()
 	{
+		_chargeSkillEffect.Play();
 	}
 }
 }

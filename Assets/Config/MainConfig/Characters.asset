@@ -51,7 +51,8 @@ MonoBehaviour:
       - <Level>k__BackingField: 0
         <Health>k__BackingField: 70
     - <Id>k__BackingField: Mage
-      <Skills>k__BackingField: []
+      <Skills>k__BackingField:
+      - basicFireballAttackSkill
       <CharacterClass>k__BackingField: 1
       <AttackInfo>k__BackingField:
         <AttackLayer>k__BackingField: 2

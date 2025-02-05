@@ -4,19 +4,19 @@ public struct OverTimeDamageEffectConfig : IEffectConfig
 {
 	public string EffectId { get; }
 	public int TotalDamage { get;}
-	public int IntervalPerMilliseconds { get; }
-	public int DurationPerMilliseconds { get; }
+	public int TimeBetweenDamage { get; }
+	public int EffectDuration { get; }
 
 	public OverTimeDamageEffectConfig(
 		string effectId,
 		int totalDamage,
-		int intervalPerMilliseconds,
-		int durationPerMilliseconds)
+		int timeBetweenDamage,
+		int effectDuration)
 	{
 		EffectId = effectId;
 		TotalDamage = totalDamage;
-		IntervalPerMilliseconds = intervalPerMilliseconds;
-		DurationPerMilliseconds = durationPerMilliseconds;
+		TimeBetweenDamage = timeBetweenDamage;
+		EffectDuration = effectDuration;
 	}
 }
 }

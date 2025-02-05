@@ -17,6 +17,7 @@ using Code.SavesContainers.Factory;
 using Code.SavesContainers.TeamSave;
 using Code.UI.UIContext;
 using Code.Utils.AsyncUtils;
+using Disposable;
 using InGameLogger;
 using LocalSaveSystem;
 using ResourceLoader.AddressableResourceLoader;
@@ -26,7 +27,8 @@ using UnityEngine;
 
 namespace Code
 {
-public class GameRoot : MonoBehaviour
+[DefaultExecutionOrder(-1000)]
+public class GameRoot : MonoBehaviourDisposable
 {
 	private const string SavesFolderName = "Saves";
 	private const float DetectionCellSize = 30;
@@ -81,12 +83,20 @@ public class GameRoot : MonoBehaviour
 		}
 	}
 
-	private void OnDestroy() {
+	private void OnApplicationQuit()
+	{
 		Dispose();
 	}
 
-	private void Dispose()
+	private void OnDestroy() 
 	{
+		Dispose();
+	}
+
+	protected override void Dispose(bool disposing)
+	{
+		base.Dispose(disposing);
+		
 		_turnOffGameCancellationTokenSource.CancelAndDispose();
 		_dispatcherBehaviour.Dispose();
 		_teamCoordinator.Dispose();
@@ -143,11 +153,13 @@ public class GameRoot : MonoBehaviour
 		var charactersRemotePage = _scriptableObjectConfig.CharactersRemotePage;
 		var skillsRemotePage = _scriptableObjectConfig.SkillsRemotePage;
 		var characterTeamPlacesRemotePage = _scriptableObjectConfig.CharacterTeamPlacesRemotePage;
+		var detectRemotePage = _scriptableObjectConfig.DetectRemotePage;
 		
 		IRemotePage[] remoteDatas = {
 			charactersRemotePage,
 			skillsRemotePage,
 			characterTeamPlacesRemotePage,
+			detectRemotePage,
 		};
 
 		var configParser = new ScriptableObjectConfigParser(remoteDatas, _logger);
