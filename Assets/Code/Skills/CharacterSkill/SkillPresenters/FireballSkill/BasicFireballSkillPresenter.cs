@@ -1,4 +1,6 @@
 ﻿using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 using Code.MovementService;
 using Code.Skills.CharacterSkill.Core.SkillAffectable;
 using Code.Skills.CharacterSkill.Core.SkillAffectable.Base;
@@ -18,12 +20,12 @@ public class BasicFireballSkillPresenter : SkillPresenterBase
 	public override bool IsReadyToActivate => _fireballSkill.IsReadyToActivate;
 
 	private readonly ITickHandler _tickHandler;
-    private readonly IInGameLogger _logger;
-	private readonly ISkill _fireballSkill;
+	private readonly IInGameLogger _logger;
 	private readonly List<FireballPresenterBase> _fireballPresentersCash = new();
+	private readonly Queue<FireballPresenterBase> _chargingFireballs = new();
 	private readonly IMovementService _movementService;
-	private FireballPresenterBase _chargedFireball;
 	private IDamageable _currentTarget;
+	private ISkill _fireballSkill;
 
 	public BasicFireballSkillPresenter(
 		SkillViewBase view,
@@ -33,10 +35,17 @@ public class BasicFireballSkillPresenter : SkillPresenterBase
 		ISkill fireballSkill,
 		IMovementService movementService) : base(view, skillModel)
     {
-        _tickHandler = tickHandler;
-        _logger = logger;
+		_tickHandler = tickHandler;
+		_logger = logger;
 		_fireballSkill = fireballSkill;
 		_movementService = movementService;
+	}
+
+	protected override async Task OnInitializeAsync(CancellationToken token)
+	{
+		await base.OnInitializeAsync(token);
+		
+		_fireballSkill.ChargeCompleted += OnChargeCompleted;
 	}
 
 	protected override void OnInitialize()
@@ -74,17 +83,27 @@ public class BasicFireballSkillPresenter : SkillPresenterBase
 		var fireball = CreateFireball();
 		fireball.ChargeFireball();
 		
+		_chargingFireballs.Enqueue(fireball);
 		_fireballSkill.StartChargeSkill();
 		model.ChargeSkill();
 		view.ChargeSkill(); 
 	}
+
+	public override void UpdateSkill(ISkill skill)
+	{
+		_fireballSkill = skill;
+	}
 	
 	private void OnChargeCompleted()
 	{
+		view.OnChargeCompleted();
+		model.OnChargeCompleted();
+		
 		model.ActivateSkill();
 		view.ActivateSkill();
 		
-		_chargedFireball.Activate(_currentTarget, OnFireballReachTarget);
+		var fireballPresenterBase = _chargingFireballs.Dequeue();
+		fireballPresenterBase.Activate(_currentTarget, OnFireballReachTarget);
 	}
 
 	private void OnFireballReachTarget(IDamageable target)

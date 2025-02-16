@@ -17,6 +17,7 @@ public abstract class TeamCharacterModelBase : Model
 	public abstract CharacterClass HeroClass { get; }
 	public abstract int CurrentLevel { get; }
 	public abstract int AttackDamage { get; }
+	public abstract string[] Skills { get; }
 
 	public abstract void MoveToTarget();
 	public abstract void StopMoveToTarget();

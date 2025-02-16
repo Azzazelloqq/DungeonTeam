@@ -24,6 +24,14 @@ public class BasicFireballSkillModel : SkillModelBase
 
 	public override void ActivateSkill()
 	{
+		if (IsCharging)
+		{
+			return;
+		}
+	}
+
+	public override void OnChargeCompleted()
+	{
 		IsCharging = false;
 	}
 }

@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace Code.MovementService
 {
-internal class PhysicsMovementTask
+internal readonly struct PhysicsMovementTask
 {
 	public Rigidbody Rigidbody { get; }
 	public ReadOnlyTransform Target { get; }

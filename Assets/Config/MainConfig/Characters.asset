@@ -15,6 +15,7 @@ MonoBehaviour:
   <SkillsRemotePage>k__BackingField: {fileID: 0}
   <CharacterTeamPlacesRemotePage>k__BackingField: {fileID: 0}
   <CharactersRemotePage>k__BackingField: {fileID: 0}
+  <DetectRemotePage>k__BackingField: {fileID: 0}
   <CharactersGroups>k__BackingField:
   - <CharactersGroupId>k__BackingField: group1
     <Characters>k__BackingField:
@@ -22,11 +23,10 @@ MonoBehaviour:
       <Skills>k__BackingField: []
       <CharacterClass>k__BackingField: 4
       <AttackInfo>k__BackingField:
-        <AttackLayer>k__BackingField: 2
         <ViewDistance>k__BackingField: 15
         <ViewAngel>k__BackingField: 70
         <AttackSkillDistance>k__BackingField: 0
-        <AttackDistance>k__BackingField: 1
+        <AttackDistance>k__BackingField: 3
         <AttackByLevels>k__BackingField:
         - <Level>k__BackingField: 0
           <ReloadAttackPerSeconds>k__BackingField: 1
@@ -38,11 +38,10 @@ MonoBehaviour:
       <Skills>k__BackingField: []
       <CharacterClass>k__BackingField: 5
       <AttackInfo>k__BackingField:
-        <AttackLayer>k__BackingField: 2
         <ViewDistance>k__BackingField: 15
         <ViewAngel>k__BackingField: 70
         <AttackSkillDistance>k__BackingField: 0
-        <AttackDistance>k__BackingField: 1
+        <AttackDistance>k__BackingField: 3
         <AttackByLevels>k__BackingField:
         - <Level>k__BackingField: 0
           <ReloadAttackPerSeconds>k__BackingField: 1
@@ -55,7 +54,6 @@ MonoBehaviour:
       - basicFireballAttackSkill
       <CharacterClass>k__BackingField: 1
       <AttackInfo>k__BackingField:
-        <AttackLayer>k__BackingField: 2
         <ViewDistance>k__BackingField: 15
         <ViewAngel>k__BackingField: 70
         <AttackSkillDistance>k__BackingField: 10
@@ -71,7 +69,6 @@ MonoBehaviour:
       <Skills>k__BackingField: []
       <CharacterClass>k__BackingField: 3
       <AttackInfo>k__BackingField:
-        <AttackLayer>k__BackingField: 2
         <ViewDistance>k__BackingField: 15
         <ViewAngel>k__BackingField: 70
         <AttackSkillDistance>k__BackingField: 20
@@ -87,7 +84,6 @@ MonoBehaviour:
       <Skills>k__BackingField: []
       <CharacterClass>k__BackingField: 3
       <AttackInfo>k__BackingField:
-        <AttackLayer>k__BackingField: 2
         <ViewDistance>k__BackingField: 15
         <ViewAngel>k__BackingField: 70
         <AttackSkillDistance>k__BackingField: 20

@@ -13,5 +13,6 @@ public abstract class SkillViewBase : ViewMonoBehaviour<SkillPresenterBase>
 	public abstract FireballViewBase CreateFireballView();
 	public abstract void ChargeSkill();
     public abstract void CancelChargeSkill();
+	public abstract void OnChargeCompleted();
 }
 }

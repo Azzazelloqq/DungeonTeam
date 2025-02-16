@@ -72,9 +72,13 @@ public class ActionTimer : IDisposable
 			onTimerCompleted?.Invoke();
 			IsInProgress = false;
 		}
+		catch (OperationCanceledException)
+		{
+			_logger.Log("Timer was canceled");
+		}
 		catch (Exception e)
 		{
-			Console.WriteLine(e);
+			_logger.LogError(e);
 		}
 	}
 

@@ -38,15 +38,6 @@ public class EnemyView : EnemyViewBase
         _commonTakeDamageEffectRoutine = StartCoroutine(TakeDamageEffect(FLASH_DURATION));
     }
 
-    public override void TakeFireballDamage()
-    {
-        if (_burnEffectRoutine!= null)
-        {
-            StopCoroutine(_burnEffectRoutine);
-        }
-        
-        _burnEffectRoutine = StartCoroutine(BurnEffect());
-    }
 
     public override void StartDieEffect()
     {

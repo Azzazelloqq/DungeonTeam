@@ -8,5 +8,6 @@ public abstract class SkillModelBase : Model
 	public abstract bool IsCharging { get; protected set; }
 	public abstract void ChargeSkill();
 	public abstract void ActivateSkill();
+	public abstract void OnChargeCompleted();
 }
 }

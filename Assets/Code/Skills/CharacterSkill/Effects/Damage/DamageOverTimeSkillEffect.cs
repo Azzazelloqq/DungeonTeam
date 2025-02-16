@@ -97,6 +97,10 @@ public class DamageOverTimeSkillEffect : IDamageSkillEffect
 			{
 				_logger.LogError("Error while applying damage over time effect" + e.Message);
 			}
+			else
+			{
+				_logger.Log("Damage over time effect was canceled");
+			}
 		}
 	}
 }

@@ -9,13 +9,22 @@ namespace Code.DungeonTeam.TeamCharacter
 {
 public class TeamCharacterView : TeamCharacterViewBase
 {
+	private static readonly int AttackAnimationName = Animator.StringToHash("Attack");
+
 	[SerializeField]
 	private NavMeshAgent _navMeshAgent;
+
+	[SerializeField]
+	private Animator _mainAnimator;
+	[SerializeField]
+	private Transform _skillsParent;
+	
+	public override Transform SkillsParent => _skillsParent;
 
 	#if UNITY_EDITOR
 	private VisionDebugger _visionDebugger;
 	#endif
-	
+
 	protected override void OnInitialize()
 	{
 		base.OnInitialize();
@@ -51,6 +60,11 @@ public class TeamCharacterView : TeamCharacterViewBase
 	public override void UpdateMoveSpeed(float moveSpeed)
 	{
 		_navMeshAgent.speed = moveSpeed;
+	}
+
+	public override void PlayAttackAnimation()
+	{
+		_mainAnimator.SetTrigger(AttackAnimationName);
 	}
 
 	private void DrawCharacterVision()

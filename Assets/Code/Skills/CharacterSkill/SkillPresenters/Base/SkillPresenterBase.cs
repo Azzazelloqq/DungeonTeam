@@ -1,4 +1,5 @@
 ﻿using Code.Skills.CharacterSkill.Core.SkillAffectable.Base;
+using Code.Skills.CharacterSkill.Core.Skills.Base;
 using MVP;
 
 namespace Code.Skills.CharacterSkill.SkillPresenters.Base
@@ -12,5 +13,6 @@ public abstract class SkillPresenterBase : Presenter<SkillViewBase, SkillModelBa
 	}
 
 	public abstract void ActivateSkill(ISkillAffectable target);
+	public abstract void UpdateSkill(ISkill skill);
 }
 }

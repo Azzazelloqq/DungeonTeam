@@ -47,6 +47,7 @@ public class TestTakeDamageEnemyPresenter : EnemyPresenterBase, IDetectable, IDa
 
 	public void TakeDamage(int damage)
 	{
+		view.TakeCommonAttackDamage();
 		model.TakeCommonAttackDamage(damage);
 	}
 

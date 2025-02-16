@@ -5,7 +5,6 @@ namespace Code.EnemiesCore.Enemies.Base.BaseEnemy
 public abstract class EnemyViewBase : ViewMonoBehaviour<EnemyPresenterBase>
 {
     public abstract void TakeCommonAttackDamage();
-    public abstract void TakeFireballDamage();
     public abstract void StartDieEffect();
 }
 }

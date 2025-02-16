@@ -38,8 +38,8 @@ Transform:
   - {fileID: 9210884289308858378}
   - {fileID: 4089762304477269075}
   - {fileID: 7176381707494250885}
-  - {fileID: 3238655665982327227}
   - {fileID: 5265023137651647267}
+  - {fileID: 3238655665982327227}
   - {fileID: 4614208745849998044}
   - {fileID: 7169105693225149483}
   - {fileID: 4634959308815674588}
@@ -59,6 +59,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 71a0ba45dd0441c493eaa8ca6bbed58c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  targetRenderer:
+  - {fileID: 4518889534398726506}
+  - {fileID: 446894480023569325}
+  - {fileID: 3540214238120183924}
+  - {fileID: 7663059550884841136}
+  - {fileID: 5898392555347563684}
+  - {fileID: 521764993299930162}
+  - {fileID: 8144944787139344886}
+  - {fileID: 306012804218247618}
 --- !u!33 &7849881538708465046
 MeshFilter:
   m_ObjectHideFlags: 0

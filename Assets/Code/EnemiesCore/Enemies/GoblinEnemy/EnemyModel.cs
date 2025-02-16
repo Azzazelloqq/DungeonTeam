@@ -24,16 +24,5 @@ public class EnemyModel : EnemyModelBase
 
         IsDead = _currentHealth <= 0;
     }
-
-    public override void TakeFireballDamage(int damage)
-    {
-        if (damage <= 0)
-        {
-            return;
-        }
-
-        _currentHealth -= damage;
-
-        IsDead = _currentHealth <= 0;    }
 }
 }

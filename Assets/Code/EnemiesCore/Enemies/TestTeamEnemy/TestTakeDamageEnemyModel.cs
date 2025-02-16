@@ -8,9 +8,5 @@ public class TestTakeDamageEnemyModel : EnemyModelBase
 	public override void TakeCommonAttackDamage(int damage)
 	{
 	}
-
-	public override void TakeFireballDamage(int damage)
-	{
-	}
 }
 }

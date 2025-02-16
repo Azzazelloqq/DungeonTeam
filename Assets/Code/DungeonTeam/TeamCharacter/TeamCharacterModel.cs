@@ -7,10 +7,10 @@ using InGameLogger;
 
 namespace Code.DungeonTeam.TeamCharacter
 {
-//todo: move attack login in new regular attack module
 public class TeamCharacterModel : TeamCharacterModelBase
 {
 	public override CharacterClass HeroClass { get; }
+	public override string[] Skills { get; }
 	public override int CurrentLevel => _currentLevel;
 	public override int AttackDamage => _attackInfoConfig.AttackDamage;
 	public override bool IsDead { get; protected set; }
@@ -36,10 +36,12 @@ public class TeamCharacterModel : TeamCharacterModelBase
 		string id,
 		CharacterClass heroClass,
 		CharacterAttackConfig attackConfig,
-		int currentLevel)
+		int currentLevel,
+		string[] skills)
 	{
 		CharacterId = id;
 		HeroClass = heroClass;
+		Skills = skills;
 		_logger = logger;
 		_currentLevel = currentLevel;
 		ViewDistance = attackConfig.ViewDistance;
@@ -103,7 +105,7 @@ public class TeamCharacterModel : TeamCharacterModelBase
 		var reloadAttackPerMilliseconds = _attackInfoConfig.ReloadAttackPerMilliseconds;
 		_attackReloadTimer.StartTimer(reloadAttackPerMilliseconds);
 		
-		return false;
+		return true;
 	}
 }
 }

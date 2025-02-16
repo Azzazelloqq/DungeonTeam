@@ -86,12 +86,6 @@ public class EnemyPresenter : EnemyPresenterBase, IDetectable, IDamageable, IEne
         }
     }
 
-    public void TakeFireballDamage(int damage)
-    {
-        view.TakeFireballDamage();
-        model.TakeFireballDamage(damage);
-    }
-
     public bool IsAvailableUseAttackSkill()
     {
         throw new System.NotImplementedException();

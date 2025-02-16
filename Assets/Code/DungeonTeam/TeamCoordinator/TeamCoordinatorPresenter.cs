@@ -1,12 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Code.Config;
 using Code.DetectionService;
-using Code.DungeonTeam.CharacterHealth;
-using Code.DungeonTeam.CharacterHealth.Base;
 using Code.DungeonTeam.MoveController.Base;
 using Code.DungeonTeam.MoveController.VirtualJoystick;
 using Code.DungeonTeam.MovementNavigator;
@@ -16,21 +12,17 @@ using Code.DungeonTeam.TeamCharacter.Base;
 using Code.DungeonTeam.TeamCoordinator.Base;
 using Code.GameConfig.ScriptableObjectParser.ConfigData.Characters;
 using Code.GameConfig.ScriptableObjectParser.ConfigData.CharacterTeamPlace;
-using Code.GameConfig.ScriptableObjectParser.ConfigData.DetectConfig;
-using Code.GameConfig.ScriptableObjectParser.RemoteData.DetectPage;
 using Code.Generated.Addressables;
 using Code.MovementService;
 using Code.SavesContainers.TeamSave;
 using Code.Skills.CharacterSkill.Core.SkillAffectable;
 using Code.Skills.CharacterSkill.Factory.SkillsPresenter;
-using Code.Skills.CharacterSkill.SkillPresenters.Base;
 using Code.UI.UIContext;
 using Disposable.Utils;
 using InGameLogger;
 using LocalSaveSystem;
 using ResourceLoader;
 using TickHandler;
-using Unity.Collections;
 using UnityEngine;
 
 namespace Code.DungeonTeam.TeamCoordinator
@@ -43,6 +35,7 @@ public class TeamCoordinatorPresenter : TeamCoordinatorPresenterBase
 	private readonly ITickHandler _tickHandler;
 	private readonly ILocalSaveSystem _saveSystem;
 	private readonly IDetectionService _detectionService;
+	private readonly IMovementService _movementService;
 	private readonly IUIContext _uiContext;
 	private readonly CharactersConfigPage _charactersConfigPage;
 	private readonly List<TeamCharacterPresenterBase> _temCharacters = new();
@@ -70,12 +63,10 @@ public class TeamCoordinatorPresenter : TeamCoordinatorPresenterBase
 		_tickHandler = tickHandler;
 		_saveSystem = saveSystem;
 		_detectionService = detectionService;
+		_movementService = movementService;
 		_uiContext = uiContext;
 		_charactersConfigPage = _config.GetConfigPage<CharactersConfigPage>();
 		_playerTeamSave = _saveSystem.Load<PlayerTeamSave>();
-
-		var skillDependencies = new SkillDependencies(_tickHandler, movementService);
-		_skillsFactory = new SkillsPresenterFactory(skillDependencies, resourceLoader, logger, config, saveSystem);
 	}
 
 	protected override async Task OnInitializeAsync(CancellationToken token) {
@@ -128,8 +119,7 @@ public class TeamCoordinatorPresenter : TeamCoordinatorPresenterBase
 
 	private async Task<List<TeamCharacterPresenterBase>> CreateTeamCharactersAsync(CancellationToken token)
 	{
-		var playerTeamSave = _saveSystem.Load<PlayerTeamSave>();
-		var selectedPlayerTeam = playerTeamSave.SelectedPlayerTeam;
+		var selectedPlayerTeam = _playerTeamSave.SelectedPlayerTeam;
 		var teamPresenters = new List<TeamCharacterPresenterBase>(selectedPlayerTeam.Count);
 
 		foreach (var characterSave in selectedPlayerTeam.Values)
@@ -182,79 +172,24 @@ public class TeamCoordinatorPresenter : TeamCoordinatorPresenterBase
 		var characterClass = characterConfig.CharacterClass;
 		var attackConfig = characterConfig.AttackConfig;
 		var skills = characterConfig.Skills;
-		var healSkillsGetTask = GetSkillsByTypeAsync(characterId, skills, token);
-		var attackSkillsGetTask = GetSkillsByTypeAsync(characterId, skills, token);
-		var characterHealthTask = InitializePlayerCharacterHealth(characterConfig, characterSave, token);
-		
-		await Task.WhenAll(healSkillsGetTask, attackSkillsGetTask, characterHealthTask);
-		var healSkills = healSkillsGetTask.Result;
-		var attackSkills = attackSkillsGetTask.Result;
-		var characterHealth = characterHealthTask.Result;
-		var characterTeamMoveConfigPage = _config.GetConfigPage<CharacterTeamMoveConfigPage>();
-		
-		var detectConfigPage = _config.GetConfigPage<DetectConfigPage>();
-		var detectLayerMask = detectConfigPage.DetectLayerMask;
 		
 		var characterLevel = characterSave.CurrentLevel;
 		
-		var characterModel = new TeamCharacterModel(_logger, characterId, characterClass, attackConfig, characterLevel);
+		var characterModel = new TeamCharacterModel(_logger, characterId, characterClass, attackConfig, characterLevel, skills);
 		var character = new PlayerTeamCharacterPresenter(
 			characterView,
 			characterModel,
 			_tickHandler,
 			_detectionService,
 			_logger,
-			characterHealth,
-			attackSkills,
-			healSkills,
-			characterTeamMoveConfigPage,
-			detectLayerMask,
+			_movementService,
+			_resourceLoader,
+			_config,
+			_saveSystem,
+			_uiContext,
 			GetNeedToHealAnyCharacter);
 		
 		return character;
-	}
-	
-	private async Task<CharacterHealthPresenterBase> InitializePlayerCharacterHealth(
-		CharacterConfig characterConfig,
-		CharacterSave characterSave, 
-		CancellationToken token)
-	{
-		var characterHealthViewResourceId = ResourceIdsContainer.Test.CharacterHealthView;
-		var uiElementsOverlay = _uiContext.UIElementsOverlay;
-		var characterHealthView =
-			await _resourceLoader.LoadAndCreateAsync<CharacterHealthViewBase, Transform>(characterHealthViewResourceId,
-				uiElementsOverlay, token);
-
-		var healthByLevelConfigs = characterConfig.CharacterHealthByLevelConfig;
-		var currentLevel = characterSave.CurrentLevel;
-		var currentHealth = characterSave.CurrentHealth;
-		var healthModel = new CharacterHealthModel(_logger, healthByLevelConfigs, currentLevel, currentHealth);
-		
-		var presenter = new CharacterHealthPresenter(characterHealthView, healthModel);
-		await presenter.InitializeAsync(token);
-
-		return presenter;
-	}
-
-	private async Task<SkillPresenterBase[]> GetSkillsByTypeAsync(string characterId, string[] skillIds, CancellationToken token)
-	{
-		if(skillIds.Length == 0)
-		{
-			return Array.Empty<SkillPresenterBase>();
-		}
-		
-		var charactersParent = view.SkillsParent;
-    
-		var tasks = new Task<SkillPresenterBase>[skillIds.Length];
-		for (var i = 0; i < skillIds.Length; i++)
-		{
-			var skillId = skillIds[i];
-			tasks[i] = _skillsFactory.GetAsync(characterId, skillId, charactersParent, token);
-		}
-    
-		var skills = await Task.WhenAll(tasks);
-
-		return skills;
 	}
 	
 	private IHealable GetNeedToHealAnyCharacter()

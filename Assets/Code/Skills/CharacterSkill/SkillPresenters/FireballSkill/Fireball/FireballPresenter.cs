@@ -40,7 +40,7 @@ public class FireballPresenter : FireballPresenterBase
 		var fireballSpeed = model.FireballSpeed;
 		var targetTransform = affectable.GetTransform();
 		var thresholdToTarget = model.ThresholdToTarget;
-		_movementService.StartMoveRigidbodyWithVelocity(
+		_movementService.StartMoveRigidbodyTowardsTarget(
 			view.Rigidbody,
 			targetTransform,
 			fireballSpeed,

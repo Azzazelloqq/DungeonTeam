@@ -49,6 +49,11 @@ public class BasicSkillView : SkillViewBase
 		_chargeSkillEffect.Stop();
 	}
 
+	public override void OnChargeCompleted()
+	{
+		_chargeSkillEffect.Stop();
+	}
+
 	private void PlayChargeSkillEffect()
 	{
 		_chargeSkillEffect.Play();
