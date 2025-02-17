@@ -3,6 +3,7 @@ using Code.GameConfig.ScriptableObjectParser.ConfigData.Skills;
 using Code.Skills.CharacterSkill.Core.EffectsCore.Base;
 using Code.Skills.CharacterSkill.Effects;
 using Code.Skills.CharacterSkill.Effects.Buff;
+using Code.Skills.CharacterSkill.Effects.Damage;
 using Code.Skills.CharacterSkill.Effects.Heal;
 using InGameLogger;
 

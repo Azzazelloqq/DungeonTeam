@@ -3,7 +3,7 @@ using Code.Skills.CharacterSkill.Core.EffectsCore;
 using Code.Skills.CharacterSkill.Core.SkillAffectable;
 using Code.Skills.CharacterSkill.Core.SkillAffectable.Base;
 
-namespace Code.Skills.CharacterSkill.Effects
+namespace Code.Skills.CharacterSkill.Effects.Damage
 {
 public class DamageSkillEffect : IDamageSkillEffect
 {

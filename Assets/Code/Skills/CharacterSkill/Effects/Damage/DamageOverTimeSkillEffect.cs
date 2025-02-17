@@ -3,13 +3,12 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Code.Skills.CharacterSkill.Core.EffectsCore;
-using Code.Skills.CharacterSkill.Core.EffectsCore.Base;
 using Code.Skills.CharacterSkill.Core.SkillAffectable;
 using Code.Skills.CharacterSkill.Core.SkillAffectable.Base;
 using Code.Utils.AsyncUtils;
 using InGameLogger;
 
-namespace Code.Skills.CharacterSkill.Effects
+namespace Code.Skills.CharacterSkill.Effects.Damage
 {
 public class DamageOverTimeSkillEffect : IDamageSkillEffect
 {
