@@ -48,11 +48,16 @@ public class GameRoot : MonoBehaviourDisposable
 	[SerializeField]
 	private Transform _testEnemyParent;
 	
+	#if UNITY_EDITOR
+	[SerializeField]
+	private DetectionServiceGizmos _detectionServiceGizmos;
+	#endif
+	
 	private readonly CancellationTokenSource _turnOffGameCancellationTokenSource;
 	private readonly AddressableResourceLoader _resourceLoader;
 	private readonly IInGameLogger _logger;
-	private ILocalSaveSystem _saveSystem;
 	private readonly IDetectionService _detectionService;
+	private ILocalSaveSystem _saveSystem;
 	private ITickHandler _tickHandler;
 	private IMovementService _movementService;
 	private Config.Config _config;
@@ -142,6 +147,10 @@ public class GameRoot : MonoBehaviourDisposable
 			
 		}
 		
+		#if UNITY_EDITOR
+		InitializeEditorServices();
+		#endif
+		
 		_saveSystem.Save();
 		_teamCoordinator =  await InitializeTeamCoordinatorAsync(_config, cancellationToken);
 
@@ -204,5 +213,12 @@ public class GameRoot : MonoBehaviourDisposable
 
 		return presenter;
 	}
+
+	#if UNITY_EDITOR
+	private void InitializeEditorServices()
+	{
+		_detectionServiceGizmos.Initialize(_detectionService);
+	}
+	#endif
 }
 }

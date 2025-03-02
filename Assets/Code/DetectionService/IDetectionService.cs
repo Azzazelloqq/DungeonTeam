@@ -38,5 +38,17 @@ public interface IDetectionService
     /// <returns>List of detected objects.</returns>
     public IReadOnlyList<IDetectable> DetectObjectsInView(Vector3 observerPosition, Vector3 observerForward, float viewAngle,
         float viewDistance, LayerMask obstacleLayer);
+
+	/// <summary>
+	/// Gets the size of each grid cell in Unity world units.
+	/// </summary>
+	/// <returns>The size of each grid cell.</returns>
+	float GetCellSize();
+
+	/// <summary>
+	/// Gets the size of each grid cell in Unity world units.
+	/// </summary>
+	/// <returns>The size of each grid cell.</returns>
+	IReadOnlyDictionary<Vector2Int, List<IDetectable>> GetGrid();
 }
 }

@@ -8,6 +8,7 @@ using Code.DetectionService;
 using Code.DungeonTeam.CharacterHealth;
 using Code.DungeonTeam.CharacterHealth.Base;
 using Code.DungeonTeam.TeamCharacter.Base;
+using Code.DungeonTeam.TeamCharacter.Components;
 using Code.EnemiesCore.Enemies.Base;
 using Code.GameConfig.ScriptableObjectParser.ConfigData.Characters;
 using Code.GameConfig.ScriptableObjectParser.ConfigData.CharacterTeamPlace;
@@ -60,6 +61,7 @@ public class PlayerTeamCharacterPresenter : TeamCharacterPresenterBase, ICharact
 	private readonly CharactersConfigPage _charactersConfigPage;
 	private readonly ILocalSaveSystem _saveSystem;
 	private readonly IResourceLoader _resourceLoader;
+	private readonly CharacterDetectionUpdater _characterDetectionUpdater;
 	private SkillPresenterBase[] _healSkills;
 	private SkillPresenterBase[] _attackSkills;
 	private CharacterHealthPresenterBase _characterHealth;
@@ -96,6 +98,9 @@ public class PlayerTeamCharacterPresenter : TeamCharacterPresenterBase, ICharact
 		_resourceLoader = resourceLoader;
 		var skillDependencies = new SkillDependencies(_tickHandler, movementService);
 		_skillsFactory = new SkillsPresenterFactory(skillDependencies, resourceLoader, logger, config, saveSystem);
+		
+		var distanceThreshold = _detectionService.GetCellSize() / 2;
+		_characterDetectionUpdater = new CharacterDetectionUpdater(_detectionService, this, _tickHandler, 0.1f, distanceThreshold);
 	}
 
 	protected override void OnInitialize()
@@ -109,7 +114,6 @@ public class PlayerTeamCharacterPresenter : TeamCharacterPresenterBase, ICharact
 	{
 		await base.OnInitializeAsync(token);
 		
-		_detectionService.RegisterObject(this);
 		view.UpdateMoveSpeed(_moveConfig.TeamSpeed);
 		
 		var characterId = model.CharacterId;
@@ -136,18 +140,19 @@ public class PlayerTeamCharacterPresenter : TeamCharacterPresenterBase, ICharact
 		{
 			await skillPresenterBase.InitializeAsync(token);
 		}
+		
+		_characterDetectionUpdater.Initialize();
 
 		_aiTickTimer.StartLoopTickTimer(TickTreeAgent, _characterBehaviourTree.Tick);
 	}
-	
 
 	protected override void OnDispose()
     {
         base.OnDispose();
         
-        _detectionService.UnregisterObject(this);
 		_aiTickTimer.Dispose();
 		_characterBehaviourTree.Dispose();
+		_characterDetectionUpdater.Dispose();
     }
 
 	public bool IsAvailableUseAttackSkill()
@@ -458,16 +463,17 @@ public class PlayerTeamCharacterPresenter : TeamCharacterPresenterBase, ICharact
 		view.UpdatePointToFollow(targetPosition);
 	}
 
-	private void MoveCharacterWithTeam(float deltaTime)
-	{
-		var targetPosition = _teamMoveTarget.position;
-		view.UpdatePointToFollow(targetPosition);
-	}
-
 	private void StopMoveCharacterWithTeam()
 	{
 		_tickHandler.FrameUpdate -= MoveCharacterWithTeam;
 		view.StopFollowToTarget();
+	}
+
+	private void MoveCharacterWithTeam(float deltaTime)
+	{
+		var targetPosition = _teamMoveTarget.position;
+
+		view.UpdatePointToFollow(targetPosition);
 	}
 
 	private bool TryGetNeedHealTeamCharacter(out IHealable healable)
@@ -487,8 +493,9 @@ public class PlayerTeamCharacterPresenter : TeamCharacterPresenterBase, ICharact
 		
 		var targetPosition = _currentTargetToAttack.Position;
 		var position = view.transform.position;
-		
+
 		model.CheckAttackDistanceToTarget(position.ToModelVector(), targetPosition.ToModelVector());
+		
 		view.UpdatePointToFollow(targetPosition);
 	}
 }

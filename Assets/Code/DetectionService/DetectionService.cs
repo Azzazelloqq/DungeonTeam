@@ -114,6 +114,24 @@ public class DetectionService : IDetectionService
 
         return _detectedObjectsCash;
     }
+    
+    /// <summary>
+    /// Gets the size of each grid cell in Unity world units.
+    /// </summary>
+    /// <returns>The size of each grid cell.</returns>
+    public float GetCellSize()
+    {
+        return _cellSize;
+    }
+
+    /// <summary>
+    /// Gets the size of each grid cell in Unity world units.
+    /// </summary>
+    /// <returns>The size of each grid cell.</returns>
+    public IReadOnlyDictionary<Vector2Int, List<IDetectable>> GetGrid()
+    {
+        return _grid;
+    }
 
     /// <summary>
     /// Calculates the grid cell coordinates based on a world position.
