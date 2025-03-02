@@ -215,7 +215,7 @@ public class PlayerTeamCharacterPresenter : TeamCharacterPresenterBase, ICharact
 			return;
 		}
 
-		view.PlayAttackAnimation();
+		view.PlayMeleeAttackAnimation();
 		
 		damageable.TakeDamage(model.AttackDamage);
 	}

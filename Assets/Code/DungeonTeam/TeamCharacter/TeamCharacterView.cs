@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using Code.DungeonTeam.TeamCharacter.Base;
 using Code.GameDebugUtils.CharacterDetection;
+using Code.Utils.AnimationUtils;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -15,7 +16,7 @@ public class TeamCharacterView : TeamCharacterViewBase
 	private NavMeshAgent _navMeshAgent;
 
 	[SerializeField]
-	private Animator _mainAnimator;
+	private ObservableAnimator _mainAnimator;
 	[SerializeField]
 	private Transform _skillsParent;
 	
@@ -62,7 +63,7 @@ public class TeamCharacterView : TeamCharacterViewBase
 		_navMeshAgent.speed = moveSpeed;
 	}
 
-	public override void PlayAttackAnimation()
+	public override void PlayMeleeAttackAnimation()
 	{
 		_mainAnimator.SetTrigger(AttackAnimationName);
 	}
