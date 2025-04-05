@@ -1341,7 +1341,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c140dcb34db14d3ea382b19ae976088f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _gridColor: {r: 0.4749295, g: 0.18560876, b: 0.9150943, a: 1}
+  _gridColor: {r: 1, g: 0, b: 0.88996744, a: 1}
   _drawCellContent: 1
 --- !u!1 &1521174048
 GameObject:

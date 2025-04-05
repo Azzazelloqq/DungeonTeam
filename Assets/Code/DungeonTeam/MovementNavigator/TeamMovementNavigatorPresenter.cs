@@ -7,6 +7,7 @@ using Code.DungeonTeam.MovementNavigator.Base;
 using Code.DungeonTeam.TeamCharacter.Base;
 using Code.Utils.ModelUtils;
 using InGameLogger;
+using LightDI.Runtime;
 using TickHandler;
 using UnityEngine;
 
@@ -16,18 +17,17 @@ public class TeamMovementNavigatorPresenter : MovementNavigatorPresenterBase
 {
 	private readonly IInGameLogger _logger;
 	private readonly ITickHandler _tickHandler;
-	private readonly MoveControllerPresenterBase _moveController;
+	private readonly IMoveController _moveController;
 	private readonly IConfig _config;
 	private readonly List<TeamCharacterPresenterBase> _characters;
 
 	public TeamMovementNavigatorPresenter(
 		MovementNavigatorViewBase view,
 		MovementNavigatorModelBase model,
-		IInGameLogger logger,
-		ITickHandler tickHandler,
 		List<TeamCharacterPresenterBase> characterPresentersBase,
-		MoveControllerPresenterBase moveController)
-		: base(view, model)
+		[Inject] IInGameLogger logger,
+		[Inject] ITickHandler tickHandler,
+		[Inject] IMoveController moveController) : base(view, model)
 	{
 		_logger = logger;
 		_tickHandler = tickHandler;

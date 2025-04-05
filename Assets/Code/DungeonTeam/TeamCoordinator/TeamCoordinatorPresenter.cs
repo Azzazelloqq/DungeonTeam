@@ -20,6 +20,7 @@ using Code.Skills.CharacterSkill.Factory.SkillsPresenter;
 using Code.UI.UIContext;
 using Disposable.Utils;
 using InGameLogger;
+using LightDI.Runtime;
 using LocalSaveSystem;
 using ResourceLoader;
 using TickHandler;
@@ -32,46 +33,31 @@ public class TeamCoordinatorPresenter : TeamCoordinatorPresenterBase
 	private readonly IResourceLoader _resourceLoader;
 	private readonly IConfig _config;
 	private readonly IInGameLogger _logger;
-	private readonly ITickHandler _tickHandler;
 	private readonly ILocalSaveSystem _saveSystem;
-	private readonly IDetectionService _detectionService;
-	private readonly IMovementService _movementService;
-	private readonly IUIContext _uiContext;
 	private readonly CharactersConfigPage _charactersConfigPage;
 	private readonly List<TeamCharacterPresenterBase> _temCharacters = new();
 	private readonly ISkillsPresenterFactory _skillsFactory;
 	private readonly List<IHealable> _healableCharacters = new();
 	private readonly PlayerTeamSave _playerTeamSave;
-	private MoveControllerPresenterBase _moveController;
 	private MovementNavigatorPresenterBase _teamMovementNavigator;
 
 	public TeamCoordinatorPresenter(
 		TeamCoordinatorViewBase view,
 		TeamCoordinatorModelBase model,
-		IResourceLoader resourceLoader,
-		IConfig config,
-		IInGameLogger logger,
-		ITickHandler tickHandler,
-		ILocalSaveSystem saveSystem,
-		IDetectionService detectionService,
-		IMovementService movementService,
-		IUIContext uiContext) : base(view, model)
+		[Inject] IResourceLoader resourceLoader,
+		[Inject] IConfig config,
+		[Inject] IInGameLogger logger,
+		[Inject] ILocalSaveSystem saveSystem) : base(view, model)
 	{
 		_resourceLoader = resourceLoader;
 		_config = config;
 		_logger = logger;
-		_tickHandler = tickHandler;
 		_saveSystem = saveSystem;
-		_detectionService = detectionService;
-		_movementService = movementService;
-		_uiContext = uiContext;
 		_charactersConfigPage = _config.GetConfigPage<CharactersConfigPage>();
 		_playerTeamSave = _saveSystem.Load<PlayerTeamSave>();
 	}
 
 	protected override async Task OnInitializeAsync(CancellationToken token) {
-		_moveController = await InitMoveControllerAsync(token);
-
 		var team = await CreateTeamCharactersAsync(token);
 		_teamMovementNavigator = await InitializeMovementNavigatorAsync(team, token);
 		compositeDisposable.AddDisposable(_teamMovementNavigator);
@@ -104,13 +90,10 @@ public class TeamCoordinatorPresenter : TeamCoordinatorPresenterBase
 			await _resourceLoader.LoadAndCreateAsync<MovementNavigatorViewBase, Transform>(movementNavigatorViewResourceId,
 				movementNavigatorParent, token);
 		
-		var teamMovementNavigator = new TeamMovementNavigatorPresenter(
+		var teamMovementNavigator = TeamMovementNavigatorPresenterFactory.CreateTeamMovementNavigatorPresenter(
 			navigatorView,
 			movementNavigatorModelBase,
-			_logger,
-			_tickHandler,
-			team, 
-			_moveController);
+			team);
 
 		await teamMovementNavigator.InitializeAsync(token);
 
@@ -140,23 +123,6 @@ public class TeamCoordinatorPresenter : TeamCoordinatorPresenterBase
 		return teamPresenters;
 	}
 	
-	private async Task<MoveControllerPresenterBase> InitMoveControllerAsync(CancellationToken token)
-	{
-		var uiOverlayParent = _uiContext.UIElementsOverlay;
-		var moveControllerViewResourceId = ResourceIdsContainer.GameplayUI.VirtualJoystickView;
-		var moveControllerView =
-			await _resourceLoader.LoadAndCreateAsync<MoveControllerViewBase, Transform>(moveControllerViewResourceId, uiOverlayParent, token);
-
-		var radius = moveControllerView.ControllerHandleRadius;
-		var moveControllerModel = new VirtualJoystickModel(_logger, radius);
-		
-		var moveController = new VirtualJoystickPresenter(moveControllerView, moveControllerModel);
-		
-		await moveController.InitializeAsync(token);
-		
-		return moveController;
-	}
-	
 	private async Task<TeamCharacterPresenterBase> CreateTeamCharacterAsync(
 		string characterId,
 		CharacterSave characterSave,
@@ -176,17 +142,9 @@ public class TeamCoordinatorPresenter : TeamCoordinatorPresenterBase
 		var characterLevel = characterSave.CurrentLevel;
 		
 		var characterModel = new TeamCharacterModel(_logger, characterId, characterClass, attackConfig, characterLevel, skills);
-		var character = new PlayerTeamCharacterPresenter(
+		var character = PlayerTeamCharacterPresenterFactory.CreatePlayerTeamCharacterPresenter(
 			characterView,
 			characterModel,
-			_tickHandler,
-			_detectionService,
-			_logger,
-			_movementService,
-			_resourceLoader,
-			_config,
-			_saveSystem,
-			_uiContext,
 			GetNeedToHealAnyCharacter);
 		
 		return character;

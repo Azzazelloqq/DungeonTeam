@@ -1,14 +1,25 @@
-﻿{
-  "name": "EnemiesCore",
-  "references":[
-    "MVP",
-    "TickHandler",
-    "Disposable",
-    "Logger",
-    "GUID:d06476e50cf34f35947c4321c0805b96",
-    "GUID:1f479669ac344197a28280f8705300a5",
-    "GUID:5b1d99d5a9b84611b15c22e533a82392",
-    "GUID:d273da7f6076476bb07bad86e0fb33f1",
-    "GUID:70ee12777b344a749a40250f551474e7"
-  ]
+{
+    "name": "EnemiesCore",
+    "rootNamespace": "",
+    "references": [
+        "GUID:fc9472c09360a0e48b998a21fda85ee1",
+        "GUID:21443193b9119fc458cebc6c25737dbb",
+        "GUID:f3a29d15daa5e9345ab71de7276cd04b",
+        "GUID:e03d2d67472051a4e8982e8a5bebc561",
+        "GUID:d06476e50cf34f35947c4321c0805b96",
+        "GUID:1f479669ac344197a28280f8705300a5",
+        "GUID:5b1d99d5a9b84611b15c22e533a82392",
+        "GUID:d273da7f6076476bb07bad86e0fb33f1",
+        "GUID:70ee12777b344a749a40250f551474e7",
+        "GUID:c9f76ac6b5b2484789d93f0d3960dc33"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
 }

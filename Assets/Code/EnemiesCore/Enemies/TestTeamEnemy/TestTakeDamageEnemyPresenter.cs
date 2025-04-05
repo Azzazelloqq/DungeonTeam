@@ -5,6 +5,7 @@ using Code.DetectionService;
 using Code.EnemiesCore.Enemies.Base.BaseEnemy;
 using Code.Skills.CharacterSkill.Core.SkillAffectable;
 using Code.Utils.TransformUtils;
+using LightDI.Runtime;
 using UnityEngine;
 
 namespace Code.EnemiesCore.Enemies.TestTeamEnemy
@@ -16,7 +17,11 @@ public class TestTakeDamageEnemyPresenter : EnemyPresenterBase, IDetectable, IDa
 	public bool IsDead => model.IsDead;
 	public bool IsNeedMoveToEnemyForAttack => false;
 
-	public TestTakeDamageEnemyPresenter(EnemyViewBase view, EnemyModelBase model, IDetectionService detectionService) : base(view, model)
+	public TestTakeDamageEnemyPresenter(
+		EnemyViewBase view,
+		EnemyModelBase model,
+		[Inject] IDetectionService detectionService) : base(view,
+		model)
 	{
 		_detectionService = detectionService;
 	}

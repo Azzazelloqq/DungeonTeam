@@ -25,6 +25,7 @@ using Code.UI.UIContext;
 using Code.Utils.ModelUtils;
 using Code.Utils.TransformUtils;
 using InGameLogger;
+using LightDI.Runtime;
 using LocalSaveSystem;
 using ResourceLoader;
 using TickHandler;
@@ -72,15 +73,15 @@ public class PlayerTeamCharacterPresenter : TeamCharacterPresenterBase, ICharact
 	public PlayerTeamCharacterPresenter(
 		TeamCharacterViewBase view,
 		TeamCharacterModelBase model,
-		ITickHandler tickHandler,
-        IDetectionService detectionService,
-		IInGameLogger logger,
-		IMovementService movementService,
-		IResourceLoader resourceLoader,
-		IConfig config,
-		ILocalSaveSystem saveSystem,
-		IUIContext uiContext,
-		Func<IHealable> getNeedToHealCharacter) : base(view,
+		Func<IHealable> getNeedToHealCharacter,
+		[Inject] ITickHandler tickHandler,
+        [Inject] IDetectionService detectionService,
+		[Inject] IInGameLogger logger,
+		[Inject] IMovementService movementService,
+		[Inject] IResourceLoader resourceLoader,
+		[Inject] IConfig config,
+		[Inject] ILocalSaveSystem saveSystem,
+		[Inject] IUIContext uiContext) : base(view,
 		model)
 	{
 		_tickHandler = tickHandler;

@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace Code.DungeonTeam.MoveController.Base
 {
-public abstract class MoveControllerPresenterBase : Presenter<MoveControllerViewBase, MoveControllerModelBase>
+public abstract class MoveControllerPresenterBase : Presenter<MoveControllerViewBase, MoveControllerModelBase>, IMoveController
 {
 	public abstract event Action<Vector2> DirectionChanged; 
 	public abstract event Action MoveStarted; 
