@@ -11,7 +11,7 @@ public class FindEnemyTargetInSightNode : IBehaviourTreeNode
 	{
 		_agent = agent;
 	}
-	
+
 	public NodeState Tick()
 	{
 		if (_agent.TryFindEnemyTarget())

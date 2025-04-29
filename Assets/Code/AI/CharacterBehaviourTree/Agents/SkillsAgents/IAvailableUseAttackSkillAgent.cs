@@ -4,6 +4,6 @@ namespace Code.AI.CharacterBehaviourTree.Agents.SkillsAgents
 {
 public interface IAvailableUseAttackSkillAgent : IBehaviourTreeAgent
 {
-    public bool IsAvailableUseAttackSkill();
+	public bool IsAvailableUseAttackSkill();
 }
 }

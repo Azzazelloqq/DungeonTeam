@@ -10,9 +10,9 @@ namespace Code.Skills.CharacterSkill.Core.EffectsCore.Base
 public interface ISkillEffect : IDisposable
 {
 	public event Action EffectApplied;
-	
+
 	public string EffectId { get; }
-	
+
 	/// <summary>
 	/// Attempts to apply this effect to the given target.
 	/// </summary>

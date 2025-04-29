@@ -41,7 +41,7 @@ public class TeamMovementNavigatorPresenter : MovementNavigatorPresenterBase
 
 		var modelCharacters = GetModelCharactersContainers();
 		model.InitializeCharacters(modelCharacters);
-		
+
 		UpdateTeamNavigationTargets();
 
 		var viewTeamParentPosition = view.TeamParentPosition;
@@ -55,10 +55,10 @@ public class TeamMovementNavigatorPresenter : MovementNavigatorPresenterBase
 	protected override async Task OnInitializeAsync(CancellationToken token)
 	{
 		await base.OnInitializeAsync(token);
-		
+
 		var modelCharacters = GetModelCharactersContainers();
 		model.InitializeCharacters(modelCharacters);
-		
+
 		UpdateTeamNavigationTargets();
 
 		var viewTeamParentPosition = view.TeamParentPosition;
@@ -84,7 +84,7 @@ public class TeamMovementNavigatorPresenter : MovementNavigatorPresenterBase
 
 		var modelCharacterContainer = GetModelCharacterContainer(character);
 		model.AddCharacter(modelCharacterContainer);
-		
+
 		UpdateTeamNavigationTargets();
 	}
 
@@ -93,7 +93,7 @@ public class TeamMovementNavigatorPresenter : MovementNavigatorPresenterBase
 		RemoveCharacterFromCache(characterId);
 
 		model.RemoveCharacter(characterId);
-		
+
 		UpdateTeamNavigationTargets();
 	}
 
@@ -140,7 +140,7 @@ public class TeamMovementNavigatorPresenter : MovementNavigatorPresenterBase
 		{
 			teamCharacterPresenterBase.OnTeamMove();
 		}
-		
+
 		_tickHandler.FrameUpdate += OnControllerDirectionChanged;
 	}
 
@@ -155,7 +155,7 @@ public class TeamMovementNavigatorPresenter : MovementNavigatorPresenterBase
 		{
 			teamCharacterPresenterBase.OnTeamStay();
 		}
-		
+
 		_tickHandler.FrameUpdate -= OnControllerDirectionChanged;
 	}
 
@@ -168,11 +168,11 @@ public class TeamMovementNavigatorPresenter : MovementNavigatorPresenterBase
 		}
 
 		var direction = _moveController.Direction;
-		
+
 		var modelDirection = direction.ToModelVector();
 		model.MoveTeamByDirection(modelDirection, deltaTime);
 		var teamPosition = model.TeamPosition.ToUnityVector();
-		
+
 		view.MoveTeamToPosition(teamPosition);
 	}
 
@@ -200,12 +200,12 @@ public class TeamMovementNavigatorPresenter : MovementNavigatorPresenterBase
 			{
 				continue;
 			}
-			
+
 			var place = viewMovementTarget.Place;
 
 			return place;
 		}
-		
+
 		_logger.LogError($"Place not found by place number {placeNumber}");
 
 		return null;

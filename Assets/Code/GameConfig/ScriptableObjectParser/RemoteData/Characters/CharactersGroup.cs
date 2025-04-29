@@ -8,8 +8,8 @@ internal struct CharactersGroup
 {
 	[field: SerializeField]
 	internal string CharactersGroupId { get; private set; }
-	
+
 	[field: SerializeField]
-	internal CharacterRemote[] Characters { get; private set; } 
+	internal CharacterRemote[] Characters { get; private set; }
 }
 }

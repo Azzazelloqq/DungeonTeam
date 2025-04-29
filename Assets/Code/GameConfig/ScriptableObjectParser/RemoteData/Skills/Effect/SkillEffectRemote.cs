@@ -6,11 +6,20 @@ namespace Code.GameConfig.ScriptableObjectParser.RemoteData.Skills.Effect
 [Serializable]
 internal struct SkillEffectRemote
 {
-	[SerializeField] private EffectType _effectType;
-	[SerializeField] private string _effectId;
-	[SerializeField] private int _effectImpact;
-	[SerializeField] private float _effectDuration;
-	[SerializeField] private float _interval;
+	[SerializeField]
+	private EffectType _effectType;
+
+	[SerializeField]
+	private string _effectId;
+
+	[SerializeField]
+	private int _effectImpact;
+
+	[SerializeField]
+	private float _effectDuration;
+
+	[SerializeField]
+	private float _interval;
 
 	internal EffectType EffectType => _effectType;
 	internal string EffectId => _effectId;

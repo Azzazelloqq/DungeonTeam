@@ -28,7 +28,7 @@ public class AttackEnemyNode : IBehaviourTreeNode
 
 		_agent.AttackEnemy();
 		_attackStarted = true;
-		
+
 		return NodeState.Running;
 	}
 

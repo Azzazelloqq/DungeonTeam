@@ -16,13 +16,15 @@ public class TestTakeDamageEnemyPresenter : EnemyPresenterBase, IDetectable, IDa
 	public Vector3 Position => view.transform.position;
 	public bool IsDead => model.IsDead;
 	public bool IsNeedMoveToEnemyForAttack => false;
-	
+
 	public bool IsAttackSkillCasting => false;
 	public bool CanStartAttackSkill => false;
 	public bool IsAttackCasting => false;
 	public bool CanStartAttack => false;
 	public bool IsCanMove => false;
 	public string AgentName => view.name;
+	public bool IsEnemyReached => false;
+
 
 	public TestTakeDamageEnemyPresenter(
 		EnemyViewBase view,
@@ -36,14 +38,14 @@ public class TestTakeDamageEnemyPresenter : EnemyPresenterBase, IDetectable, IDa
 	protected override async Task OnInitializeAsync(CancellationToken token)
 	{
 		await base.OnInitializeAsync(token);
-		
+
 		_detectionService.RegisterObject(this);
 	}
 
 	protected override void OnDispose()
 	{
 		base.OnDispose();
-		
+
 		_detectionService.UnregisterObject(this);
 	}
 
@@ -63,11 +65,15 @@ public class TestTakeDamageEnemyPresenter : EnemyPresenterBase, IDetectable, IDa
 		model.TakeCommonAttackDamage(damage);
 	}
 
+	public void StopMovement()
+	{
+	}
+
 	public bool IsAvailableUseAttackSkill()
 	{
 		return false;
 	}
-	
+
 	public void AttackEnemy()
 	{
 		return;
@@ -77,7 +83,7 @@ public class TestTakeDamageEnemyPresenter : EnemyPresenterBase, IDetectable, IDa
 	{
 		return false;
 	}
-	
+
 	public void MoveToEnemyForAttack()
 	{
 	}

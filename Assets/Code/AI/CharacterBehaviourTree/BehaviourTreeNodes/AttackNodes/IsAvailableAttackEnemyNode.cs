@@ -14,11 +14,13 @@ public class IsAvailableAttackEnemyNode : IBehaviourTreeNode
 
 	public NodeState Tick()
 	{
-		return _agent.CanStartAttack 
-			? NodeState.Success 
+		return _agent.CanStartAttack
+			? NodeState.Success
 			: NodeState.Failure;
 	}
 
-	public void Dispose() { }
+	public void Dispose()
+	{
+	}
 }
 }

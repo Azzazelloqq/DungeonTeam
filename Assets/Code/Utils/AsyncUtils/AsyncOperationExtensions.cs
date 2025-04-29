@@ -23,10 +23,10 @@ public static class AsyncOperationExtensions
 		{
 			cancellationTokenSource.Cancel();
 		}
-		
+
 		cancellationTokenSource.Dispose();
 	}
-	
+
 	public static void CancelAndDispose(this IEnumerable<CancellationTokenSource> cancellationTokenSource)
 	{
 		foreach (var tokenSource in cancellationTokenSource)

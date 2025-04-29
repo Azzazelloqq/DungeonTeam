@@ -10,7 +10,7 @@ public class TeamCoordinatorView : TeamCoordinatorViewBase
 
 	[field: SerializeField]
 	public override Transform MovementNavigatorParent { get; protected set; }
-	
+
 	[field: SerializeField]
 	public override Transform CharactersParent { get; protected set; }
 }

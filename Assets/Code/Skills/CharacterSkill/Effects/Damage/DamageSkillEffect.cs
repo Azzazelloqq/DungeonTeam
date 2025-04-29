@@ -22,7 +22,7 @@ public class DamageSkillEffect : IDamageSkillEffect
 	{
 		EffectApplied = null;
 	}
-	
+
 	public bool TryApplyEffect(ISkillAffectable target)
 	{
 		if (target.IsDead)
@@ -30,15 +30,15 @@ public class DamageSkillEffect : IDamageSkillEffect
 			return false;
 		}
 
-		if (target is not IDamageable damageable) {
+		if (target is not IDamageable damageable)
+		{
 			return false;
 		}
 
 		damageable.TakeDamage(TotalDamageAmount);
 		EffectApplied?.Invoke();
-			
-		return true;
 
+		return true;
 	}
 }
 }

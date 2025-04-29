@@ -11,36 +11,36 @@ namespace Code.Timer
 public class ActionTimer : IDisposable
 {
 	public bool IsInProgress { get; private set; }
-	
+
 	private readonly IInGameLogger _logger;
 	private CancellationTokenSource _cancelTimerTokenSource;
 	private readonly Dictionary<Action, CallbackEntry> _normalizedCallbacks = new();
 	private int _currentDurationMs;
-	
+
 	public ActionTimer(IInGameLogger logger)
 	{
 		_logger = logger;
 	}
-	
-    public void Dispose()
+
+	public void Dispose()
 	{
 		_cancelTimerTokenSource?.CancelAndDispose();
 		ClearAllCallbacks();
-		
-        IsInProgress = false;
-    }
 
-	public void StartTimer(int timerMilliseconds, Action onTimerCompleted = null)
-    {
-        StartTimerPerMillisecond(timerMilliseconds, onTimerCompleted);
+		IsInProgress = false;
 	}
 
-    public void StartTimer(float seconds, Action onTimerCompleted = null)
-    {
+	public void StartTimer(int timerMilliseconds, Action onTimerCompleted = null)
+	{
+		StartTimerPerMillisecond(timerMilliseconds, onTimerCompleted);
+	}
+
+	public void StartTimer(float seconds, Action onTimerCompleted = null)
+	{
 		var milliseconds = seconds.ToMilliseconds();
-        
-        StartTimerPerMillisecond(milliseconds, onTimerCompleted);
-    }
+
+		StartTimerPerMillisecond(milliseconds, onTimerCompleted);
+	}
 
 	public void StartLoopTickTimer(int tickPeriodPerMilliseconds, Action onTick)
 	{
@@ -78,23 +78,23 @@ public class ActionTimer : IDisposable
 
 		entry.CancellationTokenSource.Cancel();
 		entry.CancellationTokenSource.Dispose();
-			
+
 		_normalizedCallbacks.Remove(callback);
 	}
-	
+
 	public void StopTimer()
 	{
 		if (!IsInProgress)
 		{
 			return;
 		}
-		
+
 		_cancelTimerTokenSource?.Cancel();
 		ClearAllCallbacks();
-		
-        IsInProgress = false;
-    }
-	
+
+		IsInProgress = false;
+	}
+
 	private async void ScheduleCallback(Action callback, CallbackEntry entry)
 	{
 		try
@@ -132,12 +132,12 @@ public class ActionTimer : IDisposable
 
 			await Task.Delay(timePerMillisecond, token);
 
-			if(token.IsCancellationRequested)
+			if (token.IsCancellationRequested)
 			{
 				IsInProgress = false;
 				return;
 			}
-			
+
 			onTimerCompleted?.Invoke();
 			IsInProgress = false;
 		}

@@ -8,7 +8,7 @@ namespace Code.Skills.CharacterSkill.Effects.Heal
 public class HealSkillEffect : IHealSkillEffect
 {
 	public event Action EffectApplied;
-	
+
 	public string EffectId { get; }
 	public int TotalHealAmount { get; }
 
@@ -22,19 +22,19 @@ public class HealSkillEffect : IHealSkillEffect
 	{
 		EffectApplied = null;
 	}
-	
+
 	public bool TryApplyEffect(ISkillAffectable target)
 	{
 		if (target.IsDead)
 		{
 			return false;
 		}
-		
+
 		if (target is IHealable healable)
 		{
 			healable.Heal(TotalHealAmount);
 			EffectApplied?.Invoke();
-			
+
 			return true;
 		}
 

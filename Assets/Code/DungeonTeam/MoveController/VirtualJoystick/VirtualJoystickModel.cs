@@ -1,5 +1,4 @@
-﻿
-using Code.DungeonTeam.MoveController.Base;
+﻿using Code.DungeonTeam.MoveController.Base;
 using Code.Utils.ModelUtils;
 using InGameLogger;
 
@@ -18,7 +17,7 @@ public class VirtualJoystickModel : MoveControllerModelBase
 		_logger = logger;
 		_radius = radius;
 	}
-	
+
 	public override void OnDrag(ModelVector2 dragPosition)
 	{
 		if (_radius <= 0)
@@ -26,11 +25,11 @@ public class VirtualJoystickModel : MoveControllerModelBase
 			_logger.LogError("Radius must be greater than zero");
 			return;
 		}
-		
+
 		var inputVector = dragPosition / _radius;
 		inputVector = inputVector.Magnitude > 1.0f ? inputVector.Normalized : inputVector;
-		
-		Direction = inputVector;	
+
+		Direction = inputVector;
 	}
 
 	public override void OnPointerUp()

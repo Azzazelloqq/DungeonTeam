@@ -9,7 +9,7 @@ public readonly struct CharacterConfig
 	public CharacterClass CharacterClass { get; }
 	public CharacterAttackConfig AttackConfig { get; }
 	public CharacterHealthByLevelConfig[] CharacterHealthByLevelConfig { get; }
-	
+
 	public CharacterConfig(
 		string id,
 		string[] skills,

@@ -58,7 +58,7 @@ public class TeamCharacterModel : TeamCharacterModelBase
 	protected override void OnDispose()
 	{
 		base.OnDispose();
-		
+
 		_attackReloadTimer.Dispose();
 		_attackCastTimer.Dispose();
 	}
@@ -67,7 +67,7 @@ public class TeamCharacterModel : TeamCharacterModelBase
 	{
 		IsMovingToTarget = true;
 	}
-	
+
 	public override void StopMoveToTarget()
 	{
 		IsMovingToTarget = false;
@@ -107,15 +107,15 @@ public class TeamCharacterModel : TeamCharacterModelBase
 
 		var reloadAttackPerMilliseconds = _attackInfoConfig.ReloadAttackTime;
 		_attackReloadTimer.StartTimer(reloadAttackPerMilliseconds);
-		
+
 		_attackCastTimer.StopTimer();
-		
+
 		var attackCastTime = _attackInfoConfig.AttackCastTime;
 		var invokeAttackNormalizedTime = _attackMainConfig.InvokeAttackNormalizedTime;
-		
+
 		_attackCastTimer.AddCallbackByNormalizedTime(invokeAttackNormalizedTime, attackCallback);
 		_attackCastTimer.StartTimer(attackCastTime);
-		
+
 		return true;
 	}
 }

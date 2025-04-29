@@ -7,7 +7,7 @@ namespace Code.DungeonTeam.TeamCharacter.Base
 {
 public abstract class TeamCharacterModelBase : Model
 {
-    public abstract bool IsDead { get; protected set; }
+	public abstract bool IsDead { get; protected set; }
 	public abstract bool IsMovingToTarget { get; protected set; }
 	public abstract bool IsTargetInAttackRange { get; protected set; }
 	public abstract float ViewAngel { get; }

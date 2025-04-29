@@ -3,7 +3,7 @@
 public struct OverTimeDamageEffectConfig : IEffectConfig
 {
 	public string EffectId { get; }
-	public int TotalDamage { get;}
+	public int TotalDamage { get; }
 	public int TimeBetweenDamage { get; }
 	public int EffectDuration { get; }
 

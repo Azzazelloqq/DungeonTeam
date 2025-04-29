@@ -8,10 +8,10 @@ public struct CharacterAttackByLevelRemote
 {
 	[field: SerializeField]
 	public int Level { get; private set; }
-	
+
 	[field: SerializeField]
 	public float ReloadAttackPerSeconds { get; private set; }
-	
+
 	[field: SerializeField]
 	public int AttackDamage { get; private set; }
 

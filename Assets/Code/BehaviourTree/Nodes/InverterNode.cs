@@ -5,9 +5,9 @@ namespace Code.BehaviourTree.Nodes
 public class InverterNode : ICompositeNode
 {
 	public IReadOnlyList<IReadOnlyBehaviourTreeNode> Children { get; }
-	
+
 	private readonly IBehaviourTreeNode _child;
-	
+
 	public InverterNode(IBehaviourTreeNode child)
 	{
 		_child = child;
@@ -27,7 +27,7 @@ public class InverterNode : ICompositeNode
 			case NodeState.Running:
 				return NodeState.Running;
 		}
-		
+
 		return NodeState.Failure;
 	}
 

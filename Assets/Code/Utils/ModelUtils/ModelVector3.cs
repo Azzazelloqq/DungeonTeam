@@ -12,12 +12,12 @@ public readonly struct ModelVector3 : IEquatable<ModelVector3>
 	/// X-coordinate of the vector.
 	/// </summary>
 	public float X { get; }
-	
+
 	/// <summary>
 	/// Y-coordinate of the vector.
 	/// </summary>
 	public float Y { get; }
-	
+
 	/// <summary>
 	/// Z-coordinate of the vector.
 	/// </summary>
@@ -40,67 +40,67 @@ public readonly struct ModelVector3 : IEquatable<ModelVector3>
 	/// Initializes a new instance of the Vector3 struct based on a UnityEngine.Vector3 object.
 	/// </summary>
 	/// <param name="unityVector">The UnityEngine.Vector3 instance to copy values from.</param>
-	public ModelVector3(UnityEngine.Vector3 unityVector)
+	public ModelVector3(Vector3 unityVector)
 	{
 		X = unityVector.x;
 		Y = unityVector.y;
 		Z = unityVector.z;
 	}
-	
+
 	/// <summary>
 	/// Returns the magnitude (length) of the vector.
 	/// </summary>
-    public float Magnitude => MathF.Sqrt(X * X + Y * Y + Z * Z);
+	public float Magnitude => MathF.Sqrt(X * X + Y * Y + Z * Z);
 
 	/// <summary>
 	/// Returns the squared magnitude of the vector, useful for performance optimization.
 	/// </summary>
-    public float SqrMagnitude => X * X + Y * Y + Z * Z;
+	public float SqrMagnitude => X * X + Y * Y + Z * Z;
 
 	/// <summary>
 	/// Returns a normalized (unit) vector.
 	/// </summary>
-    public ModelVector3 Normalized => this / Magnitude;
+	public ModelVector3 Normalized => this / Magnitude;
 
 	/// <summary>
 	/// Represents a vector with all components set to zero.
 	/// </summary>
-    public static ModelVector3 Zero => new ModelVector3(0, 0, 0);
-	
+	public static ModelVector3 Zero => new(0, 0, 0);
+
 	/// <summary>
 	/// Represents a vector with all components set to one.
 	/// </summary>
-    public static ModelVector3 One => new ModelVector3(1, 1, 1);
-	
+	public static ModelVector3 One => new(1, 1, 1);
+
 	/// <summary>
 	/// Represents a vector pointing upwards.
 	/// </summary>
-    public static ModelVector3 Up => new ModelVector3(0, 1, 0);
-	
+	public static ModelVector3 Up => new(0, 1, 0);
+
 	/// <summary>
 	/// Represents a vector pointing downwards.
 	/// </summary>
-    public static ModelVector3 Down => new ModelVector3(0, -1, 0);
-	
+	public static ModelVector3 Down => new(0, -1, 0);
+
 	/// <summary>
 	/// Represents a vector pointing to the left.
 	/// </summary>
-    public static ModelVector3 Left => new ModelVector3(-1, 0, 0);
-	
+	public static ModelVector3 Left => new(-1, 0, 0);
+
 	/// <summary>
 	/// Represents a vector pointing to the right.
 	/// </summary>
-    public static ModelVector3 Right => new ModelVector3(1, 0, 0);
-	
+	public static ModelVector3 Right => new(1, 0, 0);
+
 	/// <summary>
 	/// Represents a vector pointing forward.
 	/// </summary>
-    public static ModelVector3 Forward => new ModelVector3(0, 0, 1);
-	
+	public static ModelVector3 Forward => new(0, 0, 1);
+
 	/// <summary>
 	/// Represents a vector pointing backward.
 	/// </summary>
-    public static ModelVector3 Back => new ModelVector3(0, 0, -1);
+	public static ModelVector3 Back => new(0, 0, -1);
 
 	// <summary>
 	/// Adds two ModelVector3 vectors component-wise.
@@ -108,7 +108,7 @@ public readonly struct ModelVector3 : IEquatable<ModelVector3>
 	/// <param name="a">The first vector.</param>
 	/// <param name="b">The second vector.</param>
 	/// <returns>A new vector that is the sum of the two input vectors.</returns>
-    public static ModelVector3 operator +(ModelVector3 a, ModelVector3 b)
+	public static ModelVector3 operator +(ModelVector3 a, ModelVector3 b)
 	{
 		return new ModelVector3(a.X + b.X, a.Y + b.Y, a.Z + b.Z);
 	}
@@ -145,7 +145,7 @@ public readonly struct ModelVector3 : IEquatable<ModelVector3>
 	{
 		return new ModelVector3(a.X / d, a.Y / d, a.Z / d);
 	}
-	
+
 	/// <summary>
 	/// Adds a ModelVector3 vector and a ModelVector2 vector component-wise.
 	/// </summary>
@@ -173,7 +173,7 @@ public readonly struct ModelVector3 : IEquatable<ModelVector3>
 	/// </summary>
 	/// <param name="a">First vector.</param>
 	/// <param name="b">Second vector.</param>
-    public static float Dot(ModelVector3 a, ModelVector3 b)
+	public static float Dot(ModelVector3 a, ModelVector3 b)
 	{
 		return a.X * b.X + a.Y * b.Y + a.Z * b.Z;
 	}
@@ -183,7 +183,7 @@ public readonly struct ModelVector3 : IEquatable<ModelVector3>
 	/// </summary>
 	/// <param name="a">First vector.</param>
 	/// <param name="b">Second vector.</param>
-    public static ModelVector3 Cross(ModelVector3 a, ModelVector3 b)
+	public static ModelVector3 Cross(ModelVector3 a, ModelVector3 b)
 	{
 		return new ModelVector3(
 			a.Y * b.Z - a.Z * b.Y,
@@ -230,7 +230,7 @@ public readonly struct ModelVector3 : IEquatable<ModelVector3>
 	/// <param name="normal">Normal vector of the surface.</param>
 	public static ModelVector3 Reflect(ModelVector3 direction, ModelVector3 normal)
 	{
-		return  direction - normal * (2 * Dot(direction, normal));
+		return direction - normal * (2 * Dot(direction, normal));
 	}
 
 	/// <summary>
@@ -269,7 +269,7 @@ public readonly struct ModelVector3 : IEquatable<ModelVector3>
 	{
 		return X.Equals(other.X) && Y.Equals(other.Y) && Z.Equals(other.Z);
 	}
-	
+
 	/// <summary>
 	/// Returns the hash code for the vector.
 	/// </summary>

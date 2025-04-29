@@ -8,6 +8,6 @@ internal enum EffectType
 	InstantBuff,
 	OverTimeHeal,
 	OverTimeDamage,
-	OverTimeBuff,
+	OverTimeBuff
 }
 }

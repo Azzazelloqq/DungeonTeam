@@ -8,7 +8,7 @@ public struct SkillStatsConfig
 	public int CooldownPerMilliseconds { get; }
 	public int ChargeTimePerMilliseconds { get; }
 	public IEffectConfig[] Effects { get; }
-	
+
 	public SkillStatsConfig(int level, int cooldownPerMilliseconds, int chargeTimePerMilliseconds, IEffectConfig[] effects)
 	{
 		Level = level;

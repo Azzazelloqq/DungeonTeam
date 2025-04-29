@@ -17,10 +17,10 @@ public class TeamCharacterView : TeamCharacterViewBase
 
 	[SerializeField]
 	private ObservableAnimator _mainAnimator;
-	
+
 	[SerializeField]
 	private Transform _skillsParent;
-	
+
 	public override Transform SkillsParent => _skillsParent;
 
 	#if UNITY_EDITOR
@@ -30,7 +30,7 @@ public class TeamCharacterView : TeamCharacterViewBase
 	protected override void OnInitialize()
 	{
 		base.OnInitialize();
-		
+
 		#if UNITY_EDITOR
 		InitDebugVision();
 		#endif
@@ -39,7 +39,7 @@ public class TeamCharacterView : TeamCharacterViewBase
 	protected override async Task OnInitializeAsync(CancellationToken token)
 	{
 		await base.OnInitializeAsync(token);
-		
+
 		#if UNITY_EDITOR
 		InitDebugVision();
 		#endif
@@ -48,9 +48,9 @@ public class TeamCharacterView : TeamCharacterViewBase
 	public override void UpdatePointToFollow(Vector3 targetPosition)
 	{
 		_navMeshAgent.isStopped = false;
-		
+
 		_navMeshAgent.SetDestination(targetPosition);
-		
+
 		DrawCharacterVision();
 	}
 
@@ -68,7 +68,7 @@ public class TeamCharacterView : TeamCharacterViewBase
 	{
 		_mainAnimator.SetTrigger(AttackAnimationName);
 	}
-	
+
 	private void DrawCharacterVision()
 	{
 		#if UNITY_EDITOR
@@ -82,7 +82,7 @@ public class TeamCharacterView : TeamCharacterViewBase
 		_mainAnimator.AnimationEndByHash += OnAnimationEndedByHash;
 		_mainAnimator.AnimationUpdate += OnAnimationUpdate;
 	}
-	
+
 	private void UnsubscribeOnAnimatorEvents()
 	{
 		_mainAnimator.AnimationStartedByHash -= OnAnimationStartedByHash;
@@ -114,7 +114,7 @@ public class TeamCharacterView : TeamCharacterViewBase
 			OnAttackAnimationUpdated(stateInfo);
 		}
 	}
-	
+
 	private void OnAttackAnimationStarted()
 	{
 		presenter.OnAttackAnimationStarted();
@@ -131,7 +131,7 @@ public class TeamCharacterView : TeamCharacterViewBase
 		presenter.OnAttackAnimationEnded();
 	}
 
-	
+
 	#if UNITY_EDITOR
 	private void InitDebugVision()
 	{

@@ -20,13 +20,13 @@ public class TestTakeDamageEnemyView : EnemyViewBase
 	protected override void OnInitialize()
 	{
 		base.OnInitialize();
-		
+
 		_materialInstance = new Material[targetRenderer.Length];
 		for (var i = 0; i < targetRenderer.Length; i++)
 		{
 			_materialInstance[i] = targetRenderer[i].material;
 		}
-		
+
 		_originalColor = new Color[targetRenderer.Length];
 		for (var i = 0; i < targetRenderer.Length; i++)
 		{
@@ -37,13 +37,13 @@ public class TestTakeDamageEnemyView : EnemyViewBase
 	protected override async Task OnInitializeAsync(CancellationToken token)
 	{
 		await base.OnInitializeAsync(token);
-		
+
 		_materialInstance = new Material[targetRenderer.Length];
 		for (var i = 0; i < targetRenderer.Length; i++)
 		{
 			_materialInstance[i] = targetRenderer[i].material;
 		}
-		
+
 		_originalColor = new Color[targetRenderer.Length];
 		for (var i = 0; i < targetRenderer.Length; i++)
 		{
@@ -54,7 +54,7 @@ public class TestTakeDamageEnemyView : EnemyViewBase
 	protected override void OnDispose()
 	{
 		base.OnDispose();
-		
+
 		if (_damageFlashRoutine != null)
 		{
 			StopCoroutine(_damageFlashRoutine);
@@ -70,14 +70,14 @@ public class TestTakeDamageEnemyView : EnemyViewBase
 	{
 		Debug.Log("[Test enemy] DIE EFFECT");
 	}
-	
+
 	public void TriggerDamageEffect()
 	{
 		if (_damageFlashRoutine != null)
 		{
 			StopCoroutine(_damageFlashRoutine);
 		}
-		
+
 		_damageFlashRoutine = StartCoroutine(DamageFlash());
 	}
 

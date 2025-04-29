@@ -4,16 +4,15 @@ namespace Code.BehaviourTree.Nodes
 {
 public class SequenceNode : ICompositeNode
 {
-	
 	public IReadOnlyList<IReadOnlyBehaviourTreeNode> Children => _children;
-	
+
 	private readonly IBehaviourTreeNode[] _children;
 
 	public SequenceNode(IBehaviourTreeNode[] children)
 	{
 		_children = children;
 	}
-	
+
 	public NodeState Tick()
 	{
 		foreach (var child in _children)
@@ -24,7 +23,7 @@ public class SequenceNode : ICompositeNode
 				return state;
 			}
 		}
-		
+
 		return NodeState.Success;
 	}
 

@@ -4,6 +4,7 @@ namespace Code.AI.CharacterBehaviourTree.Agents.MoveAgents
 {
 public interface IMoveToEnemyAgent : IMoveAgent
 {
-    public void MoveToEnemyForAttack();
+	public bool IsEnemyReached { get; }
+	public void MoveToEnemyForAttack();
 }
 }

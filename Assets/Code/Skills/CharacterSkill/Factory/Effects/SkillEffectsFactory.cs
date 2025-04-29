@@ -36,7 +36,7 @@ internal class SkillEffectsFactory : ISkillEffectsFactory
 	{
 		var effectConfigs = skillConfig.Effects;
 		var effects = new ISkillEffect[effectConfigs.Length];
-		
+
 		for (var i = 0; i < effectConfigs.Length; i++)
 		{
 			var effectConfig = effectConfigs[i];
@@ -82,7 +82,7 @@ internal class SkillEffectsFactory : ISkillEffectsFactory
 			return new HealOverTimerSkillEffect(effectId, _logger, overTimeHealEffectConfig.EffectDuration,
 				overTimeHealEffectConfig.TotalHeal, overTimeHealEffectConfig.TimeBetweenHeal);
 		}
-		
+
 		_logger.LogError($"Effect with id {effectId} does not have implementation");
 		return null;
 	}

@@ -16,7 +16,7 @@ namespace Code.Skills.CharacterSkill.SkillPresenters.FireballSkill
 {
 public class BasicFireballSkillPresenter : SkillPresenterBase
 {
-    public string SkillId => model.SkillId;
+	public string SkillId => model.SkillId;
 	public override bool IsReadyToActivate => _fireballSkill.IsReadyToActivate;
 	public override bool IsCasting => model.IsCasting;
 
@@ -32,10 +32,10 @@ public class BasicFireballSkillPresenter : SkillPresenterBase
 		SkillViewBase view,
 		SkillModelBase skillModel,
 		ITickHandler tickHandler,
-        IInGameLogger logger,
+		IInGameLogger logger,
 		ISkill fireballSkill,
 		IMovementService movementService) : base(view, skillModel)
-    {
+	{
 		_tickHandler = tickHandler;
 		_logger = logger;
 		_fireballSkill = fireballSkill;
@@ -45,49 +45,49 @@ public class BasicFireballSkillPresenter : SkillPresenterBase
 	protected override async Task OnInitializeAsync(CancellationToken token)
 	{
 		await base.OnInitializeAsync(token);
-		
+
 		_fireballSkill.ChargeCompleted += OnChargeCompleted;
 	}
 
 	protected override void OnInitialize()
 	{
 		base.OnInitialize();
-		
+
 		_fireballSkill.ChargeCompleted += OnChargeCompleted;
 	}
 
 	public override void Dispose()
 	{
 		base.Dispose();
-		
+
 		_fireballPresentersCash.DisposeAll();
 		_fireballPresentersCash.Clear();
 		_fireballSkill.ChargeCompleted -= OnChargeCompleted;
 	}
-	
+
 	public override void ActivateSkill(ISkillAffectable target)
 	{
 		if (target is not IDamageable damageable)
 		{
 			_logger.LogError($"Target is not {typeof(IDamageable).FullName}");
-			
+
 			return;
 		}
-		
+
 		if (!_fireballSkill.IsReadyToActivate)
 		{
 			return;
 		}
 
 		_currentTarget = damageable;
-        
+
 		var fireball = CreateFireball();
 		fireball.ChargeFireball();
-		
+
 		_chargingFireballs.Enqueue(fireball);
 		_fireballSkill.StartChargeSkill();
 		model.ChargeSkill();
-		view.ChargeSkill(); 
+		view.ChargeSkill();
 	}
 
 	public override void UpdateSkill(ISkill skill)
@@ -104,10 +104,10 @@ public class BasicFireballSkillPresenter : SkillPresenterBase
 	{
 		view.OnChargeCompleted();
 		model.OnChargeCompleted();
-		
+
 		model.ActivateSkill();
 		view.ActivateSkill();
-		
+
 		var fireballPresenterBase = _chargingFireballs.Dequeue();
 		fireballPresenterBase.Activate(_currentTarget, OnFireballReachTarget);
 	}
@@ -134,9 +134,9 @@ public class BasicFireballSkillPresenter : SkillPresenterBase
 		var fireballModel = new FireballModel(fireballSpeed);
 		var fireballPresenter = new FireballPresenter(fireballView, fireballModel, _movementService, _logger);
 		fireballPresenter.Initialize();
-		
+
 		_fireballPresentersCash.Add(fireballPresenter);
-		
+
 		return fireballPresenter;
 	}
 }

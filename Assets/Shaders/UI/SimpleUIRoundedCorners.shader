@@ -37,21 +37,21 @@ Shader "UI/SimpleUIRoundedCorners"
             struct appdata
             {
                 float4 vertex : POSITION;
-                float2 uv     : TEXCOORD0;
-                float4 color  : COLOR;
+                float2 uv : TEXCOORD0;
+                float4 color : COLOR;
             };
 
             struct v2f
             {
                 float4 vertex : SV_POSITION;
-                float2 uv     : TEXCOORD0;
-                float4 color  : COLOR;
+                float2 uv : TEXCOORD0;
+                float4 color : COLOR;
             };
 
             sampler2D _MainTex;
-            float4    _MainTex_ST;
-            float4    _Color;
-            float     _CornerRadius;
+            float4 _MainTex_ST;
+            float4 _Color;
+            float _CornerRadius;
 
             v2f vert(appdata v)
             {

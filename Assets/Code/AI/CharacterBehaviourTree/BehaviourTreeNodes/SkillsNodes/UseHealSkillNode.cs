@@ -3,7 +3,7 @@ using Code.BehaviourTree;
 
 namespace Code.AI.CharacterBehaviourTree.BehaviourTreeNodes.SkillsNodes
 {
-public class UseHealSkillNode: IBehaviourTreeNode
+public class UseHealSkillNode : IBehaviourTreeNode
 {
 	private readonly IUseHealSkillAgent _agent;
 

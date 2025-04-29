@@ -4,6 +4,6 @@ namespace Code.AI.CharacterBehaviourTree.Agents.TrackAgents
 {
 public interface ITrackNeedSupportAgent : IBehaviourTreeAgent
 {
-    public bool TryFindTargetToHeal();
+	public bool TryFindTargetToHeal();
 }
 }

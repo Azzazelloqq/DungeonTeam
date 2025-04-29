@@ -17,7 +17,7 @@ public class BasicSkillView : SkillViewBase
 
 	[SerializeField]
 	private ParticleSystem _chargeSkillEffect;
-	
+
 	[SerializeField]
 	private ParticleSystem _activateSkillEffect;
 

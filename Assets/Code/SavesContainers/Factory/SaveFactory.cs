@@ -10,7 +10,7 @@ public class SaveFactory : ISaveFactory
 	{
 		return new ISavable[]
 		{
-			new PlayerTeamSave(),
+			new PlayerTeamSave()
 		};
 	}
 

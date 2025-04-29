@@ -13,7 +13,7 @@ public class VirtualJoystickPresenter : MoveControllerPresenterBase
 	public override event Action MoveStarted;
 	public override event Action MoveEnded;
 	public override Vector2 Direction => model.Direction.ToUnityVector();
-	
+
 	public VirtualJoystickPresenter(MoveControllerViewBase view, MoveControllerModelBase model) : base(view, model)
 	{
 	}
@@ -30,7 +30,7 @@ public class VirtualJoystickPresenter : MoveControllerPresenterBase
 	internal override void OnPointerDown(Vector2 dragPosition)
 	{
 		MoveStarted?.Invoke();
-		
+
 		OnDrag(dragPosition);
 	}
 
@@ -38,10 +38,10 @@ public class VirtualJoystickPresenter : MoveControllerPresenterBase
 	{
 		var modelDragPosition = dragPosition.ToModelVector();
 		model.OnDrag(modelDragPosition);
-		
+
 		var modelHandlePosition = model.HandlePosition.ToUnityVector();
 		view.OnHandlePosition(modelHandlePosition);
-		
+
 		var modelDirection = model.Direction.ToUnityVector();
 		DirectionChanged?.Invoke(modelDirection);
 	}
@@ -49,12 +49,11 @@ public class VirtualJoystickPresenter : MoveControllerPresenterBase
 	internal override void OnPointerUp()
 	{
 		model.OnPointerUp();
-		
+
 		var modelHandlePosition = model.HandlePosition.ToUnityVector();
 		view.OnHandlePosition(modelHandlePosition);
-		
+
 		MoveEnded?.Invoke();
 	}
-
 }
 }

@@ -17,7 +17,7 @@ internal class SkillsFactory : ISkillsFactory
 	private readonly ISkillEffectsFactory _skillEffectsFactory;
 	private readonly PlayerTeamSave _playerTeamSave;
 	private readonly SkillsConfigPage _skillsConfigPage;
-	
+
 	/// <summary>
 	/// Initializes a new instance of the <see cref="SkillsFactory"/> class.
 	/// </summary>
@@ -53,7 +53,7 @@ internal class SkillsFactory : ISkillsFactory
 	TSkill ISkillsFactory.GetSkill<TSkill>(string skillId, string characterId)
 	{
 		var skillType = typeof(TSkill);
-		
+
 		if (typeof(GenericHealSkill) == skillType)
 		{
 			var skillConfig = GetSkillStatsByCharacterId(characterId, SkillType.Heal, skillId);
@@ -62,7 +62,7 @@ internal class SkillsFactory : ISkillsFactory
 			var chargeTimePerMilliseconds = skillConfig.ChargeTimePerMilliseconds;
 			var genericHealSkill = new GenericHealSkill(_logger, effects, skillId, chargeTimePerMilliseconds,
 				cooldownPerMilliseconds);
-			
+
 			if (genericHealSkill is TSkill skill)
 			{
 				return skill;
@@ -72,7 +72,7 @@ internal class SkillsFactory : ISkillsFactory
 			return default;
 		}
 
-		if(typeof(GenericDamageSkill) == skillType)
+		if (typeof(GenericDamageSkill) == skillType)
 		{
 			var skillConfig = GetSkillStatsByCharacterId(characterId, SkillType.Attack, skillId);
 			var effects = _skillEffectsFactory.GetSkillEffects(skillConfig);
@@ -80,19 +80,19 @@ internal class SkillsFactory : ISkillsFactory
 			var chargeTimePerMilliseconds = skillConfig.ChargeTimePerMilliseconds;
 			var genericDamageSkill = new GenericDamageSkill(_logger, effects, skillId, chargeTimePerMilliseconds,
 				cooldownPerMilliseconds);
-			
+
 			if (genericDamageSkill is TSkill skill)
 			{
 				return skill;
 			}
 
 			_logger.LogError($"Skill {skillType.FullName} does not have implementation");
-			
+
 			return default;
 		}
 
 		_logger.LogError($"Skill {skillType.FullName} does not have implementation");
-		
+
 		return default;
 	}
 
@@ -100,7 +100,7 @@ internal class SkillsFactory : ISkillsFactory
 	{
 		var characterSkillSave = GetCharacterSkillSave(characterId, skillId);
 		var skillLevel = characterSkillSave.SkillLevel;
-		
+
 		if (skillLevel < 0)
 		{
 			_logger.LogError("Skill with id {0} not found");
@@ -121,7 +121,7 @@ internal class SkillsFactory : ISkillsFactory
 			_logger.LogError("Character with id {0} not found");
 			return default;
 		}
-		
+
 		foreach (var characterSaveSkill in characterSave.ReadOnlySkills)
 		{
 			if (characterSaveSkill.Id != skillId)
@@ -131,7 +131,7 @@ internal class SkillsFactory : ISkillsFactory
 
 			return characterSaveSkill;
 		}
-		
+
 		_logger.LogError("Skill with id {0} not found");
 
 		return default;

@@ -5,6 +5,7 @@ namespace Code.EnemiesCore.Enemies.TestTeamEnemy
 public class TestTakeDamageEnemyModel : EnemyModelBase
 {
 	public override bool IsDead { get; protected set; }
+
 	public override void TakeCommonAttackDamage(int damage)
 	{
 	}

@@ -49,12 +49,13 @@ public class PlayerTeamCharacterPresenter : TeamCharacterPresenterBase, ICharact
 	public override float VisionViewDistance => model.ViewDistance;
 	public override Vector3 VisionDirection => view.transform.forward;
 	public bool IsNeedHeal => _characterHealth.IsNeedHeal;
-	public bool IsOnTeamPlace => Vector3.Distance(_teamMoveTarget.position, view.transform.position) < 1.5f;
+	public bool IsOnTeamPlace => Vector3.Distance(_teamMovementPlace.position, view.transform.position) < 1.5f;
 	public bool IsAttackSkillCasting => IsAnyAttackSkillCasting();
 	public bool CanStartAttackSkill => IsAnyAttackSkillsReadyToStart();
 	public bool IsAttackCasting => model.IsAttackReload;
 	public bool CanStartAttack => !model.IsAttackReload && model.IsTargetInAttackRange;
 	public bool IsCanMove => model.IsCanMove;
+	public bool IsEnemyReached => model.IsTargetInAttackRange;
 
 	private readonly ITickHandler _tickHandler;
 	private readonly IDetectionService _detectionService;
@@ -73,7 +74,7 @@ public class PlayerTeamCharacterPresenter : TeamCharacterPresenterBase, ICharact
 	private SkillPresenterBase[] _healSkills;
 	private SkillPresenterBase[] _attackSkills;
 	private CharacterHealthPresenterBase _characterHealth;
-	private Transform _teamMoveTarget;
+	private Transform _teamMovementPlace;
 	private IDetectable _currentTargetToAttack;
 	private IHealable _currentTargetToHeal;
 
@@ -82,7 +83,7 @@ public class PlayerTeamCharacterPresenter : TeamCharacterPresenterBase, ICharact
 		TeamCharacterModelBase model,
 		Func<IHealable> getNeedToHealCharacter,
 		[Inject] ITickHandler tickHandler,
-        [Inject] IDetectionService detectionService,
+		[Inject] IDetectionService detectionService,
 		[Inject] IInGameLogger logger,
 		[Inject] IMovementService movementService,
 		[Inject] IResourceLoader resourceLoader,
@@ -92,7 +93,7 @@ public class PlayerTeamCharacterPresenter : TeamCharacterPresenterBase, ICharact
 		model)
 	{
 		_tickHandler = tickHandler;
-        _detectionService = detectionService;
+		_detectionService = detectionService;
 		_logger = logger;
 		_uiContext = uiContext;
 		_moveConfig = config.GetConfigPage<CharacterTeamMoveConfigPage>();
@@ -106,24 +107,25 @@ public class PlayerTeamCharacterPresenter : TeamCharacterPresenterBase, ICharact
 		_resourceLoader = resourceLoader;
 		var skillDependencies = new SkillDependencies(_tickHandler, movementService);
 		_skillsFactory = new SkillsPresenterFactory(skillDependencies, resourceLoader, logger, config, saveSystem);
-		
+
 		var distanceThreshold = _detectionService.GetCellSize() / 2;
-		_characterDetectionUpdater = new CharacterDetectionUpdater(_detectionService, this, _tickHandler, 0.1f, distanceThreshold);
+		_characterDetectionUpdater =
+			new CharacterDetectionUpdater(_detectionService, this, _tickHandler, 0.1f, distanceThreshold);
 	}
 
 	protected override void OnInitialize()
-    {
-        base.OnInitialize();
-        
-        _logger.LogError($"{GetType().Name} doesn't support sync initialization");
+	{
+		base.OnInitialize();
+
+		_logger.LogError($"{GetType().Name} doesn't support sync initialization");
 	}
 
 	protected override async Task OnInitializeAsync(CancellationToken token)
 	{
 		await base.OnInitializeAsync(token);
-		
+
 		view.UpdateMoveSpeed(_moveConfig.TeamSpeed);
-		
+
 		var characterId = model.CharacterId;
 		var characterConfig = _charactersConfigPage.Characters[characterId];
 		var modelSkills = model.Skills;
@@ -131,37 +133,37 @@ public class PlayerTeamCharacterPresenter : TeamCharacterPresenterBase, ICharact
 		var attackSkillsGetTask = GetSkillsByTypeAsync(characterId, modelSkills, token);
 		var playerTeamSave = _saveSystem.Load<PlayerTeamSave>();
 		var characterSave = playerTeamSave.SelectedPlayerTeam[characterId];
-		
+
 		var characterHealthTask = InitializePlayerCharacterHealth(characterConfig, characterSave, token);
-		
+
 		await Task.WhenAll(healSkillsGetTask, attackSkillsGetTask, characterHealthTask);
 		_healSkills = healSkillsGetTask.Result;
 		_attackSkills = attackSkillsGetTask.Result;
 		_characterHealth = characterHealthTask.Result;
-		
+
 		foreach (var skillPresenterBase in _healSkills)
 		{
 			await skillPresenterBase.InitializeAsync(token);
 		}
-		
+
 		foreach (var skillPresenterBase in _attackSkills)
 		{
 			await skillPresenterBase.InitializeAsync(token);
 		}
-		
+
 		_characterDetectionUpdater.Initialize();
 
 		_aiTickTimer.StartLoopTickTimer(TickTreeAgent, _characterBehaviourTree.Tick);
 	}
 
 	protected override void OnDispose()
-    {
-        base.OnDispose();
-        
+	{
+		base.OnDispose();
+
 		_aiTickTimer.Dispose();
 		_characterBehaviourTree.Dispose();
 		_characterDetectionUpdater.Dispose();
-    }
+	}
 
 	public bool IsAvailableUseAttackSkill()
 	{
@@ -201,13 +203,14 @@ public class PlayerTeamCharacterPresenter : TeamCharacterPresenterBase, ICharact
 	{
 		return model.IsTargetInAttackRange;
 	}
-	
+
 	public void MoveToEnemyForAttack()
 	{
 		model.MoveToTarget();
-		_tickHandler.FrameUpdate += FollowToAttackTarget;
+
+		StartMoveToAttackTarget();
 	}
-	
+
 	public void AttackEnemy()
 	{
 		if (_currentTargetToAttack == null)
@@ -260,11 +263,11 @@ public class PlayerTeamCharacterPresenter : TeamCharacterPresenterBase, ICharact
 			_logger.LogError("Target to heal doesn't need heal");
 			return;
 		}
-		
+
 		foreach (var supportSkill in _healSkills)
 		{
 			supportSkill.ActivateSkill(_currentTargetToHeal);
-			
+
 			break;
 		}
 	}
@@ -275,36 +278,41 @@ public class PlayerTeamCharacterPresenter : TeamCharacterPresenterBase, ICharact
 		{
 			_logger.LogError("Can't move to target place in team, because is not moving state");
 		}
-		
-		_tickHandler.FrameUpdate += MoveCharacterWithTeam;
+
+		StartMoveToCharacterTeamPlace();
 	}
 
 	public void ReturnToTeam()
 	{
-		if (_teamMoveTarget == null)
+		if (_teamMovementPlace == null)
 		{
 			_logger.LogError("Can't return to team, because team target is null");
 			return;
 		}
-		
-		var targetPosition = _teamMoveTarget.position;
-		view.UpdatePointToFollow(targetPosition);
+
+		StartMoveToCharacterTeamPlace();
 	}
-	
+
+	public void StopMovement()
+	{
+		StopAllMovement();
+	}
+
 	public bool IsNeedFollowToDirection()
 	{
 		var isNeedFollowToDirection = model.IsTeamMoving;
-		
+
 		return isNeedFollowToDirection;
 	}
 
 	public bool TryFindEnemyTarget()
 	{
 		var heroPosition = view.transform.position;
-		
+
 		if (_currentTargetToAttack != null)
 		{
-			model.CheckAttackDistanceToTarget(heroPosition.ToModelVector(), _currentTargetToAttack.Position.ToModelVector());
+			model.CheckAttackDistanceToTarget(heroPosition.ToModelVector(),
+				_currentTargetToAttack.Position.ToModelVector());
 			if (model.IsTargetInAttackRange)
 			{
 				return true;
@@ -315,7 +323,7 @@ public class PlayerTeamCharacterPresenter : TeamCharacterPresenterBase, ICharact
 
 		var viewAngel = model.ViewAngel;
 		var viewDistance = model.ViewDistance;
-		
+
 		var detectedObjects =
 			_detectionService.DetectObjectsInView(heroPosition, heroForward, viewAngel, viewDistance, _obstacleLayerMask);
 
@@ -323,7 +331,7 @@ public class PlayerTeamCharacterPresenter : TeamCharacterPresenterBase, ICharact
 		{
 			return false;
 		}
-		
+
 		IDetectable closestEnemy = null;
 		foreach (var detectable in detectedObjects)
 		{
@@ -331,7 +339,7 @@ public class PlayerTeamCharacterPresenter : TeamCharacterPresenterBase, ICharact
 			{
 				continue;
 			}
-			
+
 			if (closestEnemy == null)
 			{
 				closestEnemy = detectable;
@@ -353,13 +361,13 @@ public class PlayerTeamCharacterPresenter : TeamCharacterPresenterBase, ICharact
 		}
 
 		_currentTargetToAttack = closestEnemy;
-			
+
 		return true;
 	}
 
 	public override void OnTargetChanged(Transform target)
 	{
-		_teamMoveTarget = target;
+		_teamMovementPlace = target;
 	}
 
 	public override void OnTeamMove()
@@ -384,16 +392,16 @@ public class PlayerTeamCharacterPresenter : TeamCharacterPresenterBase, ICharact
 		model.OnTeamMoveEnded();
 	}
 
-	public void Stay()
+	public void MoveToStayPlace()
 	{
 		if (model.IsTeamMoving)
 		{
 			_logger.LogError("Can't stay in team, because is moving state");
-			
+
 			return;
 		}
-		
-		_tickHandler.FrameUpdate += FollowToStayPlace;
+
+		StartMoveToCharacterTeamPlace();
 	}
 
 	public Vector3 GetPosition()
@@ -411,30 +419,33 @@ public class PlayerTeamCharacterPresenter : TeamCharacterPresenterBase, ICharact
 		_characterHealth.Heal(healPoints);
 	}
 
-	private async Task<SkillPresenterBase[]> GetSkillsByTypeAsync(string characterId, string[] skillIds, CancellationToken token)
+	private async Task<SkillPresenterBase[]> GetSkillsByTypeAsync(
+		string characterId,
+		string[] skillIds,
+		CancellationToken token)
 	{
-		if(skillIds.Length == 0)
+		if (skillIds.Length == 0)
 		{
 			return Array.Empty<SkillPresenterBase>();
 		}
-		
+
 		var charactersParent = view.SkillsParent;
-    
+
 		var tasks = new Task<SkillPresenterBase>[skillIds.Length];
 		for (var i = 0; i < skillIds.Length; i++)
 		{
 			var skillId = skillIds[i];
 			tasks[i] = _skillsFactory.GetAsync(characterId, skillId, charactersParent, token);
 		}
-    
+
 		var skills = await Task.WhenAll(tasks);
 
 		return skills;
 	}
-	
+
 	private async Task<CharacterHealthPresenterBase> InitializePlayerCharacterHealth(
 		CharacterConfig characterConfig,
-		CharacterSave characterSave, 
+		CharacterSave characterSave,
 		CancellationToken token)
 	{
 		var characterHealthViewResourceId = ResourceIdsContainer.Test.CharacterHealthView;
@@ -447,64 +458,24 @@ public class PlayerTeamCharacterPresenter : TeamCharacterPresenterBase, ICharact
 		var currentLevel = characterSave.CurrentLevel;
 		var currentHealth = characterSave.CurrentHealth;
 		var healthModel = new CharacterHealthModel(_logger, healthByLevelConfigs, currentLevel, currentHealth);
-		
+
 		var presenter = new CharacterHealthPresenter(characterHealthView, healthModel);
 		await presenter.InitializeAsync(token);
 
 		return presenter;
 	}
-	
-	private void StopStay()
-	{
-		if (!model.IsTeamMoving)
-		{
-			_logger.LogError("Can't stop stay in team, because is not moving state");
-			
-			return;
-		}
-		
-		_tickHandler.FrameUpdate -= FollowToStayPlace;
-	}
-
-	private void FollowToStayPlace(float deltaTime)
-	{
-		var targetPosition = _teamMoveTarget.position;
-		view.UpdatePointToFollow(targetPosition);
-	}
-
-	private void StopMoveCharacterWithTeam()
-	{
-		_tickHandler.FrameUpdate -= MoveCharacterWithTeam;
-		view.StopFollowToTarget();
-	}
 
 	private void MoveCharacterWithTeam(float deltaTime)
 	{
-		var targetPosition = _teamMoveTarget.position;
+		var targetPosition = _teamMovementPlace.position;
 		view.UpdatePointToFollow(targetPosition);
 	}
 
 	private bool TryGetNeedHealTeamCharacter(out IHealable healable)
 	{
 		healable = _getNeedToHealCharacter.Invoke();
-		
+
 		return healable != null;
-	}
-
-	private void FollowToAttackTarget(float deltaTime)
-	{
-		if (model.IsTargetInAttackRange)
-		{
-			_tickHandler.FrameUpdate -= FollowToAttackTarget;
-			return;
-		}
-		
-		var targetPosition = _currentTargetToAttack.Position;
-		var position = view.transform.position;
-
-		model.CheckAttackDistanceToTarget(position.ToModelVector(), targetPosition.ToModelVector());
-		
-		view.UpdatePointToFollow(targetPosition);
 	}
 
 	private bool IsAnyAttackSkillCasting()
@@ -516,13 +487,13 @@ public class PlayerTeamCharacterPresenter : TeamCharacterPresenterBase, ICharact
 			{
 				return true;
 			}
-			
+
 			return false;
 		}
 
 		return false;
 	}
-	
+
 	private bool IsAnyAttackSkillsReadyToStart()
 	{
 		foreach (var skillPresenterBase in _attackSkills)
@@ -536,6 +507,59 @@ public class PlayerTeamCharacterPresenter : TeamCharacterPresenterBase, ICharact
 		}
 
 		return false;
+	}
+
+	private void StartMoveToCharacterTeamPlace()
+	{
+		StopAllMovement();
+
+		_tickHandler.FrameUpdate += FollowToStayPlace;
+	}
+
+	private void StartMoveToAttackTarget()
+	{
+		StopAllMovement();
+
+		_tickHandler.FrameUpdate += FollowToAttackTarget;
+	}
+
+	private void StopAllMovement()
+	{
+		StopFollowToAttackTarget();
+		StopMoveCharacterWithTeam();
+		StopMoveToStayPlace();
+	}
+
+	private void StopMoveCharacterWithTeam()
+	{
+		_tickHandler.FrameUpdate -= MoveCharacterWithTeam;
+		view.StopFollowToTarget();
+	}
+
+	private void StopFollowToAttackTarget()
+	{
+		_tickHandler.FrameUpdate -= FollowToAttackTarget;
+	}
+
+	private void StopMoveToStayPlace()
+	{
+		_tickHandler.FrameUpdate -= FollowToStayPlace;
+	}
+
+	private void FollowToStayPlace(float deltaTime)
+	{
+		var targetPosition = _teamMovementPlace.position;
+		view.UpdatePointToFollow(targetPosition);
+	}
+
+	private void FollowToAttackTarget(float deltaTime)
+	{
+		var targetPosition = _currentTargetToAttack.Position;
+		var position = view.transform.position;
+
+		model.CheckAttackDistanceToTarget(position.ToModelVector(), targetPosition.ToModelVector());
+
+		view.UpdatePointToFollow(targetPosition);
 	}
 }
 }

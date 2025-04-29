@@ -4,25 +4,25 @@ namespace Code.EnemiesCore.Enemies.GoblinEnemy
 {
 public class EnemyModel : EnemyModelBase
 {
-    public override bool IsDead { get; protected set; }
-    
-    private int _currentHealth;
+	public override bool IsDead { get; protected set; }
 
-    public EnemyModel(int health)
-    {
-        _currentHealth = health;
-    }
-    
-    public override void TakeCommonAttackDamage(int damage)
-    {
-        if (damage <= 0)
-        {
-            return;
-        }
+	private int _currentHealth;
 
-        _currentHealth -= damage;
+	public EnemyModel(int health)
+	{
+		_currentHealth = health;
+	}
 
-        IsDead = _currentHealth <= 0;
-    }
+	public override void TakeCommonAttackDamage(int damage)
+	{
+		if (damage <= 0)
+		{
+			return;
+		}
+
+		_currentHealth -= damage;
+
+		IsDead = _currentHealth <= 0;
+	}
 }
 }

@@ -4,7 +4,9 @@ using UnityEngine;
 namespace Code.Utils.AnimationUtils
 {
 public delegate void AnimationStateInfoHandler(AnimatorStateInfo stateInfo);
+
 public delegate void AnimationHashHandler(int stateHash);
+
 public delegate void AnimationTimeHandler(int stateHash, float normalizedTime);
 
 public class ObservableAnimator : Animator, IDisposable
@@ -28,7 +30,7 @@ public class ObservableAnimator : Animator, IDisposable
 		{
 			animationStateMachineListener.RegisterListener(this);
 		}
-		
+
 		_isObserving = true;
 	}
 
@@ -36,22 +38,22 @@ public class ObservableAnimator : Animator, IDisposable
 	{
 		UnsubscribeOnNotifierEvents();
 		ClearEvents();
-		
+
 		_isObserving = false;
 	}
-	
+
 	public void Dispose()
 	{
 		if (_isDisposed)
 		{
 			return;
 		}
-		
+
 		UnsubscribeOnNotifierEvents();
 		ClearEvents();
-		
+
 		Destroy(this);
-		
+
 		_isDisposed = true;
 		_isObserving = false;
 	}
@@ -64,7 +66,7 @@ public class ObservableAnimator : Animator, IDisposable
 		}
 
 		AnimationStarted?.Invoke(stateInfo);
-		
+
 		var hash = stateInfo.shortNameHash;
 		AnimationStartedByHash?.Invoke(hash);
 	}
@@ -77,7 +79,7 @@ public class ObservableAnimator : Animator, IDisposable
 		}
 
 		AnimationUpdate?.Invoke(stateInfo);
-		
+
 		var hash = stateInfo.shortNameHash;
 		var normalizedTime = stateInfo.normalizedTime;
 		AnimationTimeUpdatedByHash?.Invoke(hash, normalizedTime);
@@ -91,7 +93,7 @@ public class ObservableAnimator : Animator, IDisposable
 		}
 
 		AnimationEnd?.Invoke(stateInfo);
-		
+
 		var hash = stateInfo.shortNameHash;
 		AnimationEndByHash?.Invoke(hash);
 	}
@@ -109,7 +111,7 @@ public class ObservableAnimator : Animator, IDisposable
 		{
 			return;
 		}
-		
+
 		foreach (var animationStateMachineListener in _cashedNotifiers)
 		{
 			animationStateMachineListener.UnregisterListener(this);

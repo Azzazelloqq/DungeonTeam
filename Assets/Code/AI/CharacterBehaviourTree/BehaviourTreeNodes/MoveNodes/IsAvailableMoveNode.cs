@@ -11,7 +11,7 @@ public class IsAvailableMoveNode : IBehaviourTreeNode
 	{
 		_agent = agent;
 	}
-	
+
 	public NodeState Tick()
 	{
 		var isCanMove = _agent.IsCanMove;

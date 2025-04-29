@@ -11,6 +11,5 @@ internal struct SkillRemote
 
 	[field: SerializeField]
 	internal SkillStatsRemote[] ImpactsByLevel { get; private set; }
-
 }
 }

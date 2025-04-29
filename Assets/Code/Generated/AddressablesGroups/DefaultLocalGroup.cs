@@ -2,7 +2,7 @@
 
 namespace Code.Generated.Addressables
 {
-    public class DefaultLocalGroup
-    {
-    }
+public class DefaultLocalGroup
+{
+}
 }

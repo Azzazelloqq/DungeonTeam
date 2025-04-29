@@ -1,8 +1,9 @@
 ﻿{
   "name": "SkillEffects",
-  "references":[ 
+  "references": [
     "GUID:5b1d99d5a9b84611b15c22e533a82392",
-    "GUID:ae050f2342a94254ba51bbb652678452", 
-    "Logger", 
-    "GUID:70ee12777b344a749a40250f551474e7"]
+    "GUID:ae050f2342a94254ba51bbb652678452",
+    "Logger",
+    "GUID:70ee12777b344a749a40250f551474e7"
+  ]
 }

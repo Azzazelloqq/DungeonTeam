@@ -71,16 +71,16 @@ public class GameCompositionRoot : MonoBehaviourDisposable, ICompositionRoot
 	public GameCompositionRoot()
 	{
 		_gameDiContainer = DiContainerFactory.CreateContainer();
-		
+
 		_logger = new UnityInGameLogger();
 		_gameDiContainer.RegisterAsSingleton(_logger);
-		
+
 		_resourceLoader = new AddressableResourceLoader();
 		_gameDiContainer.RegisterAsSingleton(_resourceLoader);
-		
+
 		_detectionService = new DetectionService.DetectionService(DetectionCellSize);
 		_gameDiContainer.RegisterAsSingleton(_detectionService);
-		
+
 		_applicationQuitTokenSource = new CancellationTokenSource();
 	}
 
@@ -125,10 +125,10 @@ public class GameCompositionRoot : MonoBehaviourDisposable, ICompositionRoot
 	{
 		_applicationQuitTokenSource.Cancel();
 		DiContainerProvider.Dispose();
-		
+
 		Dispose();
 	}
-	
+
 	protected override void Dispose(bool disposing)
 	{
 		base.Dispose(disposing);
@@ -143,13 +143,13 @@ public class GameCompositionRoot : MonoBehaviourDisposable, ICompositionRoot
 	private async Task InitializeRoot(CancellationToken cancellationToken)
 	{
 		_gameDiContainer.RegisterAsSingleton<IUIContext>(_canvasUIContext);
-		
+
 		_tickHandler = new UnityTickHandler(_dispatcherBehaviour);
 		_gameDiContainer.RegisterAsSingleton(_tickHandler);
-		
+
 		_movementService = new GenericMovementService(_tickHandler, _logger);
 		_gameDiContainer.RegisterAsSingleton(_movementService);
-		
+
 		var savePath = Path.Combine(Application.persistentDataPath, SavesFolderName);
 		var saveFactory = new SaveFactory();
 		_saveSystem = new UnityBinaryLocalSaveSystem(savePath);
@@ -189,7 +189,7 @@ public class GameCompositionRoot : MonoBehaviourDisposable, ICompositionRoot
 
 		var moveController = await InitializeMoveControllerAsync(cancellationToken);
 		_gameDiContainer.RegisterAsSingleton(moveController);
-		
+
 		_saveSystem.Save();
 		_teamCoordinator = await InitializeTeamCoordinatorAsync(cancellationToken);
 
@@ -229,7 +229,7 @@ public class GameCompositionRoot : MonoBehaviourDisposable, ICompositionRoot
 		var teamCoordinatorPresenter = TeamCoordinatorPresenterFactory.CreateTeamCoordinatorPresenter(
 			view,
 			teamCoordinatorModel);
-		
+
 		await teamCoordinatorPresenter.InitializeAsync(token);
 
 		return teamCoordinatorPresenter;
@@ -248,21 +248,22 @@ public class GameCompositionRoot : MonoBehaviourDisposable, ICompositionRoot
 
 		return presenter;
 	}
-	
+
 	private async Task<IMoveController> InitializeMoveControllerAsync(CancellationToken token)
 	{
 		var uiOverlayParent = _canvasUIContext.UIElementsOverlay;
 		var moveControllerViewResourceId = ResourceIdsContainer.GameplayUI.VirtualJoystickView;
 		var moveControllerView =
-			await _resourceLoader.LoadAndCreateAsync<MoveControllerViewBase, Transform>(moveControllerViewResourceId, uiOverlayParent, token);
+			await _resourceLoader.LoadAndCreateAsync<MoveControllerViewBase, Transform>(moveControllerViewResourceId,
+				uiOverlayParent, token);
 
 		var radius = moveControllerView.ControllerHandleRadius;
 		var moveControllerModel = new VirtualJoystickModel(_logger, radius);
-		
+
 		var moveController = new VirtualJoystickPresenter(moveControllerView, moveControllerModel);
-		
+
 		await moveController.InitializeAsync(token);
-		
+
 		return moveController;
 	}
 

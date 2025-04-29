@@ -14,11 +14,12 @@ public readonly struct LoggerSettings
 		Postfix = postfix;
 		LogAction = logAction;
 	}
-	
+
 	public LoggerSettings(string prefix, Action<string> logAction)
 	{
 		Prefix = prefix;
-		Postfix = string.Empty;;
+		Postfix = string.Empty;
+		;
 		LogAction = logAction;
 	}
 

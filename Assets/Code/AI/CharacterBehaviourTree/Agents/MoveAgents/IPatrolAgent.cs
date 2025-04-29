@@ -4,6 +4,6 @@ namespace Code.AI.CharacterBehaviourTree.Agents.MoveAgents
 {
 public interface IPatrolAgent : IMoveAgent
 {
-    public void Patrol();
+	public void Patrol();
 }
 }

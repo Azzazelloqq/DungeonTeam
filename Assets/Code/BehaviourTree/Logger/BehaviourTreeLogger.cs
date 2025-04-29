@@ -14,7 +14,7 @@ public class BehaviourTreeLogger : IDisposable
 	{
 		_loggerSettings = loggerSettings;
 	}
-	
+
 	/// <summary>
 	/// Wraps a behavior tree node with a logging decorator and recursively applies logging to all child nodes.
 	/// </summary>

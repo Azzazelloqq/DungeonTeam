@@ -9,23 +9,25 @@ namespace Code.AI.CharacterBehaviourTree.Trees.Enemy
 {
 public class EnemyBehaviourTree : IBehaviourTree
 {
-   private readonly IBehaviourTreeNode _root;
+	private readonly IBehaviourTreeNode _root;
 
 	public EnemyBehaviourTree(IEnemyBehaviourTreeAgent agent)
 	{
 		var attackEnemySequence = InitAttackEnemyNode(agent);
 		var followEnemySequence = InitFollowEnemyNode(agent);
 
-		var combatSelector = new SelectorNode(new[]{
+		var combatSelector = new SelectorNode(new[]
+		{
 			attackEnemySequence,
 			followEnemySequence
 		});
 
 		var patrolNode = InitPatrolNode(agent);
 
-		_root = new SelectorNode(new[]{
+		_root = new SelectorNode(new[]
+		{
 			combatSelector,
-			patrolNode,
+			patrolNode
 		});
 	}
 
@@ -44,13 +46,15 @@ public class EnemyBehaviourTree : IBehaviourTree
 		var findTargetNode = new FindEnemyTargetInSightNode(agent);
 		var isEnemyInAttackRange = new TrackEnemyInAttackRangeNode(agent);
 		var attackEnemy = new AttackEnemyNode(agent);
-		
-		var attackSelector = new SelectorNode(new[]{
+
+		var attackSelector = new SelectorNode(new[]
+		{
 			useAttackSkillNode,
-			attackEnemy,
+			attackEnemy
 		});
 
-		var attackEnemySequence = new SequenceNode(new IBehaviourTreeNode[]{
+		var attackEnemySequence = new SequenceNode(new IBehaviourTreeNode[]
+		{
 			findTargetNode,
 			isEnemyInAttackRange,
 			attackSelector
@@ -64,7 +68,8 @@ public class EnemyBehaviourTree : IBehaviourTree
 		var isAvailableSkill = new IsAvailableUseAttackSkillNode(agent);
 		var useSkill = new UseAttackSkillNode(agent);
 
-		var useAttackSkillSequence = new SequenceNode(new IBehaviourTreeNode[]{
+		var useAttackSkillSequence = new SequenceNode(new IBehaviourTreeNode[]
+		{
 			isAvailableSkill,
 			useSkill
 		});
@@ -76,7 +81,7 @@ public class EnemyBehaviourTree : IBehaviourTree
 	{
 		var moveToEnemyNode = new MoveToEnemyNode(agent);
 
-		var chaseEnemySequence = new SequenceNode(new IBehaviourTreeNode[]{ moveToEnemyNode });
+		var chaseEnemySequence = new SequenceNode(new IBehaviourTreeNode[] { moveToEnemyNode });
 
 		return chaseEnemySequence;
 	}

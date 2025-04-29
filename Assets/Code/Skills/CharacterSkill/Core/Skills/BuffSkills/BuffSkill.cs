@@ -17,7 +17,7 @@ public class BuffSkill : ISkill
 	public bool IsReadyToActivate => !_cooldownTimer.IsInProgress && !_chargeTimer.IsInProgress;
 	public bool IsOnCooldown => _cooldownTimer.IsInProgress;
 	public bool IsCharging => _chargeTimer.IsInProgress;
-	
+
 	private readonly int _chargeInMilliseconds;
 	private readonly int _cooldownInMilliseconds;
 	private readonly List<ISkillEffect> _effects;
@@ -46,7 +46,7 @@ public class BuffSkill : ISkill
 		_effects.DisposeAll();
 		_effects.Clear();
 	}
-	
+
 	public void StartChargeSkill()
 	{
 		if (_chargeTimer.IsInProgress)
@@ -64,17 +64,18 @@ public class BuffSkill : ISkill
 
 	public void Activate(ISkillAffectable skillAffectable)
 	{
-		if (!IsReadyToActivate) {
+		if (!IsReadyToActivate)
+		{
 			_logger.LogError("Skill is not ready to activate");
-			
+
 			return;
 		}
-		
+
 		foreach (var effect in _effects)
 		{
 			effect.TryApplyEffect(skillAffectable);
 		}
-		
+
 		_cooldownTimer.StartTimer(_cooldownInMilliseconds);
 	}
 

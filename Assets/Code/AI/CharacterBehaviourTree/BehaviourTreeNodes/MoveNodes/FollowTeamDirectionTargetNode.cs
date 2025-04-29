@@ -20,7 +20,7 @@ public class FollowTeamDirectionTargetNode : IBehaviourTreeNode
 		{
 			return NodeState.Failure;
 		}
-		
+
 		_agent.FollowToDirection();
 
 		return NodeState.Running;

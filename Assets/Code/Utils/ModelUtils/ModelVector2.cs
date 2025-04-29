@@ -92,7 +92,7 @@ public readonly struct ModelVector2 : IEquatable<ModelVector2>
 	{
 		return new ModelVector2(a.X + b.X, a.Y + b.Y);
 	}
-	
+
 	/// <summary>
 	/// Subtracts two vectors component-wise.
 	/// </summary>
@@ -141,7 +141,7 @@ public readonly struct ModelVector2 : IEquatable<ModelVector2>
 	{
 		return new ModelVector2(a.X / d, a.Y / d);
 	}
-	
+
 	/// <summary>
 	/// Adds a ModelVector2 vector and a ModelVector3 vector component-wise.
 	/// </summary>

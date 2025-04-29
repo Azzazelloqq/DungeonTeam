@@ -10,7 +10,7 @@ public class BasicFireballSkillModel : SkillModelBase
 
 	public BasicFireballSkillModel(string skillId)
 	{
-        SkillId = skillId;
+		SkillId = skillId;
 	}
 
 	protected override void OnDispose()

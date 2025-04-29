@@ -4,7 +4,6 @@ public class LevelsService : ILevelsService
 {
 	public void LoadLevel(string levelId)
 	{
-		
 	}
 }
 }

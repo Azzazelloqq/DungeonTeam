@@ -16,16 +16,16 @@ public class PercentBuffAttackSkillEffect : IBuffSkillEffect
 	public string EffectId { get; }
 	public int BuffDuration { get; }
 	public int BuffAmount { get; }
-	
+
 	private readonly List<CancellationTokenSource> _buffCancellationTokenSources = new();
-	
+
 	public PercentBuffAttackSkillEffect(string effectId, int buffDuration, int buffAmount)
 	{
 		EffectId = effectId;
 		BuffDuration = buffDuration;
 		BuffAmount = buffAmount;
 	}
-	
+
 	public void Dispose()
 	{
 		EffectApplied = null;
@@ -38,11 +38,13 @@ public class PercentBuffAttackSkillEffect : IBuffSkillEffect
 
 	public bool TryApplyEffect(ISkillAffectable target)
 	{
-		if (target.IsDead) {
+		if (target.IsDead)
+		{
 			return false;
 		}
-		
-		if (target is not IAttackBuffable attackBuffable) {
+
+		if (target is not IAttackBuffable attackBuffable)
+		{
 			return false;
 		}
 
@@ -51,9 +53,9 @@ public class PercentBuffAttackSkillEffect : IBuffSkillEffect
 
 		var buffCancellationTokenSource = new CancellationTokenSource();
 		_buffCancellationTokenSources.Add(buffCancellationTokenSource);
-		
+
 		StartTrackBuffEnd(attackBuffCommand, BuffDuration, buffCancellationTokenSource.Token);
-		
+
 		return true;
 	}
 
@@ -63,20 +65,20 @@ public class PercentBuffAttackSkillEffect : IBuffSkillEffect
 		{
 			return;
 		}
-		
+
 		if (buffDuration <= 0)
 		{
 			attackBuffCommand.UnbuffAttack();
 		}
-		
+
 		await Task.Delay(buffDuration, token);
 
 		if (token.IsCancellationRequested)
 		{
 			return;
 		}
-		
+
 		attackBuffCommand.UnbuffAttack();
-	} 
+	}
 }
 }

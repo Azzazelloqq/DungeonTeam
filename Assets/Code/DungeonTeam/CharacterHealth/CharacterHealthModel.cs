@@ -12,8 +12,8 @@ public class CharacterHealthModel : CharacterHealthModelBase
 	private readonly IInGameLogger _logger;
 	private readonly CharacterHealthByLevelConfig[] _healthByLevelConfig;
 	public sealed override int CurrentLevel { get; protected set; }
-	public override int MaxHealth { get; protected set;}
-	public sealed override int CurrentHealth { get; protected set;}
+	public override int MaxHealth { get; protected set; }
+	public sealed override int CurrentHealth { get; protected set; }
 	public override bool IsNeedHeal => CurrentHealth < MaxHealth;
 
 	public CharacterHealthModel(
@@ -38,7 +38,7 @@ public class CharacterHealthModel : CharacterHealthModelBase
 	protected override Task OnInitializeAsync(CancellationToken token)
 	{
 		UpdateMaxHealth();
-		
+
 		return base.OnInitializeAsync(token);
 	}
 
@@ -55,12 +55,12 @@ public class CharacterHealthModel : CharacterHealthModelBase
 		if (damage <= 0)
 		{
 			_logger.LogError("Damage must be greater than zero");
-			
+
 			return;
 		}
-		
+
 		var newCurrentHealthValue = CurrentHealth - damage;
-		
+
 		CurrentHealth = CurrentHealth <= 0 ? 0 : newCurrentHealthValue;
 	}
 
@@ -69,12 +69,12 @@ public class CharacterHealthModel : CharacterHealthModelBase
 		if (heal <= 0)
 		{
 			_logger.LogError("Heal must be greater than zero");
-			
+
 			return;
 		}
-		
+
 		var newCurrentHealthValue = CurrentHealth + heal;
-		
+
 		CurrentHealth = newCurrentHealthValue > MaxHealth ? MaxHealth : newCurrentHealthValue;
 	}
 
@@ -84,10 +84,10 @@ public class CharacterHealthModel : CharacterHealthModelBase
 		if (lastLevel.Level == CurrentLevel)
 		{
 			_logger.LogError("Character has reached the maximum level");
-			
+
 			return;
 		}
-		
+
 		CurrentLevel++;
 	}
 
@@ -99,12 +99,12 @@ public class CharacterHealthModel : CharacterHealthModelBase
 			{
 				continue;
 			}
-			
+
 			MaxHealth = healthByLevelConfig.MaxHealth;
-			
+
 			return;
 		}
-		
+
 		_logger.LogError($"Character level {CurrentLevel} not found in config");
 	}
 }

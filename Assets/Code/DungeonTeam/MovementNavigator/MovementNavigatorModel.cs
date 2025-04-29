@@ -12,11 +12,11 @@ public class MovementNavigatorModel : MovementNavigatorModelBase
 	public override IReadOnlyDictionary<string, int> CharacterPlaceNumById => _characterPlaceNumById;
 	public override ModelVector3 TeamPosition => _teamPosition;
 	public override bool IsMoving { get; protected set; }
-	
+
 	private readonly PlaceConfig[] _placeConfigs;
 	private readonly IInGameLogger _logger;
 	private readonly Dictionary<string, CharacterClass> _characterClassById = new();
-	private readonly Dictionary<string,int> _characterPlaceNumById;
+	private readonly Dictionary<string, int> _characterPlaceNumById;
 	private readonly float _teamMoveSpeed;
 	private string[] _placeAssignments;
 	private ModelVector3 _teamPosition;
@@ -86,9 +86,9 @@ public class MovementNavigatorModel : MovementNavigatorModelBase
 		{
 			return false;
 		}
-		
+
 		IsMoving = true;
-		
+
 		return true;
 	}
 
@@ -98,9 +98,9 @@ public class MovementNavigatorModel : MovementNavigatorModelBase
 		{
 			return false;
 		}
-		
+
 		IsMoving = false;
-		
+
 		return true;
 	}
 
@@ -143,7 +143,7 @@ public class MovementNavigatorModel : MovementNavigatorModelBase
 
 			_logger.LogError(
 				$"No available place to reassign displaced character with ID {currentOccupantId}");
-				
+
 			_characterPlaceNumById.Remove(currentOccupantId);
 
 			return;
@@ -174,7 +174,7 @@ public class MovementNavigatorModel : MovementNavigatorModelBase
 
 			_placeAssignments[i] = characterId;
 			_characterPlaceNumById[characterId] = _placeConfigs[i].PlaceNumber;
-			
+
 			return true;
 		}
 
@@ -189,7 +189,7 @@ public class MovementNavigatorModel : MovementNavigatorModelBase
 		}
 
 		_logger.LogException(new Exception($"Character with ID {characterId} not found."));
-		
+
 		return CharacterClass.None;
 	}
 }

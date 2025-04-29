@@ -5,6 +5,6 @@ public enum SkillType
 	None = 0,
 	Attack = 1,
 	Heal = 2,
-	Buff = 3,
+	Buff = 3
 }
 }

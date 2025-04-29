@@ -11,12 +11,16 @@ public class FireballPresenter : FireballPresenterBase
 	private readonly IMovementService _movementService;
 	private readonly IInGameLogger _logger;
 	public override bool IsFree => model.IsFree;
-    public override bool IsFollowToTarget => model.IsFollowToTarget;
+	public override bool IsFollowToTarget => model.IsFollowToTarget;
 
 	private Action<IDamageable> _onTargetReached;
 	private IDamageable _currentTarget;
 
-	public FireballPresenter(FireballViewBase view, FireballModelBase model, IMovementService movementService, IInGameLogger logger) : base(view, model)
+	public FireballPresenter(
+		FireballViewBase view,
+		FireballModelBase model,
+		IMovementService movementService,
+		IInGameLogger logger) : base(view, model)
 	{
 		_movementService = movementService;
 		_logger = logger;
@@ -29,9 +33,9 @@ public class FireballPresenter : FireballPresenterBase
 			_logger.LogError("Fireball is already active");
 			return;
 		}
-		
+
 		_currentTarget = affectable;
-		
+
 		model.ActivateFireball();
 		view.ActivateFireball();
 
@@ -55,7 +59,7 @@ public class FireballPresenter : FireballPresenterBase
 		model.OnTargetReached();
 		view.BlowUpFireball();
 
-        _onTargetReached?.Invoke(_currentTarget);
+		_onTargetReached?.Invoke(_currentTarget);
 	}
 
 	public override void ChargeFireball()
@@ -67,7 +71,7 @@ public class FireballPresenter : FireballPresenterBase
 	public override void OnBlowUpEffectCompleted()
 	{
 		model.FireballExploded();
-		
+
 		view.HideFireball();
 	}
 }

@@ -7,7 +7,7 @@ public class SelectorNode : ICompositeNode
 	public IReadOnlyList<IReadOnlyBehaviourTreeNode> Children => _children;
 
 	private readonly IBehaviourTreeNode[] _children;
-	
+
 	public SelectorNode(IBehaviourTreeNode[] children)
 	{
 		_children = children;

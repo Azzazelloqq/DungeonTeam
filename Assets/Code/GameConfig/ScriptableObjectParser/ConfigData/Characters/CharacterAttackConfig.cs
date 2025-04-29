@@ -12,7 +12,7 @@ public readonly struct CharacterAttackConfig
 	public float AttackDistance { get; }
 	public float InvokeAttackNormalizedTime { get; }
 	public Dictionary<int, CharacterAttack> AttackByLevels { get; }
-	
+
 	internal CharacterAttackConfig(
 		float viewDistance,
 		float viewAngel,
@@ -28,14 +28,14 @@ public readonly struct CharacterAttackConfig
 		InvokeAttackNormalizedTime = invokeAttackNormalizedTime;
 
 		AttackByLevels = new Dictionary<int, CharacterAttack>(attackByLevels.Length);
-		
+
 		foreach (var attackRemote in attackByLevels)
 		{
 			var level = attackRemote.Level;
 			var reloadAttack = attackRemote.ReloadAttackPerSeconds.ToMilliseconds();
 			var attackDamage = attackRemote.AttackDamage;
 			var castTime = attackRemote.CastPerSeconds.ToMilliseconds();
-			
+
 			AttackByLevels[level] = new CharacterAttack(level, reloadAttack, attackDamage, castTime);
 		}
 	}
@@ -47,17 +47,17 @@ public readonly struct CharacterAttackConfig
 		AttackSkillDistance = remoteConfig.AttackSkillDistance;
 		AttackDistance = remoteConfig.AttackDistance;
 		InvokeAttackNormalizedTime = remoteConfig.InvokeAttackNormalizedTime.ToMilliseconds();
-		
+
 		var attackByLevelsRemote = remoteConfig.AttackByLevels;
 		AttackByLevels = new Dictionary<int, CharacterAttack>(attackByLevelsRemote.Length);
-		
+
 		foreach (var attackRemote in attackByLevelsRemote)
 		{
 			var level = attackRemote.Level;
 			var reloadAttack = attackRemote.ReloadAttackPerSeconds.ToMilliseconds();
 			var attackDamage = attackRemote.AttackDamage;
 			var castTime = attackRemote.CastPerSeconds.ToMilliseconds();
-			
+
 			AttackByLevels[level] = new CharacterAttack(level, reloadAttack, attackDamage, castTime);
 		}
 	}

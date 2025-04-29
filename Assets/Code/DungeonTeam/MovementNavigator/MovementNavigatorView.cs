@@ -14,7 +14,7 @@ public class MovementNavigatorView : MovementNavigatorViewBase
 	private Transform _targetsParent;
 
 	public override Vector3 TeamParentPosition => _targetsParent.position;
-	
+
 	public override void MoveTeamToPosition(Vector3 teamPosition)
 	{
 		_targetsParent.position = teamPosition;

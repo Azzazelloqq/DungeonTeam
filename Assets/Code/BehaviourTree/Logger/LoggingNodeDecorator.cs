@@ -20,13 +20,13 @@ public class LoggingNodeDecorator : IBehaviourTreeNode
 		{
 			return state;
 		}
-		
+
 		_previousState = state;
 		var logPostfix = _loggerSettings.Postfix;
 		var logPrefix = _loggerSettings.Prefix;
 		var logAction = _loggerSettings.LogAction;
 		var nodeName = _inner.GetType().Name;
-		
+
 		logAction.Invoke($"{logPrefix} {nodeName} → {state} {logPostfix}" + $"Node hash code: {_inner.GetHashCode()}");
 
 		return state;

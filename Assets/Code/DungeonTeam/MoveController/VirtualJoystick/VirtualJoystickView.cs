@@ -11,7 +11,7 @@ public class VirtualJoystickView : MoveControllerViewBase, IDragHandler, IPointe
 
 	[SerializeField]
 	private RectTransform _joystickHandle;
-	
+
 	public override float ControllerHandleRadius => _joystickBackground.rect.width / 2;
 
 	public void OnPointerDown(PointerEventData eventData)
@@ -38,7 +38,7 @@ public class VirtualJoystickView : MoveControllerViewBase, IDragHandler, IPointe
 		{
 			return;
 		}
-		
+
 		presenter.OnDrag(localPoint);
 	}
 

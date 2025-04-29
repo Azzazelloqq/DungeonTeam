@@ -7,14 +7,14 @@ namespace Code.DetectionService
 /// </summary>
 public interface IDetectable
 {
-    /// <summary>
-    /// Current position of the object in world space.
-    /// </summary>
-    public Vector3 Position { get; }
+	/// <summary>
+	/// Current position of the object in world space.
+	/// </summary>
+	public Vector3 Position { get; }
 
-    /// <summary>
-    /// Flag indicating whether the object is dead.
-    /// </summary>
-    public bool IsDead { get; }
+	/// <summary>
+	/// Flag indicating whether the object is dead.
+	/// </summary>
+	public bool IsDead { get; }
 }
 }

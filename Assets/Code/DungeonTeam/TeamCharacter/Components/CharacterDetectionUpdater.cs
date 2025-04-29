@@ -44,7 +44,7 @@ public class CharacterDetectionUpdater : IDisposable
 		_tickHandler.FrameUpdate -= StartUpdateDetection;
 		_detectionService.UnregisterObject(_detectable);
 	}
-	
+
 	public void ForceUpdate()
 	{
 		var currentPos = _detectable.Position;
@@ -59,7 +59,7 @@ public class CharacterDetectionUpdater : IDisposable
 		{
 			return;
 		}
-		
+
 		_timeSinceLastUpdate += deltaTime;
 		var timeToForceUpdate = _timeSinceLastUpdate >= _updateInterval;
 

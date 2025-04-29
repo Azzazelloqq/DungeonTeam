@@ -51,11 +51,12 @@ public class TeamCoordinatorPresenter : TeamCoordinatorPresenterBase
 		_playerTeamSave = _saveSystem.Load<PlayerTeamSave>();
 	}
 
-	protected override async Task OnInitializeAsync(CancellationToken token) {
+	protected override async Task OnInitializeAsync(CancellationToken token)
+	{
 		var team = await CreateTeamCharactersAsync(token);
 		_teamMovementNavigator = await InitializeMovementNavigatorAsync(team, token);
 		compositeDisposable.AddDisposable(_teamMovementNavigator);
-		
+
 		foreach (var teamCharacter in team)
 		{
 			await teamCharacter.InitializeAsync(token);
@@ -67,7 +68,7 @@ public class TeamCoordinatorPresenter : TeamCoordinatorPresenterBase
 	protected override void OnDispose()
 	{
 		base.OnDispose();
-		
+
 		_temCharacters.DisposeAll();
 		_temCharacters.Clear();
 	}
@@ -83,7 +84,7 @@ public class TeamCoordinatorPresenter : TeamCoordinatorPresenterBase
 		var navigatorView =
 			await _resourceLoader.LoadAndCreateAsync<MovementNavigatorViewBase, Transform>(movementNavigatorViewResourceId,
 				movementNavigatorParent, token);
-		
+
 		var teamMovementNavigator = TeamMovementNavigatorPresenterFactory.CreateTeamMovementNavigatorPresenter(
 			navigatorView,
 			movementNavigatorModelBase,
@@ -105,23 +106,23 @@ public class TeamCoordinatorPresenter : TeamCoordinatorPresenterBase
 			{
 				continue;
 			}
-			
+
 			var characterSaveId = characterSave.Id;
 			var character = await CreateTeamCharacterAsync(characterSaveId, characterSave, token);
-			
+
 			teamPresenters.Add(character);
-			
+
 			if (character is IHealable healableCharacter)
 			{
 				_healableCharacters.Add(healableCharacter);
 			}
-			
+
 			compositeDisposable.AddDisposable(character);
 		}
 
 		return teamPresenters;
 	}
-	
+
 	private async Task<TeamCharacterPresenterBase> CreateTeamCharacterAsync(
 		string characterId,
 		CharacterSave characterSave,
@@ -137,18 +138,19 @@ public class TeamCoordinatorPresenter : TeamCoordinatorPresenterBase
 		var characterClass = characterConfig.CharacterClass;
 		var attackConfig = characterConfig.AttackConfig;
 		var skills = characterConfig.Skills;
-		
+
 		var characterLevel = characterSave.CurrentLevel;
-		
-		var characterModel = new TeamCharacterModel(_logger, characterId, characterClass, attackConfig, characterLevel, skills);
+
+		var characterModel =
+			new TeamCharacterModel(_logger, characterId, characterClass, attackConfig, characterLevel, skills);
 		var character = PlayerTeamCharacterPresenterFactory.CreatePlayerTeamCharacterPresenter(
 			characterView,
 			characterModel,
 			GetNeedToHealAnyCharacter);
-		
+
 		return character;
 	}
-	
+
 	private IHealable GetNeedToHealAnyCharacter()
 	{
 		foreach (var healableCharacter in _healableCharacters)
@@ -157,10 +159,10 @@ public class TeamCoordinatorPresenter : TeamCoordinatorPresenterBase
 			{
 				continue;
 			}
-			
+
 			return healableCharacter;
 		}
-		
+
 		return null;
 	}
 }

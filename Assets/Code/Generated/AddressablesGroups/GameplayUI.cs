@@ -2,8 +2,8 @@
 
 namespace Code.Generated.Addressables
 {
-    public class GameplayUI
-    {
-        public string VirtualJoystickView = "VirtualJoystickView";
-    }
+public class GameplayUI
+{
+	public string VirtualJoystickView = "VirtualJoystickView";
+}
 }

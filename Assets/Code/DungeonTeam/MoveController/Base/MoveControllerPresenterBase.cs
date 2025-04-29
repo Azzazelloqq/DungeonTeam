@@ -4,12 +4,13 @@ using UnityEngine;
 
 namespace Code.DungeonTeam.MoveController.Base
 {
-public abstract class MoveControllerPresenterBase : Presenter<MoveControllerViewBase, MoveControllerModelBase>, IMoveController
+public abstract class MoveControllerPresenterBase : Presenter<MoveControllerViewBase, MoveControllerModelBase>,
+	IMoveController
 {
-	public abstract event Action<Vector2> DirectionChanged; 
-	public abstract event Action MoveStarted; 
-	public abstract event Action MoveEnded; 
-	
+	public abstract event Action<Vector2> DirectionChanged;
+	public abstract event Action MoveStarted;
+	public abstract event Action MoveEnded;
+
 	protected MoveControllerPresenterBase(MoveControllerViewBase view, MoveControllerModelBase model) : base(view, model)
 	{
 	}

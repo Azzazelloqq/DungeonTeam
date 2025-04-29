@@ -13,7 +13,7 @@ namespace Code.Skills.CharacterSkill.Effects.Damage
 public class DamageOverTimeSkillEffect : IDamageSkillEffect
 {
 	public event Action EffectApplied;
-	
+
 	public string EffectId { get; }
 	public int TotalDamageAmount { get; }
 
@@ -22,31 +22,36 @@ public class DamageOverTimeSkillEffect : IDamageSkillEffect
 	private readonly int _damageByTick;
 	private readonly List<CancellationTokenSource> _damageOverTimeTokens = new();
 
-	public DamageOverTimeSkillEffect(string effectId, IInGameLogger logger, int durationInMilliseconds, int totalTotalDamage, int timeBetweenDamage)
+	public DamageOverTimeSkillEffect(
+		string effectId,
+		IInGameLogger logger,
+		int durationInMilliseconds,
+		int totalTotalDamage,
+		int timeBetweenDamage)
 	{
 		EffectId = effectId;
 		_logger = logger;
 		_timeBetweenDamage = timeBetweenDamage;
 		TotalDamageAmount = totalTotalDamage;
-		
+
 		_damageByTick = totalTotalDamage / (durationInMilliseconds / timeBetweenDamage);
 	}
-	
+
 	public bool TryApplyEffect(ISkillAffectable target)
 	{
 		if (target.IsDead)
 		{
 			return false;
 		}
-		
-		if(target is not IDamageable damageable)
+
+		if (target is not IDamageable damageable)
 		{
 			return false;
 		}
 
 		var cancellationTokenSource = new CancellationTokenSource();
 		StartDamageOverTime(damageable, cancellationTokenSource.Token);
-		
+
 		return true;
 	}
 
@@ -67,26 +72,26 @@ public class DamageOverTimeSkillEffect : IDamageSkillEffect
 				damageable.TakeDamage(TotalDamageAmount);
 				return;
 			}
-			
+
 			var takenDamage = 0;
-		
+
 			while (!damageable.IsDead)
 			{
 				if (token.IsCancellationRequested)
 				{
 					break;
 				}
-			
+
 				damageable.TakeDamage(_damageByTick);
 				takenDamage += _damageByTick;
-				
+
 				EffectApplied?.Invoke();
-				
-				if(takenDamage >= TotalDamageAmount)
+
+				if (takenDamage >= TotalDamageAmount)
 				{
 					break;
 				}
-				
+
 				await Task.Delay(_timeBetweenDamage, token);
 			}
 		}

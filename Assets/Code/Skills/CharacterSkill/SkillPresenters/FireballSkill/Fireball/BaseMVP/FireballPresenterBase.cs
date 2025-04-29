@@ -11,7 +11,7 @@ public abstract class FireballPresenterBase : Presenter<FireballViewBase, Fireba
 	}
 
 	public abstract bool IsFree { get; }
-    public abstract bool IsFollowToTarget { get; }
+	public abstract bool IsFollowToTarget { get; }
 
 	public abstract void Activate(IDamageable affectable, Action<IDamageable> onTargetReached);
 	public abstract void ChargeFireball();

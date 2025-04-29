@@ -22,7 +22,12 @@ public class HealOverTimerSkillEffect : IHealSkillEffect
 	private readonly int _healByTick;
 	private readonly List<CancellationTokenSource> _healOverTimeTokens = new();
 
-	public HealOverTimerSkillEffect(string effectId, IInGameLogger logger, int durationInMilliseconds, int totalTotalHeal, int timeBetweenHeal)
+	public HealOverTimerSkillEffect(
+		string effectId,
+		IInGameLogger logger,
+		int durationInMilliseconds,
+		int totalTotalHeal,
+		int timeBetweenHeal)
 	{
 		_logger = logger;
 		_timeBetweenHeal = timeBetweenHeal;
@@ -30,22 +35,22 @@ public class HealOverTimerSkillEffect : IHealSkillEffect
 		TotalHealAmount = totalTotalHeal;
 		_healByTick = totalTotalHeal / (durationInMilliseconds / timeBetweenHeal);
 	}
-	
+
 	public bool TryApplyEffect(ISkillAffectable target)
 	{
 		if (target.IsDead)
 		{
 			return false;
 		}
-		
-		if(target is not IHealable healable)
+
+		if (target is not IHealable healable)
 		{
 			return false;
 		}
 
 		var cancellationTokenSource = new CancellationTokenSource();
 		StartHealOverTime(healable, cancellationTokenSource.Token);
-		
+
 		return true;
 	}
 
@@ -64,26 +69,26 @@ public class HealOverTimerSkillEffect : IHealSkillEffect
 				healable.Heal(TotalHealAmount);
 				return;
 			}
-			
+
 			var healAmount = 0;
-		
+
 			while (!healable.IsDead)
 			{
 				if (token.IsCancellationRequested)
 				{
 					break;
 				}
-			
+
 				healable.Heal(_healByTick);
 				healAmount += _healByTick;
-				
+
 				EffectApplied?.Invoke();
-				
-				if(healAmount >= TotalHealAmount)
+
+				if (healAmount >= TotalHealAmount)
 				{
 					break;
 				}
-				
+
 				await Task.Delay(_timeBetweenHeal, token);
 			}
 		}

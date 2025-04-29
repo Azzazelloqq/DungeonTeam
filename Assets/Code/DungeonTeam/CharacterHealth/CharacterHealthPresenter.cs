@@ -18,7 +18,7 @@ public class CharacterHealthPresenter : CharacterHealthPresenterBase
 		model.TakeDamage(damage);
 		view.PlayTakeDamageEffect();
 	}
-	
+
 	public override void Heal(int heal)
 	{
 		model.Heal(heal);

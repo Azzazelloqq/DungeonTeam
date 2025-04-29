@@ -5,22 +5,22 @@ namespace Code.AI.CharacterBehaviourTree.BehaviourTreeNodes.MoveNodes
 {
 public class PatrolNode : IBehaviourTreeNode
 {
-    private readonly IPatrolAgent _agent;
-    
-    public PatrolNode(IPatrolAgent agent)
-    {
-        _agent = agent;
-    }
-    
-    public NodeState Tick()
-    {
-        _agent.Patrol();
+	private readonly IPatrolAgent _agent;
 
-        return NodeState.Running;
-    }
+	public PatrolNode(IPatrolAgent agent)
+	{
+		_agent = agent;
+	}
 
-    public void Dispose()
-    {
-    }
+	public NodeState Tick()
+	{
+		_agent.Patrol();
+
+		return NodeState.Running;
+	}
+
+	public void Dispose()
+	{
+	}
 }
 }

@@ -5,7 +5,8 @@ using UnityEngine;
 
 namespace Code.DungeonTeam.MovementNavigator.Base
 {
-public abstract class MovementNavigatorModelBase : Model {
+public abstract class MovementNavigatorModelBase : Model
+{
 	public abstract bool IsMoving { get; protected set; }
 	public abstract IReadOnlyDictionary<string, int> CharacterPlaceNumById { get; }
 	public abstract ModelVector3 TeamPosition { get; }

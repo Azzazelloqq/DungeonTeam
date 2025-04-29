@@ -22,7 +22,7 @@ public class CharacterHealthView : CharacterHealthViewBase
 	{
 		_healthBarAnimationSequence?.Kill();
 	}
-	
+
 	public override void PlayTakeDamageEffect()
 	{
 		UpdateHealthBarFill(true);
@@ -40,16 +40,17 @@ public class CharacterHealthView : CharacterHealthViewBase
 	private void UpdateHealthBarFill(bool isNegative)
 	{
 		_healthBarFillBackground.fillAmount = _healthBar.fillAmount;
-		
+
 		var currentHealth = presenter.CurrentHealth;
 		var maxHealth = presenter.MaxHealth;
-		
+
 		var healthPercent = (float)currentHealth / maxHealth;
-		var changeHpDuration = Mathf.Lerp(ChangeHpMinDuration, ChangeHpMaxDuration, Mathf.Abs(_healthBar.fillAmount - healthPercent));
+		var changeHpDuration = Mathf.Lerp(ChangeHpMinDuration, ChangeHpMaxDuration,
+			Mathf.Abs(_healthBar.fillAmount - healthPercent));
 		_healthBarFillBackground.color = isNegative ? Color.red : Color.green;
-		
+
 		_healthBarAnimationSequence = DOTween.Sequence();
-		
+
 		_healthBarAnimationSequence.Append(_healthBar.DOFillAmount(healthPercent, changeHpDuration));
 		_healthBarAnimationSequence.Append(_healthBarFillBackground.DOFillAmount(healthPercent, changeHpDuration));
 

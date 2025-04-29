@@ -28,11 +28,11 @@ public class ScriptableObjectConfigParser : IConfigParser
 		_remoteData = remoteData;
 		_logger = logger;
 	}
-	
+
 	public IConfigPage[] Parse()
 	{
 		var configData = new IConfigPage[_remoteData.Length];
-		
+
 		for (var i = 0; i < _remoteData.Length; i++)
 		{
 			var data = _remoteData[i];
@@ -108,16 +108,17 @@ public class ScriptableObjectConfigParser : IConfigParser
 					var healthByLevelItem = new CharacterHealthByLevelConfig(
 						healthByLevelRemoteItem.Level,
 						healthByLevelRemoteItem.Health);
-					
+
 					healthByLevel[i] = healthByLevelItem;
 				}
-				
+
 				var characterId = characterRemote.Id;
 				var characterSkills = characterRemote.Skills;
 				var characterClass = (CharacterClass)characterRemote.CharacterClass;
 				var attackConfig = new CharacterAttackConfig(characterRemote.AttackInfo);
-				var characterData = new CharacterConfig(characterId, characterSkills, characterClass, attackConfig, healthByLevel);
-				
+				var characterData = new CharacterConfig(characterId, characterSkills, characterClass, attackConfig,
+					healthByLevel);
+
 				charactersData[characterId] = characterData;
 			}
 		}
@@ -130,19 +131,20 @@ public class ScriptableObjectConfigParser : IConfigParser
 	private IConfigPage ParseSkillRemote(SkillsRemotePage skillRemote)
 	{
 		var skillsGroups = new Dictionary<SkillType, SkillsGroupConfig>();
-		
+
 		foreach (var skillsGroupRemote in skillRemote.Skills)
 		{
 			var skillsConfig = new Dictionary<string, SkillConfig>();
 			var skillGroupTypeRemote = skillsGroupRemote.Type;
 			var skillType = (SkillType)skillGroupTypeRemote;
-			
+
 			foreach (var skillsInGroupRemote in skillsGroupRemote.Skills)
 			{
 				var skillImpacts = new Dictionary<int, SkillStatsConfig>(skillsInGroupRemote.ImpactsByLevel.Length);
 				var skillId = skillsInGroupRemote.SkillId;
 
-				foreach (var skillImpactRemote in skillsInGroupRemote.ImpactsByLevel) {
+				foreach (var skillImpactRemote in skillsInGroupRemote.ImpactsByLevel)
+				{
 					var cooldownPerMilliseconds = skillImpactRemote.CooldownPerSeconds.ToMilliseconds();
 					var chargePerMilliseconds = skillImpactRemote.ChargePerSeconds.ToMilliseconds();
 					var level = skillImpactRemote.Level;
@@ -153,7 +155,7 @@ public class ScriptableObjectConfigParser : IConfigParser
 						cooldownPerMilliseconds,
 						chargePerMilliseconds,
 						effectsConfig);
-					
+
 					skillImpacts[level] = skillStatsConfig;
 				}
 
@@ -169,13 +171,13 @@ public class ScriptableObjectConfigParser : IConfigParser
 
 		return skillsConfigPage;
 	}
-	
+
 	private IConfigPage ParseDetectPage(DetectRemotePage detectRemotePage)
 	{
 		var obstacleLayer = detectRemotePage.ObstacleLayer;
 
 		var detectConfigPage = new DetectConfigPage(obstacleLayer);
-		
+
 		return detectConfigPage;
 	}
 
@@ -199,8 +201,9 @@ public class ScriptableObjectConfigParser : IConfigParser
 		var effectIntervalRemote = effectRemote.Interval.ToMilliseconds();
 		var effectDurationRemote = effectRemote.EffectDuration.ToMilliseconds();
 		var effectImpactRemote = effectRemote.EffectImpact;
-		
-		switch (effectRemote.EffectType) {
+
+		switch (effectRemote.EffectType)
+		{
 			case EffectType.None:
 				_logger.LogError("Effect type is None");
 				return null;
@@ -211,9 +214,11 @@ public class ScriptableObjectConfigParser : IConfigParser
 			case EffectType.InstantBuff:
 				return new PercentBuffAttackEffectConfig(effectId, effectImpactRemote, effectDurationRemote);
 			case EffectType.OverTimeHeal:
-				return new OverTimeHealEffectConfig(effectId, effectImpactRemote, effectIntervalRemote, effectDurationRemote);
+				return new OverTimeHealEffectConfig(effectId, effectImpactRemote, effectIntervalRemote,
+					effectDurationRemote);
 			case EffectType.OverTimeDamage:
-				return new OverTimeDamageEffectConfig(effectId, effectImpactRemote, effectIntervalRemote, effectDurationRemote);
+				return new OverTimeDamageEffectConfig(effectId, effectImpactRemote, effectIntervalRemote,
+					effectDurationRemote);
 			default:
 				throw new ArgumentOutOfRangeException();
 		}

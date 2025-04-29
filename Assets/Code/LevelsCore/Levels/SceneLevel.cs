@@ -17,7 +17,7 @@ public class SceneLevel : ILevel
 		_sceneId = sceneId;
 		_sceneSwitcher = sceneSwitcher;
 	}
-	
+
 	public Task LoadLevelAsync(CancellationToken token)
 	{
 		//_sceneSwitcher.SwitchToScene<>()

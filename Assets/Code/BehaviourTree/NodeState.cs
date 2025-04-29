@@ -5,6 +5,6 @@ public enum NodeState
 	None = 0,
 	Success = 1,
 	Failure = 2,
-    Running = 3,
+	Running = 3
 }
 }

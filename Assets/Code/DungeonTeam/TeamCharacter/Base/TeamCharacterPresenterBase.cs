@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace Code.DungeonTeam.TeamCharacter.Base
 {
-public abstract class TeamCharacterPresenterBase : Presenter<TeamCharacterViewBase, TeamCharacterModelBase> 
+public abstract class TeamCharacterPresenterBase : Presenter<TeamCharacterViewBase, TeamCharacterModelBase>
 {
 	public abstract string CharacterId { get; }
 	public abstract CharacterClass CharacterClassType { get; }

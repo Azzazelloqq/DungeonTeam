@@ -4,9 +4,9 @@ namespace Code.DungeonTeam.CharacterHealth.Base
 {
 public abstract class CharacterHealthPresenterBase : Presenter<CharacterHealthViewBase, CharacterHealthModelBase>
 {
-	public abstract int MaxHealth {get;}
-	public abstract int CurrentHealth {get;}
-	public abstract int CurrentLevel {get;}
+	public abstract int MaxHealth { get; }
+	public abstract int CurrentHealth { get; }
+	public abstract int CurrentLevel { get; }
 	public abstract bool IsNeedHeal { get; }
 
 	protected CharacterHealthPresenterBase(CharacterHealthViewBase view, CharacterHealthModelBase model) : base(view, model)

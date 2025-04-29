@@ -4,7 +4,7 @@ public readonly struct CharacterAttack
 {
 	public int Level { get; }
 	public int ReloadAttackTime { get; }
-	public int AttackDamage { get;}
+	public int AttackDamage { get; }
 	public float AttackCastTime { get; }
 
 	public CharacterAttack(int level, int reloadAttackTime, int attackDamage, float attackCastTime)

@@ -9,9 +9,9 @@ public class CharacterSave
 	public string Id { get; }
 	public int CurrentHealth { get; internal set; }
 	public int CurrentLevel { get; internal set; }
-	public IReadOnlyList<CharacterSkillSave> ReadOnlySkills => Skills;	
+	public IReadOnlyList<CharacterSkillSave> ReadOnlySkills => Skills;
 	internal List<CharacterSkillSave> Skills { get; }
-	
+
 	public CharacterSave(string id, int currentLevel, int currentHealth, CharacterSkillSave[] skills)
 	{
 		Id = id;

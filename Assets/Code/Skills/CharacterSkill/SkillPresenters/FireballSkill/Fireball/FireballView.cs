@@ -20,7 +20,7 @@ public class FireballView : FireballViewBase
 
 	[SerializeField]
 	private GameObject _sphere;
-	
+
 	public override Vector3 CurrentPosition => transform.position;
 
 	private Coroutine _blowUpEffectRoutine;
@@ -76,7 +76,7 @@ public class FireballView : FireballViewBase
 	private void PlayChargeEffect()
 	{
 		_sphere.transform.localScale = Vector3.zero;
-		
+
 		_chargeSphereTween?.Kill();
 		_chargeSphereTween = _sphere.transform.DOScale(new Vector3(1, 1, 1), ChargeDuration);
 	}
@@ -95,7 +95,7 @@ public class FireballView : FireballViewBase
 	{
 		_blowUpEffect.Play();
 		_sphere.gameObject.SetActive(false);
-		
+
 		yield return _waitBlowUp;
 
 		presenter.OnBlowUpEffectCompleted();

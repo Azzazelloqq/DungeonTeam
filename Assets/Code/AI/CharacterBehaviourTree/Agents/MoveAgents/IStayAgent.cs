@@ -4,6 +4,6 @@ namespace Code.AI.CharacterBehaviourTree.Agents.MoveAgents
 {
 public interface IStayAgent : IMoveAgent
 {
-	public void Stay();
+	public void MoveToStayPlace();
 }
 }

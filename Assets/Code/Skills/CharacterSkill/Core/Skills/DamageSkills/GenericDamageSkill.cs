@@ -23,7 +23,7 @@ public class GenericDamageSkill : ISkill
 	private readonly List<ISkillEffect> _effects;
 	private readonly ActionTimer _chargeTimer;
 	private readonly ActionTimer _cooldownTimer;
-	
+
 	public GenericDamageSkill(
 		IInGameLogger logger,
 		ISkillEffect[] effects,
@@ -54,7 +54,7 @@ public class GenericDamageSkill : ISkill
 		{
 			_chargeTimer.StopTimer();
 		}
-		
+
 		_chargeTimer.StartTimer(_chargeInMilliseconds, OnChargeCompleted);
 	}
 
@@ -64,18 +64,18 @@ public class GenericDamageSkill : ISkill
 		{
 			_chargeTimer.StopTimer();
 		}
-		
+
 		if (_cooldownTimer.IsInProgress)
 		{
 			_logger.LogError("Skill is on cooldown");
 			return;
 		}
-		
+
 		foreach (var effect in _effects)
 		{
 			effect.TryApplyEffect(skillAffectable);
 		}
-		
+
 		_cooldownTimer.StartTimer(_cooldownInMilliseconds);
 	}
 

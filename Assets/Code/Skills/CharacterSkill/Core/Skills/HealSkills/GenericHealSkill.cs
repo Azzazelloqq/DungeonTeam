@@ -12,9 +12,9 @@ namespace Code.Skills.CharacterSkill.Core.Skills.HealSkills
 public class GenericHealSkill : ISkill
 {
 	public event Action ChargeCompleted;
-	
+
 	public string SkillId { get; }
-	
+
 	public bool IsReadyToActivate => !_cooldownTimer.IsInProgress && !_chargeTimer.IsInProgress;
 	public bool IsOnCooldown => _cooldownTimer.IsInProgress;
 	public bool IsCharging => _chargeTimer.IsInProgress;
@@ -50,12 +50,13 @@ public class GenericHealSkill : ISkill
 		ChargeCompleted = null;
 	}
 
-	public void StartChargeSkill() {
+	public void StartChargeSkill()
+	{
 		if (_chargeTimer.IsInProgress)
 		{
 			_chargeTimer.StopTimer();
 		}
-		
+
 		_chargeTimer.StartTimer(_chargeInMilliseconds, OnChargeCompleted);
 	}
 
@@ -65,18 +66,18 @@ public class GenericHealSkill : ISkill
 		{
 			_chargeTimer.StopTimer();
 		}
-		
+
 		if (_cooldownTimer.IsInProgress)
 		{
 			_logger.LogError("Skill is on cooldown");
 			return;
 		}
-		
+
 		foreach (var effect in _effects)
 		{
 			effect.TryApplyEffect(skillAffectable);
 		}
-		
+
 		_cooldownTimer.StartTimer(_cooldownInMilliseconds);
 	}
 
