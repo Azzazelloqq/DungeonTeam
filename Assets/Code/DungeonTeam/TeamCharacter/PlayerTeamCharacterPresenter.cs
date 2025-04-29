@@ -38,7 +38,9 @@ namespace Code.DungeonTeam.TeamCharacter
 public class PlayerTeamCharacterPresenter : TeamCharacterPresenterBase, ICharacterBehaviourTreeAgent, IDetectable, IHealable
 {
 	private const int TickTreeAgent = 200;
-	
+
+	public string AgentName => "GO: " + view.name + "id: " + model.CharacterId;
+
 	public Vector3 Position => view.transform.position;
 	public bool IsDead => model.IsDead;
 	public override string CharacterId => model.CharacterId;
@@ -47,7 +49,12 @@ public class PlayerTeamCharacterPresenter : TeamCharacterPresenterBase, ICharact
 	public override float VisionViewDistance => model.ViewDistance;
 	public override Vector3 VisionDirection => view.transform.forward;
 	public bool IsNeedHeal => _characterHealth.IsNeedHeal;
-	public bool IsOnTeamPlace => Vector3.Distance(_teamMoveTarget.position, view.transform.position) < 0.1f;
+	public bool IsOnTeamPlace => Vector3.Distance(_teamMoveTarget.position, view.transform.position) < 1.5f;
+	public bool IsAttackSkillCasting => IsAnyAttackSkillCasting();
+	public bool CanStartAttackSkill => IsAnyAttackSkillsReadyToStart();
+	public bool IsAttackCasting => model.IsAttackReload;
+	public bool CanStartAttack => !model.IsAttackReload && model.IsTargetInAttackRange;
+	public bool IsCanMove => model.IsCanMove;
 
 	private readonly ITickHandler _tickHandler;
 	private readonly IDetectionService _detectionService;
@@ -93,7 +100,7 @@ public class PlayerTeamCharacterPresenter : TeamCharacterPresenterBase, ICharact
 		_charactersConfigPage = config.GetConfigPage<CharactersConfigPage>();
 		_obstacleLayerMask = detectConfigPage.DetectLayerMask;
 		_getNeedToHealCharacter = getNeedToHealCharacter;
-		_characterBehaviourTree = new CharacterBehaviourTree(this);
+		_characterBehaviourTree = new CharacterBehaviourTree(this, _logger.Log, true);
 		_aiTickTimer = new ActionTimer(_logger);
 		_saveSystem = saveSystem;
 		_resourceLoader = resourceLoader;
@@ -200,7 +207,7 @@ public class PlayerTeamCharacterPresenter : TeamCharacterPresenterBase, ICharact
 		model.MoveToTarget();
 		_tickHandler.FrameUpdate += FollowToAttackTarget;
 	}
-
+	
 	public void AttackEnemy()
 	{
 		if (_currentTargetToAttack == null)
@@ -215,15 +222,13 @@ public class PlayerTeamCharacterPresenter : TeamCharacterPresenterBase, ICharact
 			return;
 		}
 
-		var isSuccess = model.TryAttack();
+		var isSuccess = model.TryAttack(delegate { damageable.TakeDamage(model.AttackDamage); });
 		if (!isSuccess)
 		{
 			return;
 		}
 
 		view.PlayMeleeAttackAnimation();
-		
-		damageable.TakeDamage(model.AttackDamage);
 	}
 
 	public bool TryFindTargetToHeal()
@@ -289,15 +294,6 @@ public class PlayerTeamCharacterPresenter : TeamCharacterPresenterBase, ICharact
 	public bool IsNeedFollowToDirection()
 	{
 		var isNeedFollowToDirection = model.IsTeamMoving;
-
-		if (!isNeedFollowToDirection)
-		{
-			StopMoveCharacterWithTeam();
-		}
-		else
-		{
-			StopStay();
-		}
 		
 		return isNeedFollowToDirection;
 	}
@@ -369,6 +365,18 @@ public class PlayerTeamCharacterPresenter : TeamCharacterPresenterBase, ICharact
 	public override void OnTeamMove()
 	{
 		model.OnTeamMoveStarted();
+	}
+
+	public override void OnAttackAnimationEnded()
+	{
+	}
+
+	public override void OnAttackAnimationUpdated(float stateInfoNormalizedTime)
+	{
+	}
+
+	public override void OnAttackAnimationStarted()
+	{
 	}
 
 	public override void OnTeamStay()
@@ -473,7 +481,6 @@ public class PlayerTeamCharacterPresenter : TeamCharacterPresenterBase, ICharact
 	private void MoveCharacterWithTeam(float deltaTime)
 	{
 		var targetPosition = _teamMoveTarget.position;
-
 		view.UpdatePointToFollow(targetPosition);
 	}
 
@@ -498,6 +505,37 @@ public class PlayerTeamCharacterPresenter : TeamCharacterPresenterBase, ICharact
 		model.CheckAttackDistanceToTarget(position.ToModelVector(), targetPosition.ToModelVector());
 		
 		view.UpdatePointToFollow(targetPosition);
+	}
+
+	private bool IsAnyAttackSkillCasting()
+	{
+		foreach (var skillPresenterBase in _attackSkills)
+		{
+			var isCasting = skillPresenterBase.IsCasting;
+			if (isCasting)
+			{
+				return true;
+			}
+			
+			return false;
+		}
+
+		return false;
+	}
+	
+	private bool IsAnyAttackSkillsReadyToStart()
+	{
+		foreach (var skillPresenterBase in _attackSkills)
+		{
+			var isReadyToActivate = skillPresenterBase.IsReadyToActivate;
+
+			if (isReadyToActivate)
+			{
+				return true;
+			}
+		}
+
+		return false;
 	}
 }
 }

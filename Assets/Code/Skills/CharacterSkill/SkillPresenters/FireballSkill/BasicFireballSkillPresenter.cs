@@ -18,6 +18,7 @@ public class BasicFireballSkillPresenter : SkillPresenterBase
 {
     public string SkillId => model.SkillId;
 	public override bool IsReadyToActivate => _fireballSkill.IsReadyToActivate;
+	public override bool IsCasting => model.IsCasting;
 
 	private readonly ITickHandler _tickHandler;
 	private readonly IInGameLogger _logger;
@@ -93,7 +94,12 @@ public class BasicFireballSkillPresenter : SkillPresenterBase
 	{
 		_fireballSkill = skill;
 	}
-	
+
+	public override void OnActivateSkillAnimationCompleted()
+	{
+		model.OnCastCompleted();
+	}
+
 	private void OnChargeCompleted()
 	{
 		view.OnChargeCompleted();

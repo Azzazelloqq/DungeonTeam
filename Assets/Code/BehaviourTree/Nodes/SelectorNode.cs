@@ -1,7 +1,11 @@
-﻿namespace Code.BehaviourTree.Nodes
+﻿using System.Collections.Generic;
+
+namespace Code.BehaviourTree.Nodes
 {
-public class SelectorNode : IBehaviourTreeNode
+public class SelectorNode : ICompositeNode
 {
+	public IReadOnlyList<IReadOnlyBehaviourTreeNode> Children => _children;
+
 	private readonly IBehaviourTreeNode[] _children;
 	
 	public SelectorNode(IBehaviourTreeNode[] children)

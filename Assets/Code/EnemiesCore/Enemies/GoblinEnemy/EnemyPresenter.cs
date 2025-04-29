@@ -1,4 +1,5 @@
-﻿using System.Threading;
+﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Code.AI.CharacterBehaviourTree.Trees.Enemy;
 using Code.DetectionService;
@@ -18,6 +19,12 @@ public class EnemyPresenter : EnemyPresenterBase, IDetectable, IDamageable, IEne
     
     public Vector3 Position => view.transform.position;
     public bool IsDead => model.IsDead;
+    public bool IsAttackSkillCasting => throw new NotImplementedException();
+    public bool CanStartAttackSkill => throw new NotImplementedException();
+    public bool IsAttackCasting => throw new NotImplementedException();
+    public bool CanStartAttack => throw new NotImplementedException();
+    public bool IsCanMove => throw new NotImplementedException();
+    public string AgentName => view.name;
 
     private readonly ITickHandler _tickHandler;
     private readonly IDetectionService _detectionService;
@@ -90,7 +97,7 @@ public class EnemyPresenter : EnemyPresenterBase, IDetectable, IDamageable, IEne
     {
         throw new System.NotImplementedException();
     }
-
+    
     public void AttackEnemy()
     {
         throw new System.NotImplementedException();

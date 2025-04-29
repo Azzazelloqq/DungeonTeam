@@ -6,6 +6,7 @@ public class BasicFireballSkillModel : SkillModelBase
 {
 	public override string SkillId { get; }
 	public override bool IsCharging { get; protected set; }
+	public override bool IsCasting { get; protected set; }
 
 	public BasicFireballSkillModel(string skillId)
 	{
@@ -28,11 +29,18 @@ public class BasicFireballSkillModel : SkillModelBase
 		{
 			return;
 		}
+
+		IsCasting = true;
 	}
 
 	public override void OnChargeCompleted()
 	{
 		IsCharging = false;
+	}
+
+	public override void OnCastCompleted()
+	{
+		IsCasting = true;
 	}
 }
 }

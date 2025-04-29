@@ -1,4 +1,5 @@
-﻿using Code.GameConfig.ScriptableObjectParser.ConfigData.CharacterTeamPlace;
+﻿using System;
+using Code.GameConfig.ScriptableObjectParser.ConfigData.CharacterTeamPlace;
 using Code.Utils.ModelUtils;
 using MVP;
 
@@ -18,13 +19,15 @@ public abstract class TeamCharacterModelBase : Model
 	public abstract int CurrentLevel { get; }
 	public abstract int AttackDamage { get; }
 	public abstract string[] Skills { get; }
+	public abstract bool IsAttackReload { get; }
+	public abstract bool IsCanMove { get; }
 
 	public abstract void MoveToTarget();
 	public abstract void StopMoveToTarget();
 	public abstract void OnTeamMoveStarted();
 	public abstract void OnTeamMoveEnded();
 	public abstract void CheckAttackDistanceToTarget(ModelVector3 currentPosition, ModelVector3 targetPosition);
-	public abstract bool TryAttack();
+	public abstract bool TryAttack(Action attackCallback);
 	public abstract void IncreaseLevel();
 }
 }

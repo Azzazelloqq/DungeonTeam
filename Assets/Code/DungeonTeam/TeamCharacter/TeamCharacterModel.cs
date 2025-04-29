@@ -1,4 +1,5 @@
-﻿using Code.DungeonTeam.TeamCharacter.Base;
+﻿using System;
+using Code.DungeonTeam.TeamCharacter.Base;
 using Code.GameConfig.ScriptableObjectParser.ConfigData.Characters;
 using Code.GameConfig.ScriptableObjectParser.ConfigData.CharacterTeamPlace;
 using Code.Timer;
@@ -21,13 +22,14 @@ public class TeamCharacterModel : TeamCharacterModelBase
 	public override float ViewDistance { get; }
 	public override float ViewAngel { get; }
 	public override string CharacterId { get; }
-	private bool IsCanAttack => !_attackReloadTimer.IsInProgress;
+	public override bool IsAttackReload => _attackReloadTimer.IsInProgress;
+	public override bool IsCanMove => !_attackCastTimer.IsInProgress;
 
 	private readonly float _attackSkillDistance;
 	private readonly float _attackDistance;
 	private readonly CharacterAttackConfig _attackMainConfig;
 	private readonly ActionTimer _attackReloadTimer;
-	private readonly IInGameLogger _logger;
+	private readonly ActionTimer _attackCastTimer;
 	private CharacterAttack _attackInfoConfig;
 	private int _currentLevel;
 
@@ -42,7 +44,6 @@ public class TeamCharacterModel : TeamCharacterModelBase
 		CharacterId = id;
 		HeroClass = heroClass;
 		Skills = skills;
-		_logger = logger;
 		_currentLevel = currentLevel;
 		ViewDistance = attackConfig.ViewDistance;
 		ViewAngel = attackConfig.ViewAngel;
@@ -50,7 +51,8 @@ public class TeamCharacterModel : TeamCharacterModelBase
 		_attackDistance = attackConfig.AttackDistance;
 		_attackInfoConfig = attackConfig.AttackByLevels[_currentLevel];
 		_attackMainConfig = attackConfig;
-		_attackReloadTimer = new ActionTimer(_logger);
+		_attackReloadTimer = new ActionTimer(logger);
+		_attackCastTimer = new ActionTimer(logger);
 	}
 
 	protected override void OnDispose()
@@ -58,6 +60,7 @@ public class TeamCharacterModel : TeamCharacterModelBase
 		base.OnDispose();
 		
 		_attackReloadTimer.Dispose();
+		_attackCastTimer.Dispose();
 	}
 
 	public override void MoveToTarget()
@@ -95,15 +98,23 @@ public class TeamCharacterModel : TeamCharacterModelBase
 		IsTargetInSkillAttackRange = distanceToAttackTarget <= _attackSkillDistance;
 	}
 
-	public override bool TryAttack()
+	public override bool TryAttack(Action attackCallback)
 	{
-		if (!IsCanAttack)
+		if (IsAttackReload)
 		{
 			return false;
 		}
 
-		var reloadAttackPerMilliseconds = _attackInfoConfig.ReloadAttackPerMilliseconds;
+		var reloadAttackPerMilliseconds = _attackInfoConfig.ReloadAttackTime;
 		_attackReloadTimer.StartTimer(reloadAttackPerMilliseconds);
+		
+		_attackCastTimer.StopTimer();
+		
+		var attackCastTime = _attackInfoConfig.AttackCastTime;
+		var invokeAttackNormalizedTime = _attackMainConfig.InvokeAttackNormalizedTime;
+		
+		_attackCastTimer.AddCallbackByNormalizedTime(invokeAttackNormalizedTime, attackCallback);
+		_attackCastTimer.StartTimer(attackCastTime);
 		
 		return true;
 	}

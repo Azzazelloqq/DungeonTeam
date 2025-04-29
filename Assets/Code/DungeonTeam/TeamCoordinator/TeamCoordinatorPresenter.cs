@@ -2,9 +2,6 @@
 using System.Threading;
 using System.Threading.Tasks;
 using Code.Config;
-using Code.DetectionService;
-using Code.DungeonTeam.MoveController.Base;
-using Code.DungeonTeam.MoveController.VirtualJoystick;
 using Code.DungeonTeam.MovementNavigator;
 using Code.DungeonTeam.MovementNavigator.Base;
 using Code.DungeonTeam.TeamCharacter;
@@ -13,17 +10,14 @@ using Code.DungeonTeam.TeamCoordinator.Base;
 using Code.GameConfig.ScriptableObjectParser.ConfigData.Characters;
 using Code.GameConfig.ScriptableObjectParser.ConfigData.CharacterTeamPlace;
 using Code.Generated.Addressables;
-using Code.MovementService;
 using Code.SavesContainers.TeamSave;
 using Code.Skills.CharacterSkill.Core.SkillAffectable;
 using Code.Skills.CharacterSkill.Factory.SkillsPresenter;
-using Code.UI.UIContext;
 using Disposable.Utils;
 using InGameLogger;
 using LightDI.Runtime;
 using LocalSaveSystem;
 using ResourceLoader;
-using TickHandler;
 using UnityEngine;
 
 namespace Code.DungeonTeam.TeamCoordinator
@@ -107,6 +101,11 @@ public class TeamCoordinatorPresenter : TeamCoordinatorPresenterBase
 
 		foreach (var characterSave in selectedPlayerTeam.Values)
 		{
+			if (characterSave.Id != "Warrior")
+			{
+				continue;
+			}
+			
 			var characterSaveId = characterSave.Id;
 			var character = await CreateTeamCharacterAsync(characterSaveId, characterSave, token);
 			

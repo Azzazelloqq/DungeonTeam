@@ -3,25 +3,117 @@ using UnityEngine;
 
 namespace Code.Utils.AnimationUtils
 {
-public class ObservableAnimator : Animator, IEndAnimationListener, IStartAnimationListener, IUpdateAnimationListener
+public delegate void AnimationStateInfoHandler(AnimatorStateInfo stateInfo);
+public delegate void AnimationHashHandler(int stateHash);
+public delegate void AnimationTimeHandler(int stateHash, float normalizedTime);
+
+public class ObservableAnimator : Animator, IDisposable
 {
-	public event Action<AnimatorStateInfo> AnimationStarted;
-	public event Action<AnimatorStateInfo> AnimationUpdate;
-	public event Action<AnimatorStateInfo> AnimationEnd; 
+	public event AnimationStateInfoHandler AnimationStarted;
+	public event AnimationStateInfoHandler AnimationUpdate;
+	public event AnimationStateInfoHandler AnimationEnd;
+
+	public event AnimationHashHandler AnimationStartedByHash;
+	public event AnimationHashHandler AnimationEndByHash;
+	public event AnimationTimeHandler AnimationTimeUpdatedByHash;
+
+	private AnimationStateMachineNotifier[] _cashedNotifiers;
+	private bool _isDisposed;
+	private bool _isObserving;
+
+	public void StartObserve()
+	{
+		_cashedNotifiers = GetBehaviours<AnimationStateMachineNotifier>();
+		foreach (var animationStateMachineListener in _cashedNotifiers)
+		{
+			animationStateMachineListener.RegisterListener(this);
+		}
+		
+		_isObserving = true;
+	}
+
+	public void StopObserve()
+	{
+		UnsubscribeOnNotifierEvents();
+		ClearEvents();
+		
+		_isObserving = false;
+	}
 	
-	public void OnAnimationEnd(AnimatorStateInfo stateInfo)
+	public void Dispose()
 	{
-		AnimationEnd?.Invoke(stateInfo);
+		if (_isDisposed)
+		{
+			return;
+		}
+		
+		UnsubscribeOnNotifierEvents();
+		ClearEvents();
+		
+		Destroy(this);
+		
+		_isDisposed = true;
+		_isObserving = false;
 	}
 
-	public void OnAnimationStarted(AnimatorStateInfo stateInfo)
+	internal void OnAnimationStarted(AnimatorStateInfo stateInfo)
 	{
+		if (!_isObserving)
+		{
+			return;
+		}
+
 		AnimationStarted?.Invoke(stateInfo);
+		
+		var hash = stateInfo.shortNameHash;
+		AnimationStartedByHash?.Invoke(hash);
 	}
 
-	public void OnAnimationUpdate(AnimatorStateInfo stateInfo)
+	internal void OnAnimationUpdate(AnimatorStateInfo stateInfo)
 	{
+		if (!_isObserving)
+		{
+			return;
+		}
+
 		AnimationUpdate?.Invoke(stateInfo);
+		
+		var hash = stateInfo.shortNameHash;
+		var normalizedTime = stateInfo.normalizedTime;
+		AnimationTimeUpdatedByHash?.Invoke(hash, normalizedTime);
+	}
+
+	internal void OnAnimationEnd(AnimatorStateInfo stateInfo)
+	{
+		if (!_isObserving)
+		{
+			return;
+		}
+
+		AnimationEnd?.Invoke(stateInfo);
+		
+		var hash = stateInfo.shortNameHash;
+		AnimationEndByHash?.Invoke(hash);
+	}
+
+	private void ClearEvents()
+	{
+		AnimationStarted = null;
+		AnimationUpdate = null;
+		AnimationEnd = null;
+	}
+
+	private void UnsubscribeOnNotifierEvents()
+	{
+		if (_cashedNotifiers == null)
+		{
+			return;
+		}
+		
+		foreach (var animationStateMachineListener in _cashedNotifiers)
+		{
+			animationStateMachineListener.UnregisterListener(this);
+		}
 	}
 }
 }

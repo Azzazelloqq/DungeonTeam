@@ -19,5 +19,8 @@ public abstract class TeamCharacterPresenterBase : Presenter<TeamCharacterViewBa
 	public abstract void OnTargetChanged(Transform placeTransform);
 	public abstract void OnTeamStay();
 	public abstract void OnTeamMove();
+	public abstract void OnAttackAnimationEnded();
+	public abstract void OnAttackAnimationUpdated(float stateInfoNormalizedTime);
+	public abstract void OnAttackAnimationStarted();
 }
 }

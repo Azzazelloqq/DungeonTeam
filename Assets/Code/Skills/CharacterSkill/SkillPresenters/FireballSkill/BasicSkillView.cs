@@ -26,6 +26,7 @@ public class BasicSkillView : SkillViewBase
 	public override void ActivateSkill()
 	{
 		_activateSkillEffect.Play();
+		presenter.OnActivateSkillAnimationCompleted();
 	}
 
 	public override void OnTargetReached()

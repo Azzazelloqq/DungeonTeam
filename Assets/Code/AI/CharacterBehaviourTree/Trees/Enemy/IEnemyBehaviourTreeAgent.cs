@@ -1,4 +1,7 @@
-﻿using Code.AI.CharacterBehaviourTree.Agents;
+﻿using Code.AI.CharacterBehaviourTree.Agents.AttackAgents;
+using Code.AI.CharacterBehaviourTree.Agents.MoveAgents;
+using Code.AI.CharacterBehaviourTree.Agents.SkillsAgents;
+using Code.AI.CharacterBehaviourTree.Agents.TrackAgents;
 
 namespace Code.AI.CharacterBehaviourTree.Trees.Enemy
 {

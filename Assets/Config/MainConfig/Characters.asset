@@ -27,10 +27,12 @@ MonoBehaviour:
         <ViewAngel>k__BackingField: 70
         <AttackSkillDistance>k__BackingField: 0
         <AttackDistance>k__BackingField: 3
+        _invokeAttackNormalizedTime: 0
         <AttackByLevels>k__BackingField:
         - <Level>k__BackingField: 0
           <ReloadAttackPerSeconds>k__BackingField: 1
           <AttackDamage>k__BackingField: 1
+          _castPerSeconds: 0.5
       <HealthByLevel>k__BackingField:
       - <Level>k__BackingField: 0
         <Health>k__BackingField: 150
@@ -42,10 +44,12 @@ MonoBehaviour:
         <ViewAngel>k__BackingField: 70
         <AttackSkillDistance>k__BackingField: 0
         <AttackDistance>k__BackingField: 3
+        _invokeAttackNormalizedTime: 0.5
         <AttackByLevels>k__BackingField:
         - <Level>k__BackingField: 0
-          <ReloadAttackPerSeconds>k__BackingField: 1
+          <ReloadAttackPerSeconds>k__BackingField: 3
           <AttackDamage>k__BackingField: 1
+          _castPerSeconds: 3
       <HealthByLevel>k__BackingField:
       - <Level>k__BackingField: 0
         <Health>k__BackingField: 70
@@ -58,10 +62,12 @@ MonoBehaviour:
         <ViewAngel>k__BackingField: 70
         <AttackSkillDistance>k__BackingField: 10
         <AttackDistance>k__BackingField: 10
+        _invokeAttackNormalizedTime: 0
         <AttackByLevels>k__BackingField:
         - <Level>k__BackingField: 0
           <ReloadAttackPerSeconds>k__BackingField: 1
           <AttackDamage>k__BackingField: 1
+          _castPerSeconds: 0.5
       <HealthByLevel>k__BackingField:
       - <Level>k__BackingField: 0
         <Health>k__BackingField: 50
@@ -73,10 +79,12 @@ MonoBehaviour:
         <ViewAngel>k__BackingField: 70
         <AttackSkillDistance>k__BackingField: 20
         <AttackDistance>k__BackingField: 10
+        _invokeAttackNormalizedTime: 0
         <AttackByLevels>k__BackingField:
         - <Level>k__BackingField: 0
           <ReloadAttackPerSeconds>k__BackingField: 1
           <AttackDamage>k__BackingField: 1
+          _castPerSeconds: 0.5
       <HealthByLevel>k__BackingField:
       - <Level>k__BackingField: 0
         <Health>k__BackingField: 50
@@ -88,10 +96,12 @@ MonoBehaviour:
         <ViewAngel>k__BackingField: 70
         <AttackSkillDistance>k__BackingField: 20
         <AttackDistance>k__BackingField: 10
+        _invokeAttackNormalizedTime: 0
         <AttackByLevels>k__BackingField:
         - <Level>k__BackingField: 0
           <ReloadAttackPerSeconds>k__BackingField: 1
           <AttackDamage>k__BackingField: 1
+          _castPerSeconds: 0.5
       <HealthByLevel>k__BackingField:
       - <Level>k__BackingField: 0
         <Health>k__BackingField: 20

@@ -14,5 +14,10 @@ public struct CharacterAttackByLevelRemote
 	
 	[field: SerializeField]
 	public int AttackDamage { get; private set; }
+
+	[SerializeField]
+	private float _castPerSeconds;
+
+	public float CastPerSeconds => _castPerSeconds;
 }
 }

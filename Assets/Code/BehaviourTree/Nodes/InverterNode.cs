@@ -1,12 +1,18 @@
-﻿namespace Code.BehaviourTree.Nodes
+﻿using System.Collections.Generic;
+
+namespace Code.BehaviourTree.Nodes
 {
-public class InverterNode : IBehaviourTreeNode
+public class InverterNode : ICompositeNode
 {
+	public IReadOnlyList<IReadOnlyBehaviourTreeNode> Children { get; }
+	
 	private readonly IBehaviourTreeNode _child;
 	
 	public InverterNode(IBehaviourTreeNode child)
 	{
 		_child = child;
+
+		Children = new IReadOnlyBehaviourTreeNode[] { _child };
 	}
 
 	public NodeState Tick()

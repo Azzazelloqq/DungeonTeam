@@ -108,7 +108,17 @@ public class GameCompositionRoot : MonoBehaviourDisposable, ICompositionRoot
 
 	public async Task EnterAsync(CancellationToken token)
 	{
-		await InitializeRoot(token);
+		try
+		{
+			await InitializeRoot(token);
+		}
+		catch (TaskCanceledException taskCanceledException)
+		{
+		}
+		catch (Exception e)
+		{
+			_logger.LogException(e);
+		}
 	}
 
 	private void OnApplicationQuit()

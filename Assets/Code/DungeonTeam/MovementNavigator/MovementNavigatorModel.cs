@@ -82,10 +82,8 @@ public class MovementNavigatorModel : MovementNavigatorModelBase
 
 	public override bool StartMoveTeam()
 	{
-		_logger.Log("Move started");
 		if (IsMoving)
 		{
-			_logger.LogError("Move already started.");
 			return false;
 		}
 		
@@ -96,11 +94,8 @@ public class MovementNavigatorModel : MovementNavigatorModelBase
 
 	public override bool StopMoveTeamByDirection()
 	{
-		_logger.Log("Move ended");
-
 		if (!IsMoving)
 		{
-			_logger.LogError("Move already ended.");
 			return false;
 		}
 		

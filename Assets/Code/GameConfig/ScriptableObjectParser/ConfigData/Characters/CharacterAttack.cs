@@ -1,26 +1,18 @@
-﻿using Code.GameConfig.ScriptableObjectParser.RemoteData.Characters;
-using Code.Utils.FloatUtils;
-
-namespace Code.GameConfig.ScriptableObjectParser.ConfigData.Characters
+﻿namespace Code.GameConfig.ScriptableObjectParser.ConfigData.Characters
 {
 public readonly struct CharacterAttack
 {
 	public int Level { get; }
-	public int ReloadAttackPerMilliseconds { get; }
+	public int ReloadAttackTime { get; }
 	public int AttackDamage { get;}
+	public float AttackCastTime { get; }
 
-	public CharacterAttack(int level, int reloadAttackPerMilliseconds, int attackDamage)
+	public CharacterAttack(int level, int reloadAttackTime, int attackDamage, float attackCastTime)
 	{
 		Level = level;
-		ReloadAttackPerMilliseconds = reloadAttackPerMilliseconds;
+		ReloadAttackTime = reloadAttackTime;
 		AttackDamage = attackDamage;
-	}
-
-	public CharacterAttack(CharacterAttackByLevelRemote level)
-	{
-		Level = level.Level;
-		ReloadAttackPerMilliseconds = level.ReloadAttackPerSeconds.ToMilliseconds();
-		AttackDamage = level.AttackDamage;
+		AttackCastTime = attackCastTime;
 	}
 }
 }

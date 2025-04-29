@@ -1,6 +1,7 @@
 ﻿{
   "name": "Timer",
   "references":[
-    "GUID:f64e375800d145749a5ec0e0b123e506", 
-    "Logger"]
+    "GUID:f64e375800d145749a5ec0e0b123e506",
+    "GUID:ae050f2342a94254ba51bbb652678452",
+    "GUID:e03d2d67472051a4e8982e8a5bebc561"]
 }

@@ -17,6 +17,7 @@ public class TeamCharacterView : TeamCharacterViewBase
 
 	[SerializeField]
 	private ObservableAnimator _mainAnimator;
+	
 	[SerializeField]
 	private Transform _skillsParent;
 	
@@ -67,13 +68,69 @@ public class TeamCharacterView : TeamCharacterViewBase
 	{
 		_mainAnimator.SetTrigger(AttackAnimationName);
 	}
-
+	
 	private void DrawCharacterVision()
 	{
 		#if UNITY_EDITOR
 		_visionDebugger.UpdateDirection(Vector3.zero, presenter.VisionDirection);
 		#endif
 	}
+
+	private void SubscribeOnAnimatorEvents()
+	{
+		_mainAnimator.AnimationStartedByHash += OnAnimationStartedByHash;
+		_mainAnimator.AnimationEndByHash += OnAnimationEndedByHash;
+		_mainAnimator.AnimationUpdate += OnAnimationUpdate;
+	}
+	
+	private void UnsubscribeOnAnimatorEvents()
+	{
+		_mainAnimator.AnimationStartedByHash -= OnAnimationStartedByHash;
+		_mainAnimator.AnimationEndByHash -= OnAnimationEndedByHash;
+		_mainAnimator.AnimationUpdate -= OnAnimationUpdate;
+	}
+
+	private void OnAnimationStartedByHash(int stateHash)
+	{
+		if (stateHash == AttackAnimationName)
+		{
+			OnAttackAnimationStarted();
+		}
+	}
+
+	private void OnAnimationEndedByHash(int stateHash)
+	{
+		if (stateHash == AttackAnimationName)
+		{
+			OnAttackAnimationEnded();
+		}
+	}
+
+	private void OnAnimationUpdate(AnimatorStateInfo stateInfo)
+	{
+		var stateHash = stateInfo.shortNameHash;
+		if (stateHash == AttackAnimationName)
+		{
+			OnAttackAnimationUpdated(stateInfo);
+		}
+	}
+	
+	private void OnAttackAnimationStarted()
+	{
+		presenter.OnAttackAnimationStarted();
+	}
+
+	private void OnAttackAnimationUpdated(AnimatorStateInfo stateInfo)
+	{
+		var normalizedAnimationTime = stateInfo.normalizedTime;
+		presenter.OnAttackAnimationUpdated(normalizedAnimationTime);
+	}
+
+	private void OnAttackAnimationEnded()
+	{
+		presenter.OnAttackAnimationEnded();
+	}
+
 	
 	#if UNITY_EDITOR
 	private void InitDebugVision()

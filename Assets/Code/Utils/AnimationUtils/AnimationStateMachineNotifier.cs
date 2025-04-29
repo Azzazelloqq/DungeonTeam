@@ -1,19 +1,32 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 
 namespace Code.Utils.AnimationUtils
 {
-public class AnimationStateMachineNotifier : StateMachineBehaviour
+internal class AnimationStateMachineNotifier : StateMachineBehaviour
 {
-	private IAnimationStateMachineListener _listener;
-	private IUpdateAnimationListener _updateAnimationListener;
+	private List<ObservableAnimator> _observableAnimators;
+	
+	internal void RegisterListener(ObservableAnimator observableAnimator)
+	{
+		_observableAnimators.Add(observableAnimator);
+	}
 
+	internal void UnregisterListener(ObservableAnimator listener)
+	{
+		_observableAnimators.Remove(listener);
+	}
+	
 	public override void OnStateEnter(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
 	{
 		base.OnStateEnter(animator, stateInfo, layerIndex);
-		
-		_listener = animator.GetComponent<IAnimationStateMachineListener>();
 
-		if (_listener is IStartAnimationListener startAnimationListener)
+		if (_observableAnimators == null)
+		{
+			return;
+		}
+
+		foreach (var startAnimationListener in _observableAnimators)
 		{
 			startAnimationListener.OnAnimationStarted(stateInfo);
 		}
@@ -23,19 +36,9 @@ public class AnimationStateMachineNotifier : StateMachineBehaviour
 	{
 		base.OnStateUpdate(animator, stateInfo, layerIndex);
 		
-		if(_listener == null)
+		foreach (var updateAnimationListener in _observableAnimators)
 		{
-			return;
-		}
-
-		if (_updateAnimationListener != null)
-		{
-			_updateAnimationListener.OnAnimationUpdate(stateInfo);
-		}
-		else if(_listener is IUpdateAnimationListener updateAnimationListener)
-		{
-			_updateAnimationListener = updateAnimationListener;
-			_updateAnimationListener.OnAnimationUpdate(stateInfo);
+			updateAnimationListener.OnAnimationUpdate(stateInfo);
 		}
 	}
 	
@@ -43,7 +46,7 @@ public class AnimationStateMachineNotifier : StateMachineBehaviour
 	{
 		base.OnStateExit(animator, stateInfo, layerIndex);
 
-		if (_listener is IEndAnimationListener endAnimationListener)
+		foreach (var endAnimationListener in _observableAnimators)
 		{
 			endAnimationListener.OnAnimationEnd(stateInfo);
 		}
