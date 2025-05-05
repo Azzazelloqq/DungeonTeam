@@ -56,9 +56,12 @@ public class CharacterBehaviourTree : IBehaviourTree
 
 		var trackEnemyInAttackRangeNode = new TrackEnemyInAttackRangeNode(agent);
 		var moveToEnemyNode = new MoveToEnemyNode(agent);
+		var stopMovementNode = new StopMovementNode(agent);
+		var moveToEnemySequence = new SequenceNode(new IBehaviourTreeNode[] { trackEnemyInAttackRangeNode, stopMovementNode });
+		
 		var approachOrStaySelector = new SelectorNode(new IBehaviourTreeNode[]
 		{
-			trackEnemyInAttackRangeNode,
+			moveToEnemySequence,
 			moveToEnemyNode
 		});
 

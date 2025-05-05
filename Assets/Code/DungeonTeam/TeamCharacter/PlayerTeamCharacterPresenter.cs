@@ -101,7 +101,7 @@ public class PlayerTeamCharacterPresenter : TeamCharacterPresenterBase, ICharact
 		_charactersConfigPage = config.GetConfigPage<CharactersConfigPage>();
 		_obstacleLayerMask = detectConfigPage.DetectLayerMask;
 		_getNeedToHealCharacter = getNeedToHealCharacter;
-		_characterBehaviourTree = new CharacterBehaviourTree(this, _logger.Log, true);
+		_characterBehaviourTree = new CharacterBehaviourTree(this, _logger.Log);
 		_aiTickTimer = new ActionTimer(_logger);
 		_saveSystem = saveSystem;
 		_resourceLoader = resourceLoader;

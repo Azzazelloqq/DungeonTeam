@@ -112,7 +112,7 @@ public class GameCompositionRoot : MonoBehaviourDisposable, ICompositionRoot
 		{
 			await InitializeRoot(token);
 		}
-		catch (TaskCanceledException taskCanceledException)
+		catch (TaskCanceledException)
 		{
 		}
 		catch (Exception e)

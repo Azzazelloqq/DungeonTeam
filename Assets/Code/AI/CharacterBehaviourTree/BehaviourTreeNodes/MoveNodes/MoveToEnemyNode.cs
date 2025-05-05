@@ -7,6 +7,8 @@ public class MoveToEnemyNode : IBehaviourTreeNode
 {
 	private readonly IMoveToEnemyAgent _agent;
 
+	private bool _isMovingToTarget;
+	
 	public MoveToEnemyNode(IMoveToEnemyAgent agent)
 	{
 		_agent = agent;
@@ -19,13 +21,20 @@ public class MoveToEnemyNode : IBehaviourTreeNode
 			return NodeState.Success;
 		}
 
-		_agent.MoveToEnemyForAttack();
+		if (_isMovingToTarget)
+		{
+			return NodeState.Running;
+		}
 
+		_agent.MoveToEnemyForAttack();
+		_isMovingToTarget = true;
+			
 		return NodeState.Running;
 	}
 
 	public void Dispose()
 	{
+		_isMovingToTarget = false;
 	}
 }
 }
