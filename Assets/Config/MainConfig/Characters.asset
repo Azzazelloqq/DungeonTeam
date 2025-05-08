@@ -44,7 +44,7 @@ MonoBehaviour:
         <ViewAngel>k__BackingField: 70
         <AttackSkillDistance>k__BackingField: 0
         <AttackDistance>k__BackingField: 3
-        _invokeAttackNormalizedTime: 0.5
+        _invokeAttackNormalizedTime: 0.25
         <AttackByLevels>k__BackingField:
         - <Level>k__BackingField: 0
           <ReloadAttackPerSeconds>k__BackingField: 3

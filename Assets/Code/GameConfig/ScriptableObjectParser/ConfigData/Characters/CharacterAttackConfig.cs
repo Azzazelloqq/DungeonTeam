@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 using Code.GameConfig.ScriptableObjectParser.RemoteData.Characters;
-using Code.Utils.FloatUtils;
+using Code.Utils.ValuesUtils;
 
 namespace Code.GameConfig.ScriptableObjectParser.ConfigData.Characters
 {
@@ -46,7 +46,7 @@ public readonly struct CharacterAttackConfig
 		ViewAngel = remoteConfig.ViewAngel;
 		AttackSkillDistance = remoteConfig.AttackSkillDistance;
 		AttackDistance = remoteConfig.AttackDistance;
-		InvokeAttackNormalizedTime = remoteConfig.InvokeAttackNormalizedTime.ToMilliseconds();
+		InvokeAttackNormalizedTime = remoteConfig.InvokeAttackNormalizedTime;
 
 		var attackByLevelsRemote = remoteConfig.AttackByLevels;
 		AttackByLevels = new Dictionary<int, CharacterAttack>(attackByLevelsRemote.Length);

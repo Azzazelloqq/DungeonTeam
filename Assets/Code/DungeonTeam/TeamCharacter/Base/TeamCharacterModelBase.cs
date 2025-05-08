@@ -21,6 +21,7 @@ public abstract class TeamCharacterModelBase : Model
 	public abstract string[] Skills { get; }
 	public abstract bool IsAttackReload { get; }
 	public abstract bool IsCanMove { get; }
+	public abstract int AttackCastTime { get; }
 
 	public abstract void MoveToTarget();
 	public abstract void StopMoveToTarget();

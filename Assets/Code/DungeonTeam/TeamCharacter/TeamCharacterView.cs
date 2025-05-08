@@ -1,4 +1,5 @@
-﻿using System.Threading;
+﻿using System.Collections;
+using System.Threading;
 using System.Threading.Tasks;
 using Code.DungeonTeam.TeamCharacter.Base;
 using Code.GameDebugUtils.CharacterDetection;
@@ -30,7 +31,11 @@ public class TeamCharacterView : TeamCharacterViewBase
 	protected override void OnInitialize()
 	{
 		base.OnInitialize();
-
+		
+		SubscribeOnAnimatorEvents();
+		
+		_mainAnimator.StartObserve();
+		
 		#if UNITY_EDITOR
 		InitDebugVision();
 		#endif
@@ -40,9 +45,22 @@ public class TeamCharacterView : TeamCharacterViewBase
 	{
 		await base.OnInitializeAsync(token);
 
+		SubscribeOnAnimatorEvents();
+		
+		_mainAnimator.StartObserve();
+		
 		#if UNITY_EDITOR
 		InitDebugVision();
 		#endif
+	}
+
+	protected override void OnDispose()
+	{
+		base.OnDispose();
+		
+		_mainAnimator.StartObserve();
+		
+		UnsubscribeOnAnimatorEvents();
 	}
 
 	public override void UpdatePointToFollow(Vector3 targetPosition)
@@ -64,9 +82,10 @@ public class TeamCharacterView : TeamCharacterViewBase
 		_navMeshAgent.speed = moveSpeed;
 	}
 
-	public override void PlayMeleeAttackAnimation()
+	public override void PlayMeleeAttackAnimation(float animationDurationSeconds)
 	{
 		_mainAnimator.SetTrigger(AttackAnimationName);
+		_mainAnimator.ChangeCurrentAnimationDuration(animationDurationSeconds);
 	}
 
 	private void DrawCharacterVision()

@@ -5,7 +5,7 @@ namespace Code.Utils.AnimationUtils
 {
 internal class AnimationStateMachineNotifier : StateMachineBehaviour
 {
-	private List<ObservableAnimator> _observableAnimators;
+	private readonly List<ObservableAnimator> _observableAnimators = new();
 
 	internal void RegisterListener(ObservableAnimator observableAnimator)
 	{

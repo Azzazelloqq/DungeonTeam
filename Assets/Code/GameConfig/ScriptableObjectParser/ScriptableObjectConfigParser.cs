@@ -13,7 +13,7 @@ using Code.GameConfig.ScriptableObjectParser.RemoteData.CharacterTeamPlace;
 using Code.GameConfig.ScriptableObjectParser.RemoteData.DetectPage;
 using Code.GameConfig.ScriptableObjectParser.RemoteData.Skills;
 using Code.GameConfig.ScriptableObjectParser.RemoteData.Skills.Effect;
-using Code.Utils.FloatUtils;
+using Code.Utils.ValuesUtils;
 using InGameLogger;
 
 namespace Code.GameConfig.ScriptableObjectParser

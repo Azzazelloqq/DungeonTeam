@@ -24,7 +24,8 @@ public class TeamCharacterModel : TeamCharacterModelBase
 	public override string CharacterId { get; }
 	public override bool IsAttackReload => _attackReloadTimer.IsInProgress;
 	public override bool IsCanMove => !_attackCastTimer.IsInProgress;
-
+	public override int AttackCastTime => _attackInfoConfig.AttackCastTime;
+	
 	private readonly float _attackSkillDistance;
 	private readonly float _attackDistance;
 	private readonly CharacterAttackConfig _attackMainConfig;
@@ -110,7 +111,7 @@ public class TeamCharacterModel : TeamCharacterModelBase
 
 		_attackCastTimer.StopTimer();
 
-		var attackCastTime = _attackInfoConfig.AttackCastTime;
+		var attackCastTime = AttackCastTime;
 		var invokeAttackNormalizedTime = _attackMainConfig.InvokeAttackNormalizedTime;
 
 		_attackCastTimer.AddCallbackByNormalizedTime(invokeAttackNormalizedTime, attackCallback);

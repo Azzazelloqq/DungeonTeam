@@ -24,6 +24,7 @@ using Code.Timer;
 using Code.UI.UIContext;
 using Code.Utils.ModelUtils;
 using Code.Utils.TransformUtils;
+using Code.Utils.ValuesUtils;
 using InGameLogger;
 using LightDI.Runtime;
 using LocalSaveSystem;
@@ -231,7 +232,9 @@ public class PlayerTeamCharacterPresenter : TeamCharacterPresenterBase, ICharact
 			return;
 		}
 
-		view.PlayMeleeAttackAnimation();
+		var attackCastTime = model.AttackCastTime.ToSeconds();
+		
+		view.PlayMeleeAttackAnimation(attackCastTime);
 	}
 
 	public bool TryFindTargetToHeal()

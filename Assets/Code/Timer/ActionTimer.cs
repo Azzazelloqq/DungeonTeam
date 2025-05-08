@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Code.Utils.AsyncUtils;
-using Code.Utils.FloatUtils;
+using Code.Utils.ValuesUtils;
 using InGameLogger;
 
 namespace Code.Timer
@@ -49,7 +49,7 @@ public class ActionTimer : IDisposable
 
 	public void AddCallbackByNormalizedTime(float normalizedTime, Action callback)
 	{
-		if (normalizedTime < 0f || normalizedTime > 1f)
+		if (normalizedTime is < 0f or > 1f)
 		{
 			throw new ArgumentOutOfRangeException(nameof(normalizedTime));
 		}
@@ -158,7 +158,6 @@ public class ActionTimer : IDisposable
 			IsInProgress = true;
 			_cancelTimerTokenSource = new CancellationTokenSource();
 			var token = _cancelTimerTokenSource.Token;
-
 
 			while (!token.IsCancellationRequested)
 			{
