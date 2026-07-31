@@ -1,0 +1,4 @@
+interface:
+  display_name: "DungeonTeam Workflow"
+  short_description: "Enforces the project workflow"
+  default_prompt: "Use $dungeonte-workflow-guard to plan this DungeonTeam task."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Unity Asmdef"
+  short_description: "Designs Unity assembly boundaries"
+  default_prompt: "Use $dungeonte-asmdef to plan this assembly graph."

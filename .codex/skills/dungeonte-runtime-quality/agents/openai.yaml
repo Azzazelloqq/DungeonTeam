@@ -1,0 +1,4 @@
+interface:
+  display_name: "Runtime Quality"
+  short_description: "Reviews Unity quality and performance"
+  default_prompt: "Use $dungeonte-runtime-quality to review this Unity runtime change."

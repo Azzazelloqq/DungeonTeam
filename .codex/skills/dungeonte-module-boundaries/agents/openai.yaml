@@ -1,0 +1,4 @@
+interface:
+  display_name: "Module Boundaries"
+  short_description: "Plans modular Unity feature boundaries"
+  default_prompt: "Use $dungeonte-module-boundaries to plan this Unity feature."

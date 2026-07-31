@@ -1,0 +1,4 @@
+interface:
+  display_name: "Async Lifecycle"
+  short_description: "Owns Unity async lifecycles"
+  default_prompt: "Use $dungeonte-async-lifecycle to design this async flow."

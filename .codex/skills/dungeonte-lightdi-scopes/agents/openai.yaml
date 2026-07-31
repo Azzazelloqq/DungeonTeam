@@ -1,0 +1,4 @@
+interface:
+  display_name: "LightDI Scopes"
+  short_description: "Chooses correct LightDI scopes"
+  default_prompt: "Use $dungeonte-lightdi-scopes to design this dependency scope."

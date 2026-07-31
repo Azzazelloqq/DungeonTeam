@@ -1,0 +1,4 @@
+interface:
+  display_name: "Addressables 3.1"
+  short_description: "Guides Addressables 3.1 ownership"
+  default_prompt: "Use $dungeonte-addressables-3x to review this Addressables change."

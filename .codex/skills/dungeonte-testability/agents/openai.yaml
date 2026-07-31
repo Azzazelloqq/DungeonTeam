@@ -1,0 +1,4 @@
+interface:
+  display_name: "Unity Testability"
+  short_description: "Plans test seams and proof"
+  default_prompt: "Use $dungeonte-testability to assess testability for this feature."

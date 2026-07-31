@@ -60,7 +60,7 @@
       "dependencies": {
         "com.unity.addressables": "1.21.20"
       },
-      "hash": "8100bd189b6a5617dc6c2a2840129f7abf39f360"
+      "hash": "78e92dc58e88b4cccf64600f780ab453fd5a788c"
     },
     "com.azzazello.root": {
       "version": "https://github.com/Azzazelloqq/Root-pattern.git",
@@ -102,8 +102,8 @@
       "hash": "ceac8d6946b1125fe782cd171fbcb245b567dbf9"
     },
     "com.unity.addressables": {
-      "version": "2.11.1",
-      "depth": 1,
+      "version": "3.1.0",
+      "depth": 0,
       "source": "registry",
       "dependencies": {
         "com.unity.profiling.core": "1.0.2",
@@ -112,13 +112,13 @@
         "com.unity.modules.jsonserialize": "1.0.0",
         "com.unity.modules.imageconversion": "1.0.0",
         "com.unity.modules.unitywebrequest": "1.0.0",
-        "com.unity.scriptablebuildpipeline": "3.0.2",
+        "com.unity.scriptablebuildpipeline": "3.1.1",
         "com.unity.modules.unitywebrequestassetbundle": "1.0.0"
       },
       "url": "https://packages.unity.com"
     },
     "com.unity.ai.navigation": {
-      "version": "2.0.13",
+      "version": "2.0.14",
       "depth": 0,
       "source": "registry",
       "dependencies": {
@@ -163,7 +163,7 @@
       "dependencies": {}
     },
     "com.unity.ide.rider": {
-      "version": "3.0.38",
+      "version": "3.0.40",
       "depth": 0,
       "source": "registry",
       "dependencies": {
@@ -206,7 +206,7 @@
     },
     "com.unity.profiling.core": {
       "version": "1.0.3",
-      "depth": 2,
+      "depth": 1,
       "source": "builtin",
       "dependencies": {}
     },
@@ -241,8 +241,8 @@
       }
     },
     "com.unity.scriptablebuildpipeline": {
-      "version": "3.0.2",
-      "depth": 2,
+      "version": "3.1.1",
+      "depth": 1,
       "source": "registry",
       "dependencies": {
         "com.unity.test-framework": "1.4.5",
