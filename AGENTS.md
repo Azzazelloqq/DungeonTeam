@@ -6,6 +6,7 @@
 - Для новой проблемы или feature: сначала обсудить варианты, затем дать подробный план; писать код только после явного разрешения.
 - Не изменять чужие или не относящиеся к задаче файлы в dirty worktree.
 - Соблюдать DRY, KISS, SOLID, чистый код и существующую архитектуру. Не использовать костыли.
+- Предпочитать простое и прозрачное решение. Не добавлять слои, интерфейсы, фабрики, сервисы, события и абстракции без текущей подтверждённой потребности: повторного использования, нескольких реализаций или реальной сложности предметной области. Не проектировать «на будущее»; перед реализацией оценивать, можно ли уменьшить число сущностей и зависимостей без ущерба ясности и архитектурным границам.
 - Тестировать ожидаемое поведение, а не подгонять тесты или реализацию друг под друга.
 - Перед завершением проверить полноту результата и убрать добавленное без требования.
 
@@ -19,12 +20,16 @@
 | Root, DI scope, async, subscriptions, disposal | `Docs/AI/architecture.md`, `Docs/AI/lifecycle.md`, `Docs/AI/libraries/lightdi.md`, `Docs/AI/libraries/roots-and-disposal.md` |
 | Gameplay | `Docs/AI/libraries/presentation.md`, `Docs/AI/recipes/new-gameplay-object.md` |
 | UI | `Docs/AI/libraries/presentation.md`, `Docs/AI/recipes/new-ui-screen.md` |
+| Списки, вложенные страницы, child presenter/viewmodel | `Docs/AI/libraries/presentation.md`, `Docs/AI/recipes/nested-presentation.md`, `Docs/AI/lifecycle.md` |
 | Addressables, prefab, сцены | `Docs/AI/libraries/addressables.md`, `Docs/AI/architecture.md` |
 | Config | `Docs/AI/libraries/config.md` |
 | Сохранения | `Docs/AI/libraries/persistence.md` |
 | Tick, logger, utility extensions | `Docs/AI/libraries/runtime-services.md`, `Docs/AI/lifecycle.md` |
+| Автотесты, TDD, testability | `Docs/AI/testing.md`, а при lifecycle — также `Docs/AI/lifecycle.md` |
 
 Если задача покрывает несколько строк, прочитай объединение документов. Не загружай всю документацию без необходимости.
+
+При работе с кастомной библиотекой сверяй используемый API с текущим исходником в `Library/PackageCache`. Если он расходится с документацией, источником правды является исходник; сообщи о дрейфе документации.
 
 ## Архитектурные ограничения
 

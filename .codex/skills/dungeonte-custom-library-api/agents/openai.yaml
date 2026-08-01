@@ -1,4 +1,0 @@
-interface:
-  display_name: "Custom Library API"
-  short_description: "Verifies custom package APIs"
-  default_prompt: "Use $dungeonte-custom-library-api to implement this library integration."

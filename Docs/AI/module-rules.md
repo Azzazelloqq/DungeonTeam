@@ -8,8 +8,8 @@
   Application/      # use cases, интерфейсы портов
   Infrastructure/   # реализации портов feature
   Presentation/
-    Gameplay/       # MVP
-    UI/             # MVVM
+    Gameplay/       # MVP: отдельная папка на каждую presentation-семью
+    UI/             # MVVM: отдельная папка на каждую presentation-семью
   Composition/      # FeatureRoot, factory, assembly scope при необходимости
   <FeatureName>.Domain.asmdef
   <FeatureName>.Application.asmdef
@@ -33,3 +33,4 @@
 - Root: `<Feature>Root`.
 - MVP: `<Name>Presenter`, `<Name>Model`, `<Name>View`.
 - MVVM: `<Name>ViewModel`, `<Name>View`.
+- Каждая MVP/MVVM-семья: `<Family>/Base/<Family>…Base` и конкретные типы рядом с `Base/`. Самостоятельная View и Base-класс вне конкретной семьи запрещены. Использовать только применимые Base-типы: MVP — View/Model/Presenter, MVVM — View/Model/ViewModel.
