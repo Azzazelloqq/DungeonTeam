@@ -24,7 +24,8 @@ namespace DungeonTeam.Gameplay.Dungeon.Domain
 
             for (var attempt = 0; attempt < maxGenerationAttempts; attempt++)
             {
-                var random = new DeterministicRandom(unchecked(seed + attempt * 486187739));
+                var random = new DungeonDeterministicRandom(
+                    unchecked(seed + attempt * 486187739));
                 if (TryBuild(
                         entryChunk,
                         mandatoryChunks,
@@ -49,7 +50,7 @@ namespace DungeonTeam.Gameplay.Dungeon.Domain
             IReadOnlyList<DungeonChunkMetadata> chunkPool,
             DungeonChunkMetadata exitChunk,
             int targetChunkCount,
-            DeterministicRandom random,
+            DungeonDeterministicRandom random,
             out DungeonChunkLayout layout)
         {
             var placements = new List<DungeonChunkPlacement>(targetChunkCount);
@@ -101,7 +102,7 @@ namespace DungeonTeam.Gameplay.Dungeon.Domain
             IReadOnlyList<DungeonChunkMetadata> candidates,
             List<DungeonChunkPlacement> placements,
             List<OpenPort> openPorts,
-            DeterministicRandom random)
+            DungeonDeterministicRandom random)
         {
             if (candidates.Count == 0 || openPorts.Count == 0)
             {
@@ -373,27 +374,5 @@ namespace DungeonTeam.Gameplay.Dungeon.Domain
             public int PlacementIndex { get; }
         }
 
-        private sealed class DeterministicRandom
-        {
-            private uint _state;
-
-            public DeterministicRandom(int seed)
-            {
-                _state = seed == 0 ? 0x6D2B79F5u : unchecked((uint)seed);
-            }
-
-            public int Next(int maxExclusive)
-            {
-                if (maxExclusive <= 0)
-                {
-                    throw new ArgumentOutOfRangeException(nameof(maxExclusive));
-                }
-
-                _state ^= _state << 13;
-                _state ^= _state >> 17;
-                _state ^= _state << 5;
-                return (int)(_state % (uint)maxExclusive);
-            }
-        }
     }
 }

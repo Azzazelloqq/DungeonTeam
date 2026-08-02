@@ -51,6 +51,39 @@ namespace DungeonTeam.Gameplay.Dungeon.Runtime.Config
     }
 
     [Serializable]
+    public sealed class ProceduralDungeonDefinition
+    {
+        [SerializeField]
+        private string _dungeonId;
+
+        [SerializeField]
+        private string _tileSetId;
+
+        [SerializeField, Min(1)]
+        private int _width = 1;
+
+        [SerializeField, Min(1)]
+        private int _height = 1;
+
+        [SerializeField, Min(3)]
+        private int _targetCellCount = 3;
+
+        [SerializeField, Min(2)]
+        private int _mainRouteCellCount = 2;
+
+        [SerializeField, Min(1)]
+        private int _maxGenerationAttempts = 1;
+
+        public string DungeonId => _dungeonId;
+        public string TileSetId => _tileSetId;
+        public int Width => _width;
+        public int Height => _height;
+        public int TargetCellCount => _targetCellCount;
+        public int MainRouteCellCount => _mainRouteCellCount;
+        public int MaxGenerationAttempts => _maxGenerationAttempts;
+    }
+
+    [Serializable]
     public sealed class DungeonScenarioDefinition
     {
         [SerializeField]

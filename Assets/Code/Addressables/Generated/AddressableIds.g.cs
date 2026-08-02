@@ -10,6 +10,7 @@ namespace Code.Addressables.Generated
             public const string DungeonChunksMandatory = "Dungeon/Chunks/Mandatory";
             public const string DungeonChunksRoom = "Dungeon/Chunks/Room";
             public const string DungeonMapsAuthoredDungeonDemo = "Dungeon/Maps/AuthoredDungeonDemo";
+            public const string DungeonTileSetsDemo = "Dungeon/TileSets/Demo";
         }
         public static class UI
         {

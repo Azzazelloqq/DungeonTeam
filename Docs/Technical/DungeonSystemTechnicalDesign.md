@@ -1,6 +1,6 @@
 # DungeonTeam — Dungeon System Technical Design
 
-**Статус:** D2 IMPLEMENTED
+**Статус:** D3 IMPLEMENTED
 
 **Дата:** 2 августа 2026
 
@@ -87,7 +87,6 @@ ApplicationFlowRoot
       ├─ IDungeonInstance
       │  ├─ map GameObjects
       │  ├─ loaded asset handles
-      │  └─ navigation data owned by the map
       ├─ enemy/encounter owners
       ├─ interest-point owners
       └─ objective owners
@@ -108,7 +107,7 @@ ApplicationFlowRoot
 3. Вызывает `IDungeonInstance.Dispose()`.
 4. Instance уничтожает локальные map objects и освобождает Addressables handles.
 
-Карта освобождается последней, потому что gameplay-объекты могут находиться в её иерархии или использовать её navigation/placement data.
+Карта освобождается последней, потому что gameplay-объекты могут находиться в её иерархии или использовать её placement data.
 
 `IDungeonInstance.Dispose()` идемпотентен. После успешной сборки factory не сохраняет владение ресурсами: оно целиком передаётся instance.
 
@@ -285,13 +284,15 @@ ChunkedDungeonDefinition
 ```text
 ProceduralDungeonDefinition
   DungeonId
-  TileSetAssetId
-  RoomCount
-  CellSize
+  TileSetId
+  Width
+  Height
+  TargetCellCount
+  MainRouteCellCount
   MaxGenerationAttempts
 ```
 
-Никаких algorithm IDs, plugin registries, WFC или generic solver API не вводится.
+`CellSize` и offsets semantic slots принадлежат tile-set asset, а не правилам topology. Никаких algorithm IDs, plugin registries, WFC или generic solver API не вводится.
 
 ### 7.4. Scenario definition
 
@@ -362,7 +363,6 @@ DungeonMapAuthoring
 ├─ EnemyPlacementAuthoring...
 ├─ InterestPointPlacementAuthoring...
 ├─ ObjectivePlacementAuthoring...
-└─ Navigation
 ```
 
 Level designer задаёт точные positions, rotations, modes, slot tags и fixed content IDs в Inspector.
@@ -379,7 +379,6 @@ Authoring-компоненты не создают gameplay objects и не за
 - room tags;
 - connection ports;
 - placements внутри чанка;
-- navigation bindings;
 - геометрию чанка.
 
 `DungeonConnectionPortAuthoring` содержит pose и один `PortType`. Соединение допустимо, когда port types совпадают, направления противоположны и bounds чанков не пересекаются.
@@ -428,14 +427,14 @@ Concrete `DungeonFactory` в Runtime выбирает mode по найденно
 ### 9.3. Procedural grid
 
 1. Создать entry cell `(0, 0)`.
-2. Расширять connected set через свободных cardinal neighbours до `RoomCount`.
-3. При тупике перезапустить попытку в пределах `MaxGenerationAttempts`.
-4. Выбрать exit как наиболее удалённую по BFS комнату.
-5. Создать floors, walls и doors из одного `TileSet` по соседям cells.
-6. Создать стандартные placement slots по типу комнаты.
-7. Проверить связность и отсутствие пересечений.
+2. Построить self-avoiding основной маршрут из `MainRouteCellCount` cardinal cells; его последняя cell становится exit.
+3. Добавить боковые ветви от уже размещённых cells до `TargetCellCount`, не расширяя exit.
+4. При тупике перезапустить всю попытку, но не более `MaxGenerationAttempts`.
+5. Проверить границы grid, уникальность координат, точное число cells и tree-связность через parent references.
+6. Создать semantic slots: enemy на всех cells кроме entry/exit, interest на листьях боковых ветвей, objective на exit.
+7. Runtime создаёт floors и по одному wall/passage на каждую общую сторону из одного `TileSet`.
 
-Первая версия создаёт прямоугольные grid rooms. Organic caves, multi-floor topology и runtime mesh boolean operations не входят в scope.
+Результат — одноэтажное связное дерево: гарантированный entry → exit route, минимум одна боковая ветвь и отсутствие циклов. Backtracking отсутствует; исчерпание попыток завершается `GenerationFailed`. Organic caves, multi-floor topology и runtime mesh boolean operations не входят в scope.
 
 ## 10. Scenario planning
 
@@ -472,23 +471,19 @@ Enemy budget заполняется, пока существует compatible ca
 Прямые Addressables-вызовы находятся только в `Runtime/Infrastructure`:
 
 - authored prefab, созданный через `InstantiateAsync`, освобождается через `ReleaseInstance`;
-- unique chunk/tile prefab загружается один раз через `LoadAssetAsync`;
+- procedural tile-set asset загружается один раз через `LoadAssetAsync`, а его floor/wall/passage prefabs создаются обычными локальными clones;
 - локальные clones уничтожаются до release соответствующего load handle;
 - pending operation остаётся у infrastructure до завершения и cleanup, даже если ожидание caller отменено;
 - raw handles и keys не выходят из concrete `DungeonInstance`;
 - `WaitForCompletion` не используется.
 
-Config содержит `DungeonAssetId`, а не address string. `DungeonRuntimeAssetCatalog` в composition сопоставляет его только с константой из `AddressableIds`. Каждый новый production asset обязан иметь mapping и пройти Editor validation.
+Config содержит стабильные asset IDs, а не address strings. Runtime catalogs сопоставляют их только с константами из `AddressableIds`. Каждый новый production asset обязан иметь mapping и пройти Editor validation.
 
 ## 12. Navigation
 
-- Authored prefab использует заранее подготовленную navigation data.
-- Chunk prefab содержит собственные navigation bindings; соединённые ports создают только необходимые links.
-- Procedural grid строит navigation один раз после геометрии и до возврата instance.
+Navigation не входит в D3: в проекте пока нет подтверждённого gameplay-владельца и runtime-потребителя navigation-графа. Выбор NavMesh, links и владельца runtime build выполняется отдельным архитектурным решением при интеграции конкретного режима.
 
-Runtime navigation build для procedural режима считается риском для mobile. До принятия procedural milestone обязателен profiler proof на target device. Если стоимость неприемлема, procedural geometry переводится на navigation-ready modules; параллельные реализации заранее не создаются.
-
-Dungeon не передаёт `NavMeshAgent`, `NavMeshSurface` или другие Unity-типы в Application/Domain.
+Dungeon не создаёт и не передаёт `NavMeshAgent`, `NavMeshSurface` или другие Unity-типы в Application/Domain.
 
 ## 13. Ошибки и validation
 
@@ -499,7 +494,7 @@ Config validation при старте проверяет:
 - существование scenario и difficulty references;
 - положительные costs/weights/counts и допустимые multipliers;
 - `MaxGenerationAttempts > 0` с проектным верхним лимитом;
-- существование mapping каждого `DungeonAssetId`.
+- существование mapping каждого map/chunk/tile-set asset ID.
 
 Asset/Editor validation проверяет:
 
@@ -550,7 +545,7 @@ Runtime build validation проверяет:
 - optional fixed создаются только при явном включении;
 - required objective занимает совместимый slot или build завершается ошибкой;
 - chunked result связан, не пересекается и прекращает retry;
-- procedural grid связан, имеет entry/exit и требуемое число rooms;
+- procedural grid детерминирован, является связным деревом, имеет гарантированный main route, боковую ветвь, semantic slots и точное число cells;
 - invalid config отклоняется до runtime loading.
 
 Тесты проверяют наблюдаемое поведение и инварианты, а не конкретную последовательность внутренних random calls.
@@ -560,7 +555,7 @@ Runtime build validation проверяет:
 - authored prefab создаётся, возвращает snapshot и полностью удаляется через `Dispose`;
 - chunk instances соединяются по ports;
 - cancellation/error освобождает partial graph;
-- navigation entry → exit доступна для каждого layout mode;
+- procedural tile geometry и content plan создаются, полностью удаляются и могут быть созданы повторно;
 - gameplay objects создаются по `ContentPlan` и освобождаются до карты.
 
 ### Editor/manual
@@ -574,7 +569,7 @@ Runtime build validation проверяет:
 ### Performance
 
 - отдельно измеряются authored load, chunk generation и procedural generation;
-- для procedural navigation фиксируются build time, peak memory и allocation;
+- при появлении реального gameplay-потребителя отдельно измеряются выбранная navigation-интеграция и её стоимость;
 - steady gameplay не должен иметь Dungeon-owned per-frame cost.
 
 ## 16. План реализации
@@ -612,12 +607,16 @@ Runtime build validation проверяет:
 
 Navigation links в D2 не добавлялись: в текущем проекте ещё нет владельца navigation-графа данжа и подтверждённого runtime-потребителя. Это остаётся частью интеграции конкретного режима, а не условием сборки нейтральной карты.
 
-### D3 — Procedural grid
+### D3 — Procedural grid (готово)
 
-- реализовать один grid algorithm и один tile set;
-- добавить стандартные procedural placements;
-- собрать navigation до публикации instance;
-- пройти profiler proof на target Android device.
+- реализован pure C# deterministic planner: self-avoiding main route и небольшие боковые ветви;
+- результат ограничен grid bounds, содержит точное число cells, является связным деревом и завершается явной ошибкой после `MaxGenerationAttempts`;
+- добавлены стандартные enemy/interest/objective slots, конкретный content по-прежнему выбирает `DungeonContentPlanner`;
+- Runtime собирает floor/wall/passage geometry из одного project-owned tile set;
+- tile-set asset загружается по generated `AddressableIds`, а handle и локальные GameObjects полностью освобождаются при `Dispose`, ошибке и отмене;
+- добавлена одна demo definition `dungeon.demo.procedural`; EditMode проверяет topology, determinism и bounded failure, PlayMode — create/dispose/recreate.
+
+Navigation намеренно не добавлялась без подтверждённого gameplay-владельца и потребителя.
 
 ### D4 — Полная проверка
 

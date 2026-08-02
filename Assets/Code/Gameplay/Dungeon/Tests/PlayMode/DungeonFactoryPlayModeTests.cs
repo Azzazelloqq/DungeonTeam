@@ -1,4 +1,6 @@
+using System;
 using System.Collections;
+using System.Threading;
 using Cysharp.Threading.Tasks;
 using DungeonTeam.Gameplay.Dungeon.Application;
 using DungeonTeam.Gameplay.Dungeon.Runtime.Config;
@@ -6,6 +8,7 @@ using DungeonTeam.Gameplay.Dungeon.Runtime.Infrastructure;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
+using Object = UnityEngine.Object;
 
 namespace DungeonTeam.Gameplay.Dungeon.Tests.PlayMode
 {
@@ -20,6 +23,10 @@ namespace DungeonTeam.Gameplay.Dungeon.Tests.PlayMode
             "\"_mandatoryChunkIds\":[\"chunk.demo.mandatory\"]," +
             "\"_chunkPool\":[\"chunk.demo.room\"]," +
             "\"_targetChunkCount\":5,\"_maxGenerationAttempts\":8}]," +
+            "\"_proceduralDungeons\":[{\"_dungeonId\":\"dungeon.demo.procedural\"," +
+            "\"_tileSetId\":\"tileset.demo.procedural\"," +
+            "\"_width\":8,\"_height\":8,\"_targetCellCount\":10," +
+            "\"_mainRouteCellCount\":7,\"_maxGenerationAttempts\":8}]," +
             "\"_scenarios\":[{\"_scenarioId\":\"scenario.demo\"," +
             "\"_baseThreatBudget\":1," +
             "\"_enemyCandidates\":[{\"_enemyId\":\"enemy.grunt\",\"_cost\":1," +
@@ -35,6 +42,52 @@ namespace DungeonTeam.Gameplay.Dungeon.Tests.PlayMode
             "\"_threatBudgetMultiplier\":1," +
             "\"_interestPointCountMultiplier\":1," +
             "\"_rewardBudgetMultiplier\":1}]}";
+
+        private const string InvalidProceduralConfigJson =
+            "{\"_proceduralDungeons\":[{" +
+            "\"_dungeonId\":\"dungeon.demo.procedural\"," +
+            "\"_tileSetId\":\"tileset.demo.procedural\"," +
+            "\"_width\":1,\"_height\":4,\"_targetCellCount\":4," +
+            "\"_mainRouteCellCount\":3,\"_maxGenerationAttempts\":1}]," +
+            "\"_scenarios\":[{\"_scenarioId\":\"scenario.demo\"," +
+            "\"_baseThreatBudget\":0,\"_enemyCandidates\":[]," +
+            "\"_interestPointRules\":[],\"_enabledOptionalPlacementIds\":[]," +
+            "\"_requiredObjectives\":[]}]," +
+            "\"_difficulties\":[{\"_difficultyId\":\"normal\"," +
+            "\"_threatBudgetMultiplier\":1," +
+            "\"_interestPointCountMultiplier\":1," +
+            "\"_rewardBudgetMultiplier\":1}]}";
+
+        [UnityTest]
+        public IEnumerator CreateAsync_WithAlreadyCancelledToken_CancelsBeforeGeneration()
+        {
+            var config = ScriptableObject.CreateInstance<DungeonConfigPage>();
+            JsonUtility.FromJsonOverwrite(InvalidProceduralConfigJson, config);
+            var factory = new DungeonFactory(config);
+            var request = new DungeonBuildRequest(
+                "dungeon.demo.procedural",
+                "scenario.demo",
+                "normal",
+                seed: 1);
+            var tokenSource = new CancellationTokenSource();
+            tokenSource.Cancel();
+            Exception exception = null;
+
+            try
+            {
+                yield return factory.CreateAsync(request, tokenSource.Token)
+                    .ToCoroutine(
+                        _ => Assert.Fail("Cancelled build returned an instance."),
+                        caught => exception = caught);
+
+                Assert.That(exception, Is.TypeOf<OperationCanceledException>());
+            }
+            finally
+            {
+                tokenSource.Dispose();
+                Object.Destroy(config);
+            }
+        }
 
         [UnityTest]
         public IEnumerator CreateAndDispose_DemoAuthoredDungeon_BuildsAndReleasesMap()
@@ -122,6 +175,68 @@ namespace DungeonTeam.Gameplay.Dungeon.Tests.PlayMode
             {
                 Assert.That(chunkRoots[index] == null, Is.True);
             }
+        }
+
+        [UnityTest]
+        public IEnumerator CreateDisposeAndRecreate_DemoProceduralDungeon_ReleasesAllGeometry()
+        {
+            var config = ScriptableObject.CreateInstance<DungeonConfigPage>();
+            JsonUtility.FromJsonOverwrite(ConfigJson, config);
+
+            var factory = new DungeonFactory(config);
+            var request = new DungeonBuildRequest(
+                "dungeon.demo.procedural",
+                "scenario.demo",
+                "normal",
+                seed: 42);
+            IDungeonInstance instance = null;
+
+            yield return factory.CreateAsync(request, default)
+                .ToCoroutine(result => instance = result);
+
+            var firstMapRoot = GameObject.Find("ProceduralDungeon_dungeon.demo.procedural");
+            try
+            {
+                Assert.That(instance, Is.Not.Null);
+                Assert.That(firstMapRoot, Is.Not.Null);
+                Assert.That(firstMapRoot.transform.childCount, Is.GreaterThan(10));
+                Assert.That(instance.MapSnapshot.DungeonId,
+                    Is.EqualTo("dungeon.demo.procedural"));
+                Assert.That(
+                    instance.MapSnapshot.ExitPose.PositionX !=
+                    instance.MapSnapshot.EntryPose.PositionX ||
+                    instance.MapSnapshot.ExitPose.PositionZ !=
+                    instance.MapSnapshot.EntryPose.PositionZ,
+                    Is.True);
+                Assert.That(instance.ContentPlan.EnemySpawns, Has.Count.EqualTo(1));
+                Assert.That(instance.ContentPlan.InterestPointSpawns, Has.Count.EqualTo(1));
+                Assert.That(instance.ContentPlan.ObjectiveSpawns, Has.Count.EqualTo(1));
+            }
+            finally
+            {
+                instance?.Dispose();
+                instance = null;
+            }
+
+            yield return null;
+            Assert.That(firstMapRoot == null, Is.True);
+
+            yield return factory.CreateAsync(request, default)
+                .ToCoroutine(result => instance = result);
+            var secondMapRoot = GameObject.Find("ProceduralDungeon_dungeon.demo.procedural");
+            try
+            {
+                Assert.That(instance, Is.Not.Null);
+                Assert.That(secondMapRoot, Is.Not.Null);
+            }
+            finally
+            {
+                instance?.Dispose();
+                Object.Destroy(config);
+            }
+
+            yield return null;
+            Assert.That(secondMapRoot == null, Is.True);
         }
     }
 }

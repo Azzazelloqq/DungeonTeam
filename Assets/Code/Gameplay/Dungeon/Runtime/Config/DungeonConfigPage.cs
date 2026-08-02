@@ -18,6 +18,10 @@ namespace DungeonTeam.Gameplay.Dungeon.Runtime.Config
             Array.Empty<ChunkedDungeonDefinition>();
 
         [SerializeField]
+        private ProceduralDungeonDefinition[] _proceduralDungeons =
+            Array.Empty<ProceduralDungeonDefinition>();
+
+        [SerializeField]
         private DungeonScenarioDefinition[] _scenarios =
             Array.Empty<DungeonScenarioDefinition>();
 
@@ -41,6 +45,15 @@ namespace DungeonTeam.Gameplay.Dungeon.Runtime.Config
                 dungeonId,
                 definition => definition.DungeonId,
                 "chunked dungeon");
+        }
+
+        internal ProceduralDungeonDefinition TryGetProceduralDungeon(string dungeonId)
+        {
+            return FindById(
+                _proceduralDungeons,
+                dungeonId,
+                definition => definition.DungeonId,
+                "procedural dungeon");
         }
 
         internal DungeonScenarioDefinition RequireScenario(string scenarioId)

@@ -17,6 +17,8 @@ namespace DungeonTeam.Gameplay.Dungeon.Runtime.Infrastructure
         private readonly DungeonConfigPage _config;
         private readonly DungeonContentPlanner _contentPlanner = new DungeonContentPlanner();
         private readonly DungeonChunkLayoutPlanner _layoutPlanner = new DungeonChunkLayoutPlanner();
+        private readonly DungeonProceduralLayoutPlanner _proceduralLayoutPlanner =
+            new DungeonProceduralLayoutPlanner();
 
         public DungeonFactory(DungeonConfigPage config)
         {
@@ -30,9 +32,17 @@ namespace DungeonTeam.Gameplay.Dungeon.Runtime.Infrastructure
             CancellationToken ownerToken)
         {
             var buildData = ResolveBuildData(request);
-            return buildData.Kind == DungeonKind.Authored
-                ? await CreateAuthoredAsync(request, buildData, ownerToken)
-                : await CreateChunkedAsync(request, buildData, ownerToken);
+            switch (buildData.Kind)
+            {
+                case DungeonKind.Authored:
+                    return await CreateAuthoredAsync(request, buildData, ownerToken);
+                case DungeonKind.Chunked:
+                    return await CreateChunkedAsync(request, buildData, ownerToken);
+                case DungeonKind.Procedural:
+                    return await CreateProceduralAsync(request, buildData, ownerToken);
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
         }
 
         private async UniTask<IDungeonInstance> CreateAuthoredAsync(
@@ -105,7 +115,7 @@ namespace DungeonTeam.Gameplay.Dungeon.Runtime.Infrastructure
                 foreach (var pair in buildData.ChunkAddresses)
                 {
                     ownerToken.ThrowIfCancellationRequested();
-                    var handle = StartLoad(pair.Value);
+                    var handle = StartLoad<GameObject>(pair.Value);
                     assetHandles.Add(handle);
                     var prefab = await AwaitAssetAsync(handle, ownerToken, pair.Value);
                     try
@@ -194,6 +204,91 @@ namespace DungeonTeam.Gameplay.Dungeon.Runtime.Infrastructure
             }
         }
 
+        private async UniTask<IDungeonInstance> CreateProceduralAsync(
+            DungeonBuildRequest request,
+            BuildData buildData,
+            CancellationToken ownerToken)
+        {
+            ownerToken.ThrowIfCancellationRequested();
+            var layout = BuildProceduralLayout(request, buildData.ProceduralDefinition);
+            var handle = StartLoad<DungeonTileSetAsset>(buildData.TileSetAddress);
+            GameObject mapRoot = null;
+            var ownershipTransferred = false;
+            try
+            {
+                var tileSet = await AwaitAssetAsync(
+                    handle,
+                    ownerToken,
+                    buildData.TileSetAddress);
+                ownerToken.ThrowIfCancellationRequested();
+                mapRoot = new GameObject($"ProceduralDungeon_{request.DungeonId}");
+
+                DungeonProceduralMapData mapData;
+                try
+                {
+                    mapData = DungeonProceduralMapAssembler.Build(
+                        mapRoot,
+                        request.DungeonId,
+                        request.Seed,
+                        layout,
+                        tileSet,
+                        ownerToken);
+                }
+                catch (OperationCanceledException)
+                {
+                    throw;
+                }
+                catch (Exception exception)
+                {
+                    throw new DungeonBuildException(
+                        DungeonBuildFailureReason.InvalidAuthoring,
+                        $"Procedural dungeon tile set '{buildData.ProceduralDefinition.TileSetId}' " +
+                        "is invalid.",
+                        exception);
+                }
+
+                DungeonContentPlan contentPlan;
+                try
+                {
+                    contentPlan = _contentPlanner.Build(
+                        request.Seed,
+                        mapData.EnemyPlacements,
+                        mapData.InterestPointPlacements,
+                        mapData.ObjectivePlacements,
+                        buildData.Scenario,
+                        buildData.Difficulty);
+                }
+                catch (Exception exception)
+                {
+                    throw new DungeonBuildException(
+                        DungeonBuildFailureReason.InvalidConfig,
+                        $"Procedural dungeon '{request.DungeonId}' is incompatible with " +
+                        $"scenario '{request.ScenarioId}'.",
+                        exception);
+                }
+                var instance = new DungeonInstance(
+                    mapRoot,
+                    handle,
+                    mapData.Snapshot,
+                    contentPlan);
+                mapRoot = null;
+                ownershipTransferred = true;
+                return instance;
+            }
+            finally
+            {
+                if (mapRoot != null)
+                {
+                    UnityEngine.Object.Destroy(mapRoot);
+                }
+
+                if (!ownershipTransferred && handle.IsValid())
+                {
+                    Addressables.Release(handle);
+                }
+            }
+        }
+
         private DungeonChunkLayout BuildLayout(
             DungeonBuildRequest request,
             BuildData buildData,
@@ -225,6 +320,36 @@ namespace DungeonTeam.Gameplay.Dungeon.Runtime.Infrastructure
                 throw new DungeonBuildException(
                     DungeonBuildFailureReason.InvalidConfig,
                     $"Chunked dungeon '{request.DungeonId}' has invalid layout config.",
+                    exception);
+            }
+        }
+
+        private DungeonProceduralLayout BuildProceduralLayout(
+            DungeonBuildRequest request,
+            ProceduralDungeonDefinition definition)
+        {
+            try
+            {
+                return _proceduralLayoutPlanner.Build(
+                    request.Seed,
+                    definition.Width,
+                    definition.Height,
+                    definition.TargetCellCount,
+                    definition.MainRouteCellCount,
+                    definition.MaxGenerationAttempts);
+            }
+            catch (DungeonLayoutGenerationException exception)
+            {
+                throw new DungeonBuildException(
+                    DungeonBuildFailureReason.GenerationFailed,
+                    $"Procedural dungeon '{request.DungeonId}' could not be generated.",
+                    exception);
+            }
+            catch (Exception exception)
+            {
+                throw new DungeonBuildException(
+                    DungeonBuildFailureReason.InvalidConfig,
+                    $"Procedural dungeon '{request.DungeonId}' has invalid layout config.",
                     exception);
             }
         }
@@ -281,7 +406,11 @@ namespace DungeonTeam.Gameplay.Dungeon.Runtime.Infrastructure
                 var difficulty = _config.RequireDifficulty(request.DifficultyId).ToDomain();
                 var authored = _config.TryGetAuthoredDungeon(request.DungeonId);
                 var chunked = _config.TryGetChunkedDungeon(request.DungeonId);
-                if (authored != null && chunked != null)
+                var procedural = _config.TryGetProceduralDungeon(request.DungeonId);
+                var configuredCount = (authored != null ? 1 : 0) +
+                                      (chunked != null ? 1 : 0) +
+                                      (procedural != null ? 1 : 0);
+                if (configuredCount > 1)
                 {
                     throw new InvalidOperationException(
                         $"Dungeon ID '{request.DungeonId}' is configured more than once.");
@@ -300,6 +429,15 @@ namespace DungeonTeam.Gameplay.Dungeon.Runtime.Infrastructure
                     return BuildData.ForChunks(
                         chunked,
                         ResolveChunkAddresses(chunked),
+                        scenario,
+                        difficulty);
+                }
+
+                if (procedural != null)
+                {
+                    return BuildData.ForProcedural(
+                        procedural,
+                        DungeonTileSetAssetCatalog.ResolveAddress(procedural.TileSetId),
                         scenario,
                         difficulty);
                 }
@@ -367,11 +505,11 @@ namespace DungeonTeam.Gameplay.Dungeon.Runtime.Infrastructure
             return result;
         }
 
-        private static AsyncOperationHandle<GameObject> StartLoad(string address)
+        private static AsyncOperationHandle<TAsset> StartLoad<TAsset>(string address)
         {
             try
             {
-                return Addressables.LoadAssetAsync<GameObject>(address);
+                return Addressables.LoadAssetAsync<TAsset>(address);
             }
             catch (Exception exception)
             {
@@ -401,8 +539,8 @@ namespace DungeonTeam.Gameplay.Dungeon.Runtime.Infrastructure
             }
         }
 
-        private static async UniTask<GameObject> AwaitAssetAsync(
-            AsyncOperationHandle<GameObject> handle,
+        private static async UniTask<TAsset> AwaitAssetAsync<TAsset>(
+            AsyncOperationHandle<TAsset> handle,
             CancellationToken token,
             string address)
         {
@@ -447,8 +585,8 @@ namespace DungeonTeam.Gameplay.Dungeon.Runtime.Infrastructure
             }
         }
 
-        private static async UniTask AwaitOperationCompletion(
-            AsyncOperationHandle<GameObject> handle)
+        private static async UniTask AwaitOperationCompletion<TAsset>(
+            AsyncOperationHandle<TAsset> handle)
         {
             try
             {
@@ -479,7 +617,8 @@ namespace DungeonTeam.Gameplay.Dungeon.Runtime.Infrastructure
         private enum DungeonKind
         {
             Authored,
-            Chunked
+            Chunked,
+            Procedural
         }
 
         private sealed class BuildData
@@ -489,6 +628,8 @@ namespace DungeonTeam.Gameplay.Dungeon.Runtime.Infrastructure
                 string authoredMapAddress,
                 ChunkedDungeonDefinition chunkDefinition,
                 Dictionary<string, string> chunkAddresses,
+                ProceduralDungeonDefinition proceduralDefinition,
+                string tileSetAddress,
                 DungeonScenario scenario,
                 DungeonDifficulty difficulty)
             {
@@ -496,6 +637,8 @@ namespace DungeonTeam.Gameplay.Dungeon.Runtime.Infrastructure
                 AuthoredMapAddress = authoredMapAddress;
                 ChunkDefinition = chunkDefinition;
                 ChunkAddresses = chunkAddresses;
+                ProceduralDefinition = proceduralDefinition;
+                TileSetAddress = tileSetAddress;
                 Scenario = scenario;
                 Difficulty = difficulty;
             }
@@ -504,6 +647,8 @@ namespace DungeonTeam.Gameplay.Dungeon.Runtime.Infrastructure
             public string AuthoredMapAddress { get; }
             public ChunkedDungeonDefinition ChunkDefinition { get; }
             public Dictionary<string, string> ChunkAddresses { get; }
+            public ProceduralDungeonDefinition ProceduralDefinition { get; }
+            public string TileSetAddress { get; }
             public DungeonScenario Scenario { get; }
             public DungeonDifficulty Difficulty { get; }
 
@@ -515,6 +660,8 @@ namespace DungeonTeam.Gameplay.Dungeon.Runtime.Infrastructure
                 return new BuildData(
                     DungeonKind.Authored,
                     mapAddress,
+                    null,
+                    null,
                     null,
                     null,
                     scenario,
@@ -532,6 +679,25 @@ namespace DungeonTeam.Gameplay.Dungeon.Runtime.Infrastructure
                     null,
                     definition,
                     addresses,
+                    null,
+                    null,
+                    scenario,
+                    difficulty);
+            }
+
+            public static BuildData ForProcedural(
+                ProceduralDungeonDefinition definition,
+                string tileSetAddress,
+                DungeonScenario scenario,
+                DungeonDifficulty difficulty)
+            {
+                return new BuildData(
+                    DungeonKind.Procedural,
+                    null,
+                    null,
+                    null,
+                    definition,
+                    tileSetAddress,
                     scenario,
                     difficulty);
             }

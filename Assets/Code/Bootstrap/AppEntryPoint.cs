@@ -31,15 +31,25 @@ namespace Code.ApplicationRoot
 			catch (Exception exception)
 			{
 				Debug.LogException(exception);
-				_applicationRoot.Dispose();
-				_applicationRoot = null;
+				DisposeApplicationRoot();
 			}
+		}
+
+		private void OnApplicationQuit()
+		{
+			DisposeApplicationRoot();
 		}
 
 		private void OnDestroy()
 		{
-			_applicationRoot?.Dispose();
+			DisposeApplicationRoot();
+		}
+
+		private void DisposeApplicationRoot()
+		{
+			var applicationRoot = _applicationRoot;
 			_applicationRoot = null;
+			applicationRoot?.Dispose();
 		}
 	}
 }

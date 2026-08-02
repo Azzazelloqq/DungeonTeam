@@ -25,6 +25,14 @@ MonoBehaviour:
     - chunk.demo.room
     _targetChunkCount: 5
     _maxGenerationAttempts: 8
+  _proceduralDungeons:
+  - _dungeonId: dungeon.demo.procedural
+    _tileSetId: tileset.demo.procedural
+    _width: 8
+    _height: 8
+    _targetCellCount: 10
+    _mainRouteCellCount: 7
+    _maxGenerationAttempts: 8
   _scenarios:
   - _scenarioId: scenario.demo
     _baseThreatBudget: 1

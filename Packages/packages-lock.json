@@ -19,7 +19,7 @@
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "954b8a75bd57303f366aaf8ec916494c04e0252f"
+      "hash": "d931de680ee4a13757748becf58d7eb6d4d3cc8b"
     },
     "com.azzazello.localsavesystem": {
       "version": "https://github.com/Azzazelloqq/LocalSave.git#main",
@@ -60,7 +60,7 @@
       "dependencies": {
         "com.unity.addressables": "1.21.20"
       },
-      "hash": "78e92dc58e88b4cccf64600f780ab453fd5a788c"
+      "hash": "3acc2750cf3662d6e56a7b57d76a92ebfae11fe7"
     },
     "com.azzazello.root": {
       "version": "https://github.com/Azzazelloqq/Root-pattern.git",

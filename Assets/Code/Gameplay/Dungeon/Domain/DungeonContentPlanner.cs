@@ -38,7 +38,7 @@ namespace DungeonTeam.Gameplay.Dungeon.Domain
                 throw new ArgumentNullException(nameof(difficulty));
             }
 
-            var random = new DeterministicRandom(seed);
+            var random = new DungeonDeterministicRandom(seed);
             var enabledOptionalPlacements = new HashSet<string>(
                 scenario.EnabledOptionalPlacementIds,
                 StringComparer.Ordinal);
@@ -68,7 +68,7 @@ namespace DungeonTeam.Gameplay.Dungeon.Domain
             DungeonScenario scenario,
             DungeonDifficulty difficulty,
             ISet<string> enabledOptionalPlacements,
-            DeterministicRandom random)
+            DungeonDeterministicRandom random)
         {
             var spawns = new List<EnemySpawnPlan>(placements.Count);
 
@@ -120,7 +120,7 @@ namespace DungeonTeam.Gameplay.Dungeon.Domain
             DungeonScenario scenario,
             DungeonDifficulty difficulty,
             ISet<string> enabledOptionalPlacements,
-            DeterministicRandom random)
+            DungeonDeterministicRandom random)
         {
             var spawns = new List<InterestPointSpawnPlan>(placements.Count);
             var usedPlacements = new HashSet<string>(StringComparer.Ordinal);
@@ -224,7 +224,7 @@ namespace DungeonTeam.Gameplay.Dungeon.Domain
             IReadOnlyList<EnemyCandidate> candidates,
             string slotTag,
             int remainingBudget,
-            DeterministicRandom random,
+            DungeonDeterministicRandom random,
             out EnemyCandidate selected)
         {
             var totalWeight = 0;
@@ -282,7 +282,7 @@ namespace DungeonTeam.Gameplay.Dungeon.Domain
 
         private static InterestPointCandidate SelectInterestPoint(
             IReadOnlyList<InterestPointCandidate> candidates,
-            DeterministicRandom random)
+            DungeonDeterministicRandom random)
         {
             var totalWeight = 0;
             for (var index = 0; index < candidates.Count; index++)
@@ -305,34 +305,5 @@ namespace DungeonTeam.Gameplay.Dungeon.Domain
             throw new InvalidOperationException("Weighted interest point selection failed.");
         }
 
-        private sealed class DeterministicRandom
-        {
-            private uint _state;
-
-            public DeterministicRandom(int seed)
-            {
-                _state = seed == 0 ? 0x6D2B79F5u : unchecked((uint)seed);
-            }
-
-            public int Next(int maxExclusive)
-            {
-                if (maxExclusive <= 0)
-                {
-                    throw new ArgumentOutOfRangeException(nameof(maxExclusive));
-                }
-
-                _state ^= _state << 13;
-                _state ^= _state >> 17;
-                _state ^= _state << 5;
-                return (int)(_state % (uint)maxExclusive);
-            }
-
-            public int NextInclusive(int minInclusive, int maxInclusive)
-            {
-                return minInclusive == maxInclusive
-                    ? minInclusive
-                    : minInclusive + Next(maxInclusive - minInclusive + 1);
-            }
-        }
     }
 }
