@@ -1,0 +1,21 @@
+{
+  "name": "MainMenu.Tests.EditMode",
+  "rootNamespace": "Code.MainMenu.Tests",
+  "references": [
+    "MainMenu",
+    "DungeonTeam.Addressables",
+    "DungeonTeam.MainMenu",
+    "DungeonTeam.UIService",
+    "MVVM.Core",
+    "Disposable",
+    "Root",
+    "UniTask"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ],
+  "autoReferenced": false
+}

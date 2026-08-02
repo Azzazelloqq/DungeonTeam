@@ -382,7 +382,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &3160172289512699960
 RectTransform:
   m_ObjectHideFlags: 0
@@ -429,8 +429,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: DungeonTeam.LoadingScreen::Code.UI.LoadingScreen.LoadingScreenView
   _settings:
-    _group: 1
-    _hideBehavior: 0
+    _group: 3
+    _hideBehavior: 1
   _canvasGroup: {fileID: 9053352016475130948}
   _statusText: {fileID: 1961998142359491111}
 --- !u!1 &8356780462071337825

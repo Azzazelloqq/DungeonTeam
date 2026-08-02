@@ -1,3 +1,4 @@
+using System;
 using Code.Configuration;
 using Code.UIService;
 using Cysharp.Threading.Tasks;
@@ -18,15 +19,27 @@ namespace Code.ApplicationRoot
 		// ReSharper disable once UnusedMember.Local
 		private async UniTask Start()
 		{
-			Application.quitting += OnApplicationQuit;
-
 			_applicationRoot = new ApplicationRoot(_canvasContext, _configCatalog);
-			await _applicationRoot.InitializeAsync(destroyCancellationToken);
+
+			try
+			{
+				await _applicationRoot.InitializeAsync(destroyCancellationToken);
+			}
+			catch (OperationCanceledException) when (destroyCancellationToken.IsCancellationRequested)
+			{
+			}
+			catch (Exception exception)
+			{
+				Debug.LogException(exception);
+				_applicationRoot.Dispose();
+				_applicationRoot = null;
+			}
 		}
 
-		private void OnApplicationQuit()
+		private void OnDestroy()
 		{
 			_applicationRoot?.Dispose();
+			_applicationRoot = null;
 		}
 	}
 }

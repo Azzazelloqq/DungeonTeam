@@ -3,7 +3,10 @@
   "references": [
     "Root",
     "UniTask",
-    "LightDI",
-    "DungeonTeam.UIService"
+    "DungeonTeam.Addressables",
+    "DungeonTeam.MainMenu",
+    "DungeonTeam.UIService",
+    "MVVM.Core",
+    "Disposable"
   ]
 }
