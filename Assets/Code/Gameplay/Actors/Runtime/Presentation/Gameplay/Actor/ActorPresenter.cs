@@ -24,6 +24,8 @@ namespace DungeonTeam.Gameplay.Actors.Runtime.Presentation.Gameplay.Actor
 
         public override Vector3 Position => view.Position;
 
+        public override Vector3 Forward => view.Forward;
+
         public override int CurrentHealth => model.CurrentHealth;
 
         public override bool IsAlive => model.IsAlive;
@@ -43,12 +45,30 @@ namespace DungeonTeam.Gameplay.Actors.Runtime.Presentation.Gameplay.Actor
             view.StopMovement();
         }
 
+        public override void PlayAttackFeedback()
+        {
+            if (model.IsAlive)
+            {
+                view.PlayAttackFeedback();
+            }
+        }
+
+        public override void SetTargetHighlighted(bool isHighlighted)
+        {
+            view.SetTargetHighlighted(model.IsAlive && isHighlighted);
+        }
+
         public override ActorDamageResult ApplyDamage(int amount)
         {
             var result = model.ApplyDamage(amount);
+            if (result != ActorDamageResult.Ignored)
+            {
+                view.PlayDamageFeedback(amount);
+            }
+
             if (result == ActorDamageResult.Killed)
             {
-                view.ShowDead();
+                view.PlayDeathFeedback();
             }
 
             return result;

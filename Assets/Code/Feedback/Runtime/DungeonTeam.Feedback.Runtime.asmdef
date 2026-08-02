@@ -1,0 +1,11 @@
+{
+  "name": "DungeonTeam.Feedback.Runtime",
+  "rootNamespace": "DungeonTeam.Feedback.Runtime",
+  "references": [
+    "ResourceLoader",
+    "TickHandler",
+    "UniTask",
+    "Unity.InputSystem"
+  ],
+  "autoReferenced": false
+}

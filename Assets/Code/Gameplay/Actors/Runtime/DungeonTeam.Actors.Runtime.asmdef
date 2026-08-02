@@ -4,7 +4,8 @@
   "references": [
     "DungeonTeam.Actors.Domain",
     "MVP",
-    "Disposable"
+    "Disposable",
+    "Unity.TextMeshPro"
   ],
   "autoReferenced": false
 }

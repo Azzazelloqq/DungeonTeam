@@ -1,5 +1,7 @@
 using System;
 using DungeonTeam.Gameplay.Actors.Runtime.Presentation.Gameplay.Actor.Base;
+using DungeonTeam.Gameplay.ContextActions.Runtime;
+using DungeonTeam.Gameplay.ContextActions.Runtime.Base;
 using UnityEngine;
 
 namespace DungeonTeam.Gameplay.DungeonRun.Runtime
@@ -9,6 +11,9 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
     {
         [SerializeField]
         private ActorViewBase _actorPrefab;
+
+        [SerializeField]
+        private ContextActionsViewBase _contextActionsPrefab;
 
         [SerializeField]
         private GreyboxActorSettings _leader = new(
@@ -35,14 +40,20 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
         {
         }
 
-        public DungeonRunBindings(ActorViewBase actorPrefab)
+        public DungeonRunBindings(
+            ActorViewBase actorPrefab,
+            ContextActionsViewBase contextActionsPrefab)
         {
             _actorPrefab = actorPrefab != null
                 ? actorPrefab
                 : throw new ArgumentNullException(nameof(actorPrefab));
+            _contextActionsPrefab = contextActionsPrefab != null
+                ? contextActionsPrefab
+                : throw new ArgumentNullException(nameof(contextActionsPrefab));
         }
 
         internal ActorViewBase ActorPrefab => _actorPrefab;
+        internal ContextActionsViewBase ContextActionsPrefab => _contextActionsPrefab;
         internal GreyboxActorSettings Leader => _leader;
         internal GreyboxActorSettings Companion => _companion;
         internal GreyboxActorSettings Enemy => _enemy;
@@ -53,6 +64,12 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
             if (_actorPrefab == null)
             {
                 throw new InvalidOperationException("Dungeon Run requires an Actor prefab binding.");
+            }
+
+            if (_contextActionsPrefab == null)
+            {
+                throw new InvalidOperationException(
+                    "Dungeon Run requires a Context Actions prefab binding.");
             }
 
             RequireSettings(_leader, nameof(_leader)).Validate(nameof(_leader));

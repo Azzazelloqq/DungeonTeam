@@ -13,6 +13,8 @@ namespace DungeonTeam.Gameplay.Actors.Runtime.Presentation.Gameplay.Actor.Base
 
         public abstract Vector3 Position { get; }
 
+        public abstract Vector3 Forward { get; }
+
         public abstract int CurrentHealth { get; }
 
         public abstract bool IsAlive { get; }
@@ -22,6 +24,10 @@ namespace DungeonTeam.Gameplay.Actors.Runtime.Presentation.Gameplay.Actor.Base
         public abstract bool SetMoveDirection(Vector3 direction);
 
         public abstract void StopMovement();
+
+        public abstract void PlayAttackFeedback();
+
+        public abstract void SetTargetHighlighted(bool isHighlighted);
 
         public abstract ActorDamageResult ApplyDamage(int amount);
     }

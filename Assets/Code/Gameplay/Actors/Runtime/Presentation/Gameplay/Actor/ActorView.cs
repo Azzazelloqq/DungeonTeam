@@ -7,10 +7,10 @@ using UnityEngine.AI;
 
 namespace DungeonTeam.Gameplay.Actors.Runtime.Presentation.Gameplay.Actor
 {
-    [RequireComponent(typeof(NavMeshAgent))]
+    [RequireComponent(typeof(NavMeshAgent), typeof(ActorCombatFeedback))]
     public sealed class ActorView : ActorViewBase
     {
-        private static readonly int BaseColor = Shader.PropertyToID("_BaseColor");
+        private static readonly Color DeadColor = new(0.2f, 0.2f, 0.2f, 1f);
 
         [SerializeField]
         private NavMeshAgent _agent;
@@ -18,11 +18,15 @@ namespace DungeonTeam.Gameplay.Actors.Runtime.Presentation.Gameplay.Actor
         [SerializeField]
         private Renderer[] _colorRenderers = Array.Empty<Renderer>();
 
-        private MaterialPropertyBlock _propertyBlock;
+        [SerializeField]
+        private ActorCombatFeedback _combatFeedback;
+
         private float _movementSpeed;
         private bool _isDirectlyControlled;
 
         public override Vector3 Position => transform.position;
+
+        public override Vector3 Forward => transform.forward;
 
         public override bool IsOnNavMesh =>
             _agent != null && _agent.enabled && _agent.isOnNavMesh;
@@ -36,15 +40,7 @@ namespace DungeonTeam.Gameplay.Actors.Runtime.Presentation.Gameplay.Actor
 
             _agent.speed = movementSpeed;
             _movementSpeed = movementSpeed;
-            _propertyBlock ??= new MaterialPropertyBlock();
-
-            for (var index = 0; index < _colorRenderers.Length; index++)
-            {
-                var targetRenderer = _colorRenderers[index];
-                targetRenderer.GetPropertyBlock(_propertyBlock);
-                _propertyBlock.SetColor(BaseColor, color);
-                targetRenderer.SetPropertyBlock(_propertyBlock);
-            }
+            _combatFeedback.Configure(_colorRenderers, color);
         }
 
         public override bool TryMoveTo(Vector3 destination)
@@ -93,10 +89,26 @@ namespace DungeonTeam.Gameplay.Actors.Runtime.Presentation.Gameplay.Actor
             _isDirectlyControlled = false;
         }
 
-        public override void ShowDead()
+        public override void PlayAttackFeedback()
+        {
+            _combatFeedback.PlayAttack();
+        }
+
+        public override void SetTargetHighlighted(bool isHighlighted)
+        {
+            _combatFeedback.SetTargetHighlighted(isHighlighted);
+        }
+
+        public override void PlayDamageFeedback(int amount)
+        {
+            _combatFeedback.PlayDamage(amount);
+        }
+
+        public override void PlayDeathFeedback()
         {
             StopMovement();
             _agent.enabled = false;
+            _combatFeedback.PlayDeath(DeadColor);
         }
 
         protected override void OnInitialize()
@@ -109,6 +121,12 @@ namespace DungeonTeam.Gameplay.Actors.Runtime.Presentation.Gameplay.Actor
             if (_colorRenderers == null || _colorRenderers.Length == 0)
             {
                 throw new InvalidOperationException("Actor View requires at least one color renderer.");
+            }
+
+            if (_combatFeedback == null)
+            {
+                throw new InvalidOperationException(
+                    "Actor View requires an Actor Combat Feedback binding.");
             }
 
             for (var index = 0; index < _colorRenderers.Length; index++)

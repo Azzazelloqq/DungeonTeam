@@ -1,0 +1,14 @@
+{
+  "name": "DungeonTeam.EnemyAI.Tests.EditMode",
+  "rootNamespace": "DungeonTeam.Gameplay.EnemyAI.Tests",
+  "references": [
+    "DungeonTeam.EnemyAI.Domain"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ],
+  "autoReferenced": false
+}

@@ -1,0 +1,11 @@
+{
+  "name": "DungeonTeam.EnemyAI.Runtime",
+  "rootNamespace": "DungeonTeam.Gameplay.EnemyAI.Runtime",
+  "references": [
+    "DungeonTeam.Actors.Domain",
+    "DungeonTeam.Actors.Runtime",
+    "DungeonTeam.EnemyAI.Domain",
+    "TickHandler"
+  ],
+  "autoReferenced": false
+}

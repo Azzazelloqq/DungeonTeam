@@ -173,6 +173,7 @@ MonoBehaviour:
   _worldCamera: {fileID: 1065636713}
   _dungeonRunBindings:
     _actorPrefab: {fileID: 4388003729755209391, guid: d89eb11cdf02e0645ab9ec901011f452, type: 3}
+    _contextActionsPrefab: {fileID: 710002, guid: 7ac8d16d69aa43e99d1afc43ab8cf0e8, type: 3}
     _leader:
       _maximumHealth: 100
       _movementSpeed: 4
@@ -186,6 +187,40 @@ MonoBehaviour:
       _movementSpeed: 3.5
       _color: {r: 1, g: 0.25, b: 0.2, a: 1}
     _companionOffset: {x: 1.25, y: 0, z: -1.25}
+  _teamControlSettings:
+    _startFollowingDistance: 3
+    _stopFollowingDistance: 1.5
+    _cameraDistance: 10
+    _cameraPitch: 55
+    _cameraInitialYaw: 45
+    _cameraTargetHeight: 1
+    _cameraFollowSharpness: 10
+    _mouseYawSensitivity: 0.15
+    _commandRange: 10
+    _commandViewAngle: 180
+    _commandEyeHeight: 1
+    _obstacleMask:
+      serializedVersion: 2
+      m_Bits: 4294967295
+    _companionAttackRange: 1.5
+    _companionTargetLossDistance: 12
+    _companionAttackDamage: 12
+    _companionAttackCooldown: 0.9
+  _enemyAiSettings:
+    _viewDistance: 8
+    _viewAngle: 90
+    _targetLossDistance: 12
+    _attackRange: 1.5
+    _attackDamage: 15
+    _attackCooldown: 1
+    _homeArrivalDistance: 0.25
+    _eyeHeight: 1
+    _visionAreaHeight: 0.04
+    _obstacleMask:
+      serializedVersion: 2
+      m_Bits: 4294967295
+    _idleVisionColor: {r: 1, g: 0.8, b: 0.1, a: 0.2}
+    _alertVisionColor: {r: 1, g: 0.15, b: 0.1, a: 0.3}
 --- !u!224 &246644463 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 7612956250186285755, guid: 9c5b19e8d6dae0344ba010a6b2951003, type: 3}

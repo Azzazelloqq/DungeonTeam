@@ -1,0 +1,12 @@
+{
+  "name": "DungeonTeam.ContextActions.Runtime",
+  "rootNamespace": "DungeonTeam.Gameplay.ContextActions.Runtime",
+  "references": [
+    "MVVM.Core",
+    "MVVM.Reactive",
+    "Disposable",
+    "UnityEngine.UI",
+    "Unity.TextMeshPro"
+  ],
+  "autoReferenced": false
+}

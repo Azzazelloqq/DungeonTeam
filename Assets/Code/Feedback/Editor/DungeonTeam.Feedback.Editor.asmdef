@@ -1,0 +1,11 @@
+{
+  "name": "DungeonTeam.Feedback.Editor",
+  "rootNamespace": "DungeonTeam.Feedback.Editor",
+  "references": [
+    "DungeonTeam.Feedback.Runtime"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "autoReferenced": false
+}

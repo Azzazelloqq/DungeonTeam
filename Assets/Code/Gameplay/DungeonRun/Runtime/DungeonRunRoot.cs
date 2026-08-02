@@ -3,8 +3,11 @@ using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using DungeonTeam.Gameplay.Actors.Runtime;
+using DungeonTeam.Gameplay.ContextActions.Runtime;
+using DungeonTeam.Gameplay.ContextActions.Runtime.Base;
 using DungeonTeam.Gameplay.Dungeon.Application;
 using DungeonTeam.Gameplay.Dungeon.Domain;
+using DungeonTeam.Gameplay.EnemyAI.Runtime;
 using DungeonTeam.Gameplay.Team.Runtime;
 using RootPattern;
 using TickHandler;
@@ -17,13 +20,19 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
         private readonly IDungeonFactory _dungeonFactory;
         private readonly DungeonBuildRequest _buildRequest;
         private readonly DungeonRunBindings _bindings;
+        private readonly RectTransform _contextActionsParent;
         private readonly Camera _worldCamera;
         private readonly ITickHandler _tickHandler;
         private readonly TeamControlSettings _teamControlSettings;
+        private readonly EnemyAiSettings _enemyAiSettings;
         private readonly List<ActorInstance> _enemies = new();
+        private readonly List<EnemyAiController> _enemyAiControllers = new();
 
         private ITeamInput _teamInput;
         private TeamController _teamController;
+        private DungeonRunContextActionsController _contextActionsController;
+        private ContextActionsViewModel _contextActionsViewModel;
+        private ContextActionsViewBase _contextActionsView;
         private IDungeonInstance _dungeonInstance;
         private DungeonRunNavigation _navigation;
         private GameObject _actorsRoot;
@@ -32,14 +41,19 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
             IDungeonFactory dungeonFactory,
             DungeonBuildRequest buildRequest,
             DungeonRunBindings bindings,
+            RectTransform contextActionsParent,
             Camera worldCamera,
             ITickHandler tickHandler,
             ITeamInput teamInput,
-            TeamControlSettings teamControlSettings)
+            TeamControlSettings teamControlSettings,
+            EnemyAiSettings enemyAiSettings)
         {
             _dungeonFactory = dungeonFactory ?? throw new ArgumentNullException(nameof(dungeonFactory));
             _buildRequest = buildRequest;
             _bindings = bindings ?? throw new ArgumentNullException(nameof(bindings));
+            _contextActionsParent = contextActionsParent != null
+                ? contextActionsParent
+                : throw new ArgumentNullException(nameof(contextActionsParent));
             _worldCamera = worldCamera != null
                 ? worldCamera
                 : throw new ArgumentNullException(nameof(worldCamera));
@@ -47,6 +61,8 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
             _teamInput = teamInput ?? throw new ArgumentNullException(nameof(teamInput));
             _teamControlSettings = teamControlSettings ??
                 throw new ArgumentNullException(nameof(teamControlSettings));
+            _enemyAiSettings = enemyAiSettings ??
+                throw new ArgumentNullException(nameof(enemyAiSettings));
         }
 
         public DungeonMapSnapshot MapSnapshot => RequireDungeon().MapSnapshot;
@@ -83,16 +99,36 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
             _teamController = new TeamController(
                 Leader,
                 Companion,
+                _enemies,
                 _worldCamera,
                 _tickHandler,
                 _teamInput,
                 _teamControlSettings);
             _teamInput = null;
             _teamController.Initialize();
+
+            CreateEnemyAiControllers();
+            CreateContextActions();
         }
 
         protected override void OnDispose()
         {
+            _contextActionsController?.Dispose();
+            _contextActionsController = null;
+
+            _contextActionsView?.Dispose();
+            _contextActionsView = null;
+
+            _contextActionsViewModel?.Dispose();
+            _contextActionsViewModel = null;
+
+            for (var index = _enemyAiControllers.Count - 1; index >= 0; index--)
+            {
+                _enemyAiControllers[index].Dispose();
+            }
+
+            _enemyAiControllers.Clear();
+
             _teamController?.Dispose();
             _teamController = null;
 
@@ -185,6 +221,43 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
                     settings.MovementSpeed,
                     settings.Color),
                 _actorsRoot.transform);
+        }
+
+        private void CreateEnemyAiControllers()
+        {
+            for (var index = 0; index < _enemies.Count; index++)
+            {
+                var controller = new EnemyAiController(
+                    _enemies[index],
+                    Leader,
+                    Companion,
+                    _tickHandler,
+                    _enemyAiSettings);
+                _enemyAiControllers.Add(controller);
+                controller.Initialize();
+            }
+        }
+
+        private void CreateContextActions()
+        {
+            _contextActionsView = UnityEngine.Object.Instantiate(
+                _bindings.ContextActionsPrefab,
+                _contextActionsParent,
+                worldPositionStays: false);
+            _contextActionsView.name = "ContextActions";
+            _contextActionsView.gameObject.SetActive(true);
+
+            var model = new ContextActionsModel();
+            _contextActionsViewModel = new ContextActionsViewModel(model);
+            _contextActionsViewModel.Initialize();
+            _contextActionsView.Initialize(
+                _contextActionsViewModel,
+                disposeWithViewModel: false);
+
+            _contextActionsController = new DungeonRunContextActionsController(
+                _teamController,
+                model);
+            _contextActionsController.Initialize();
         }
 
         private IDungeonInstance RequireDungeon()

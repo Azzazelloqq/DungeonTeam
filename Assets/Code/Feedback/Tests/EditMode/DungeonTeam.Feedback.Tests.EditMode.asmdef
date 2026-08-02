@@ -1,0 +1,16 @@
+{
+  "name": "DungeonTeam.Feedback.Tests.EditMode",
+  "rootNamespace": "DungeonTeam.Feedback.Tests",
+  "references": [
+    "DungeonTeam.Feedback.Runtime",
+    "ResourceLoader",
+    "UniTask"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ],
+  "autoReferenced": false
+}

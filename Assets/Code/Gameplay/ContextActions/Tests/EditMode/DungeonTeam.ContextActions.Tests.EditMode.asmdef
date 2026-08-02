@@ -1,0 +1,17 @@
+{
+  "name": "DungeonTeam.ContextActions.Tests.EditMode",
+  "rootNamespace": "DungeonTeam.Gameplay.ContextActions.Tests",
+  "references": [
+    "DungeonTeam.ContextActions.Runtime",
+    "MVVM.Core",
+    "MVVM.Reactive",
+    "Disposable"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ],
+  "autoReferenced": false
+}

@@ -30,6 +30,30 @@ namespace DungeonTeam.Gameplay.Team.Runtime
         [SerializeField, Min(0.001f)]
         private float _mouseYawSensitivity = 0.15f;
 
+        [SerializeField, Min(0.1f)]
+        private float _commandRange = 10f;
+
+        [SerializeField, Range(1f, 180f)]
+        private float _commandViewAngle = 180f;
+
+        [SerializeField, Min(0f)]
+        private float _commandEyeHeight = 1f;
+
+        [SerializeField]
+        private LayerMask _obstacleMask = ~0;
+
+        [SerializeField, Min(0.1f)]
+        private float _companionAttackRange = 1.5f;
+
+        [SerializeField, Min(0.1f)]
+        private float _companionTargetLossDistance = 12f;
+
+        [SerializeField, Min(1)]
+        private int _companionAttackDamage = 12;
+
+        [SerializeField, Min(0.01f)]
+        private float _companionAttackCooldown = 0.9f;
+
         internal float StartFollowingDistance => _startFollowingDistance;
         internal float StopFollowingDistance => _stopFollowingDistance;
         internal float CameraDistance => _cameraDistance;
@@ -38,6 +62,14 @@ namespace DungeonTeam.Gameplay.Team.Runtime
         internal float CameraTargetHeight => _cameraTargetHeight;
         internal float CameraFollowSharpness => _cameraFollowSharpness;
         internal float MouseYawSensitivity => _mouseYawSensitivity;
+        internal float CommandRange => _commandRange;
+        internal float CommandViewAngle => _commandViewAngle;
+        internal float CommandEyeHeight => _commandEyeHeight;
+        internal LayerMask ObstacleMask => _obstacleMask;
+        internal float CompanionAttackRange => _companionAttackRange;
+        internal float CompanionTargetLossDistance => _companionTargetLossDistance;
+        internal int CompanionAttackDamage => _companionAttackDamage;
+        internal float CompanionAttackCooldown => _companionAttackCooldown;
 
         internal void Validate()
         {
@@ -60,6 +92,23 @@ namespace DungeonTeam.Gameplay.Team.Runtime
             {
                 throw new InvalidOperationException(
                     "Team Control camera pitch must be between 15 and 80 degrees.");
+            }
+
+            if (_commandRange <= 0f ||
+                _commandViewAngle is < 1f or > 180f ||
+                _commandEyeHeight < 0f)
+            {
+                throw new InvalidOperationException(
+                    "Team Control command visibility settings are invalid.");
+            }
+
+            if (_companionAttackRange <= 0f ||
+                _companionTargetLossDistance <= _companionAttackRange ||
+                _companionAttackDamage <= 0 ||
+                _companionAttackCooldown <= 0f)
+            {
+                throw new InvalidOperationException(
+                    "Team Control companion combat settings are invalid.");
             }
         }
     }

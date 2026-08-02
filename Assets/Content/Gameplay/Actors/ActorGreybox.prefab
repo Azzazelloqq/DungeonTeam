@@ -101,6 +101,7 @@ GameObject:
   - component: {fileID: 6869858279683362321}
   - component: {fileID: 7773900245406320706}
   - component: {fileID: 4388003729755209391}
+  - component: {fileID: 8465123981123456790}
   m_Layer: 0
   m_Name: ActorGreybox
   m_TagString: Untagged
@@ -161,3 +162,24 @@ MonoBehaviour:
   _agent: {fileID: 7773900245406320706}
   _colorRenderers:
   - {fileID: 3610909069589098927}
+  _combatFeedback: {fileID: 8465123981123456790}
+--- !u!114 &8465123981123456790
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6257048085854281556}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6e0c7fbb923b4c4da82584594df327b0, type: 3}
+  m_Name: ""
+  m_EditorClassIdentifier: DungeonTeam.Actors.Runtime::DungeonTeam.Gameplay.Actors.Runtime.Presentation.Gameplay.Actor.ActorCombatFeedback
+  _damageText: {fileID: 0}
+  _attackFlashDuration: 0.12
+  _damageFlashDuration: 0.15
+  _damageNumberDuration: 0.7
+  _damageNumberRiseDistance: 0.8
+  _attackFlashColor: {r: 1, g: 0.8, b: 0.2, a: 1}
+  _damageFlashColor: {r: 1, g: 0.15, b: 0.1, a: 1}
+  _damageNumberColor: {r: 1, g: 0.2, b: 0.1, a: 1}

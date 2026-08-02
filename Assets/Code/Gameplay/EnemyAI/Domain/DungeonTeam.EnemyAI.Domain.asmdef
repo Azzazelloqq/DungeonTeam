@@ -1,0 +1,7 @@
+{
+  "name": "DungeonTeam.EnemyAI.Domain",
+  "rootNamespace": "DungeonTeam.Gameplay.EnemyAI.Domain",
+  "references": [],
+  "autoReferenced": false,
+  "noEngineReferences": true
+}

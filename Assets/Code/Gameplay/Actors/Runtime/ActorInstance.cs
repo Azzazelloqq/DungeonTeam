@@ -20,9 +20,13 @@ namespace DungeonTeam.Gameplay.Actors.Runtime
 
         public Vector3 Position => RequirePresenter().Position;
 
+        public Vector3 Forward => RequirePresenter().Forward;
+
         public int CurrentHealth => RequirePresenter().CurrentHealth;
 
         public bool IsAlive => RequirePresenter().IsAlive;
+
+        public event Action<ActorInstance> AttackedBy;
 
         public bool TryMoveTo(Vector3 destination)
         {
@@ -39,9 +43,30 @@ namespace DungeonTeam.Gameplay.Actors.Runtime
             RequirePresenter().StopMovement();
         }
 
+        public void PlayAttackFeedback()
+        {
+            RequirePresenter().PlayAttackFeedback();
+        }
+
+        public void SetTargetHighlighted(bool isHighlighted)
+        {
+            RequirePresenter().SetTargetHighlighted(isHighlighted);
+        }
+
         public ActorDamageResult ApplyDamage(int amount)
         {
-            return RequirePresenter().ApplyDamage(amount);
+            return ApplyDamage(amount, attacker: null);
+        }
+
+        public ActorDamageResult ApplyDamage(int amount, ActorInstance attacker)
+        {
+            var result = RequirePresenter().ApplyDamage(amount);
+            if (result != ActorDamageResult.Ignored && attacker != null)
+            {
+                AttackedBy?.Invoke(attacker);
+            }
+
+            return result;
         }
 
         public void Dispose()
@@ -50,6 +75,7 @@ namespace DungeonTeam.Gameplay.Actors.Runtime
             var gameObject = _gameObject;
             _presenter = null;
             _gameObject = null;
+            AttackedBy = null;
             presenter?.Dispose();
 
             if (gameObject == null)

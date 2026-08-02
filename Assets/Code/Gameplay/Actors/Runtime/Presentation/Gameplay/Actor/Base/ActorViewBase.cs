@@ -7,6 +7,8 @@ namespace DungeonTeam.Gameplay.Actors.Runtime.Presentation.Gameplay.Actor.Base
     {
         public abstract Vector3 Position { get; }
 
+        public abstract Vector3 Forward { get; }
+
         public abstract bool IsOnNavMesh { get; }
 
         public abstract void Configure(Color color, float movementSpeed);
@@ -17,6 +19,12 @@ namespace DungeonTeam.Gameplay.Actors.Runtime.Presentation.Gameplay.Actor.Base
 
         public abstract void StopMovement();
 
-        public abstract void ShowDead();
+        public abstract void PlayAttackFeedback();
+
+        public abstract void SetTargetHighlighted(bool isHighlighted);
+
+        public abstract void PlayDamageFeedback(int amount);
+
+        public abstract void PlayDeathFeedback();
     }
 }

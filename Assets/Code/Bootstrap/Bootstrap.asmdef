@@ -17,6 +17,8 @@
     "DungeonTeam.Dungeon.Domain",
     "DungeonTeam.Dungeon.Runtime",
     "DungeonTeam.DungeonRun.Runtime",
+    "DungeonTeam.EnemyAI.Runtime",
+    "DungeonTeam.Feedback.Runtime",
     "DungeonTeam.Team.Runtime",
     "MVVM.Core",
     "Disposable"

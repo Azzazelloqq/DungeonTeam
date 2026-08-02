@@ -2,7 +2,9 @@ using System;
 using Code.Configuration;
 using Code.UIService;
 using Cysharp.Threading.Tasks;
+using DungeonTeam.Feedback.Runtime;
 using DungeonTeam.Gameplay.DungeonRun.Runtime;
+using DungeonTeam.Gameplay.EnemyAI.Runtime;
 using DungeonTeam.Gameplay.Team.Runtime;
 using UnityEngine;
 
@@ -25,6 +27,12 @@ namespace Code.ApplicationRoot
 		[SerializeField]
 		private TeamControlSettings _teamControlSettings = new();
 
+		[SerializeField]
+		private EnemyAiSettings _enemyAiSettings = new();
+
+		[SerializeField]
+		private FeedbackRuntimeSettings _feedbackRuntimeSettings = new();
+
 		private ApplicationRoot _applicationRoot;
 
 		// ReSharper disable once UnusedMember.Local
@@ -35,7 +43,9 @@ namespace Code.ApplicationRoot
 				_configCatalog,
 				_worldCamera,
 				_dungeonRunBindings,
-				_teamControlSettings);
+				_teamControlSettings,
+				_enemyAiSettings,
+				_feedbackRuntimeSettings);
 
 			try
 			{
@@ -54,6 +64,11 @@ namespace Code.ApplicationRoot
 		private void OnApplicationQuit()
 		{
 			DisposeApplicationRoot();
+		}
+
+		private void OnApplicationPause(bool isPaused)
+		{
+			_applicationRoot?.SetApplicationPaused(isPaused);
 		}
 
 		private void OnDestroy()

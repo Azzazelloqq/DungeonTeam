@@ -3,14 +3,17 @@ using System.Threading;
 using System.Threading.Tasks;
 using Cysharp.Threading.Tasks;
 using DungeonTeam.Gameplay.Actors.Runtime.Presentation.Gameplay.Actor.Base;
+using DungeonTeam.Gameplay.ContextActions.Runtime;
 using DungeonTeam.Gameplay.Dungeon.Application;
 using DungeonTeam.Gameplay.Dungeon.Domain;
 using DungeonTeam.Gameplay.DungeonRun.Runtime;
+using DungeonTeam.Gameplay.EnemyAI.Runtime;
 using DungeonTeam.Gameplay.Team.Runtime;
 using NUnit.Framework;
 using TickHandler.UnityTickHandler;
 using UnityEngine;
 using UnityEngine.TestTools;
+using UnityEngine.UI;
 
 namespace DungeonTeam.Gameplay.DungeonRun.Tests.PlayMode
 {
@@ -22,6 +25,15 @@ namespace DungeonTeam.Gameplay.DungeonRun.Tests.PlayMode
             var actorPrefabObject = new GameObject("ActorTestPrefab");
             actorPrefabObject.SetActive(false);
             var actorPrefab = actorPrefabObject.AddComponent<TestActorView>();
+            var contextActionsPrefabObject = new GameObject(
+                "ContextActionsTestPrefab",
+                typeof(RectTransform));
+            contextActionsPrefabObject.SetActive(false);
+            var contextActionsPrefab = contextActionsPrefabObject.AddComponent<ContextActionsView>();
+            var contextActionsParentObject = new GameObject(
+                "ContextActionsTestParent",
+                typeof(RectTransform));
+            var contextActionsParent = contextActionsParentObject.GetComponent<RectTransform>();
             var cameraObject = new GameObject("TeamTestCamera");
             var worldCamera = cameraObject.AddComponent<Camera>();
             var dispatcherObject = new GameObject("TeamTestDispatcher");
@@ -31,19 +43,29 @@ namespace DungeonTeam.Gameplay.DungeonRun.Tests.PlayMode
             var root = new DungeonRunRoot(
                 new FakeDungeonFactory(),
                 new DungeonBuildRequest("dungeon.test", "scenario.test", "normal", seed: 42),
-                new DungeonRunBindings(actorPrefab),
+                new DungeonRunBindings(actorPrefab, contextActionsPrefab),
+                contextActionsParent,
                 worldCamera,
                 tickHandler,
                 teamInput,
-                new TeamControlSettings());
+                new TeamControlSettings(),
+                new EnemyAiSettings());
 
-            yield return root.InitializeAsync(default).ToCoroutine();
-
-            var mapRoot = GameObject.Find("DungeonTestMap");
-            var navigationRoot = GameObject.Find("DungeonRunNavigation");
-            var actorsRoot = GameObject.Find("DungeonRunActors");
+            GameObject mapRoot = null;
+            GameObject navigationRoot = null;
+            GameObject actorsRoot = null;
+            GameObject visionArea = null;
+            GameObject contextActions = null;
             try
             {
+                yield return root.InitializeAsync(default).ToCoroutine();
+
+                mapRoot = GameObject.Find("DungeonTestMap");
+                navigationRoot = GameObject.Find("DungeonRunNavigation");
+                actorsRoot = GameObject.Find("DungeonRunActors");
+                visionArea = GameObject.Find("EnemyVisionArea");
+                contextActions = GameObject.Find("ContextActions");
+
                 Assert.That(root.MapSnapshot.DungeonId, Is.EqualTo("dungeon.test"));
                 Assert.That(root.Leader, Is.Not.Null);
                 Assert.That(root.Companion, Is.Not.Null);
@@ -54,15 +76,37 @@ namespace DungeonTeam.Gameplay.DungeonRun.Tests.PlayMode
                 Assert.That(mapRoot, Is.Not.Null);
                 Assert.That(navigationRoot, Is.Not.Null);
                 Assert.That(actorsRoot, Is.Not.Null);
+                Assert.That(visionArea, Is.Not.Null);
+                Assert.That(contextActions, Is.Not.Null);
                 Assert.That(actorsRoot.transform.childCount, Is.EqualTo(4));
                 Assert.That(actorsRoot.transform.Find("Enemy_enemy.test.a"), Is.Not.Null);
                 Assert.That(actorsRoot.transform.Find("Enemy_enemy.test.b"), Is.Not.Null);
+
+                var firstEnemyHealth = root.Enemies[0].CurrentHealth;
+                var secondEnemyHealth = root.Enemies[1].CurrentHealth;
+                var attackButton = contextActions.GetComponentInChildren<Button>();
+                Assert.That(attackButton, Is.Not.Null);
+
+                root.Enemies[0].ApplyDamage(firstEnemyHealth - 12);
+                attackButton.onClick.Invoke();
+                yield return null;
+                yield return null;
+
+                Assert.That(root.Enemies[0].IsAlive, Is.False);
+                Assert.That(root.Enemies[1].CurrentHealth, Is.EqualTo(secondEnemyHealth));
+
+                yield return new WaitForSeconds(1.1f);
+
+                Assert.That(root.Enemies[1].CurrentHealth, Is.EqualTo(secondEnemyHealth),
+                    "Companion must not automatically chain to the next target.");
             }
             finally
             {
                 root.Dispose();
                 tickHandler.Dispose();
                 Object.Destroy(actorPrefabObject);
+                Object.Destroy(contextActionsPrefabObject);
+                Object.Destroy(contextActionsParentObject);
                 Object.Destroy(cameraObject);
                 Object.Destroy(dispatcherObject);
             }
@@ -72,6 +116,8 @@ namespace DungeonTeam.Gameplay.DungeonRun.Tests.PlayMode
             Assert.That(mapRoot == null, Is.True);
             Assert.That(navigationRoot == null, Is.True);
             Assert.That(actorsRoot == null, Is.True);
+            Assert.That(visionArea == null, Is.True);
+            Assert.That(contextActions == null, Is.True);
             Assert.That(teamInput.IsDisposed, Is.True);
         }
 
@@ -137,6 +183,8 @@ namespace DungeonTeam.Gameplay.DungeonRun.Tests.PlayMode
         {
             public override Vector3 Position => transform.position;
 
+            public override Vector3 Forward => transform.forward;
+
             public override bool IsOnNavMesh => true;
 
             public override void Configure(Color color, float movementSpeed)
@@ -159,7 +207,19 @@ namespace DungeonTeam.Gameplay.DungeonRun.Tests.PlayMode
             {
             }
 
-            public override void ShowDead()
+            public override void PlayAttackFeedback()
+            {
+            }
+
+            public override void SetTargetHighlighted(bool isHighlighted)
+            {
+            }
+
+            public override void PlayDamageFeedback(int amount)
+            {
+            }
+
+            public override void PlayDeathFeedback()
             {
             }
 

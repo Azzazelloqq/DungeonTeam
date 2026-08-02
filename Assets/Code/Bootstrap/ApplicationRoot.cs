@@ -8,10 +8,16 @@ using Code.UI.MainMenu;
 using Code.UI.LoadingScreen;
 using Code.UIService;
 using Cysharp.Threading.Tasks;
+using DungeonTeam.Feedback.Runtime;
+using DungeonTeam.Feedback.Runtime.Audio;
+using DungeonTeam.Feedback.Runtime.Banks;
+using DungeonTeam.Feedback.Runtime.Haptics;
+using DungeonTeam.Feedback.Runtime.Music;
 using DungeonTeam.Gameplay.Dungeon.Application;
 using DungeonTeam.Gameplay.DungeonRun.Runtime;
 using DungeonTeam.Gameplay.Dungeon.Runtime.Config;
 using DungeonTeam.Gameplay.Dungeon.Runtime.Infrastructure;
+using DungeonTeam.Gameplay.EnemyAI.Runtime;
 using DungeonTeam.Gameplay.Team.Runtime;
 using LightDI.Runtime;
 using ResourceLoader;
@@ -30,6 +36,8 @@ namespace Code.ApplicationRoot
 		private readonly Camera _worldCamera;
 		private readonly DungeonRunBindings _dungeonRunBindings;
 		private readonly TeamControlSettings _teamControlSettings;
+		private readonly EnemyAiSettings _enemyAiSettings;
+		private readonly FeedbackRuntimeSettings _feedbackRuntimeSettings;
 
 		private IDiContainer _globalContainer;
 		private IUiService _uiService;
@@ -38,6 +46,9 @@ namespace Code.ApplicationRoot
 		private MainMenuRoot _mainMenuRoot;
 		private IDungeonFactory _dungeonFactory;
 		private ITickHandler _tickHandler;
+		private IFeedbackService _feedbackService;
+		private IMusicPlayer _musicPlayer;
+		private FeedbackBankLoader _feedbackBankLoader;
 		private DungeonRunRoot _dungeonRunRoot;
 		private bool _isDungeonTransitioning;
 
@@ -46,7 +57,9 @@ namespace Code.ApplicationRoot
 			ConfigCatalog configCatalog,
 			Camera worldCamera,
 			DungeonRunBindings dungeonRunBindings,
-			TeamControlSettings teamControlSettings)
+			TeamControlSettings teamControlSettings,
+			EnemyAiSettings enemyAiSettings,
+			FeedbackRuntimeSettings feedbackRuntimeSettings)
 		{
 			_canvasContext = canvasContext;
 			_configCatalog = configCatalog;
@@ -57,6 +70,10 @@ namespace Code.ApplicationRoot
 				throw new ArgumentNullException(nameof(dungeonRunBindings));
 			_teamControlSettings = teamControlSettings ??
 				throw new ArgumentNullException(nameof(teamControlSettings));
+			_enemyAiSettings = enemyAiSettings ??
+				throw new ArgumentNullException(nameof(enemyAiSettings));
+			_feedbackRuntimeSettings = feedbackRuntimeSettings ??
+				throw new ArgumentNullException(nameof(feedbackRuntimeSettings));
 		}
 
 		protected override async UniTask OnInitializeAsync(CancellationToken token)
@@ -80,6 +97,14 @@ namespace Code.ApplicationRoot
 			_tickHandler = new UnityTickHandler(unityDispatcherBehaviour);
 			_globalContainer.RegisterAsSingleton(_tickHandler);
 
+			_feedbackRuntimeSettings.Validate();
+			_feedbackService = CreateFeedbackService(_tickHandler, _feedbackRuntimeSettings);
+			_globalContainer.RegisterAsSingleton(_feedbackService);
+			_musicPlayer = new MusicPlayer();
+			_globalContainer.RegisterAsSingleton(_musicPlayer);
+			_feedbackBankLoader = new FeedbackBankLoader(resourceLoader, _feedbackService);
+			_globalContainer.RegisterAsSingleton(_feedbackBankLoader);
+
 			_mainMenuRoot = new MainMenuRoot(
 				_uiService,
 				OnPlayRequested,
@@ -102,10 +127,27 @@ namespace Code.ApplicationRoot
 			_loadingScreenViewModel = null;
 			_loadingScreen = null;
 
-			_globalContainer?.Dispose();
-			_globalContainer = null;
-			_tickHandler = null;
-			_uiService = null;
+			try
+			{
+				_globalContainer?.Dispose();
+			}
+			finally
+			{
+				_globalContainer = null;
+				_feedbackBankLoader = null;
+				_musicPlayer = null;
+				_feedbackService = null;
+				_tickHandler = null;
+				_uiService = null;
+			}
+		}
+
+		public void SetApplicationPaused(bool isPaused)
+		{
+			if (isPaused)
+			{
+				_feedbackService?.StopAll();
+			}
 		}
 
 		private async UniTask ShowLoadingScreenAsync(CancellationToken token)
@@ -157,10 +199,12 @@ namespace Code.ApplicationRoot
 						"normal",
 						request.Seed),
 					_dungeonRunBindings,
+					_canvasContext.GetParent(UIElementGroup.OverlayElement),
 					_worldCamera,
 					_tickHandler,
 					new DesktopTeamInput(),
-					_teamControlSettings);
+					_teamControlSettings,
+					_enemyAiSettings);
 				await _dungeonRunRoot.InitializeAsync(token);
 
 				if (token.IsCancellationRequested)
@@ -221,6 +265,32 @@ namespace Code.ApplicationRoot
 			var dungeonRunRoot = _dungeonRunRoot;
 			_dungeonRunRoot = null;
 			dungeonRunRoot?.Dispose();
+		}
+
+		private static IFeedbackService CreateFeedbackService(
+			ITickHandler tickHandler,
+			FeedbackRuntimeSettings settings)
+		{
+			AudioFeedbackPlayer audioPlayer = null;
+			HapticFeedbackPlayer hapticPlayer = null;
+			try
+			{
+				audioPlayer = new AudioFeedbackPlayer(settings.SfxVoiceLimit);
+				hapticPlayer = new HapticFeedbackPlayer(
+					tickHandler,
+					settings.HapticImpulseLimit);
+				return new FeedbackService(new IFeedbackPlayer[]
+				{
+					audioPlayer,
+					hapticPlayer
+				});
+			}
+			catch
+			{
+				hapticPlayer?.Dispose();
+				audioPlayer?.Dispose();
+				throw;
+			}
 		}
 	}
 }

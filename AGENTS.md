@@ -23,6 +23,7 @@
 | UIService, UI-группы, Show/Hide/Close, очереди окон | `Docs/AI/libraries/ui-service.md`, `Docs/AI/lifecycle.md`, `Docs/AI/libraries/addressables.md` |
 | Списки, вложенные страницы, child presenter/viewmodel | `Docs/AI/libraries/presentation.md`, `Docs/AI/recipes/nested-presentation.md`, `Docs/AI/lifecycle.md` |
 | Addressables, prefab, сцены | `Docs/AI/libraries/addressables.md`, `Docs/AI/architecture.md` |
+| Feedback, звук, музыка, вибрации | `Docs/AI/libraries/feedback.md`, `Docs/AI/lifecycle.md`, `Docs/AI/libraries/addressables.md` |
 | Config | `Docs/AI/libraries/config.md` |
 | Сохранения | `Docs/AI/libraries/persistence.md` |
 | Tick, logger, utility extensions | `Docs/AI/libraries/runtime-services.md`, `Docs/AI/lifecycle.md` |
