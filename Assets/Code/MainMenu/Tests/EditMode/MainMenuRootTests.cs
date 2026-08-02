@@ -24,7 +24,8 @@ namespace Code.MainMenu.Tests
             var quitRequestCount = 0;
             using var root = new MainMenuRoot(
                 uiService,
-                () => playRequestCount++,
+                _ => playRequestCount++,
+                () => { },
                 () => quitRequestCount++);
 
             try
@@ -56,7 +57,7 @@ namespace Code.MainMenu.Tests
             var gameObject = new GameObject("MainMenuView", typeof(FakeMainMenuView));
             var view = gameObject.GetComponent<FakeMainMenuView>();
             var uiService = new FakeUiService(view);
-            var root = new MainMenuRoot(uiService, () => { }, () => { });
+            var root = new MainMenuRoot(uiService, _ => { }, () => { }, () => { });
 
             try
             {

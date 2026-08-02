@@ -8,10 +8,14 @@
     "Config",
     "UniTask",
     "MainMenu",
+    "DungeonTeam.MainMenu",
     "DungeonTeam.Addressables",
     "DungeonTeam.LoadingScreen",
     "DungeonTeam.UIService",
     "DungeonTeam.Configuration",
+    "DungeonTeam.Dungeon.Application",
+    "DungeonTeam.Dungeon.Domain",
+    "DungeonTeam.Dungeon.Runtime",
     "MVVM.Core",
     "Disposable"
   ]

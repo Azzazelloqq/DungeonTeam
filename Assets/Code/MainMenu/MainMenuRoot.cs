@@ -11,18 +11,21 @@ namespace Code.MainMenu
     public sealed class MainMenuRoot : Root
     {
         private readonly IUiService _uiService;
-        private readonly Action _playRequested;
+        private readonly Action<MainMenuPlayRequest> _playRequested;
+        private readonly Action _backRequested;
         private readonly Action _quitConfirmed;
 
         private MainMenuViewModel _viewModel;
 
         public MainMenuRoot(
             IUiService uiService,
-            Action playRequested,
+            Action<MainMenuPlayRequest> playRequested,
+            Action backRequested,
             Action quitConfirmed)
         {
             _uiService = uiService ?? throw new ArgumentNullException(nameof(uiService));
             _playRequested = playRequested ?? throw new ArgumentNullException(nameof(playRequested));
+            _backRequested = backRequested ?? throw new ArgumentNullException(nameof(backRequested));
             _quitConfirmed = quitConfirmed ?? throw new ArgumentNullException(nameof(quitConfirmed));
         }
 
@@ -34,12 +37,34 @@ namespace Code.MainMenu
 
             _viewModel = new MainMenuViewModel(
                 new MainMenuModel(),
+                CreateDungeonOptions(),
                 _playRequested,
+                _backRequested,
                 _quitConfirmed);
             _viewModel.Initialize();
             view.Initialize(_viewModel, disposeWithViewModel: false);
 
             await _uiService.ShowAsync(view, token);
+        }
+
+        public void ShowDungeonPreview(string summary)
+        {
+            _viewModel.ShowPreview(summary);
+        }
+
+        public void ShowSelection()
+        {
+            _viewModel.ShowSelection();
+        }
+
+        private static MainMenuDungeonOption[] CreateDungeonOptions()
+        {
+            return new[]
+            {
+                new MainMenuDungeonOption("AUTHORED", "dungeon.demo.authored"),
+                new MainMenuDungeonOption("CHUNKED", "dungeon.demo.chunked"),
+                new MainMenuDungeonOption("PROCEDURAL", "dungeon.demo.procedural")
+            };
         }
 
         protected override void OnDispose()

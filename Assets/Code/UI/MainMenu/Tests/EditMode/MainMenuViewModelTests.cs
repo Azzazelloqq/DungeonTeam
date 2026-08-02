@@ -43,20 +43,63 @@ namespace Code.UI.MainMenu.Tests
         [Test]
         public void Play_InvokesPlayAction()
         {
-            var playCount = 0;
+            MainMenuPlayRequest request = default;
             using var viewModel = new MainMenuViewModel(
                 new MainMenuModel(),
-                () => playCount++,
+                CreateDungeonOptions(),
+                value => request = value,
+                () => { },
                 () => { });
+
+            viewModel.Initialize();
+            viewModel.SelectNextDungeonCommand.Execute();
+            viewModel.IncreaseSeedCommand.Execute();
 
             viewModel.PlayCommand.Execute();
 
-            Assert.That(playCount, Is.EqualTo(1));
+            Assert.That(request.DungeonId, Is.EqualTo("dungeon.chunked"));
+            Assert.That(request.Seed, Is.EqualTo(43));
+        }
+
+        [Test]
+        public void Back_FromPreview_ReturnsToSelectionAndInvokesBackAction()
+        {
+            var backCount = 0;
+            using var viewModel = new MainMenuViewModel(
+                new MainMenuModel(),
+                CreateDungeonOptions(),
+                _ => { },
+                () => backCount++,
+                () => { });
+            viewModel.Initialize();
+
+            viewModel.ShowPreview("Preview");
+            viewModel.BackCommand.Execute();
+            viewModel.ShowSelection();
+
+            Assert.That(backCount, Is.EqualTo(1));
+            Assert.That(viewModel.IsPreviewVisible.Value, Is.False);
         }
 
         private static MainMenuViewModel CreateViewModel(System.Action onQuit)
         {
-            return new MainMenuViewModel(new MainMenuModel(), () => { }, onQuit);
+            var viewModel = new MainMenuViewModel(
+                new MainMenuModel(),
+                CreateDungeonOptions(),
+                _ => { },
+                () => { },
+                onQuit);
+            viewModel.Initialize();
+            return viewModel;
+        }
+
+        private static MainMenuDungeonOption[] CreateDungeonOptions()
+        {
+            return new[]
+            {
+                new MainMenuDungeonOption("AUTHORED", "dungeon.authored"),
+                new MainMenuDungeonOption("CHUNKED", "dungeon.chunked")
+            };
         }
     }
 }

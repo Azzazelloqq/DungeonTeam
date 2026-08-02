@@ -11,7 +11,23 @@ namespace Code.UI.MainMenu
 
         public abstract IReadOnlyReactiveProperty<bool> IsQuitConfirmationVisible { get; }
 
+        public abstract IReadOnlyReactiveProperty<bool> IsPreviewVisible { get; }
+
+        public abstract IReadOnlyReactiveProperty<string> SelectedDungeonLabel { get; }
+
+        public abstract IReadOnlyReactiveProperty<string> SeedLabel { get; }
+
+        public abstract IReadOnlyReactiveProperty<string> PreviewSummary { get; }
+
         public abstract IActionCommand PlayCommand { get; }
+
+        public abstract IActionCommand SelectNextDungeonCommand { get; }
+
+        public abstract IActionCommand DecreaseSeedCommand { get; }
+
+        public abstract IActionCommand IncreaseSeedCommand { get; }
+
+        public abstract IActionCommand BackCommand { get; }
 
         public abstract IActionCommand RequestQuitCommand { get; }
 

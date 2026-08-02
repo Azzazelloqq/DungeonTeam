@@ -14,12 +14,15 @@ namespace Code.ApplicationRoot
 		[SerializeField]
 		private ConfigCatalog _configCatalog;
 
+		[SerializeField]
+		private Camera _worldCamera;
+
 		private ApplicationRoot _applicationRoot;
 
 		// ReSharper disable once UnusedMember.Local
 		private async UniTask Start()
 		{
-			_applicationRoot = new ApplicationRoot(_canvasContext, _configCatalog);
+			_applicationRoot = new ApplicationRoot(_canvasContext, _configCatalog, _worldCamera);
 
 			try
 			{

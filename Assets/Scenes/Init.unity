@@ -170,6 +170,7 @@ MonoBehaviour:
     _overlayElement: {fileID: 1918413648}
     _dynamicOverlayElement: {fileID: 246644463}
   _configCatalog: {fileID: 11400000, guid: a390392618f54ecb8da5f730b4e1c9de, type: 2}
+  _worldCamera: {fileID: 1065636713}
 --- !u!224 &246644463 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 7612956250186285755, guid: 9c5b19e8d6dae0344ba010a6b2951003, type: 3}
@@ -301,7 +302,7 @@ Camera:
   m_Depth: 0
   m_CullingMask:
     serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 4294967263
   m_RenderingPath: -1
   m_TargetTexture: {fileID: 0}
   m_TargetDisplay: 0
