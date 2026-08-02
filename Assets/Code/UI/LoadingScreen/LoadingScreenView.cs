@@ -3,8 +3,8 @@ using System.Threading.Tasks;
 using Azzazelloqq.MVVM.ReactiveLibrary;
 using Code.UIService;
 using Cysharp.Threading.Tasks;
+using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace Code.UI.LoadingScreen
 {
@@ -17,7 +17,7 @@ namespace Code.UI.LoadingScreen
         private CanvasGroup _canvasGroup = null;
 
         [SerializeField]
-        private Text _statusText = null;
+        private TMP_Text _statusText = null;
 
         public UIElementSettings Settings => _settings;
 

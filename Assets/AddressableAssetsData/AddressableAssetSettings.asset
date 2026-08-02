@@ -26,20 +26,20 @@ MonoBehaviour:
   m_InternalBundleIdMode: 1
   m_AssetLoadMode: 0
   m_BundledAssetProviderType:
-    m_AssemblyName: 
-    m_ClassName: 
+    m_AssemblyName: Unity.ResourceManager, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+    m_ClassName: UnityEngine.ResourceManagement.ResourceProviders.BundledAssetProvider
   m_AssetBundleProviderType:
-    m_AssemblyName: 
-    m_ClassName: 
+    m_AssemblyName: Unity.ResourceManager, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+    m_ClassName: UnityEngine.ResourceManagement.ResourceProviders.AssetBundleProvider
   m_ContentDirectoryProviderType:
-    m_AssemblyName: 
-    m_ClassName: 
+    m_AssemblyName: Unity.ResourceManager, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+    m_ClassName: UnityEngine.ResourceManagement.ResourceProviders.ContentDirectoryProvider
   m_GroupRootAssetProviderType:
-    m_AssemblyName: 
-    m_ClassName: 
+    m_AssemblyName: Unity.ResourceManager, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+    m_ClassName: UnityEngine.ResourceManagement.ResourceProviders.GroupRootAssetProvider
   m_GroupRootAssetEntryProviderType:
-    m_AssemblyName: 
-    m_ClassName: 
+    m_AssemblyName: Unity.Addressables, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+    m_ClassName: UnityEngine.AddressableAssets.ResourceProviders.GroupRootAssetEntryProvider
   m_ArchiveContentDirectories: 1
   m_TargetArchiveSizeInMB: 2000
   m_IgnoreUnsupportedFilesInBuild: 0
@@ -76,6 +76,7 @@ MonoBehaviour:
   m_overridePlayerVersion: '[UnityEditor.PlayerSettings.bundleVersion]'
   m_GroupAssets:
   - {fileID: 11400000, guid: 00a11f0fe5edc5f4f9f4a3f918ca1156, type: 2}
+  - {fileID: 11400000, guid: 6fecd617c3708ed469f0397ba9324a89, type: 2}
   - {fileID: 11400000, guid: c07d38fbf033ed1488b9c2a2f7e93c2f, type: 2}
   m_BuildSettings:
     m_LogResourceManagerExceptions: 1

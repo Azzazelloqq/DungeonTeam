@@ -12,4 +12,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: afccaaf2a3274f729568f2464605e625, type: 3}
   m_Name: ConfigCatalog
   m_EditorClassIdentifier: DungeonTeam.Configuration::Code.Configuration.ConfigCatalog
-  _pages: []
+  _pages:
+  - {fileID: 11400000, guid: 8560153f025237649ac5b8a56e1c911e, type: 2}

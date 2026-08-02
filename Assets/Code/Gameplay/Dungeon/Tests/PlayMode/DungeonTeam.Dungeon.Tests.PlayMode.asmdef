@@ -1,0 +1,15 @@
+{
+  "name": "DungeonTeam.Dungeon.Tests.PlayMode",
+  "rootNamespace": "DungeonTeam.Gameplay.Dungeon.Tests.PlayMode",
+  "references": [
+    "DungeonTeam.Dungeon.Domain",
+    "DungeonTeam.Dungeon.Application",
+    "DungeonTeam.Dungeon.Runtime",
+    "DungeonTeam.Configuration",
+    "UniTask"
+  ],
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ],
+  "autoReferenced": false
+}

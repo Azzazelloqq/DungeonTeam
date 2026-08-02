@@ -12,7 +12,6 @@ Material:
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords:
-  - UI_EFFECT_GRADIENT
   - UI_EFFECT_ROUNDED
   m_InvalidKeywords: []
   m_LightmapFlags: 4
@@ -38,7 +37,7 @@ Material:
     - _BottomLeftRadius: 18
     - _BottomRightRadius: 18
     - _ColorMask: 15
-    - _Gradient: 1
+    - _Gradient: 0
     - _GradientEnd: 1
     - _GradientStart: 0
     - _Mask: 0

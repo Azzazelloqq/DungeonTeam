@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
+  m_Name: Dungeons
+  m_EditorClassIdentifier: Unity.Addressables.Editor::UnityEditor.AddressableAssets.Settings.AddressableAssetGroup
+  m_GroupName: Dungeons
+  m_GUID: 4889ced16b49f2e4fb5f6833a252a24f
+  m_SerializeEntries:
+  - m_GUID: 63f3f71645ea1ba4296250e06d80771c
+    m_Address: Dungeon/Maps/AuthoredDungeonDemo
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  m_ReadOnly: 0
+  m_Settings: {fileID: 11400000, guid: daef036da91545b4e8e92deee338648e, type: 2}
+  m_SchemaSet:
+    m_Schemas:
+    - {fileID: 11400000, guid: e5e8503c9bb3bfa408d4bb8031aa4c97, type: 2}
+    - {fileID: 11400000, guid: 19ca83639f4c702409c1a0829478a4f6, type: 2}

@@ -58,9 +58,9 @@ Material:
     - _UseUIAlphaClip: 0
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
-    - _GradientColorA: {r: 1, g: 1, b: 1, a: 1}
-    - _GradientColorB: {r: 0.74, g: 0.88, b: 1, a: 1}
-    - _GradientDirection: {r: 0, g: 1, b: 0, a: 0}
+    - _GradientColorA: {r: 0.7924528, g: 0.7924528, b: 0.7924528, a: 1}
+    - _GradientColorB: {r: 1, g: 1, b: 1, a: 1}
+    - _GradientDirection: {r: 0, g: 0.7, b: 0, a: 0}
     - _MaskScaleOffset: {r: 1, g: 1, b: 0, a: 0}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

@@ -1,0 +1,8 @@
+{
+  "name": "DungeonTeam.UIUtills.Editor",
+  "rootNamespace": "Code.UI.Editor",
+  "references": [],
+  "includePlatforms": [
+    "Editor"
+  ]
+}

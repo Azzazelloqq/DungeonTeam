@@ -1,0 +1,44 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3f3a862a07d2c2f4d80220a691062827, type: 3}
+  m_Name: DungeonConfig
+  m_EditorClassIdentifier: DungeonTeam.Dungeon.Runtime::DungeonTeam.Gameplay.Dungeon.Runtime.Config.DungeonConfigPage
+  _authoredDungeons:
+  - _dungeonId: dungeon.demo.authored
+    _mapAssetId: map.authored.demo
+  _scenarios:
+  - _scenarioId: scenario.demo
+    _baseThreatBudget: 1
+    _enemyCandidates:
+    - _enemyId: enemy.grunt
+      _cost: 1
+      _weight: 1
+      _allowedSlotTags:
+      - enemy.common
+    _interestPointRules:
+    - _slotTag: interest.common
+      _minCount: 1
+      _maxCount: 1
+      _candidates:
+      - _interestPointId: interest.chest.basic
+        _weight: 1
+        _rewardProfileId: reward.common
+    _enabledOptionalPlacementIds:
+    - interest.optional.chest
+    _requiredObjectives:
+    - _objectiveId: objective.exit
+      _requiredSlotTag: objective.exit
+  _difficulties:
+  - _difficultyId: normal
+    _threatBudgetMultiplier: 1
+    _interestPointCountMultiplier: 1
+    _rewardBudgetMultiplier: 1

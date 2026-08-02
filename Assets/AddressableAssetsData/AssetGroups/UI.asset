@@ -15,13 +15,33 @@ MonoBehaviour:
   m_GroupName: UI
   m_GUID: 10b5df492bc4663428474cf788f3339f
   m_SerializeEntries:
+  - m_GUID: 0c2a8899427d99c48ab895dbe0162793
+    m_Address: Materials/UIEffectsBackground
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3872c0884f98a3b4da41ee202a320315
+    m_Address: Materials/UIEffectsButton
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 7a0e6ab46df060f498355395fab4ce2f
-    m_Address: Assets/Content/UI/Windows/Main/MainMenu.prefab
+    m_Address: Windows/Main/MainMenu.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9c5b19e8d6dae0344ba010a6b2951003
+    m_Address: General/UICanvas
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: bfbe4b5cfd61d31469469beaf199834b
-    m_Address: Assets/Content/UI/Windows/Main/LoadingScreen.prefab
+    m_Address: Windows/Main/LoadingScreen
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c8c20e304e90a9545b1aef340bcd4a52
+    m_Address: Materials/UIEffectsPanel
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

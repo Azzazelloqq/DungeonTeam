@@ -1,8 +1,8 @@
 # DungeonTeam — Dungeon System Technical Design
 
-**Статус:** PROPOSED FOR APPROVAL
+**Статус:** D1 IMPLEMENTED
 
-**Дата:** 1 августа 2026
+**Дата:** 2 августа 2026
 
 **Связанный дизайн:** `Docs/Technical/DungeonExpeditionVerticalSliceTechnicalDesign.md`
 
@@ -117,7 +117,7 @@ ApplicationFlowRoot
 Целевая структура:
 
 ```text
-Assets/Game/Features/Dungeon/
+Assets/Code/Gameplay/Dungeon/
   Domain/
     Map/
     Scenario/
@@ -579,7 +579,7 @@ Runtime build validation проверяет:
 
 ## 16. План реализации
 
-### D0 — Архитектурный каркас
+### D0 — Архитектурный каркас (готово)
 
 - создать только `Domain` и `Application` asmdef с реальным кодом;
 - добавить request, минимальные immutable snapshot/content plan и public factory contract;
@@ -587,17 +587,17 @@ Runtime build validation проверяет:
 - не создавать Runtime, Config и Unity authoring до authored-среза;
 - legacy asmdef удалить после успешной компиляции новой структуры отдельным осознанным изменением.
 
-### D1 — Authored vertical slice
+### D1 — Authored vertical slice (готово)
 
 - создать Runtime asmdef и минимальную `DungeonConfigPage` только для authored path;
 - добавить authored root и три placement authoring component;
 - реализовать Addressables instance ownership;
 - реализовать fixed/slot/optional scenario planning;
 - подключить один project-owned authored dungeon prefab;
-- интегрировать результат с `DungeonExpeditionRoot`;
+- оставить factory готовой к интеграции; `DungeonExpeditionRoot` в текущем коде проекта отсутствует, поэтому зависимость от несуществующего владельца не добавляется;
 - пройти EditMode, PlayMode, Editor validation и manual smoke.
 
-Это минимальный полезный вертикальный срез. До его завершения chunked/procedural builders не реализуются.
+Минимальный authored-срез завершён. Chunked/procedural builders в D1 не реализуются.
 
 ### D2 — Chunked
 
