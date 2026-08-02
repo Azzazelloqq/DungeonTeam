@@ -16,6 +16,8 @@
     "DungeonTeam.Dungeon.Application",
     "DungeonTeam.Dungeon.Domain",
     "DungeonTeam.Dungeon.Runtime",
+    "DungeonTeam.DungeonRun.Runtime",
+    "DungeonTeam.Team.Runtime",
     "MVVM.Core",
     "Disposable"
   ]

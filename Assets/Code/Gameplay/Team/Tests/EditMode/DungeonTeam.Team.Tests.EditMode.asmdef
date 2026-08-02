@@ -1,0 +1,14 @@
+{
+  "name": "DungeonTeam.Team.Tests.EditMode",
+  "rootNamespace": "DungeonTeam.Gameplay.Team.Tests",
+  "references": [
+    "DungeonTeam.Team.Domain"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ],
+  "autoReferenced": false
+}

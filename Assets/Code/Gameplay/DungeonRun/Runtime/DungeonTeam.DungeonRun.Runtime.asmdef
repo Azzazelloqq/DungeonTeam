@@ -1,0 +1,17 @@
+{
+  "name": "DungeonTeam.DungeonRun.Runtime",
+  "rootNamespace": "DungeonTeam.Gameplay.DungeonRun.Runtime",
+  "references": [
+    "DungeonTeam.Actors.Runtime",
+    "DungeonTeam.Dungeon.Application",
+    "DungeonTeam.Dungeon.Domain",
+    "DungeonTeam.Team.Runtime",
+    "Disposable",
+    "MVP",
+    "Root",
+    "TickHandler",
+    "UniTask",
+    "Unity.AI.Navigation"
+  ],
+  "autoReferenced": false
+}

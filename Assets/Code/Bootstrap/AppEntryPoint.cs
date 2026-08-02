@@ -2,6 +2,8 @@ using System;
 using Code.Configuration;
 using Code.UIService;
 using Cysharp.Threading.Tasks;
+using DungeonTeam.Gameplay.DungeonRun.Runtime;
+using DungeonTeam.Gameplay.Team.Runtime;
 using UnityEngine;
 
 namespace Code.ApplicationRoot
@@ -17,12 +19,23 @@ namespace Code.ApplicationRoot
 		[SerializeField]
 		private Camera _worldCamera;
 
+		[SerializeField]
+		private DungeonRunBindings _dungeonRunBindings = new();
+
+		[SerializeField]
+		private TeamControlSettings _teamControlSettings = new();
+
 		private ApplicationRoot _applicationRoot;
 
 		// ReSharper disable once UnusedMember.Local
 		private async UniTask Start()
 		{
-			_applicationRoot = new ApplicationRoot(_canvasContext, _configCatalog, _worldCamera);
+			_applicationRoot = new ApplicationRoot(
+				_canvasContext,
+				_configCatalog,
+				_worldCamera,
+				_dungeonRunBindings,
+				_teamControlSettings);
 
 			try
 			{

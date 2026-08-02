@@ -1,0 +1,18 @@
+{
+  "name": "DungeonTeam.Actors.Tests.EditMode",
+  "rootNamespace": "DungeonTeam.Gameplay.Actors.Tests",
+  "references": [
+    "DungeonTeam.Actors.Domain"
+  ],
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "autoReferenced": false,
+  "overrideReferences": true,
+  "precompiledReferences": [
+    "nunit.framework.dll"
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "name": "DungeonTeam.Team.Domain",
+  "rootNamespace": "DungeonTeam.Gameplay.Team.Domain",
+  "references": [],
+  "autoReferenced": false,
+  "noEngineReferences": true
+}

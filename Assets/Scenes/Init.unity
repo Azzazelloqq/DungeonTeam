@@ -171,6 +171,21 @@ MonoBehaviour:
     _dynamicOverlayElement: {fileID: 246644463}
   _configCatalog: {fileID: 11400000, guid: a390392618f54ecb8da5f730b4e1c9de, type: 2}
   _worldCamera: {fileID: 1065636713}
+  _dungeonRunBindings:
+    _actorPrefab: {fileID: 4388003729755209391, guid: d89eb11cdf02e0645ab9ec901011f452, type: 3}
+    _leader:
+      _maximumHealth: 100
+      _movementSpeed: 4
+      _color: {r: 0.2, g: 0.55, b: 1, a: 1}
+    _companion:
+      _maximumHealth: 80
+      _movementSpeed: 4
+      _color: {r: 0.2, g: 1, b: 0.4, a: 1}
+    _enemy:
+      _maximumHealth: 60
+      _movementSpeed: 3.5
+      _color: {r: 1, g: 0.25, b: 0.2, a: 1}
+    _companionOffset: {x: 1.25, y: 0, z: -1.25}
 --- !u!224 &246644463 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 7612956250186285755, guid: 9c5b19e8d6dae0344ba010a6b2951003, type: 3}

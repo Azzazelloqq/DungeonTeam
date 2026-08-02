@@ -9,8 +9,10 @@ using Code.UI.LoadingScreen;
 using Code.UIService;
 using Cysharp.Threading.Tasks;
 using DungeonTeam.Gameplay.Dungeon.Application;
+using DungeonTeam.Gameplay.DungeonRun.Runtime;
 using DungeonTeam.Gameplay.Dungeon.Runtime.Config;
 using DungeonTeam.Gameplay.Dungeon.Runtime.Infrastructure;
+using DungeonTeam.Gameplay.Team.Runtime;
 using LightDI.Runtime;
 using ResourceLoader;
 using ResourceLoader.AddressableResourceLoader;
@@ -26,6 +28,8 @@ namespace Code.ApplicationRoot
 		private readonly UICanvasContext _canvasContext;
 		private readonly ConfigCatalog _configCatalog;
 		private readonly Camera _worldCamera;
+		private readonly DungeonRunBindings _dungeonRunBindings;
+		private readonly TeamControlSettings _teamControlSettings;
 
 		private IDiContainer _globalContainer;
 		private IUiService _uiService;
@@ -33,19 +37,26 @@ namespace Code.ApplicationRoot
 		private LoadingScreenViewModel _loadingScreenViewModel;
 		private MainMenuRoot _mainMenuRoot;
 		private IDungeonFactory _dungeonFactory;
-		private IDungeonInstance _dungeonInstance;
+		private ITickHandler _tickHandler;
+		private DungeonRunRoot _dungeonRunRoot;
 		private bool _isDungeonTransitioning;
 
 		public ApplicationRoot(
 			UICanvasContext canvasContext,
 			ConfigCatalog configCatalog,
-			Camera worldCamera)
+			Camera worldCamera,
+			DungeonRunBindings dungeonRunBindings,
+			TeamControlSettings teamControlSettings)
 		{
 			_canvasContext = canvasContext;
 			_configCatalog = configCatalog;
 			_worldCamera = worldCamera != null
 				? worldCamera
 				: throw new ArgumentNullException(nameof(worldCamera));
+			_dungeonRunBindings = dungeonRunBindings ??
+				throw new ArgumentNullException(nameof(dungeonRunBindings));
+			_teamControlSettings = teamControlSettings ??
+				throw new ArgumentNullException(nameof(teamControlSettings));
 		}
 
 		protected override async UniTask OnInitializeAsync(CancellationToken token)
@@ -66,8 +77,8 @@ namespace Code.ApplicationRoot
 
 			var dispatcher = new GameObject("TickHandlerDispatcher");
 			var unityDispatcherBehaviour = dispatcher.AddComponent<UnityDispatcherBehaviour>();
-			ITickHandler tickHandler = new UnityTickHandler(unityDispatcherBehaviour);
-			_globalContainer.RegisterAsSingleton(tickHandler);
+			_tickHandler = new UnityTickHandler(unityDispatcherBehaviour);
+			_globalContainer.RegisterAsSingleton(_tickHandler);
 
 			_mainMenuRoot = new MainMenuRoot(
 				_uiService,
@@ -81,9 +92,7 @@ namespace Code.ApplicationRoot
 
 		protected override void OnDispose()
 		{
-			var dungeonInstance = _dungeonInstance;
-			_dungeonInstance = null;
-			dungeonInstance?.Dispose();
+			DisposeDungeonRun();
 			_dungeonFactory = null;
 
 			_mainMenuRoot?.Dispose();
@@ -95,6 +104,7 @@ namespace Code.ApplicationRoot
 
 			_globalContainer?.Dispose();
 			_globalContainer = null;
+			_tickHandler = null;
 			_uiService = null;
 		}
 
@@ -121,7 +131,7 @@ namespace Code.ApplicationRoot
 
 		private void OnPlayRequested(MainMenuPlayRequest request)
 		{
-			if (_isDungeonTransitioning || _dungeonInstance != null)
+			if (_isDungeonTransitioning || _dungeonRunRoot != null)
 			{
 				return;
 			}
@@ -139,29 +149,34 @@ namespace Code.ApplicationRoot
 			{
 				await ShowLoadingScreenAsync(token);
 
-				var instance = await _dungeonFactory.CreateAsync(
+				_dungeonRunRoot = new DungeonRunRoot(
+					_dungeonFactory,
 					new DungeonBuildRequest(
 						request.DungeonId,
 						"scenario.demo",
 						"normal",
 						request.Seed),
-					token);
+					_dungeonRunBindings,
+					_worldCamera,
+					_tickHandler,
+					new DesktopTeamInput(),
+					_teamControlSettings);
+				await _dungeonRunRoot.InitializeAsync(token);
 
 				if (token.IsCancellationRequested)
 				{
-					instance.Dispose();
 					token.ThrowIfCancellationRequested();
 				}
 
-				_dungeonInstance = instance;
-				FrameDungeon();
-				_mainMenuRoot.ShowDungeonPreview(CreatePreviewSummary(instance));
+				_mainMenuRoot.ShowDungeonPreview(CreatePreviewSummary(_dungeonRunRoot));
 			}
 			catch (OperationCanceledException) when (token.IsCancellationRequested)
 			{
+				DisposeDungeonRun();
 			}
 			catch (Exception exception)
 			{
+				DisposeDungeonRun();
 				Debug.LogException(exception);
 				_mainMenuRoot.ShowSelection();
 			}
@@ -188,47 +203,24 @@ namespace Code.ApplicationRoot
 				return;
 			}
 
-			var dungeonInstance = _dungeonInstance;
-			_dungeonInstance = null;
-
-			try
-			{
-				dungeonInstance?.Dispose();
-			}
-			finally
-			{
-				_mainMenuRoot.ShowSelection();
-			}
+			DisposeDungeonRun();
+			_mainMenuRoot.ShowSelection();
 		}
 
-		private static string CreatePreviewSummary(IDungeonInstance instance)
+		private static string CreatePreviewSummary(DungeonRunRoot runRoot)
 		{
-			return $"{instance.MapSnapshot.DungeonId}\n" +
-			       $"SEED: {instance.MapSnapshot.Seed}\n" +
-			       $"ENEMIES: {instance.ContentPlan.EnemySpawns.Count}\n" +
-			       $"INTERESTS: {instance.ContentPlan.InterestPointSpawns.Count}\n" +
-			       $"OBJECTIVES: {instance.ContentPlan.ObjectiveSpawns.Count}";
+			return $"{runRoot.MapSnapshot.DungeonId}\n" +
+			       $"SEED: {runRoot.MapSnapshot.Seed}\n" +
+			       $"ENEMIES: {runRoot.EnemyCount}\n" +
+			       $"PLANNED INTERESTS: {runRoot.ContentPlan.InterestPointSpawns.Count}\n" +
+			       $"PLANNED OBJECTIVES: {runRoot.ContentPlan.ObjectiveSpawns.Count}";
 		}
 
-		private void FrameDungeon()
+		private void DisposeDungeonRun()
 		{
-			var renderers = UnityEngine.Object.FindObjectsByType<Renderer>();
-			if (renderers.Length == 0)
-			{
-				throw new InvalidOperationException("Created dungeon has no visible geometry.");
-			}
-
-			var bounds = renderers[0].bounds;
-			for (var index = 1; index < renderers.Length; index++)
-			{
-				bounds.Encapsulate(renderers[index].bounds);
-			}
-
-			var halfFieldOfView = _worldCamera.fieldOfView * 0.5f * Mathf.Deg2Rad;
-			var distance = bounds.extents.magnitude / Mathf.Sin(halfFieldOfView) * 1.15f;
-			var viewDirection = new Vector3(-0.65f, 1f, -0.65f).normalized;
-			_worldCamera.transform.position = bounds.center + viewDirection * distance;
-			_worldCamera.transform.LookAt(bounds.center);
+			var dungeonRunRoot = _dungeonRunRoot;
+			_dungeonRunRoot = null;
+			dungeonRunRoot?.Dispose();
 		}
 	}
 }

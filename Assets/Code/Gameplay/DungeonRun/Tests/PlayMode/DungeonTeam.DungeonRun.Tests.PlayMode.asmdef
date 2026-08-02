@@ -1,0 +1,20 @@
+{
+  "name": "DungeonTeam.DungeonRun.Tests.PlayMode",
+  "rootNamespace": "DungeonTeam.Gameplay.DungeonRun.Tests.PlayMode",
+  "references": [
+    "DungeonTeam.Actors.Runtime",
+    "DungeonTeam.Dungeon.Application",
+    "DungeonTeam.Dungeon.Domain",
+    "DungeonTeam.DungeonRun.Runtime",
+    "DungeonTeam.Team.Runtime",
+    "MVP",
+    "Disposable",
+    "Root",
+    "TickHandler",
+    "UniTask"
+  ],
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ],
+  "autoReferenced": false
+}

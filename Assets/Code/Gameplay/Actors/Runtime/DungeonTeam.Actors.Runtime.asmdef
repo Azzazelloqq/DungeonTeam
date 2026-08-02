@@ -1,0 +1,10 @@
+{
+  "name": "DungeonTeam.Actors.Runtime",
+  "rootNamespace": "DungeonTeam.Gameplay.Actors.Runtime",
+  "references": [
+    "DungeonTeam.Actors.Domain",
+    "MVP",
+    "Disposable"
+  ],
+  "autoReferenced": false
+}
