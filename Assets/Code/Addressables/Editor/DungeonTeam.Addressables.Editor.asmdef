@@ -1,0 +1,10 @@
+{
+  "name": "DungeonTeam.Addressables.Editor",
+  "rootNamespace": "Code.Addressables.Editor",
+  "references": [
+    "Unity.Addressables.Editor"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ]
+}

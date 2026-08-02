@@ -1,0 +1,14 @@
+{
+  "name": "DungeonTeam.MainMenu",
+  "rootNamespace": "Code.UI.MainMenu",
+  "references": [
+    "DungeonTeam.UIService",
+    "MVVM.Core",
+    "MVVM.Reactive",
+    "Disposable",
+    "UniTask",
+    "UnityEngine.UI"
+  ],
+  "autoReferenced": false,
+  "noEngineReferences": false
+}

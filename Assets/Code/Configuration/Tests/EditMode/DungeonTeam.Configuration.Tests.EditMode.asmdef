@@ -1,0 +1,15 @@
+{
+  "name": "DungeonTeam.Configuration.Tests.EditMode",
+  "rootNamespace": "Code.Configuration.Tests",
+  "references": [
+    "DungeonTeam.Configuration",
+    "Config"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ],
+  "autoReferenced": false
+}

@@ -1,0 +1,16 @@
+{
+  "name": "DungeonTeam.UIService.Tests.EditMode",
+  "rootNamespace": "Code.UIService.Tests",
+  "references": [
+    "DungeonTeam.UIService",
+    "ResourceLoader",
+    "UniTask"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ],
+  "autoReferenced": false
+}

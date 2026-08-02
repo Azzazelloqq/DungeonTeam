@@ -807,7 +807,8 @@ PlayerSettings:
   webGLCloseOnQuit: 0
   webWasm2023: 1
   webEnableSubmoduleStrippingCompatibility: 0
-  scriptingDefineSymbols: {}
+  scriptingDefineSymbols:
+    Android: PROJECT_SUPPORT_UNITASK
   additionalCompilerArguments: {}
   platformArchitecture: {}
   scriptingBackend:

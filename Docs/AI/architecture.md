@@ -21,6 +21,8 @@ Infrastructure implements contracts declared above it.
 
 Root создаёт все принадлежащие ему объекты и уничтожает их в обратном порядке. Дочерний root не создаётся библиотекой автоматически: владелец обязан явно вызвать `Dispose`.
 
+Для управления lifecycle проект активно использует паттерн Disposable: root, presenter, viewmodel и другие владельцы ресурсов явно освобождают принадлежащие им объекты, подписки и операции через `Dispose`. Правила владения, порядок освобождения и применение `CompositeDisposable` описаны в [lifecycle.md](lifecycle.md) и [roots-and-disposal.md](libraries/roots-and-disposal.md).
+
 ## Дерево композиции и владения
 
 Слои отвечают на вопрос «от чего может зависеть код». Дерево композиции отвечает на вопрос «кто создаёт, использует и освобождает объект». Это разные оси и их нельзя смешивать.
@@ -72,4 +74,6 @@ UI использует MVVM. ViewModel не зависит от View; View по
 
 ## Addressables
 
-Граница Addressables ещё не реализована. Когда она появится, runtime-код будет обращаться к ней через собственные контракты; прямые вызовы `Addressables`, `ResourceLoader` и `SceneSwitcher` вне composition/infrastructure запрещены.
+Инфраструктурная база Addressables реализована: `AddressableIds` генерирует ключи из Addressables Settings, а `SceneSwitcher` 1.0.4 предоставляет async scene loading. Наличие пакета не означает автоматическое подключение навигации к application flow.
+
+Runtime-код обращается к загрузке через узкий проектный контракт. Прямые вызовы `Addressables`, `ResourceLoader` и `AddressablesSceneSwitcher` вне composition/infrastructure запрещены; raw keys и handles не выходят в Domain, gameplay или UI. Владеющий application/scene root создаёт navigator, передаёт свой cancellation token и освобождает navigator до завершения собственного lifecycle.

@@ -1,0 +1,10 @@
+{
+  "name": "DungeonTeam.Dungeon.Application",
+  "rootNamespace": "DungeonTeam.Gameplay.Dungeon.Application",
+  "references": [
+    "DungeonTeam.Dungeon.Domain",
+    "UniTask"
+  ],
+  "autoReferenced": false,
+  "noEngineReferences": true
+}

@@ -1,0 +1,9 @@
+{
+  "name": "DungeonTeam.UIService",
+  "rootNamespace": "Code.UIService",
+  "references": [
+    "ResourceLoader",
+    "UniTask"
+  ],
+  "autoReferenced": false
+}

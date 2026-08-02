@@ -302,7 +302,7 @@ LightDI container при `disposeRegistered: true` владеет зарегис
 ### 8.1 Ownership tree
 
 ```text
-GameBootstrapper (RootBehaviour)
+GameBootstrapper (MonoBehaviour adapter)
 └─ ApplicationRoot
    ├─ global LightDI container -> application services
    ├─ application-lifetime feature factories
@@ -330,7 +330,7 @@ Async-операция, способная пережить кадр, прини
 
 ### 8.3 Cancellation и shutdown
 
-Текущий `Root<TContext>` отменяет свой token до вызова `OnDispose`. FeatureRoot использует это как основную lifecycle-семантику: сначала stop signal, затем освобождение owned children/resources в явно заданном порядке.
+Текущий `Root` отменяет свой token до вызова `OnDispose`. FeatureRoot использует это как основную lifecycle-семантику: сначала stop signal, затем освобождение owned children/resources в явно заданном порядке.
 
 Shutdown session:
 
@@ -513,8 +513,8 @@ Green compile не доказывает scene wiring, input, animation или re
 Сверка текущих Docs/AI и PackageCache:
 
 - `Docs/AI/module-rules.md` описывает старый feature template с отдельными `Presentation`/`Composition`; для утверждённого здесь starter slice целевая boundary — `Domain`/`Application`/`Runtime`. Синхронизация Docs/AI требует отдельной команды и не входит в эту задачу.
-- API `Root<TContext>` требует `struct, IRootContext`, но не обеспечивает `readonly` на уровне generic constraint; проект сохраняет более строгое правило `readonly struct` для context.
-- `Root<TContext>` отменяет token до `OnDispose`; это подтверждает выбранный shutdown order.
+- API `Root` не generic: зависимости feature root передаются через его конструктор или явную factory, а `IRootContext` в пакете отсутствует.
+- `Root.InitializeAsync(CancellationToken)` разрешён один раз; `Root.CancellationToken` отменяется до `OnDispose` и при initialization failure. Это подтверждает выбранный shutdown order.
 - LightDI `CreateContainer()` является global alias, multiple globals технически разрешены с warning, local container один на calling assembly, а registered disposables освобождаются в прямом порядке. Проектные правила намеренно строже: один `CreateGlobalContainer()` в Bootstrap и явный ownership order.
 - `CompositeDisposable` не имеет remove API и освобождает элементы в порядке добавления; поэтому он не используется для replaceable/order-sensitive children.
 

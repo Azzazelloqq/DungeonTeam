@@ -9,4 +9,6 @@ Inspect the execution context first: cold initialization, warm user action, or h
 
 Check only relevant risks: repeated Unity lookups, unnecessary `Update`, LINQ/closures/boxing/string allocation in hot paths, repeated instantiate/destroy, hierarchy traversal, UI rebuilds, reflection, retained Addressables assets, and unclear cache ownership.
 
+Avoid needless managed allocations in proven hot paths. Use value types when the data has clear value semantics, and use `in`/`ref`/`out` for meaningful struct-copy or mutation costs; verify that this does not introduce boxing or obscure ownership. Do not force structs or by-reference parameters outside performance-sensitive code, or when they reduce API clarity, maintainability, or correctness.
+
 Prefer correcting ownership or algorithmic shape over a cache, manager, or abstraction. Introduce pooling only for a demonstrated repeated lifecycle. Preserve readability outside hot paths. Reject silent fallbacks and speculative interfaces, flags, services, or wrappers; add an abstraction only when present consumers and removed coupling are concrete.

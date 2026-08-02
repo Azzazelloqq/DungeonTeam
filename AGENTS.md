@@ -20,6 +20,7 @@
 | Root, DI scope, async, subscriptions, disposal | `Docs/AI/architecture.md`, `Docs/AI/lifecycle.md`, `Docs/AI/libraries/lightdi.md`, `Docs/AI/libraries/roots-and-disposal.md` |
 | Gameplay | `Docs/AI/libraries/presentation.md`, `Docs/AI/recipes/new-gameplay-object.md` |
 | UI | `Docs/AI/libraries/presentation.md`, `Docs/AI/recipes/new-ui-screen.md` |
+| UIService, UI-группы, Show/Hide/Close, очереди окон | `Docs/AI/libraries/ui-service.md`, `Docs/AI/lifecycle.md`, `Docs/AI/libraries/addressables.md` |
 | Списки, вложенные страницы, child presenter/viewmodel | `Docs/AI/libraries/presentation.md`, `Docs/AI/recipes/nested-presentation.md`, `Docs/AI/lifecycle.md` |
 | Addressables, prefab, сцены | `Docs/AI/libraries/addressables.md`, `Docs/AI/architecture.md` |
 | Config | `Docs/AI/libraries/config.md` |
@@ -39,7 +40,7 @@
 - Gameplay использует MVP; UI использует MVVM.
 - Зависимости передаются конструктором. `DiContainerProvider.Resolve<T>()` запрещён вне документированного инфраструктурного исключения.
 - LightDI-container создаётся только на реальном application/module scope. Для малого или повторно создаваемого object graph используй явные конструкторы/фабрики.
-- Когда появится Addressables-генератор, runtime-код не должен использовать строковые keys; использовать следует только сгенерированный API ключей.
+- Runtime-код не использует строковые Addressables keys; обязательный источник ключей — сгенерированный API `AddressableIds`.
 - Для сохранений использовать только `SaveStore` V2 и `SaveKey<T>`; legacy `UnityBinaryLocalSaveSystem` запрещён.
 
 ## Проверка результата

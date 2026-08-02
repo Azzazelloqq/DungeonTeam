@@ -77,9 +77,9 @@
 ### 2.1. Проверенный baseline
 
 - Unity `6000.7.0a3`.
-- `GameBootstrapper : RootBehaviour` — единственная Unity entry point; `Awake` вызывает `InitializeRoot()`.
+- `GameBootstrapper : MonoBehaviour` — единственная Unity entry point и project-specific lifecycle adapter; `Awake` запускает и наблюдает `ApplicationRoot.InitializeAsync`.
 - `GameBootstrapper` создаёт один `DiContainerFactory.CreateGlobalContainer()`, logger и `ApplicationRoot`.
-- `ApplicationRoot : Root<ApplicationContext>` владеет global container; gameplay state отсутствует.
+- `ApplicationRoot : Root` владеет global container; gameplay state отсутствует.
 - В `Assets/Game` есть только `Bootstrap` и `Architecture/Composition`.
 - Game assemblies: `Game.Bootstrap` и `Game.Architecture.Composition`.
 - `SquadCombat`, gameplay scenes/prefabs/input actions/tests отсутствуют.
@@ -92,9 +92,9 @@
 
 В `C:\UnityProjects\DungeonTeam\Library\PackageCache` общий manifest/lock отличается от текущего, но для Root, Disposable, LightDI, MVP, MVVM и Config версии и полные git hashes в обоих locks совпадают, а cache directories имеют соответствующий hash-prefix. Для этих package исходники признаны точным API proof:
 
-- `Root<TContext>` требует `struct, IRootContext`, разрешает одну initialization, отменяет token до `OnDispose`, `Dispose` идемпотентен после завершения;
-- `Root.Initialize` при ошибке отменяет token, но не вызывает `OnDispose` автоматически: creator обязан очистить partial graph;
-- `RootBehaviour` создаёт root через `CreateRoot`, и освобождает его в `OnDestroy`;
+- `Root` не generic, разрешает один `InitializeAsync(CancellationToken)`, отменяет свой token до `OnDispose`, `Dispose` идемпотентен после завершения;
+- `Root.InitializeAsync` при ошибке переводит root в `InitializationFailed`, отменяет token, но не вызывает `OnDispose` автоматически: owner обязан вызвать `Dispose` для partial graph;
+- `RootBehaviour` отсутствует: project-specific `GameBootstrapper : MonoBehaviour` создаёт root, наблюдает `InitializeAsync` и освобождает его в `OnDestroy`;
 - `DisposableBase` отменяет свой token после managed/composite disposal, поэтому не заменяет Root для feature shutdown semantics;
 - `CompositeDisposable` не имеет remove и освобождает synchronous items в порядке добавления;
 - LightDI `CreateContainer()` является global alias; local container один на calling assembly; registered disposables освобождаются в порядке регистрации;

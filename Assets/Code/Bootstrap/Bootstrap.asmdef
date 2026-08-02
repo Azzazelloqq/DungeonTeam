@@ -1,0 +1,14 @@
+{
+  "name": "Bootstrap",
+  "references": [
+    "Root",
+    "ResourceLoader",
+    "TickHandler",
+    "LightDI",
+    "Config",
+    "UniTask",
+    "MainMenu",
+    "DungeonTeam.UIService",
+    "DungeonTeam.Configuration"
+  ]
+}

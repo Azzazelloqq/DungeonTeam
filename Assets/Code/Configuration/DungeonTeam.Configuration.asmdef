@@ -1,0 +1,6 @@
+{
+  "name": "DungeonTeam.Configuration",
+  "references": [
+    "Config"
+  ]
+}

@@ -67,16 +67,17 @@
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "2f41d58b71b4fd6c23b552f1a9a0ae3f468586e2"
+      "hash": "42e62684aaee3da5939e60355adf3847bb432fc0"
     },
     "com.azzazello.sceneswitcher": {
       "version": "https://github.com/Azzazelloqq/SceneSwitcher.git#main",
       "depth": 0,
       "source": "git",
       "dependencies": {
-        "com.unity.addressables": "1.21.20"
+        "com.unity.addressables": "3.1.0",
+        "com.cysharp.unitask": "2.5.10"
       },
-      "hash": "dd7134e11d95f90ceae5ec4e4b89a8771f40c3ed"
+      "hash": "4f815abb6cd26c80154e37373219bb76726929a6"
     },
     "com.azzazello.tickhandler": {
       "version": "https://github.com/Azzazelloqq/TickHandler.git#main",
