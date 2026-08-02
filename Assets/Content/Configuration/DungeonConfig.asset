@@ -15,6 +15,16 @@ MonoBehaviour:
   _authoredDungeons:
   - _dungeonId: dungeon.demo.authored
     _mapAssetId: map.authored.demo
+  _chunkedDungeons:
+  - _dungeonId: dungeon.demo.chunked
+    _entryChunkId: chunk.demo.entry
+    _exitChunkId: chunk.demo.exit
+    _mandatoryChunkIds:
+    - chunk.demo.mandatory
+    _chunkPool:
+    - chunk.demo.room
+    _targetChunkCount: 5
+    _maxGenerationAttempts: 8
   _scenarios:
   - _scenarioId: scenario.demo
     _baseThreatBudget: 1

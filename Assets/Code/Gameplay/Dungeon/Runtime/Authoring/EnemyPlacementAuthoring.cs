@@ -20,16 +20,22 @@ namespace DungeonTeam.Gameplay.Dungeon.Runtime.Authoring
         [SerializeField]
         private string _encounterGroupId;
 
-        internal EnemyPlacement ToDomain()
+        internal EnemyPlacement ToDomain(
+            string runtimePlacementId,
+            string runtimeEncounterGroupId)
         {
             return new EnemyPlacement(
+                runtimePlacementId,
                 _placementId,
                 _mode,
                 _slotTag,
                 _fixedEnemyId,
-                _encounterGroupId,
+                runtimeEncounterGroupId,
                 transform.ToDungeonPose());
         }
+
+        internal string PlacementId => _placementId;
+        internal string EncounterGroupId => _encounterGroupId;
 
         private void OnDrawGizmosSelected()
         {

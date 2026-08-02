@@ -11,10 +11,12 @@ namespace DungeonTeam.Gameplay.Dungeon.Runtime.Authoring
         [SerializeField]
         private string _slotTag;
 
-        internal ObjectivePlacement ToDomain()
+        internal ObjectivePlacement ToDomain(string runtimePlacementId)
         {
-            return new ObjectivePlacement(_placementId, _slotTag, transform.ToDungeonPose());
+            return new ObjectivePlacement(runtimePlacementId, _slotTag, transform.ToDungeonPose());
         }
+
+        internal string PlacementId => _placementId;
 
         private void OnDrawGizmosSelected()
         {

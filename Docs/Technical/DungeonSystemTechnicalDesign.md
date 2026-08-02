@@ -1,6 +1,6 @@
 # DungeonTeam — Dungeon System Technical Design
 
-**Статус:** D1 IMPLEMENTED
+**Статус:** D2 IMPLEMENTED
 
 **Дата:** 2 августа 2026
 
@@ -208,11 +208,11 @@ OptionalFixed
 
 ```text
 EnemyPlacement
-  PlacementId, RoomId, Pose, Mode, SlotTag,
+  PlacementId, AuthoringId, RoomId, Pose, Mode, SlotTag,
   FixedEnemyId?, EncounterGroupId?
 
 InterestPointPlacement
-  PlacementId, RoomId, Pose, Mode, SlotTag,
+  PlacementId, AuthoringId, RoomId, Pose, Mode, SlotTag,
   FixedInterestPointId?, FixedRewardProfileId?
 
 ObjectivePlacement
@@ -597,15 +597,20 @@ Runtime build validation проверяет:
 - оставить factory готовой к интеграции; `DungeonExpeditionRoot` в текущем коде проекта отсутствует, поэтому зависимость от несуществующего владельца не добавляется;
 - пройти EditMode, PlayMode, Editor validation и manual smoke.
 
-Минимальный authored-срез завершён. Chunked/procedural builders в D1 не реализуются.
+Минимальный authored-срез завершён. Chunked builder добавлен отдельно в D2.
 
-### D2 — Chunked
+### D2 — Chunked (готово)
 
-- добавить chunk/port authoring;
-- реализовать mandatory + generated chunk placement;
-- добавить overlap/connectivity validation;
-- подготовить небольшой project-owned chunk set;
-- проверить navigation links и bounded failure.
+- добавлены `DungeonChunkAuthoring` и `DungeonConnectionPortAuthoring`;
+- реализована детерминированная раскладка entry → mandatory → pool → exit;
+- совместимость портов, связность и отсутствие overlap обеспечиваются при размещении;
+- число попыток ограничено `MaxGenerationAttempts`, скрытого fallback нет;
+- подготовлен project-owned demo-набор из entry, mandatory, room и exit chunk prefabs;
+- chunk anchors агрегируются в общий `DungeonContentPlan`, повторяемые local IDs получают уникальные runtime IDs;
+- Addressables-инстансы освобождаются целиком при `Dispose`, ошибке и отмене;
+- EditMode проверяет layout/authoring, PlayMode — реальное create/dispose authored и chunked данжей.
+
+Navigation links в D2 не добавлялись: в текущем проекте ещё нет владельца navigation-графа данжа и подтверждённого runtime-потребителя. Это остаётся частью интеграции конкретного режима, а не условием сборки нейтральной карты.
 
 ### D3 — Procedural grid
 

@@ -14,6 +14,10 @@ namespace DungeonTeam.Gameplay.Dungeon.Runtime.Config
             Array.Empty<AuthoredDungeonDefinition>();
 
         [SerializeField]
+        private ChunkedDungeonDefinition[] _chunkedDungeons =
+            Array.Empty<ChunkedDungeonDefinition>();
+
+        [SerializeField]
         private DungeonScenarioDefinition[] _scenarios =
             Array.Empty<DungeonScenarioDefinition>();
 
@@ -21,13 +25,22 @@ namespace DungeonTeam.Gameplay.Dungeon.Runtime.Config
         private DungeonDifficultyDefinition[] _difficulties =
             Array.Empty<DungeonDifficultyDefinition>();
 
-        internal AuthoredDungeonDefinition RequireAuthoredDungeon(string dungeonId)
+        internal AuthoredDungeonDefinition TryGetAuthoredDungeon(string dungeonId)
         {
-            return RequireById(
+            return FindById(
                 _authoredDungeons,
                 dungeonId,
                 definition => definition.DungeonId,
                 "authored dungeon");
+        }
+
+        internal ChunkedDungeonDefinition TryGetChunkedDungeon(string dungeonId)
+        {
+            return FindById(
+                _chunkedDungeons,
+                dungeonId,
+                definition => definition.DungeonId,
+                "chunked dungeon");
         }
 
         internal DungeonScenarioDefinition RequireScenario(string scenarioId)
@@ -49,6 +62,18 @@ namespace DungeonTeam.Gameplay.Dungeon.Runtime.Config
         }
 
         private TDefinition RequireById<TDefinition>(
+            TDefinition[] definitions,
+            string id,
+            Func<TDefinition, string> getId,
+            string definitionName)
+            where TDefinition : class
+        {
+            return FindById(definitions, id, getId, definitionName) ??
+                   throw new InvalidOperationException(
+                       $"Dungeon config '{name}' does not contain {definitionName} ID '{id}'.");
+        }
+
+        private TDefinition FindById<TDefinition>(
             TDefinition[] definitions,
             string id,
             Func<TDefinition, string> getId,
@@ -85,8 +110,7 @@ namespace DungeonTeam.Gameplay.Dungeon.Runtime.Config
                 match = definition;
             }
 
-            return match ?? throw new InvalidOperationException(
-                $"Dungeon config '{name}' does not contain {definitionName} ID '{id}'.");
+            return match;
         }
     }
 }

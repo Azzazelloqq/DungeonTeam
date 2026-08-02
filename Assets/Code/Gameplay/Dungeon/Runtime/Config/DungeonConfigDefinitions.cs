@@ -18,6 +18,39 @@ namespace DungeonTeam.Gameplay.Dungeon.Runtime.Config
     }
 
     [Serializable]
+    public sealed class ChunkedDungeonDefinition
+    {
+        [SerializeField]
+        private string _dungeonId;
+
+        [SerializeField]
+        private string _entryChunkId;
+
+        [SerializeField]
+        private string _exitChunkId;
+
+        [SerializeField]
+        private string[] _mandatoryChunkIds = Array.Empty<string>();
+
+        [SerializeField]
+        private string[] _chunkPool = Array.Empty<string>();
+
+        [SerializeField, Min(2)]
+        private int _targetChunkCount = 2;
+
+        [SerializeField, Min(1)]
+        private int _maxGenerationAttempts = 1;
+
+        public string DungeonId => _dungeonId;
+        public string EntryChunkId => _entryChunkId;
+        public string ExitChunkId => _exitChunkId;
+        public string[] MandatoryChunkIds => _mandatoryChunkIds;
+        public string[] ChunkPool => _chunkPool;
+        public int TargetChunkCount => _targetChunkCount;
+        public int MaxGenerationAttempts => _maxGenerationAttempts;
+    }
+
+    [Serializable]
     public sealed class DungeonScenarioDefinition
     {
         [SerializeField]

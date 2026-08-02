@@ -62,6 +62,7 @@ namespace DungeonTeam.Gameplay.Dungeon.Tests.EditMode
                     null,
                     Pose),
                 new EnemyPlacement(
+                    "chunk0.enemy-enabled",
                     "enemy-enabled",
                     DungeonPlacementMode.OptionalFixed,
                     null,
@@ -87,6 +88,7 @@ namespace DungeonTeam.Gameplay.Dungeon.Tests.EditMode
 
             Assert.That(plan.EnemySpawns, Has.Count.EqualTo(1));
             Assert.That(plan.EnemySpawns[0].EnemyId, Is.EqualTo("enemy.enabled"));
+            Assert.That(plan.EnemySpawns[0].PlacementId, Is.EqualTo("chunk0.enemy-enabled"));
         }
 
         [Test]

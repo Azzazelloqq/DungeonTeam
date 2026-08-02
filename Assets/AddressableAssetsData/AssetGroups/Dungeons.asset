@@ -15,8 +15,28 @@ MonoBehaviour:
   m_GroupName: Dungeons
   m_GUID: 4889ced16b49f2e4fb5f6833a252a24f
   m_SerializeEntries:
+  - m_GUID: 0cea11107b2dcaa4bbe904a7545ab6fa
+    m_Address: Dungeon/Chunks/Room
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 63f3f71645ea1ba4296250e06d80771c
     m_Address: Dungeon/Maps/AuthoredDungeonDemo
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ea444e560fb439c4b9042b541fdb991d
+    m_Address: Dungeon/Chunks/Entry
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ec555e768fede994fad4be5a2d5d4841
+    m_Address: Dungeon/Chunks/Mandatory
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ecd1d6dff38ec804884068e733e5e254
+    m_Address: Dungeon/Chunks/Exit
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

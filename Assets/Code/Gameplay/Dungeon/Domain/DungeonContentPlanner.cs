@@ -77,7 +77,7 @@ namespace DungeonTeam.Gameplay.Dungeon.Domain
                 var placement = placements[index];
                 if (placement.Mode == DungeonPlacementMode.Fixed ||
                     placement.Mode == DungeonPlacementMode.OptionalFixed &&
-                    enabledOptionalPlacements.Contains(placement.PlacementId))
+                    enabledOptionalPlacements.Contains(placement.AuthoringId))
                 {
                     spawns.Add(new EnemySpawnPlan(
                         placement.PlacementId,
@@ -130,7 +130,7 @@ namespace DungeonTeam.Gameplay.Dungeon.Domain
                 var placement = placements[index];
                 if (placement.Mode == DungeonPlacementMode.Fixed ||
                     placement.Mode == DungeonPlacementMode.OptionalFixed &&
-                    enabledOptionalPlacements.Contains(placement.PlacementId))
+                    enabledOptionalPlacements.Contains(placement.AuthoringId))
                 {
                     spawns.Add(new InterestPointSpawnPlan(
                         placement.PlacementId,

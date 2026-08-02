@@ -19,21 +19,21 @@ namespace Code.UI.LoadingScreen
         [SerializeField]
         private TMP_Text _statusText = null;
 
-        public UIElementSettings Settings => _settings;
+        public override UIElementSettings Settings => _settings;
 
-        public void HideImmediately()
+        public override void HideImmediately()
         {
             SetVisible(false);
         }
 
-        public UniTask ShowAsync(CancellationToken token)
+        public override UniTask ShowAsync(CancellationToken token)
         {
             token.ThrowIfCancellationRequested();
             SetVisible(true);
             return UniTask.CompletedTask;
         }
 
-        public UniTask HideAsync(CancellationToken token)
+        public override UniTask HideAsync(CancellationToken token)
         {
             token.ThrowIfCancellationRequested();
             SetVisible(false);

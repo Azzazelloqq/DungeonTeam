@@ -6,7 +6,8 @@ namespace DungeonTeam.Gameplay.Dungeon.Application
     {
         InvalidConfig = 0,
         MissingAsset = 1,
-        InvalidAuthoring = 2
+        InvalidAuthoring = 2,
+        GenerationFailed = 3
     }
 
     public sealed class DungeonBuildException : Exception

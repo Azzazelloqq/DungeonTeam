@@ -5,15 +5,20 @@ namespace Code.Addressables.Generated
     {
         public static class Dungeons
         {
+            public const string DungeonChunksEntry = "Dungeon/Chunks/Entry";
+            public const string DungeonChunksExit = "Dungeon/Chunks/Exit";
+            public const string DungeonChunksMandatory = "Dungeon/Chunks/Mandatory";
+            public const string DungeonChunksRoom = "Dungeon/Chunks/Room";
             public const string DungeonMapsAuthoredDungeonDemo = "Dungeon/Maps/AuthoredDungeonDemo";
         }
         public static class UI
         {
-            public const string AssetsContentUIWindowsMainLoadingScreenPrefab = "Assets/Content/UI/Windows/Main/LoadingScreen.prefab";
-            public const string AssetsContentUIWindowsMainMainMenuPrefab = "Assets/Content/UI/Windows/Main/MainMenu.prefab";
-            public const string Materials = "Materials/";
+            public const string GeneralUICanvas = "General/UICanvas";
+            public const string MaterialsUIEffectsBackground = "Materials/UIEffectsBackground";
             public const string MaterialsUIEffectsButton = "Materials/UIEffectsButton";
             public const string MaterialsUIEffectsPanel = "Materials/UIEffectsPanel";
+            public const string WindowsMainLoadingScreen = "Windows/Main/LoadingScreen";
+            public const string WindowsMainMainMenuPrefab = "Windows/Main/MainMenu.prefab";
         }
     }
 }

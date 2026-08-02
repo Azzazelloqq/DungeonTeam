@@ -18,8 +18,28 @@ namespace DungeonTeam.Gameplay.Dungeon.Domain
             string fixedEnemyId,
             string encounterGroupId,
             DungeonPose pose)
+            : this(
+                placementId,
+                placementId,
+                mode,
+                slotTag,
+                fixedEnemyId,
+                encounterGroupId,
+                pose)
+        {
+        }
+
+        public EnemyPlacement(
+            string placementId,
+            string authoringId,
+            DungeonPlacementMode mode,
+            string slotTag,
+            string fixedEnemyId,
+            string encounterGroupId,
+            DungeonPose pose)
         {
             PlacementId = RequireId(placementId, nameof(placementId));
+            AuthoringId = RequireId(authoringId, nameof(authoringId));
             ValidateMode(mode, slotTag, fixedEnemyId, nameof(fixedEnemyId));
 
             Mode = mode;
@@ -30,6 +50,7 @@ namespace DungeonTeam.Gameplay.Dungeon.Domain
         }
 
         public string PlacementId { get; }
+        public string AuthoringId { get; }
         public DungeonPlacementMode Mode { get; }
         public string SlotTag { get; }
         public string FixedEnemyId { get; }
@@ -76,6 +97,25 @@ namespace DungeonTeam.Gameplay.Dungeon.Domain
             string fixedInterestPointId,
             string fixedRewardProfileId,
             DungeonPose pose)
+            : this(
+                placementId,
+                placementId,
+                mode,
+                slotTag,
+                fixedInterestPointId,
+                fixedRewardProfileId,
+                pose)
+        {
+        }
+
+        public InterestPointPlacement(
+            string placementId,
+            string authoringId,
+            DungeonPlacementMode mode,
+            string slotTag,
+            string fixedInterestPointId,
+            string fixedRewardProfileId,
+            DungeonPose pose)
         {
             if (string.IsNullOrWhiteSpace(placementId))
             {
@@ -103,7 +143,13 @@ namespace DungeonTeam.Gameplay.Dungeon.Domain
                 throw new ArgumentOutOfRangeException(nameof(mode), mode, "Unknown placement mode.");
             }
 
+            if (string.IsNullOrWhiteSpace(authoringId))
+            {
+                throw new ArgumentException("ID cannot be empty.", nameof(authoringId));
+            }
+
             PlacementId = placementId;
+            AuthoringId = authoringId;
             Mode = mode;
             SlotTag = slotTag;
             FixedInterestPointId = fixedInterestPointId;
@@ -112,6 +158,7 @@ namespace DungeonTeam.Gameplay.Dungeon.Domain
         }
 
         public string PlacementId { get; }
+        public string AuthoringId { get; }
         public DungeonPlacementMode Mode { get; }
         public string SlotTag { get; }
         public string FixedInterestPointId { get; }

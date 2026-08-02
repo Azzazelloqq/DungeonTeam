@@ -20,9 +20,10 @@ namespace DungeonTeam.Gameplay.Dungeon.Runtime.Authoring
         [SerializeField]
         private string _fixedRewardProfileId;
 
-        internal InterestPointPlacement ToDomain()
+        internal InterestPointPlacement ToDomain(string runtimePlacementId)
         {
             return new InterestPointPlacement(
+                runtimePlacementId,
                 _placementId,
                 _mode,
                 _slotTag,
@@ -30,6 +31,8 @@ namespace DungeonTeam.Gameplay.Dungeon.Runtime.Authoring
                 _fixedRewardProfileId,
                 transform.ToDungeonPose());
         }
+
+        internal string PlacementId => _placementId;
 
         private void OnDrawGizmosSelected()
         {
