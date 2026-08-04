@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 15dadadbebc4479888a43d0119640f83, type: 3}
+  m_Name: ActorConfig
+  m_EditorClassIdentifier: DungeonTeam.Actors.Runtime::DungeonTeam.Gameplay.Actors.Runtime.ActorConfigPage
+  _actors:
+  - _actorId: actor.king
+    _displayName: KING
+    _maximumHealth: 100
+    _movementSpeed: 4
+  - _actorId: actor.druid
+    _displayName: DRUID
+    _maximumHealth: 80
+    _movementSpeed: 4
+  - _actorId: actor.rogue
+    _displayName: ROGUE
+    _maximumHealth: 80
+    _movementSpeed: 4
+  - _actorId: actor.wizard
+    _displayName: WIZARD
+    _maximumHealth: 80
+    _movementSpeed: 4
+  - _actorId: actor.skeleton.mage
+    _displayName: SKELETON MAGE
+    _maximumHealth: 60
+    _movementSpeed: 3.5
+  - _actorId: actor.skeleton.warrior
+    _displayName: SKELETON WARRIOR
+    _maximumHealth: 60
+    _movementSpeed: 3.5

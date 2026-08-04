@@ -12,6 +12,29 @@ namespace DungeonTeam.Gameplay.Dungeon.Domain
             InterestPointRule[] interestPointRules,
             string[] enabledOptionalPlacementIds,
             RequiredObjective[] requiredObjectives)
+            : this(
+                scenarioId,
+                threatBudget,
+                enemyCandidates,
+                interestPointRules,
+                enabledOptionalPlacementIds,
+                requiredObjectives,
+                Array.Empty<DungeonRewardProfile>(),
+                Array.Empty<EnemyRewardRule>(),
+                completionRewardProfileId: null)
+        {
+        }
+
+        public DungeonScenario(
+            string scenarioId,
+            int threatBudget,
+            EnemyCandidate[] enemyCandidates,
+            InterestPointRule[] interestPointRules,
+            string[] enabledOptionalPlacementIds,
+            RequiredObjective[] requiredObjectives,
+            DungeonRewardProfile[] rewardProfiles,
+            EnemyRewardRule[] enemyRewardRules,
+            string completionRewardProfileId)
         {
             if (string.IsNullOrWhiteSpace(scenarioId))
             {
@@ -31,6 +54,9 @@ namespace DungeonTeam.Gameplay.Dungeon.Domain
                 enabledOptionalPlacementIds,
                 nameof(enabledOptionalPlacementIds));
             RequiredObjectives = Copy(requiredObjectives, nameof(requiredObjectives));
+            RewardProfiles = Copy(rewardProfiles, nameof(rewardProfiles));
+            EnemyRewardRules = Copy(enemyRewardRules, nameof(enemyRewardRules));
+            CompletionRewardProfileId = completionRewardProfileId;
 
             foreach (var id in EnabledOptionalPlacementIds)
             {
@@ -49,6 +75,9 @@ namespace DungeonTeam.Gameplay.Dungeon.Domain
         public IReadOnlyList<InterestPointRule> InterestPointRules { get; }
         public IReadOnlyList<string> EnabledOptionalPlacementIds { get; }
         public IReadOnlyList<RequiredObjective> RequiredObjectives { get; }
+        public IReadOnlyList<DungeonRewardProfile> RewardProfiles { get; }
+        public IReadOnlyList<EnemyRewardRule> EnemyRewardRules { get; }
+        public string CompletionRewardProfileId { get; }
 
         private static IReadOnlyList<T> Copy<T>(T[] source, string parameterName)
         {
@@ -59,6 +88,74 @@ namespace DungeonTeam.Gameplay.Dungeon.Domain
 
             return Array.AsReadOnly((T[])source.Clone());
         }
+    }
+
+    public sealed class DungeonRewardProfile
+    {
+        public DungeonRewardProfile(string profileId, DungeonRewardEntry[] entries)
+        {
+            if (string.IsNullOrWhiteSpace(profileId))
+            {
+                throw new ArgumentException("Reward profile ID cannot be empty.", nameof(profileId));
+            }
+
+            ProfileId = profileId;
+            Entries = entries != null
+                ? Array.AsReadOnly((DungeonRewardEntry[])entries.Clone())
+                : throw new ArgumentNullException(nameof(entries));
+        }
+
+        public string ProfileId { get; }
+
+        public IReadOnlyList<DungeonRewardEntry> Entries { get; }
+    }
+
+    public readonly struct DungeonRewardEntry
+    {
+        public DungeonRewardEntry(string rewardId, int amount)
+        {
+            if (string.IsNullOrWhiteSpace(rewardId))
+            {
+                throw new ArgumentException("Reward ID cannot be empty.", nameof(rewardId));
+            }
+
+            if (amount <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(amount));
+            }
+
+            RewardId = rewardId;
+            Amount = amount;
+        }
+
+        public string RewardId { get; }
+
+        public int Amount { get; }
+    }
+
+    public readonly struct EnemyRewardRule
+    {
+        public EnemyRewardRule(string enemyId, string rewardProfileId)
+        {
+            if (string.IsNullOrWhiteSpace(enemyId))
+            {
+                throw new ArgumentException("Enemy ID cannot be empty.", nameof(enemyId));
+            }
+
+            if (string.IsNullOrWhiteSpace(rewardProfileId))
+            {
+                throw new ArgumentException(
+                    "Reward profile ID cannot be empty.",
+                    nameof(rewardProfileId));
+            }
+
+            EnemyId = enemyId;
+            RewardProfileId = rewardProfileId;
+        }
+
+        public string EnemyId { get; }
+
+        public string RewardProfileId { get; }
     }
 
     public sealed class DungeonDifficulty
@@ -100,11 +197,21 @@ namespace DungeonTeam.Gameplay.Dungeon.Domain
 
     public readonly struct EnemyCandidate
     {
-        public EnemyCandidate(string enemyId, int cost, int weight, string[] allowedSlotTags)
+        public EnemyCandidate(
+            string enemyId,
+            string behaviorId,
+            int cost,
+            int weight,
+            string[] allowedSlotTags)
         {
             if (string.IsNullOrWhiteSpace(enemyId))
             {
                 throw new ArgumentException("Enemy ID cannot be empty.", nameof(enemyId));
+            }
+
+            if (string.IsNullOrWhiteSpace(behaviorId))
+            {
+                throw new ArgumentException("Behavior ID cannot be empty.", nameof(behaviorId));
             }
 
             if (cost <= 0)
@@ -123,12 +230,14 @@ namespace DungeonTeam.Gameplay.Dungeon.Domain
             }
 
             EnemyId = enemyId;
+            BehaviorId = behaviorId;
             Cost = cost;
             Weight = weight;
             AllowedSlotTags = Array.AsReadOnly((string[])allowedSlotTags.Clone());
         }
 
         public string EnemyId { get; }
+        public string BehaviorId { get; }
         public int Cost { get; }
         public int Weight { get; }
         public IReadOnlyList<string> AllowedSlotTags { get; }

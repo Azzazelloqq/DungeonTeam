@@ -1,4 +1,5 @@
 using System;
+using System.Text;
 using System.Threading;
 using Azzazelloqq.Config;
 using Code.Addressables.Generated;
@@ -13,11 +14,16 @@ using DungeonTeam.Feedback.Runtime.Audio;
 using DungeonTeam.Feedback.Runtime.Banks;
 using DungeonTeam.Feedback.Runtime.Haptics;
 using DungeonTeam.Feedback.Runtime.Music;
+using DungeonTeam.Gameplay.Actors.Runtime;
+using DungeonTeam.Gameplay.Chests.Runtime;
 using DungeonTeam.Gameplay.Dungeon.Application;
+using DungeonTeam.Gameplay.DungeonRun.Application;
 using DungeonTeam.Gameplay.DungeonRun.Runtime;
 using DungeonTeam.Gameplay.Dungeon.Runtime.Config;
 using DungeonTeam.Gameplay.Dungeon.Runtime.Infrastructure;
 using DungeonTeam.Gameplay.EnemyAI.Runtime;
+using DungeonTeam.Gameplay.Hero.Runtime;
+using DungeonTeam.Gameplay.Rewards.Runtime;
 using DungeonTeam.Gameplay.Team.Runtime;
 using LightDI.Runtime;
 using ResourceLoader;
@@ -36,7 +42,7 @@ namespace Code.ApplicationRoot
 		private readonly Camera _worldCamera;
 		private readonly DungeonRunBindings _dungeonRunBindings;
 		private readonly TeamControlSettings _teamControlSettings;
-		private readonly EnemyAiSettings _enemyAiSettings;
+		private readonly HeroControlSettings _heroControlSettings;
 		private readonly FeedbackRuntimeSettings _feedbackRuntimeSettings;
 
 		private IDiContainer _globalContainer;
@@ -45,6 +51,12 @@ namespace Code.ApplicationRoot
 		private LoadingScreenViewModel _loadingScreenViewModel;
 		private MainMenuRoot _mainMenuRoot;
 		private IDungeonFactory _dungeonFactory;
+		private IActorDefinitionLoader _actorDefinitionLoader;
+		private IRewardPickupViewLoader _rewardPickupViewLoader;
+		private IChestViewLoader _chestViewLoader;
+		private RewardCatalog _rewardCatalog;
+		private EnemyBehaviorCatalog _enemyBehaviorCatalog;
+		private DungeonRunTeamSetup _dungeonRunTeamSetup;
 		private ITickHandler _tickHandler;
 		private IFeedbackService _feedbackService;
 		private IMusicPlayer _musicPlayer;
@@ -58,7 +70,7 @@ namespace Code.ApplicationRoot
 			Camera worldCamera,
 			DungeonRunBindings dungeonRunBindings,
 			TeamControlSettings teamControlSettings,
-			EnemyAiSettings enemyAiSettings,
+			HeroControlSettings heroControlSettings,
 			FeedbackRuntimeSettings feedbackRuntimeSettings)
 		{
 			_canvasContext = canvasContext;
@@ -70,8 +82,8 @@ namespace Code.ApplicationRoot
 				throw new ArgumentNullException(nameof(dungeonRunBindings));
 			_teamControlSettings = teamControlSettings ??
 				throw new ArgumentNullException(nameof(teamControlSettings));
-			_enemyAiSettings = enemyAiSettings ??
-				throw new ArgumentNullException(nameof(enemyAiSettings));
+			_heroControlSettings = heroControlSettings ??
+				throw new ArgumentNullException(nameof(heroControlSettings));
 			_feedbackRuntimeSettings = feedbackRuntimeSettings ??
 				throw new ArgumentNullException(nameof(feedbackRuntimeSettings));
 		}
@@ -91,6 +103,17 @@ namespace Code.ApplicationRoot
 			_globalContainer.RegisterAsSingleton(config);
 			await config.InitializeAsync(token);
 			_dungeonFactory = new DungeonFactory(config.GetConfigPage<DungeonConfigPage>());
+			var actorCatalog = config.GetConfigPage<ActorConfigPage>().CreateCatalog();
+			_actorDefinitionLoader = new ActorDefinitionLoader(actorCatalog, resourceLoader);
+			_dungeonRunTeamSetup = config
+				.GetConfigPage<DungeonRunConfigPage>()
+				.CreateTeamSetup(actorCatalog);
+			_rewardPickupViewLoader = new RewardPickupViewLoader(resourceLoader);
+			_chestViewLoader = new ChestViewLoader(resourceLoader);
+			_rewardCatalog = config.GetConfigPage<RewardConfigPage>().CreateCatalog();
+			_enemyBehaviorCatalog = config
+				.GetConfigPage<EnemyBehaviorConfigPage>()
+				.CreateCatalog();
 
 			var dispatcher = new GameObject("TickHandlerDispatcher");
 			var unityDispatcherBehaviour = dispatcher.AddComponent<UnityDispatcherBehaviour>();
@@ -107,6 +130,7 @@ namespace Code.ApplicationRoot
 
 			_mainMenuRoot = new MainMenuRoot(
 				_uiService,
+				_dungeonRunTeamSetup,
 				OnPlayRequested,
 				OnBackRequested,
 				Application.Quit);
@@ -119,6 +143,12 @@ namespace Code.ApplicationRoot
 		{
 			DisposeDungeonRun();
 			_dungeonFactory = null;
+			_actorDefinitionLoader = null;
+			_rewardPickupViewLoader = null;
+			_chestViewLoader = null;
+			_rewardCatalog = null;
+			_enemyBehaviorCatalog = null;
+			_dungeonRunTeamSetup = null;
 
 			_mainMenuRoot?.Dispose();
 			_mainMenuRoot = null;
@@ -193,19 +223,22 @@ namespace Code.ApplicationRoot
 
 				_dungeonRunRoot = new DungeonRunRoot(
 					_dungeonFactory,
-					new DungeonBuildRequest(
-						request.DungeonId,
-						"scenario.demo",
-						"normal",
-						request.Seed),
+					CreateStartRequest(request),
 					_dungeonRunBindings,
+					_actorDefinitionLoader,
+					_rewardPickupViewLoader,
+					_chestViewLoader,
 					_canvasContext.GetParent(UIElementGroup.OverlayElement),
 					_worldCamera,
 					_tickHandler,
-					new DesktopTeamInput(),
+					new DesktopDungeonRunInput(),
+					_rewardCatalog,
 					_teamControlSettings,
-					_enemyAiSettings);
+					_heroControlSettings,
+					_enemyBehaviorCatalog);
 				await _dungeonRunRoot.InitializeAsync(token);
+				_dungeonRunRoot.ProgressChanged += OnDungeonRunProgressChanged;
+				_dungeonRunRoot.Finished += OnDungeonRunFinished;
 
 				if (token.IsCancellationRequested)
 				{
@@ -256,14 +289,70 @@ namespace Code.ApplicationRoot
 			return $"{runRoot.MapSnapshot.DungeonId}\n" +
 			       $"SEED: {runRoot.MapSnapshot.Seed}\n" +
 			       $"ENEMIES: {runRoot.EnemyCount}\n" +
+			       $"KILLED: {runRoot.KilledEnemyCount}\n" +
+			       $"REWARDS: {runRoot.CollectedRewardCount}\n" +
+			       $"EXIT: {(runRoot.CanExit ? "READY" : "LOCKED")}\n" +
 			       $"PLANNED INTERESTS: {runRoot.ContentPlan.InterestPointSpawns.Count}\n" +
 			       $"PLANNED OBJECTIVES: {runRoot.ContentPlan.ObjectiveSpawns.Count}";
+		}
+
+		private DungeonRunStartRequest CreateStartRequest(MainMenuPlayRequest request)
+		{
+			_dungeonRunTeamSetup.RequireValid(request.Team);
+			return new DungeonRunStartRequest(
+				new DungeonBuildRequest(
+					request.DungeonId,
+					"scenario.demo",
+					"normal",
+					request.Seed),
+				request.Team);
+		}
+
+		private void OnDungeonRunProgressChanged()
+		{
+			if (_dungeonRunRoot != null)
+			{
+				_mainMenuRoot.ShowDungeonPreview(CreatePreviewSummary(_dungeonRunRoot));
+			}
+		}
+
+		private void OnDungeonRunFinished(DungeonRunResult result)
+		{
+			_mainMenuRoot.ShowDungeonPreview(CreateResultSummary(result));
+		}
+
+		private string CreateResultSummary(DungeonRunResult result)
+		{
+			var summary = new StringBuilder()
+				.Append(result.Outcome.ToString().ToUpperInvariant()).Append('\n')
+				.Append(result.DungeonId).Append('\n')
+				.Append("SEED: ").Append(result.Seed).Append('\n')
+				.Append("KILLED: ").Append(result.KilledEnemies).Append('\n')
+				.Append("REWARDS: ").Append(result.CollectedRewardCount);
+
+			for (var index = 0; index < result.CollectedRewards.Count; index++)
+			{
+				var reward = result.CollectedRewards[index];
+				var definition = _rewardCatalog.Require(reward.RewardId);
+				summary.Append('\n')
+					.Append(definition.DisplayName)
+					.Append(": ")
+					.Append(reward.Amount);
+			}
+
+			return summary.ToString();
 		}
 
 		private void DisposeDungeonRun()
 		{
 			var dungeonRunRoot = _dungeonRunRoot;
 			_dungeonRunRoot = null;
+			if (dungeonRunRoot != null)
+			{
+				dungeonRunRoot.ProgressChanged -= OnDungeonRunProgressChanged;
+				dungeonRunRoot.Finished -= OnDungeonRunFinished;
+			}
+
 			dungeonRunRoot?.Dispose();
 		}
 

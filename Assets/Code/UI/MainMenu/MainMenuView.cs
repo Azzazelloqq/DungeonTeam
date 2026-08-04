@@ -1,6 +1,8 @@
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Azzazelloqq.MVVM.ReactiveLibrary;
+using Code.UI.MainMenu.TeamMemberSelection.Base;
 using Code.UIService;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
@@ -41,6 +43,15 @@ namespace Code.UI.MainMenu
         private Text _seedLabel = null;
 
         [SerializeField]
+        private RectTransform _teamMembersParent = null;
+
+        [SerializeField]
+        private MainMenuTeamMemberViewBase _teamMemberPrefab = null;
+
+        [SerializeField]
+        private Text _teamSummary = null;
+
+        [SerializeField]
         private Button _quitButton = null;
 
         [SerializeField]
@@ -60,6 +71,10 @@ namespace Code.UI.MainMenu
 
         [SerializeField]
         private Button _backButton = null;
+
+        private readonly List<MainMenuTeamMemberViewBase> _teamMemberViews = new();
+        private bool _canPlay;
+        private bool _isQuitConfirmationVisibleState;
 
         public override UIElementSettings Settings => _settings;
 
@@ -97,6 +112,17 @@ namespace Code.UI.MainMenu
             viewModel.SelectedDungeonLabel.Subscribe(SetSelectedDungeonLabel).AddTo(compositeDisposable);
             viewModel.SeedLabel.Subscribe(SetSeedLabel).AddTo(compositeDisposable);
             viewModel.PreviewSummary.Subscribe(SetPreviewSummary).AddTo(compositeDisposable);
+            viewModel.TeamSummary.Subscribe(SetTeamSummary).AddTo(compositeDisposable);
+            viewModel.CanPlay.Subscribe(SetCanPlay).AddTo(compositeDisposable);
+
+            for (var index = 0; index < viewModel.TeamMembers.Count; index++)
+            {
+                var memberView = Instantiate(_teamMemberPrefab, _teamMembersParent);
+                memberView.Initialize(
+                    viewModel.TeamMembers[index],
+                    disposeWithViewModel: false);
+                _teamMemberViews.Add(memberView);
+            }
         }
 
         protected override ValueTask OnInitializeAsync(CancellationToken token)
@@ -114,6 +140,14 @@ namespace Code.UI.MainMenu
             _quitButton.onClick.RemoveListener(OnQuitClicked);
             _confirmQuitButton.onClick.RemoveListener(OnConfirmQuitClicked);
             _cancelQuitButton.onClick.RemoveListener(OnCancelQuitClicked);
+            for (var index = _teamMemberViews.Count - 1; index >= 0; index--)
+            {
+                var memberView = _teamMemberViews[index];
+                memberView.Dispose();
+                Destroy(memberView.gameObject);
+            }
+
+            _teamMemberViews.Clear();
         }
 
         protected override ValueTask OnDisposeAsync(CancellationToken token)
@@ -124,7 +158,8 @@ namespace Code.UI.MainMenu
         private void SetQuitConfirmationVisible(bool isVisible)
         {
             _quitConfirmation.SetActive(isVisible);
-            _playButton.interactable = !isVisible;
+            _isQuitConfirmationVisibleState = isVisible;
+            UpdatePlayInteractable();
             _quitButton.interactable = !isVisible;
         }
 
@@ -155,6 +190,22 @@ namespace Code.UI.MainMenu
         private void SetPreviewSummary(string summary)
         {
             _previewSummary.text = summary;
+        }
+
+        private void SetTeamSummary(string summary)
+        {
+            _teamSummary.text = summary;
+        }
+
+        private void SetCanPlay(bool canPlay)
+        {
+            _canPlay = canPlay;
+            UpdatePlayInteractable();
+        }
+
+        private void UpdatePlayInteractable()
+        {
+            _playButton.interactable = _canPlay && !_isQuitConfirmationVisibleState;
         }
 
         private void OnPlayClicked()

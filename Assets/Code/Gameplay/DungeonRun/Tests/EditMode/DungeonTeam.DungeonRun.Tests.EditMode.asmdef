@@ -1,0 +1,16 @@
+{
+  "name": "DungeonTeam.DungeonRun.Tests.EditMode",
+  "rootNamespace": "DungeonTeam.Gameplay.DungeonRun.Tests",
+  "references": [
+    "DungeonTeam.DungeonRun.Application",
+    "DungeonTeam.DungeonRun.Runtime",
+    "DungeonTeam.Rewards.Runtime"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ],
+  "autoReferenced": false
+}

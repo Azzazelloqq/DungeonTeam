@@ -48,16 +48,16 @@ namespace DungeonTeam.Gameplay.Dungeon.Runtime.Authoring
 
         public static DungeonPose RequireEntryPose(GameObject chunkInstance)
         {
-            var authoring = RequireAuthoring(chunkInstance);
-            ValidateMarker(chunkInstance.transform, authoring.Entry, "entry");
-            return authoring.Entry.ToDungeonPose();
+            return RequirePointPose<DungeonEntryPointAuthoring>(
+                chunkInstance,
+                "entry point");
         }
 
         public static DungeonPose RequireExitPose(GameObject chunkInstance)
         {
-            var authoring = RequireAuthoring(chunkInstance);
-            ValidateMarker(chunkInstance.transform, authoring.Exit, "exit");
-            return authoring.Exit.ToDungeonPose();
+            return RequirePointPose<DungeonExitPointAuthoring>(
+                chunkInstance,
+                "exit point");
         }
 
         private static DungeonChunkAuthoring RequireAuthoring(GameObject chunkRoot)
@@ -72,22 +72,22 @@ namespace DungeonTeam.Gameplay.Dungeon.Runtime.Authoring
                        $"Chunk '{chunkRoot.name}' must have DungeonChunkAuthoring on its root.");
         }
 
-        private static void ValidateMarker(
-            Transform chunkRoot,
-            Transform marker,
-            string markerName)
+        private static DungeonPose RequirePointPose<TPoint>(
+            GameObject chunkRoot,
+            string pointName)
+            where TPoint : Component
         {
-            if (marker == null)
+            RequireAuthoring(chunkRoot);
+            var points = chunkRoot.GetComponentsInChildren<TPoint>(includeInactive: true);
+
+            if (points.Length != 1)
             {
                 throw new InvalidOperationException(
-                    $"Chunk '{chunkRoot.name}' has no {markerName} marker.");
+                    $"Chunk '{chunkRoot.name}' must contain exactly one {pointName} " +
+                    $"marker, but found {points.Length}.");
             }
 
-            if (marker != chunkRoot && !marker.IsChildOf(chunkRoot))
-            {
-                throw new InvalidOperationException(
-                    $"Chunk {markerName} marker must belong to its hierarchy.");
-            }
+            return points[0].transform.ToDungeonPose();
         }
     }
 }

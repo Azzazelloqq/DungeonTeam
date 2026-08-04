@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
-using DungeonTeam.Gameplay.Actors.Domain;
 using DungeonTeam.Gameplay.Actors.Runtime;
-using DungeonTeam.Gameplay.Team.Domain;
 using TickHandler;
 using UnityEngine;
 
@@ -11,28 +9,19 @@ namespace DungeonTeam.Gameplay.Team.Runtime
     public sealed class TeamController : IDisposable
     {
         private const float MovementThreshold = 0.0001f;
-        private const float CompanionDestinationUpdateDistance = 0.5f;
 
         private readonly ActorInstance _leader;
-        private readonly ActorInstance _companion;
         private readonly IReadOnlyList<ActorInstance> _enemies;
         private readonly Camera _camera;
         private readonly ITickHandler _tickHandler;
-        private readonly ITeamInput _input;
+        private readonly ITeamCameraInput _cameraInput;
         private readonly TeamControlSettings _settings;
-        private readonly CompanionFollowBrain _companionBrain;
-        private readonly CompanionCombatBrain _combatBrain;
-        private readonly AttackCooldown _attackCooldown;
+        private readonly List<CompanionController> _companions;
         private readonly float _minimumCommandViewDot;
 
-        private Vector3 _lastCompanionDestination;
         private ActorInstance _availableAttackTarget;
         private ActorInstance _combatTarget;
-        private ActorInstance _highlightedTarget;
         private float _cameraYaw;
-        private bool _hasCompanionDestination;
-        private bool _leaderIsMoving;
-        private bool _companionIsMoving;
         private bool _isForcedFollow;
         private bool _lastCanOrderAttack;
         private bool _lastCanOrderFollow;
@@ -43,41 +32,64 @@ namespace DungeonTeam.Gameplay.Team.Runtime
 
         public TeamController(
             ActorInstance leader,
-            ActorInstance companion,
+            IReadOnlyList<ActorInstance> companions,
+            IReadOnlyList<Vector3> formationOffsets,
             IReadOnlyList<ActorInstance> enemies,
             Camera camera,
             ITickHandler tickHandler,
-            ITeamInput input,
+            ITeamCameraInput cameraInput,
             TeamControlSettings settings)
         {
             _leader = leader ?? throw new ArgumentNullException(nameof(leader));
-            _companion = companion ?? throw new ArgumentNullException(nameof(companion));
+            if (companions == null)
+            {
+                throw new ArgumentNullException(nameof(companions));
+            }
+
+            if (formationOffsets == null)
+            {
+                throw new ArgumentNullException(nameof(formationOffsets));
+            }
+
+            if (companions.Count != formationOffsets.Count)
+            {
+                throw new ArgumentException(
+                    "Each companion requires one formation offset.",
+                    nameof(formationOffsets));
+            }
+
             _enemies = enemies ?? throw new ArgumentNullException(nameof(enemies));
             _camera = camera != null
                 ? camera
                 : throw new ArgumentNullException(nameof(camera));
             _tickHandler = tickHandler ?? throw new ArgumentNullException(nameof(tickHandler));
-            _input = input ?? throw new ArgumentNullException(nameof(input));
+            _cameraInput = cameraInput ?? throw new ArgumentNullException(nameof(cameraInput));
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
             _settings.Validate();
 
-            _companionBrain = new CompanionFollowBrain(
-                _settings.StartFollowingDistance,
-                _settings.StopFollowingDistance);
-            _combatBrain = new CompanionCombatBrain(
-                _settings.CompanionAttackRange,
-                _settings.CompanionTargetLossDistance);
-            _attackCooldown = new AttackCooldown(_settings.CompanionAttackCooldown);
+            _companions = new List<CompanionController>(companions.Count);
+            for (var index = 0; index < companions.Count; index++)
+            {
+                _companions.Add(new CompanionController(
+                    companions[index] ?? throw new ArgumentException(
+                        $"Companion at index {index} is missing.",
+                        nameof(companions)),
+                    formationOffsets[index],
+                    settings));
+            }
+
             _minimumCommandViewDot = Mathf.Cos(
                 _settings.CommandViewAngle * 0.5f * Mathf.Deg2Rad);
             _cameraYaw = _settings.CameraInitialYaw;
         }
 
         public bool CanOrderAttack =>
-            _companion.IsAlive && _combatTarget == null && _availableAttackTarget != null;
+            HasLivingCompanion() && _combatTarget == null && _availableAttackTarget != null;
 
         public bool CanOrderFollow =>
-            !_isForcedFollow && (_combatTarget != null || _availableAttackTarget != null);
+            HasLivingCompanion() &&
+            !_isForcedFollow &&
+            (_combatTarget != null || _availableAttackTarget != null);
 
         public void Initialize()
         {
@@ -91,11 +103,13 @@ namespace DungeonTeam.Gameplay.Team.Runtime
                 throw new InvalidOperationException("Team Controller is already initialized.");
             }
 
-            _input.Enable();
             _leader.AttackedBy += OnTeamMemberAttacked;
-            _companion.AttackedBy += OnTeamMemberAttacked;
+            for (var index = 0; index < _companions.Count; index++)
+            {
+                _companions[index].Actor.AttackedBy += OnTeamMemberAttacked;
+            }
+
             RefreshAvailableAttackTarget();
-            RefreshTargetHighlight();
             StoreCommandAvailability();
             PositionCamera(immediate: true, deltaTime: 0f);
             _tickHandler.SubscribeOnFrameUpdate(OnFrameUpdate);
@@ -112,30 +126,29 @@ namespace DungeonTeam.Gameplay.Team.Runtime
 
             _isDisposed = true;
             _leader.AttackedBy -= OnTeamMemberAttacked;
-            _companion.AttackedBy -= OnTeamMemberAttacked;
+            for (var index = _companions.Count - 1; index >= 0; index--)
+            {
+                _companions[index].Actor.AttackedBy -= OnTeamMemberAttacked;
+                _companions[index].Dispose();
+            }
+
+            _companions.Clear();
             if (_isInitialized)
             {
                 _tickHandler.UnsubscribeOnFrameLateUpdate(OnFrameLateUpdate);
                 _tickHandler.UnsubscribeOnFrameUpdate(OnFrameUpdate);
-                _leader.StopMovement();
-                _companion.StopMovement();
             }
 
-            SetHighlightedTarget(null);
             _availableAttackTarget = null;
             _combatTarget = null;
             CommandsChanged = null;
-
-            _input.Dispose();
         }
 
         public bool TryOrderAttack()
         {
-            if (!CanOrderAttack ||
-                !TryGetVisibleDistanceSqr(_availableAttackTarget, out _))
+            if (!CanOrderAttack || !IsVisibleToTeam(_availableAttackTarget, out _))
             {
                 RefreshAvailableAttackTarget();
-                RefreshTargetHighlight();
                 PublishCommandAvailabilityIfChanged();
                 return false;
             }
@@ -143,7 +156,6 @@ namespace DungeonTeam.Gameplay.Team.Runtime
             _combatTarget = _availableAttackTarget;
             _availableAttackTarget = null;
             _isForcedFollow = false;
-            RefreshTargetHighlight();
             PublishCommandAvailabilityIfChanged();
             return true;
         }
@@ -151,152 +163,31 @@ namespace DungeonTeam.Gameplay.Team.Runtime
         public void OrderFollow()
         {
             _isForcedFollow = true;
-            ClearCombatTarget();
+            _combatTarget = null;
             RefreshAvailableAttackTarget();
-            RefreshTargetHighlight();
             PublishCommandAvailabilityIfChanged();
         }
 
         private void OnFrameUpdate(float deltaTime)
         {
-            UpdateLeaderMovement();
             UpdateCombatTarget();
             RefreshAvailableAttackTarget();
-            UpdateCompanionMovement(deltaTime);
-            RefreshTargetHighlight();
+            for (var index = 0; index < _companions.Count; index++)
+            {
+                _companions[index].Tick(
+                    deltaTime,
+                    _leader,
+                    _combatTarget,
+                    _isForcedFollow);
+            }
+
             PublishCommandAvailabilityIfChanged();
         }
 
         private void OnFrameLateUpdate(float deltaTime)
         {
-            _cameraYaw += _input.CameraYawDelta * _settings.MouseYawSensitivity;
+            _cameraYaw += _cameraInput.CameraYawDelta * _settings.MouseYawSensitivity;
             PositionCamera(immediate: false, deltaTime);
-        }
-
-        private void UpdateLeaderMovement()
-        {
-            var movement = _input.Movement;
-            if (!_leader.IsAlive || movement.sqrMagnitude <= MovementThreshold)
-            {
-                if (_leaderIsMoving)
-                {
-                    _leader.StopMovement();
-                    _leaderIsMoving = false;
-                }
-
-                return;
-            }
-
-            var cameraForward = _camera.transform.forward;
-            cameraForward.y = 0f;
-            cameraForward.Normalize();
-
-            var cameraRight = _camera.transform.right;
-            cameraRight.y = 0f;
-            cameraRight.Normalize();
-
-            var direction = cameraForward * movement.y + cameraRight * movement.x;
-            _leaderIsMoving = _leader.SetMoveDirection(
-                Vector3.ClampMagnitude(direction, 1f));
-        }
-
-        private void UpdateCompanionMovement(float deltaTime)
-        {
-            if (!_companion.IsAlive)
-            {
-                _attackCooldown.Tick(deltaTime, canAttack: false);
-                StopCompanion();
-                return;
-            }
-
-            if (_combatTarget != null)
-            {
-                UpdateCompanionCombat(deltaTime);
-                return;
-            }
-
-            _attackCooldown.Tick(deltaTime, canAttack: false);
-            if (!_leader.IsAlive)
-            {
-                StopCompanion();
-                return;
-            }
-
-            var leaderPosition = _leader.Position;
-            var distance = Vector3.Distance(_companion.Position, leaderPosition);
-            var state = _companionBrain.Evaluate(distance);
-            if (state == CompanionFollowState.Holding)
-            {
-                StopCompanion();
-                return;
-            }
-
-            MoveCompanionTo(leaderPosition);
-        }
-
-        private void UpdateCompanionCombat(float deltaTime)
-        {
-            var distance = PlanarDistance(_companion.Position, _combatTarget.Position);
-            var state = _combatBrain.Evaluate(
-                _combatTarget.IsAlive,
-                HasClearLine(_companion, _combatTarget),
-                distance);
-            var shouldAttack = _attackCooldown.Tick(
-                deltaTime,
-                state == CompanionCombatState.Attack);
-
-            switch (state)
-            {
-                case CompanionCombatState.Follow:
-                    ClearCombatTarget();
-                    StopCompanion();
-                    break;
-                case CompanionCombatState.Chase:
-                    MoveCompanionTo(_combatTarget.Position);
-                    break;
-                case CompanionCombatState.Attack:
-                    StopCompanion();
-                    if (shouldAttack)
-                    {
-                        AttackCombatTarget();
-                    }
-
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException();
-            }
-        }
-
-        private void AttackCombatTarget()
-        {
-            if (_combatTarget == null || !_combatTarget.IsAlive)
-            {
-                return;
-            }
-
-            _companion.PlayAttackFeedback();
-            _combatTarget.ApplyDamage(_settings.CompanionAttackDamage, _companion);
-            if (!_combatTarget.IsAlive)
-            {
-                ClearCombatTarget();
-            }
-        }
-
-        private void MoveCompanionTo(Vector3 destination)
-        {
-            if (_hasCompanionDestination &&
-                PlanarSqrDistance(destination, _lastCompanionDestination) <
-                CompanionDestinationUpdateDistance * CompanionDestinationUpdateDistance)
-            {
-                return;
-            }
-
-            if (_companion.TryMoveTo(destination))
-            {
-                _lastCompanionDestination = destination;
-                _hasCompanionDestination = true;
-                _companionIsMoving = true;
-            }
         }
 
         private void UpdateCombatTarget()
@@ -306,18 +197,32 @@ namespace DungeonTeam.Gameplay.Team.Runtime
                 return;
             }
 
-            if (!_companion.IsAlive ||
-                !_combatTarget.IsAlive ||
-                PlanarDistance(_companion.Position, _combatTarget.Position) >
-                _settings.CompanionTargetLossDistance)
+            if (!_combatTarget.IsAlive || !CanAnyCompanionContinueCombat(_combatTarget))
             {
-                ClearCombatTarget();
+                _combatTarget = null;
             }
+        }
+
+        private bool CanAnyCompanionContinueCombat(ActorInstance target)
+        {
+            var maximumDistanceSqr = _settings.CompanionTargetLossDistance *
+                                     _settings.CompanionTargetLossDistance;
+            for (var index = 0; index < _companions.Count; index++)
+            {
+                var companion = _companions[index].Actor;
+                if (companion.IsAlive &&
+                    PlanarSqrDistance(companion.Position, target.Position) <= maximumDistanceSqr)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private void RefreshAvailableAttackTarget()
         {
-            if (_combatTarget != null || !_companion.IsAlive)
+            if (_combatTarget != null || !HasLivingCompanion())
             {
                 _availableAttackTarget = null;
                 return;
@@ -328,7 +233,7 @@ namespace DungeonTeam.Gameplay.Team.Runtime
             for (var index = 0; index < _enemies.Count; index++)
             {
                 var candidate = _enemies[index];
-                if (!TryGetVisibleDistanceSqr(candidate, out var distanceSqr) ||
+                if (!IsVisibleToTeam(candidate, out var distanceSqr) ||
                     distanceSqr >= nearestDistanceSqr)
                 {
                     continue;
@@ -341,9 +246,7 @@ namespace DungeonTeam.Gameplay.Team.Runtime
             _availableAttackTarget = nearest;
         }
 
-        private bool TryGetVisibleDistanceSqr(
-            ActorInstance candidate,
-            out float distanceSqr)
+        private bool IsVisibleToTeam(ActorInstance candidate, out float distanceSqr)
         {
             distanceSqr = float.MaxValue;
             if (candidate == null || !candidate.IsAlive)
@@ -351,22 +254,14 @@ namespace DungeonTeam.Gameplay.Team.Runtime
                 return false;
             }
 
-            if (PlanarSqrDistance(_companion.Position, candidate.Position) >
-                _settings.CompanionTargetLossDistance *
-                _settings.CompanionTargetLossDistance)
+            var isVisible = CanSee(_leader, candidate, out distanceSqr);
+            for (var index = 0; index < _companions.Count; index++)
             {
-                return false;
-            }
+                if (!CanSee(_companions[index].Actor, candidate, out var companionDistanceSqr))
+                {
+                    continue;
+                }
 
-            var isVisible = false;
-            if (CanSee(_leader, candidate, out var leaderDistanceSqr))
-            {
-                distanceSqr = leaderDistanceSqr;
-                isVisible = true;
-            }
-
-            if (CanSee(_companion, candidate, out var companionDistanceSqr))
-            {
                 distanceSqr = Mathf.Min(distanceSqr, companionDistanceSqr);
                 isVisible = true;
             }
@@ -422,7 +317,7 @@ namespace DungeonTeam.Gameplay.Team.Runtime
         {
             if (_isForcedFollow ||
                 _combatTarget != null ||
-                !_companion.IsAlive ||
+                !HasLivingCompanion() ||
                 attacker == null ||
                 !attacker.IsAlive ||
                 !IsEnemy(attacker))
@@ -432,7 +327,6 @@ namespace DungeonTeam.Gameplay.Team.Runtime
 
             _combatTarget = attacker;
             _availableAttackTarget = null;
-            RefreshTargetHighlight();
             PublishCommandAvailabilityIfChanged();
         }
 
@@ -449,26 +343,17 @@ namespace DungeonTeam.Gameplay.Team.Runtime
             return false;
         }
 
-        private void ClearCombatTarget()
+        private bool HasLivingCompanion()
         {
-            _combatTarget = null;
-        }
-
-        private void RefreshTargetHighlight()
-        {
-            SetHighlightedTarget(_combatTarget ?? _availableAttackTarget);
-        }
-
-        private void SetHighlightedTarget(ActorInstance target)
-        {
-            if (ReferenceEquals(_highlightedTarget, target))
+            for (var index = 0; index < _companions.Count; index++)
             {
-                return;
+                if (_companions[index].Actor.IsAlive)
+                {
+                    return true;
+                }
             }
 
-            _highlightedTarget?.SetTargetHighlighted(false);
-            _highlightedTarget = target;
-            _highlightedTarget?.SetTargetHighlighted(true);
+            return false;
         }
 
         private void StoreCommandAvailability()
@@ -492,18 +377,6 @@ namespace DungeonTeam.Gameplay.Team.Runtime
             CommandsChanged?.Invoke();
         }
 
-        private void StopCompanion()
-        {
-            _hasCompanionDestination = false;
-            if (!_companionIsMoving)
-            {
-                return;
-            }
-
-            _companion.StopMovement();
-            _companionIsMoving = false;
-        }
-
         private void PositionCamera(bool immediate, float deltaTime)
         {
             var target = _leader.Position + Vector3.up * _settings.CameraTargetHeight;
@@ -523,11 +396,6 @@ namespace DungeonTeam.Gameplay.Team.Runtime
             _camera.transform.SetPositionAndRotation(
                 Vector3.Lerp(_camera.transform.position, targetPosition, blend),
                 Quaternion.Slerp(_camera.transform.rotation, targetRotation, blend));
-        }
-
-        private static float PlanarDistance(Vector3 first, Vector3 second)
-        {
-            return Mathf.Sqrt(PlanarSqrDistance(first, second));
         }
 
         private static float PlanarSqrDistance(Vector3 first, Vector3 second)

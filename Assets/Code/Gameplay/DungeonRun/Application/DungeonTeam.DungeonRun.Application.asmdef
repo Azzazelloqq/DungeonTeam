@@ -1,0 +1,9 @@
+{
+  "name": "DungeonTeam.DungeonRun.Application",
+  "rootNamespace": "DungeonTeam.Gameplay.DungeonRun.Application",
+  "references": [
+    "DungeonTeam.Dungeon.Application"
+  ],
+  "autoReferenced": false,
+  "noEngineReferences": true
+}

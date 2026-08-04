@@ -66,7 +66,7 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
                 return;
             }
 
-            if (Application.isPlaying)
+            if (UnityEngine.Application.isPlaying)
             {
                 UnityEngine.Object.Destroy(root);
             }

@@ -1,3 +1,4 @@
+using DungeonTeam.Gameplay.DungeonRun.Application;
 using NUnit.Framework;
 
 namespace Code.UI.MainMenu.Tests
@@ -47,6 +48,7 @@ namespace Code.UI.MainMenu.Tests
             using var viewModel = new MainMenuViewModel(
                 new MainMenuModel(),
                 CreateDungeonOptions(),
+                CreateTeamSetup(),
                 value => request = value,
                 () => { },
                 () => { });
@@ -59,6 +61,8 @@ namespace Code.UI.MainMenu.Tests
 
             Assert.That(request.DungeonId, Is.EqualTo("dungeon.chunked"));
             Assert.That(request.Seed, Is.EqualTo(43));
+            Assert.That(request.Team.LeaderActorId, Is.EqualTo("actor.king"));
+            Assert.That(request.Team.CompanionActorIds, Is.EqualTo(new[] { "actor.druid" }));
         }
 
         [Test]
@@ -68,6 +72,7 @@ namespace Code.UI.MainMenu.Tests
             using var viewModel = new MainMenuViewModel(
                 new MainMenuModel(),
                 CreateDungeonOptions(),
+                CreateTeamSetup(),
                 _ => { },
                 () => backCount++,
                 () => { });
@@ -86,6 +91,7 @@ namespace Code.UI.MainMenu.Tests
             var viewModel = new MainMenuViewModel(
                 new MainMenuModel(),
                 CreateDungeonOptions(),
+                CreateTeamSetup(),
                 _ => { },
                 () => { },
                 onQuit);
@@ -100,6 +106,66 @@ namespace Code.UI.MainMenu.Tests
                 new MainMenuDungeonOption("AUTHORED", "dungeon.authored"),
                 new MainMenuDungeonOption("CHUNKED", "dungeon.chunked")
             };
+        }
+
+        [Test]
+        public void TeamSelection_ChangeLeaderAndAddCompanion_ProducesSelectedTeam()
+        {
+            MainMenuPlayRequest request = default;
+            using var viewModel = new MainMenuViewModel(
+                new MainMenuModel(),
+                CreateDungeonOptions(),
+                CreateTeamSetup(),
+                value => request = value,
+                () => { },
+                () => { });
+            viewModel.Initialize();
+
+            viewModel.TeamMembers[3].SelectLeaderCommand.Execute();
+            viewModel.TeamMembers[2].ToggleCompanionCommand.Execute();
+            viewModel.PlayCommand.Execute();
+
+            Assert.That(request.Team.LeaderActorId, Is.EqualTo("actor.wizard"));
+            Assert.That(
+                request.Team.CompanionActorIds,
+                Is.EqualTo(new[] { "actor.king", "actor.druid", "actor.rogue" }));
+        }
+
+        [Test]
+        public void TeamSelection_BelowMinimum_DisablesPlay()
+        {
+            var playCount = 0;
+            using var viewModel = new MainMenuViewModel(
+                new MainMenuModel(),
+                CreateDungeonOptions(),
+                CreateTeamSetup(),
+                _ => playCount++,
+                () => { },
+                () => { });
+            viewModel.Initialize();
+
+            viewModel.TeamMembers[1].ToggleCompanionCommand.Execute();
+            viewModel.PlayCommand.Execute();
+
+            Assert.That(viewModel.CanPlay.Value, Is.False);
+            Assert.That(playCount, Is.Zero);
+        }
+
+        private static DungeonRunTeamSetup CreateTeamSetup()
+        {
+            return new DungeonRunTeamSetup(
+                new[]
+                {
+                    new DungeonRunTeamMemberOption("actor.king", "KING"),
+                    new DungeonRunTeamMemberOption("actor.druid", "DRUID"),
+                    new DungeonRunTeamMemberOption("actor.rogue", "ROGUE"),
+                    new DungeonRunTeamMemberOption("actor.wizard", "WIZARD")
+                },
+                2,
+                4,
+                new DungeonRunTeamSelection(
+                    "actor.king",
+                    new[] { "actor.druid" }));
         }
     }
 }

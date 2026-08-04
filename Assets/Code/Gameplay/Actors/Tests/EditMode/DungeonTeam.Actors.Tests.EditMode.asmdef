@@ -2,7 +2,12 @@
   "name": "DungeonTeam.Actors.Tests.EditMode",
   "rootNamespace": "DungeonTeam.Gameplay.Actors.Tests",
   "references": [
-    "DungeonTeam.Actors.Domain"
+    "DungeonTeam.Actors.Domain",
+    "DungeonTeam.Actors.Runtime",
+    "MVP",
+    "Disposable",
+    "ResourceLoader",
+    "UniTask"
   ],
   "optionalUnityReferences": [
     "TestAssemblies"

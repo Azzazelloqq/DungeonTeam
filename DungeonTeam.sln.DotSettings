@@ -1,0 +1,305 @@
+<wpf:ResourceDictionary xml:space="preserve" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:s="clr-namespace:System;assembly=mscorlib" xmlns:ss="urn:shemas-jetbrains-com:settings-storage-xaml" xmlns:wpf="http://schemas.microsoft.com/winfx/2006/xaml/presentation">
+  <s:Boolean x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=A1F8391E6B7F4E7E90C0D2A3B4C5D6E7/@KeyIndexDefined">True</s:Boolean>
+  <s:String x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=A1F8391E6B7F4E7E90C0D2A3B4C5D6E7/Description/@EntryValue">DungeonTeam MVP Family</s:String>
+  <s:String x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=A1F8391E6B7F4E7E90C0D2A3B4C5D6E7/UITag/@EntryValue">DungeonTeam</s:String>
+  <s:String x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=A1F8391E6B7F4E7E90C0D2A3B4C5D6E7/Text/@EntryValue">using System.Threading;
+using System.Threading.Tasks;
+using $NAMESPACE$.Base;
+
+namespace $NAMESPACE$
+{
+    public sealed class $NAME$Presenter : $NAME$PresenterBase
+    {
+        public $NAME$Presenter($NAME$ViewBase view, $NAME$ModelBase model)
+            : base(view, model)
+        {
+        }
+
+        protected override void OnInitialize()
+        {
+            $END$
+        }
+
+        protected override ValueTask OnInitializeAsync(CancellationToken token)
+        {
+            return default;
+        }
+
+        protected override void OnDispose()
+        {
+        }
+
+        protected override ValueTask OnDisposeAsync(CancellationToken token)
+        {
+            return default;
+        }
+    }
+}</s:String>
+  <s:Boolean x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=A1F8391E6B7F4E7E90C0D2A3B4C5D6E7/Reformat/@EntryValue">True</s:Boolean>
+  <s:Boolean x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=A1F8391E6B7F4E7E90C0D2A3B4C5D6E7/ShortenQualifiedReferences/@EntryValue">True</s:Boolean>
+  <s:String x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=A1F8391E6B7F4E7E90C0D2A3B4C5D6E7/CustomProperties/=FileName/@EntryIndexedValue">$NAME$/$NAME$Presenter</s:String>
+  <s:String x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=A1F8391E6B7F4E7E90C0D2A3B4C5D6E7/CustomProperties/=Extension/@EntryIndexedValue">cs</s:String>
+  <s:String x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=A1F8391E6B7F4E7E90C0D2A3B4C5D6E7/CustomProperties/=ValidateFileName/@EntryIndexedValue">False</s:String>
+  <s:Boolean x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=A1F8391E6B7F4E7E90C0D2A3B4C5D6E7/Applicability/=File/@EntryIndexedValue">True</s:Boolean>
+  <s:Boolean x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=A1F8391E6B7F4E7E90C0D2A3B4C5D6E7/Scope/=E8F0594528C33E45BBFEC6CFE851095D/@KeyIndexDefined">True</s:Boolean>
+  <s:String x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=A1F8391E6B7F4E7E90C0D2A3B4C5D6E7/Scope/=E8F0594528C33E45BBFEC6CFE851095D/Type/@EntryValue">InCSharpProjectFile</s:String>
+  <s:Boolean x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=A1F8391E6B7F4E7E90C0D2A3B4C5D6E7/Field/=NAMESPACE/@KeyIndexDefined">True</s:Boolean>
+  <s:String x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=A1F8391E6B7F4E7E90C0D2A3B4C5D6E7/Field/=NAMESPACE/Expression/@EntryValue">fileDefaultNamespace()</s:String>
+  <s:Int64 x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=A1F8391E6B7F4E7E90C0D2A3B4C5D6E7/Field/=NAMESPACE/InitialRange/@EntryValue">-1</s:Int64>
+  <s:Int64 x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=A1F8391E6B7F4E7E90C0D2A3B4C5D6E7/Field/=NAMESPACE/Order/@EntryValue">0</s:Int64>
+  <s:String x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=A1F8391E6B7F4E7E90C0D2A3B4C5D6E7/Field/=NAMESPACE/InitialSection/@EntryValue">111111111111111111111111111111A1</s:String>
+  <s:Boolean x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=A1F8391E6B7F4E7E90C0D2A3B4C5D6E7/Section/=111111111111111111111111111111A1/@KeyIndexDefined">True</s:Boolean>
+  <s:String x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=A1F8391E6B7F4E7E90C0D2A3B4C5D6E7/Section/=111111111111111111111111111111A1/LocationSelectorName/@EntryValue">manual</s:String>
+  <s:String x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=A1F8391E6B7F4E7E90C0D2A3B4C5D6E7/Section/=111111111111111111111111111111A1/LocationSelectorConfig/@EntryValue">&lt;RelativeConfig Folder="$NAME$" File="$NAME$Model.cs" /&gt;</s:String>
+  <s:Int64 x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=A1F8391E6B7F4E7E90C0D2A3B4C5D6E7/Section/=111111111111111111111111111111A1/Order/@EntryValue">0</s:Int64>
+  <s:String x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=A1F8391E6B7F4E7E90C0D2A3B4C5D6E7/Section/=111111111111111111111111111111A1/SectionPlain/Text/@EntryValue">using System.Threading;
+using System.Threading.Tasks;
+using $NAMESPACE$.Base;
+
+namespace $NAMESPACE$
+{
+    public sealed class $NAME$Model : $NAME$ModelBase
+    {
+        protected override void OnInitialize()
+        {
+        }
+
+        protected override ValueTask OnInitializeAsync(CancellationToken token)
+        {
+            return default;
+        }
+
+        protected override void OnDispose()
+        {
+        }
+
+        protected override ValueTask OnDisposeAsync(CancellationToken token)
+        {
+            return default;
+        }
+    }
+}</s:String>
+  <s:Boolean x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=A1F8391E6B7F4E7E90C0D2A3B4C5D6E7/Section/=111111111111111111111111111111A2/@KeyIndexDefined">True</s:Boolean>
+  <s:String x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=A1F8391E6B7F4E7E90C0D2A3B4C5D6E7/Section/=111111111111111111111111111111A2/LocationSelectorName/@EntryValue">manual</s:String>
+  <s:String x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=A1F8391E6B7F4E7E90C0D2A3B4C5D6E7/Section/=111111111111111111111111111111A2/LocationSelectorConfig/@EntryValue">&lt;RelativeConfig Folder="$NAME$" File="$NAME$View.cs" /&gt;</s:String>
+  <s:Int64 x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=A1F8391E6B7F4E7E90C0D2A3B4C5D6E7/Section/=111111111111111111111111111111A2/Order/@EntryValue">1</s:Int64>
+  <s:String x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=A1F8391E6B7F4E7E90C0D2A3B4C5D6E7/Section/=111111111111111111111111111111A2/SectionPlain/Text/@EntryValue">using System.Threading;
+using System.Threading.Tasks;
+using $NAMESPACE$.Base;
+
+namespace $NAMESPACE$
+{
+    public sealed class $NAME$View : $NAME$ViewBase
+    {
+        protected override void OnInitialize()
+        {
+        }
+
+        protected override ValueTask OnInitializeAsync(CancellationToken token)
+        {
+            return default;
+        }
+
+        protected override void OnDispose()
+        {
+        }
+
+        protected override ValueTask OnDisposeAsync(CancellationToken token)
+        {
+            return default;
+        }
+    }
+}</s:String>
+  <s:Boolean x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=A1F8391E6B7F4E7E90C0D2A3B4C5D6E7/Section/=111111111111111111111111111111A3/@KeyIndexDefined">True</s:Boolean>
+  <s:String x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=A1F8391E6B7F4E7E90C0D2A3B4C5D6E7/Section/=111111111111111111111111111111A3/LocationSelectorName/@EntryValue">manual</s:String>
+  <s:String x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=A1F8391E6B7F4E7E90C0D2A3B4C5D6E7/Section/=111111111111111111111111111111A3/LocationSelectorConfig/@EntryValue">&lt;RelativeConfig Folder="$NAME$/Base" File="$NAME$ModelBase.cs" /&gt;</s:String>
+  <s:Int64 x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=A1F8391E6B7F4E7E90C0D2A3B4C5D6E7/Section/=111111111111111111111111111111A3/Order/@EntryValue">2</s:Int64>
+  <s:String x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=A1F8391E6B7F4E7E90C0D2A3B4C5D6E7/Section/=111111111111111111111111111111A3/SectionPlain/Text/@EntryValue">using MVP;
+
+namespace $NAMESPACE$.Base
+{
+    public abstract class $NAME$ModelBase : Model
+    {
+    }
+}</s:String>
+  <s:Boolean x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=A1F8391E6B7F4E7E90C0D2A3B4C5D6E7/Section/=111111111111111111111111111111A4/@KeyIndexDefined">True</s:Boolean>
+  <s:String x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=A1F8391E6B7F4E7E90C0D2A3B4C5D6E7/Section/=111111111111111111111111111111A4/LocationSelectorName/@EntryValue">manual</s:String>
+  <s:String x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=A1F8391E6B7F4E7E90C0D2A3B4C5D6E7/Section/=111111111111111111111111111111A4/LocationSelectorConfig/@EntryValue">&lt;RelativeConfig Folder="$NAME$/Base" File="$NAME$ViewBase.cs" /&gt;</s:String>
+  <s:Int64 x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=A1F8391E6B7F4E7E90C0D2A3B4C5D6E7/Section/=111111111111111111111111111111A4/Order/@EntryValue">3</s:Int64>
+  <s:String x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=A1F8391E6B7F4E7E90C0D2A3B4C5D6E7/Section/=111111111111111111111111111111A4/SectionPlain/Text/@EntryValue">using MVP;
+
+namespace $NAMESPACE$.Base
+{
+    public abstract class $NAME$ViewBase : ViewMonoBehaviour&lt;$NAME$PresenterBase&gt;
+    {
+    }
+}</s:String>
+  <s:Boolean x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=A1F8391E6B7F4E7E90C0D2A3B4C5D6E7/Section/=111111111111111111111111111111A5/@KeyIndexDefined">True</s:Boolean>
+  <s:String x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=A1F8391E6B7F4E7E90C0D2A3B4C5D6E7/Section/=111111111111111111111111111111A5/LocationSelectorName/@EntryValue">manual</s:String>
+  <s:String x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=A1F8391E6B7F4E7E90C0D2A3B4C5D6E7/Section/=111111111111111111111111111111A5/LocationSelectorConfig/@EntryValue">&lt;RelativeConfig Folder="$NAME$/Base" File="$NAME$PresenterBase.cs" /&gt;</s:String>
+  <s:Int64 x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=A1F8391E6B7F4E7E90C0D2A3B4C5D6E7/Section/=111111111111111111111111111111A5/Order/@EntryValue">4</s:Int64>
+  <s:String x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=A1F8391E6B7F4E7E90C0D2A3B4C5D6E7/Section/=111111111111111111111111111111A5/SectionPlain/Text/@EntryValue">using MVP;
+
+namespace $NAMESPACE$.Base
+{
+    public abstract class $NAME$PresenterBase : Presenter&lt;$NAME$ViewBase, $NAME$ModelBase&gt;
+    {
+        protected $NAME$PresenterBase($NAME$ViewBase view, $NAME$ModelBase model)
+            : base(view, model)
+        {
+        }
+    }
+}</s:String>
+
+  <s:Boolean x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=B2E94A2F7C8D4F8091D1E3B4C5D6E7F8/@KeyIndexDefined">True</s:Boolean>
+  <s:String x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=B2E94A2F7C8D4F8091D1E3B4C5D6E7F8/Description/@EntryValue">DungeonTeam MVVM Family</s:String>
+  <s:String x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=B2E94A2F7C8D4F8091D1E3B4C5D6E7F8/UITag/@EntryValue">DungeonTeam</s:String>
+  <s:String x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=B2E94A2F7C8D4F8091D1E3B4C5D6E7F8/Text/@EntryValue">using System.Threading;
+using System.Threading.Tasks;
+using $NAMESPACE$.Base;
+
+namespace $NAMESPACE$
+{
+    public sealed class $NAME$ViewModel : $NAME$ViewModelBase
+    {
+        public $NAME$ViewModel($NAME$ModelBase model)
+            : base(model)
+        {
+        }
+
+        protected override void OnInitialize()
+        {
+            $END$
+        }
+
+        protected override ValueTask OnInitializeAsync(CancellationToken token)
+        {
+            return default;
+        }
+
+        protected override void OnDispose()
+        {
+        }
+
+        protected override ValueTask OnDisposeAsync(CancellationToken token)
+        {
+            return default;
+        }
+    }
+}</s:String>
+  <s:Boolean x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=B2E94A2F7C8D4F8091D1E3B4C5D6E7F8/Reformat/@EntryValue">True</s:Boolean>
+  <s:Boolean x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=B2E94A2F7C8D4F8091D1E3B4C5D6E7F8/ShortenQualifiedReferences/@EntryValue">True</s:Boolean>
+  <s:String x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=B2E94A2F7C8D4F8091D1E3B4C5D6E7F8/CustomProperties/=FileName/@EntryIndexedValue">$NAME$/$NAME$ViewModel</s:String>
+  <s:String x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=B2E94A2F7C8D4F8091D1E3B4C5D6E7F8/CustomProperties/=Extension/@EntryIndexedValue">cs</s:String>
+  <s:String x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=B2E94A2F7C8D4F8091D1E3B4C5D6E7F8/CustomProperties/=ValidateFileName/@EntryIndexedValue">False</s:String>
+  <s:Boolean x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=B2E94A2F7C8D4F8091D1E3B4C5D6E7F8/Applicability/=File/@EntryIndexedValue">True</s:Boolean>
+  <s:Boolean x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=B2E94A2F7C8D4F8091D1E3B4C5D6E7F8/Scope/=E8F0594528C33E45BBFEC6CFE851095D/@KeyIndexDefined">True</s:Boolean>
+  <s:String x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=B2E94A2F7C8D4F8091D1E3B4C5D6E7F8/Scope/=E8F0594528C33E45BBFEC6CFE851095D/Type/@EntryValue">InCSharpProjectFile</s:String>
+  <s:Boolean x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=B2E94A2F7C8D4F8091D1E3B4C5D6E7F8/Field/=NAMESPACE/@KeyIndexDefined">True</s:Boolean>
+  <s:String x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=B2E94A2F7C8D4F8091D1E3B4C5D6E7F8/Field/=NAMESPACE/Expression/@EntryValue">fileDefaultNamespace()</s:String>
+  <s:Int64 x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=B2E94A2F7C8D4F8091D1E3B4C5D6E7F8/Field/=NAMESPACE/InitialRange/@EntryValue">-1</s:Int64>
+  <s:Int64 x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=B2E94A2F7C8D4F8091D1E3B4C5D6E7F8/Field/=NAMESPACE/Order/@EntryValue">0</s:Int64>
+  <s:String x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=B2E94A2F7C8D4F8091D1E3B4C5D6E7F8/Field/=NAMESPACE/InitialSection/@EntryValue">222222222222222222222222222222B1</s:String>
+  <s:Boolean x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=B2E94A2F7C8D4F8091D1E3B4C5D6E7F8/Section/=222222222222222222222222222222B1/@KeyIndexDefined">True</s:Boolean>
+  <s:String x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=B2E94A2F7C8D4F8091D1E3B4C5D6E7F8/Section/=222222222222222222222222222222B1/LocationSelectorName/@EntryValue">manual</s:String>
+  <s:String x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=B2E94A2F7C8D4F8091D1E3B4C5D6E7F8/Section/=222222222222222222222222222222B1/LocationSelectorConfig/@EntryValue">&lt;RelativeConfig Folder="$NAME$" File="$NAME$Model.cs" /&gt;</s:String>
+  <s:Int64 x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=B2E94A2F7C8D4F8091D1E3B4C5D6E7F8/Section/=222222222222222222222222222222B1/Order/@EntryValue">0</s:Int64>
+  <s:String x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=B2E94A2F7C8D4F8091D1E3B4C5D6E7F8/Section/=222222222222222222222222222222B1/SectionPlain/Text/@EntryValue">using System.Threading;
+using System.Threading.Tasks;
+using $NAMESPACE$.Base;
+
+namespace $NAMESPACE$
+{
+    public sealed class $NAME$Model : $NAME$ModelBase
+    {
+        protected override void OnInitialize()
+        {
+        }
+
+        protected override ValueTask OnInitializeAsync(CancellationToken token)
+        {
+            return default;
+        }
+
+        protected override void OnDispose()
+        {
+        }
+
+        protected override ValueTask OnDisposeAsync(CancellationToken token)
+        {
+            return default;
+        }
+    }
+}</s:String>
+  <s:Boolean x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=B2E94A2F7C8D4F8091D1E3B4C5D6E7F8/Section/=222222222222222222222222222222B2/@KeyIndexDefined">True</s:Boolean>
+  <s:String x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=B2E94A2F7C8D4F8091D1E3B4C5D6E7F8/Section/=222222222222222222222222222222B2/LocationSelectorName/@EntryValue">manual</s:String>
+  <s:String x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=B2E94A2F7C8D4F8091D1E3B4C5D6E7F8/Section/=222222222222222222222222222222B2/LocationSelectorConfig/@EntryValue">&lt;RelativeConfig Folder="$NAME$" File="$NAME$View.cs" /&gt;</s:String>
+  <s:Int64 x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=B2E94A2F7C8D4F8091D1E3B4C5D6E7F8/Section/=222222222222222222222222222222B2/Order/@EntryValue">1</s:Int64>
+  <s:String x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=B2E94A2F7C8D4F8091D1E3B4C5D6E7F8/Section/=222222222222222222222222222222B2/SectionPlain/Text/@EntryValue">using System.Threading;
+using System.Threading.Tasks;
+using $NAMESPACE$.Base;
+
+namespace $NAMESPACE$
+{
+    public sealed class $NAME$View : $NAME$ViewBase
+    {
+        protected override void OnInitialize()
+        {
+        }
+
+        protected override ValueTask OnInitializeAsync(CancellationToken token)
+        {
+            return default;
+        }
+
+        protected override void OnDispose()
+        {
+        }
+
+        protected override ValueTask OnDisposeAsync(CancellationToken token)
+        {
+            return default;
+        }
+    }
+}</s:String>
+  <s:Boolean x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=B2E94A2F7C8D4F8091D1E3B4C5D6E7F8/Section/=222222222222222222222222222222B3/@KeyIndexDefined">True</s:Boolean>
+  <s:String x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=B2E94A2F7C8D4F8091D1E3B4C5D6E7F8/Section/=222222222222222222222222222222B3/LocationSelectorName/@EntryValue">manual</s:String>
+  <s:String x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=B2E94A2F7C8D4F8091D1E3B4C5D6E7F8/Section/=222222222222222222222222222222B3/LocationSelectorConfig/@EntryValue">&lt;RelativeConfig Folder="$NAME$/Base" File="$NAME$ModelBase.cs" /&gt;</s:String>
+  <s:Int64 x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=B2E94A2F7C8D4F8091D1E3B4C5D6E7F8/Section/=222222222222222222222222222222B3/Order/@EntryValue">2</s:Int64>
+  <s:String x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=B2E94A2F7C8D4F8091D1E3B4C5D6E7F8/Section/=222222222222222222222222222222B3/SectionPlain/Text/@EntryValue">using Azzazelloqq.MVVM.Core;
+
+namespace $NAMESPACE$.Base
+{
+    public abstract class $NAME$ModelBase : ModelBase
+    {
+    }
+}</s:String>
+  <s:Boolean x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=B2E94A2F7C8D4F8091D1E3B4C5D6E7F8/Section/=222222222222222222222222222222B4/@KeyIndexDefined">True</s:Boolean>
+  <s:String x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=B2E94A2F7C8D4F8091D1E3B4C5D6E7F8/Section/=222222222222222222222222222222B4/LocationSelectorName/@EntryValue">manual</s:String>
+  <s:String x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=B2E94A2F7C8D4F8091D1E3B4C5D6E7F8/Section/=222222222222222222222222222222B4/LocationSelectorConfig/@EntryValue">&lt;RelativeConfig Folder="$NAME$/Base" File="$NAME$ViewBase.cs" /&gt;</s:String>
+  <s:Int64 x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=B2E94A2F7C8D4F8091D1E3B4C5D6E7F8/Section/=222222222222222222222222222222B4/Order/@EntryValue">3</s:Int64>
+  <s:String x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=B2E94A2F7C8D4F8091D1E3B4C5D6E7F8/Section/=222222222222222222222222222222B4/SectionPlain/Text/@EntryValue">using Azzazelloqq.MVVM.Core;
+
+namespace $NAMESPACE$.Base
+{
+    public abstract class $NAME$ViewBase : ViewMonoBehavior&lt;$NAME$ViewModelBase&gt;
+    {
+    }
+}</s:String>
+  <s:Boolean x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=B2E94A2F7C8D4F8091D1E3B4C5D6E7F8/Section/=222222222222222222222222222222B5/@KeyIndexDefined">True</s:Boolean>
+  <s:String x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=B2E94A2F7C8D4F8091D1E3B4C5D6E7F8/Section/=222222222222222222222222222222B5/LocationSelectorName/@EntryValue">manual</s:String>
+  <s:String x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=B2E94A2F7C8D4F8091D1E3B4C5D6E7F8/Section/=222222222222222222222222222222B5/LocationSelectorConfig/@EntryValue">&lt;RelativeConfig Folder="$NAME$/Base" File="$NAME$ViewModelBase.cs" /&gt;</s:String>
+  <s:Int64 x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=B2E94A2F7C8D4F8091D1E3B4C5D6E7F8/Section/=222222222222222222222222222222B5/Order/@EntryValue">4</s:Int64>
+  <s:String x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=B2E94A2F7C8D4F8091D1E3B4C5D6E7F8/Section/=222222222222222222222222222222B5/SectionPlain/Text/@EntryValue">using Azzazelloqq.MVVM.Core;
+
+namespace $NAMESPACE$.Base
+{
+    public abstract class $NAME$ViewModelBase : ViewModelBase&lt;$NAME$ModelBase&gt;
+    {
+        protected $NAME$ViewModelBase($NAME$ModelBase model)
+            : base(model)
+        {
+        }
+    }
+}</s:String>
+</wpf:ResourceDictionary>

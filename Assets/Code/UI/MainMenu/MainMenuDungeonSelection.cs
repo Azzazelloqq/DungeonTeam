@@ -1,4 +1,5 @@
 using System;
+using DungeonTeam.Gameplay.DungeonRun.Application;
 
 namespace Code.UI.MainMenu
 {
@@ -27,7 +28,10 @@ namespace Code.UI.MainMenu
 
     public readonly struct MainMenuPlayRequest
     {
-        public MainMenuPlayRequest(string dungeonId, int seed)
+        public MainMenuPlayRequest(
+            string dungeonId,
+            int seed,
+            DungeonRunTeamSelection team)
         {
             if (string.IsNullOrWhiteSpace(dungeonId))
             {
@@ -36,10 +40,13 @@ namespace Code.UI.MainMenu
 
             DungeonId = dungeonId;
             Seed = seed;
+            Team = team ?? throw new ArgumentNullException(nameof(team));
         }
 
         public string DungeonId { get; }
 
         public int Seed { get; }
+
+        public DungeonRunTeamSelection Team { get; }
     }
 }

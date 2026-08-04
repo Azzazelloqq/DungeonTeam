@@ -10,16 +10,38 @@ namespace DungeonTeam.Gameplay.Actors.Runtime.Presentation.Gameplay.Actor
     [RequireComponent(typeof(NavMeshAgent), typeof(ActorCombatFeedback))]
     public sealed class ActorView : ActorViewBase
     {
-        private static readonly Color DeadColor = new(0.2f, 0.2f, 0.2f, 1f);
+        public const string MoveSpeedParameter = "MoveSpeed";
+        public const string AttackParameter = "Attack";
+        public const string HitParameter = "Hit";
+        public const string DeathParameter = "Death";
+
+        private static readonly int MoveSpeedHash = Animator.StringToHash(MoveSpeedParameter);
+        private static readonly int AttackHash = Animator.StringToHash(AttackParameter);
+        private static readonly int HitHash = Animator.StringToHash(HitParameter);
+        private static readonly int DeathHash = Animator.StringToHash(DeathParameter);
 
         [SerializeField]
         private NavMeshAgent _agent;
 
         [SerializeField]
-        private Renderer[] _colorRenderers = Array.Empty<Renderer>();
-
-        [SerializeField]
         private ActorCombatFeedback _combatFeedback;
+
+        [SerializeField, Tooltip(
+            "Optional. Controller parameters: Float MoveSpeed, Triggers Attack, Hit and Death. " +
+            "Root Motion must be disabled.")]
+        private Animator _animator;
+
+        [SerializeField, Tooltip("Optional attachment point for the equipped weapon.")]
+        private Transform _weaponAnchor;
+
+        [SerializeField, Tooltip("Optional origin for hit and damage VFX.")]
+        private Transform _hitVfxAnchor;
+
+        [SerializeField, Tooltip("Optional anchor for health bars and other overhead UI.")]
+        private Transform _overheadAnchor;
+
+        [SerializeField, Min(0f)]
+        private float _moveAnimationDampTime = 0.1f;
 
         private float _movementSpeed;
         private bool _isDirectlyControlled;
@@ -31,7 +53,13 @@ namespace DungeonTeam.Gameplay.Actors.Runtime.Presentation.Gameplay.Actor
         public override bool IsOnNavMesh =>
             _agent != null && _agent.enabled && _agent.isOnNavMesh;
 
-        public override void Configure(Color color, float movementSpeed)
+        public override Transform WeaponAnchor => _weaponAnchor;
+
+        public override Transform HitVfxAnchor => _hitVfxAnchor;
+
+        public override Transform OverheadAnchor => _overheadAnchor;
+
+        public override void Configure(float movementSpeed)
         {
             if (movementSpeed <= 0f)
             {
@@ -40,7 +68,11 @@ namespace DungeonTeam.Gameplay.Actors.Runtime.Presentation.Gameplay.Actor
 
             _agent.speed = movementSpeed;
             _movementSpeed = movementSpeed;
-            _combatFeedback.Configure(_colorRenderers, color);
+            _combatFeedback.Configure();
+            if (_animator != null)
+            {
+                _animator.SetFloat(MoveSpeedHash, 0f);
+            }
         }
 
         public override bool TryMoveTo(Vector3 destination)
@@ -78,6 +110,19 @@ namespace DungeonTeam.Gameplay.Actors.Runtime.Presentation.Gameplay.Actor
             return true;
         }
 
+        public override bool TryFaceTowards(Vector3 targetPosition)
+        {
+            var direction = targetPosition - transform.position;
+            direction.y = 0f;
+            if (direction.sqrMagnitude <= 0.0001f)
+            {
+                return false;
+            }
+
+            transform.rotation = Quaternion.LookRotation(direction, Vector3.up);
+            return true;
+        }
+
         public override void StopMovement()
         {
             if (IsOnNavMesh)
@@ -91,16 +136,16 @@ namespace DungeonTeam.Gameplay.Actors.Runtime.Presentation.Gameplay.Actor
 
         public override void PlayAttackFeedback()
         {
-            _combatFeedback.PlayAttack();
+            _animator?.SetTrigger(AttackHash);
         }
 
-        public override void SetTargetHighlighted(bool isHighlighted)
+        public override void PlayDamageFeedback(int amount, bool isFatal)
         {
-            _combatFeedback.SetTargetHighlighted(isHighlighted);
-        }
+            if (!isFatal)
+            {
+                _animator?.SetTrigger(HitHash);
+            }
 
-        public override void PlayDamageFeedback(int amount)
-        {
             _combatFeedback.PlayDamage(amount);
         }
 
@@ -108,7 +153,15 @@ namespace DungeonTeam.Gameplay.Actors.Runtime.Presentation.Gameplay.Actor
         {
             StopMovement();
             _agent.enabled = false;
-            _combatFeedback.PlayDeath(DeadColor);
+            if (_animator != null)
+            {
+                _animator.SetFloat(MoveSpeedHash, 0f);
+                _animator.ResetTrigger(AttackHash);
+                _animator.ResetTrigger(HitHash);
+                _animator.SetTrigger(DeathHash);
+            }
+
+            enabled = false;
         }
 
         protected override void OnInitialize()
@@ -118,25 +171,14 @@ namespace DungeonTeam.Gameplay.Actors.Runtime.Presentation.Gameplay.Actor
                 throw new InvalidOperationException("Actor View requires a NavMeshAgent binding.");
             }
 
-            if (_colorRenderers == null || _colorRenderers.Length == 0)
-            {
-                throw new InvalidOperationException("Actor View requires at least one color renderer.");
-            }
-
             if (_combatFeedback == null)
             {
                 throw new InvalidOperationException(
                     "Actor View requires an Actor Combat Feedback binding.");
             }
 
-            for (var index = 0; index < _colorRenderers.Length; index++)
-            {
-                if (_colorRenderers[index] == null)
-                {
-                    throw new InvalidOperationException(
-                        $"Actor View color renderer at index {index} is missing.");
-                }
-            }
+            ValidateAnimator();
+            enabled = _animator != null;
         }
 
         protected override ValueTask OnInitializeAsync(CancellationToken token)
@@ -151,6 +193,75 @@ namespace DungeonTeam.Gameplay.Actors.Runtime.Presentation.Gameplay.Actor
         protected override ValueTask OnDisposeAsync(CancellationToken token)
         {
             return default;
+        }
+
+        private void Update()
+        {
+            if (_animator == null || !_animator.isActiveAndEnabled || _movementSpeed <= 0f)
+            {
+                return;
+            }
+
+            var normalizedSpeed = IsOnNavMesh
+                ? Mathf.Clamp01(_agent.velocity.magnitude / _movementSpeed)
+                : 0f;
+            _animator.SetFloat(
+                MoveSpeedHash,
+                normalizedSpeed,
+                _moveAnimationDampTime,
+                Time.deltaTime);
+        }
+
+        private void ValidateAnimator()
+        {
+            if (_animator == null)
+            {
+                return;
+            }
+
+            if (_animator.applyRootMotion)
+            {
+                throw new InvalidOperationException(
+                    "Actor Animator Root Motion must be disabled because movement is " +
+                    "gameplay-authoritative.");
+            }
+
+            RequireAnimatorParameter(
+                MoveSpeedParameter,
+                MoveSpeedHash,
+                AnimatorControllerParameterType.Float);
+            RequireAnimatorParameter(
+                AttackParameter,
+                AttackHash,
+                AnimatorControllerParameterType.Trigger);
+            RequireAnimatorParameter(
+                HitParameter,
+                HitHash,
+                AnimatorControllerParameterType.Trigger);
+            RequireAnimatorParameter(
+                DeathParameter,
+                DeathHash,
+                AnimatorControllerParameterType.Trigger);
+        }
+
+        private void RequireAnimatorParameter(
+            string parameterName,
+            int parameterHash,
+            AnimatorControllerParameterType expectedType)
+        {
+            var parameters = _animator.parameters;
+            for (var index = 0; index < parameters.Length; index++)
+            {
+                var parameter = parameters[index];
+                if (parameter.nameHash == parameterHash && parameter.type == expectedType)
+                {
+                    return;
+                }
+            }
+
+            throw new InvalidOperationException(
+                $"Actor Animator requires parameter '{parameterName}' of type " +
+                $"'{expectedType}'.");
         }
     }
 }

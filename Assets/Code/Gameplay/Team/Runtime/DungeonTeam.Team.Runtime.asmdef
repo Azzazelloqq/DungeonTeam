@@ -5,8 +5,7 @@
     "DungeonTeam.Actors.Domain",
     "DungeonTeam.Actors.Runtime",
     "DungeonTeam.Team.Domain",
-    "TickHandler",
-    "Unity.InputSystem"
+    "TickHandler"
   ],
   "autoReferenced": false
 }

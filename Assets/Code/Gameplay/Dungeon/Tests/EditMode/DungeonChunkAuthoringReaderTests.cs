@@ -1,8 +1,10 @@
+using System;
 using DungeonTeam.Gameplay.Dungeon.Domain;
 using DungeonTeam.Gameplay.Dungeon.Runtime.Authoring;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace DungeonTeam.Gameplay.Dungeon.Tests.EditMode
 {
@@ -50,6 +52,69 @@ namespace DungeonTeam.Gameplay.Dungeon.Tests.EditMode
             {
                 Object.DestroyImmediate(first);
                 Object.DestroyImmediate(second);
+            }
+        }
+
+        [Test]
+        public void RequireEntryPose_EntryPrefab_ReturnsEntryPointMarkerPose()
+        {
+            var prefab = LoadPrefab("DungeonChunkEntry");
+            var marker = prefab.GetComponentInChildren<DungeonEntryPointAuthoring>(true);
+
+            var pose = DungeonChunkAuthoringReader.RequireEntryPose(prefab);
+
+            Assert.That(marker, Is.Not.Null);
+            Assert.That(pose.PositionX, Is.EqualTo(marker.transform.position.x));
+            Assert.That(pose.PositionY, Is.EqualTo(marker.transform.position.y));
+            Assert.That(pose.PositionZ, Is.EqualTo(marker.transform.position.z));
+        }
+
+        [Test]
+        public void RequireExitPose_ExitPrefab_ReturnsExitPointMarkerPose()
+        {
+            var prefab = LoadPrefab("DungeonChunkExit");
+            var marker = prefab.GetComponentInChildren<DungeonExitPointAuthoring>(true);
+
+            var pose = DungeonChunkAuthoringReader.RequireExitPose(prefab);
+
+            Assert.That(marker, Is.Not.Null);
+            Assert.That(pose.PositionX, Is.EqualTo(marker.transform.position.x));
+            Assert.That(pose.PositionY, Is.EqualTo(marker.transform.position.y));
+            Assert.That(pose.PositionZ, Is.EqualTo(marker.transform.position.z));
+        }
+
+        [Test]
+        public void RequireEntryPose_RegularChunk_ThrowsClearAuthoringError()
+        {
+            var prefab = LoadPrefab("DungeonChunkRoom");
+
+            var exception = Assert.Throws<InvalidOperationException>(
+                () => DungeonChunkAuthoringReader.RequireEntryPose(prefab));
+
+            StringAssert.Contains("exactly one entry point marker", exception.Message);
+        }
+
+        [Test]
+        public void RequireExitPose_MultipleExitPoints_ThrowsClearAuthoringError()
+        {
+            var chunk = new GameObject("Chunk");
+            chunk.AddComponent<DungeonChunkAuthoring>();
+            var firstPoint = new GameObject("ExitPointA");
+            var secondPoint = new GameObject("ExitPointB");
+            firstPoint.transform.SetParent(chunk.transform);
+            secondPoint.transform.SetParent(chunk.transform);
+            firstPoint.AddComponent<DungeonExitPointAuthoring>();
+            secondPoint.AddComponent<DungeonExitPointAuthoring>();
+            try
+            {
+                var exception = Assert.Throws<InvalidOperationException>(
+                    () => DungeonChunkAuthoringReader.RequireExitPose(chunk));
+
+                StringAssert.Contains("exactly one exit point marker", exception.Message);
+            }
+            finally
+            {
+                Object.DestroyImmediate(chunk);
             }
         }
 

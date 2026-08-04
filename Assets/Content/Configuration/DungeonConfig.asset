@@ -23,21 +23,22 @@ MonoBehaviour:
     - chunk.demo.mandatory
     _chunkPool:
     - chunk.demo.room
-    _targetChunkCount: 5
+    _targetChunkCount: 7
     _maxGenerationAttempts: 8
   _proceduralDungeons:
   - _dungeonId: dungeon.demo.procedural
     _tileSetId: tileset.demo.procedural
-    _width: 8
-    _height: 8
-    _targetCellCount: 10
-    _mainRouteCellCount: 7
+    _width: 12
+    _height: 12
+    _targetCellCount: 20
+    _mainRouteCellCount: 12
     _maxGenerationAttempts: 8
   _scenarios:
   - _scenarioId: scenario.demo
     _baseThreatBudget: 1
     _enemyCandidates:
-    - _enemyId: enemy.grunt
+    - _enemyId: actor.skeleton.warrior
+      _behaviorId: behavior.enemy.melee.basic
       _cost: 1
       _weight: 1
       _allowedSlotTags:
@@ -55,6 +56,25 @@ MonoBehaviour:
     _requiredObjectives:
     - _objectiveId: objective.exit
       _requiredSlotTag: objective.exit
+    _rewardProfiles:
+    - _profileId: reward.enemy.grunt
+      _entries:
+      - _rewardId: reward.gold
+        _amount: 1
+    - _profileId: reward.common
+      _entries:
+      - _rewardId: reward.gold
+        _amount: 3
+      - _rewardId: reward.crystal
+        _amount: 1
+    - _profileId: reward.completion
+      _entries:
+      - _rewardId: reward.gold
+        _amount: 5
+    _enemyRewardRules:
+    - _enemyId: actor.skeleton.warrior
+      _rewardProfileId: reward.enemy.grunt
+    _completionRewardProfileId: reward.completion
   _difficulties:
   - _difficultyId: normal
     _threatBudgetMultiplier: 1

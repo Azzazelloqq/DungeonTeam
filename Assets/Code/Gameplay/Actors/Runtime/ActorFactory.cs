@@ -8,34 +8,34 @@ namespace DungeonTeam.Gameplay.Actors.Runtime
     public sealed class ActorFactory
     {
         public ActorInstance Create(
-            ActorViewBase prefab,
+            ActorDefinition definition,
             ActorSpawnRequest request,
             Transform parent = null)
         {
-            if (prefab == null)
-            {
-                throw new ArgumentNullException(nameof(prefab));
-            }
+            if (definition == null)
+                throw new ArgumentNullException(nameof(definition));
 
             ActorPresenterBase presenter = null;
             ActorViewBase view = null;
             try
             {
                 view = UnityEngine.Object.Instantiate(
-                    prefab,
+                    definition.Prefab,
                     request.Position,
                     request.Rotation,
                     parent);
                 view.name = request.InstanceName;
 
-                var model = new ActorModel(request.MaximumHealth);
+                var model = new ActorModel(definition.MaximumHealth);
                 presenter = new ActorPresenter(
                     view,
                     model,
-                    request.Color,
-                    request.MovementSpeed);
+                    definition.MovementSpeed);
                 presenter.Initialize();
-                return new ActorInstance(presenter, view.gameObject);
+                return new ActorInstance(
+                    definition.ActorId,
+                    presenter,
+                    view.gameObject);
             }
             catch
             {

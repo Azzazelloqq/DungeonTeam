@@ -19,15 +19,21 @@ namespace DungeonTeam.Gameplay.Actors.Runtime.Presentation.Gameplay.Actor.Base
 
         public abstract bool IsAlive { get; }
 
+        public abstract Transform WeaponAnchor { get; }
+
+        public abstract Transform HitVfxAnchor { get; }
+
+        public abstract Transform OverheadAnchor { get; }
+
         public abstract bool TryMoveTo(Vector3 destination);
 
         public abstract bool SetMoveDirection(Vector3 direction);
 
+        public abstract bool TryFaceTowards(Vector3 targetPosition);
+
         public abstract void StopMovement();
 
         public abstract void PlayAttackFeedback();
-
-        public abstract void SetTargetHighlighted(bool isHighlighted);
 
         public abstract ActorDamageResult ApplyDamage(int amount);
     }

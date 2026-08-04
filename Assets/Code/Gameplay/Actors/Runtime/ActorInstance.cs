@@ -10,13 +10,21 @@ namespace DungeonTeam.Gameplay.Actors.Runtime
         private ActorPresenterBase _presenter;
         private GameObject _gameObject;
 
-        internal ActorInstance(ActorPresenterBase presenter, GameObject gameObject)
+        internal ActorInstance(
+            string actorId,
+            ActorPresenterBase presenter,
+            GameObject gameObject)
         {
+            ActorId = !string.IsNullOrWhiteSpace(actorId)
+                ? actorId
+                : throw new ArgumentException("Actor ID cannot be empty.", nameof(actorId));
             _presenter = presenter ?? throw new ArgumentNullException(nameof(presenter));
             _gameObject = gameObject != null
                 ? gameObject
                 : throw new ArgumentNullException(nameof(gameObject));
         }
+
+        public string ActorId { get; }
 
         public Vector3 Position => RequirePresenter().Position;
 
@@ -26,7 +34,15 @@ namespace DungeonTeam.Gameplay.Actors.Runtime
 
         public bool IsAlive => RequirePresenter().IsAlive;
 
+        public Transform WeaponAnchor => RequirePresenter().WeaponAnchor;
+
+        public Transform HitVfxAnchor => RequirePresenter().HitVfxAnchor;
+
+        public Transform OverheadAnchor => RequirePresenter().OverheadAnchor;
+
         public event Action<ActorInstance> AttackedBy;
+
+        public event Action<ActorInstance> Died;
 
         public bool TryMoveTo(Vector3 destination)
         {
@@ -38,6 +54,11 @@ namespace DungeonTeam.Gameplay.Actors.Runtime
             return RequirePresenter().SetMoveDirection(direction);
         }
 
+        public bool TryFaceTowards(Vector3 targetPosition)
+        {
+            return RequirePresenter().TryFaceTowards(targetPosition);
+        }
+
         public void StopMovement()
         {
             RequirePresenter().StopMovement();
@@ -46,11 +67,6 @@ namespace DungeonTeam.Gameplay.Actors.Runtime
         public void PlayAttackFeedback()
         {
             RequirePresenter().PlayAttackFeedback();
-        }
-
-        public void SetTargetHighlighted(bool isHighlighted)
-        {
-            RequirePresenter().SetTargetHighlighted(isHighlighted);
         }
 
         public ActorDamageResult ApplyDamage(int amount)
@@ -66,6 +82,11 @@ namespace DungeonTeam.Gameplay.Actors.Runtime
                 AttackedBy?.Invoke(attacker);
             }
 
+            if (result == ActorDamageResult.Killed)
+            {
+                Died?.Invoke(this);
+            }
+
             return result;
         }
 
@@ -76,6 +97,7 @@ namespace DungeonTeam.Gameplay.Actors.Runtime
             _presenter = null;
             _gameObject = null;
             AttackedBy = null;
+            Died = null;
             presenter?.Dispose();
 
             if (gameObject == null)

@@ -1,0 +1,13 @@
+{
+  "name": "DungeonTeam.Rewards.Runtime",
+  "rootNamespace": "DungeonTeam.Gameplay.Rewards.Runtime",
+  "references": [
+    "DungeonTeam.Addressables",
+    "DungeonTeam.Configuration",
+    "MVP",
+    "Disposable",
+    "ResourceLoader",
+    "UniTask"
+  ],
+  "autoReferenced": false
+}

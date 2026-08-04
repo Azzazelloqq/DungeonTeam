@@ -6,13 +6,13 @@ namespace DungeonTeam.Gameplay.EnemyAI.Tests
     public sealed class EnemyAiBrainTests
     {
         [Test]
-        public void Evaluate_WhenTargetIsNotVisible_RemainsIdle()
+        public void Evaluate_WhenTargetIsNotDetected_RemainsIdle()
         {
             var brain = CreateBrain();
 
             var state = brain.Evaluate(
                 hasTarget: false,
-                canSeeTarget: false,
+                targetDetected: false,
                 canAttackTarget: false,
                 distanceToTarget: 0f,
                 distanceToHome: 0f);
@@ -21,13 +21,13 @@ namespace DungeonTeam.Gameplay.EnemyAI.Tests
         }
 
         [Test]
-        public void Evaluate_WhenVisibleTargetIsOutsideAttackRange_StartsChasing()
+        public void Evaluate_WhenDetectedTargetIsOutsideAttackRange_StartsChasing()
         {
             var brain = CreateBrain();
 
             var state = brain.Evaluate(
                 hasTarget: true,
-                canSeeTarget: true,
+                targetDetected: true,
                 canAttackTarget: true,
                 distanceToTarget: 5f,
                 distanceToHome: 0f);
@@ -36,13 +36,13 @@ namespace DungeonTeam.Gameplay.EnemyAI.Tests
         }
 
         [Test]
-        public void Evaluate_WhenVisibleTargetIsInsideAttackRange_StartsAttacking()
+        public void Evaluate_WhenDetectedTargetIsInsideAttackRange_StartsAttacking()
         {
             var brain = CreateBrain();
 
             var state = brain.Evaluate(
                 hasTarget: true,
-                canSeeTarget: true,
+                targetDetected: true,
                 canAttackTarget: true,
                 distanceToTarget: 1f,
                 distanceToHome: 0f);
@@ -58,7 +58,7 @@ namespace DungeonTeam.Gameplay.EnemyAI.Tests
 
             var state = brain.Evaluate(
                 hasTarget: true,
-                canSeeTarget: false,
+                targetDetected: false,
                 canAttackTarget: false,
                 distanceToTarget: 6f,
                 distanceToHome: 2f);
@@ -74,7 +74,7 @@ namespace DungeonTeam.Gameplay.EnemyAI.Tests
 
             var state = brain.Evaluate(
                 hasTarget: true,
-                canSeeTarget: false,
+                targetDetected: false,
                 canAttackTarget: false,
                 distanceToTarget: 11f,
                 distanceToHome: 4f);
@@ -90,7 +90,7 @@ namespace DungeonTeam.Gameplay.EnemyAI.Tests
 
             var state = brain.Evaluate(
                 hasTarget: true,
-                canSeeTarget: false,
+                targetDetected: false,
                 canAttackTarget: true,
                 distanceToTarget: 2f,
                 distanceToHome: 2f);
@@ -106,7 +106,7 @@ namespace DungeonTeam.Gameplay.EnemyAI.Tests
 
             var state = brain.Evaluate(
                 hasTarget: true,
-                canSeeTarget: false,
+                targetDetected: false,
                 canAttackTarget: false,
                 distanceToTarget: 1f,
                 distanceToHome: 2f);
@@ -123,7 +123,7 @@ namespace DungeonTeam.Gameplay.EnemyAI.Tests
 
             var state = brain.Evaluate(
                 hasTarget: false,
-                canSeeTarget: false,
+                targetDetected: false,
                 canAttackTarget: false,
                 distanceToTarget: 0f,
                 distanceToHome: 0.25f);
@@ -132,7 +132,7 @@ namespace DungeonTeam.Gameplay.EnemyAI.Tests
         }
 
         [Test]
-        public void Evaluate_WhileReturningAndNewTargetIsVisible_StartsChasing()
+        public void Evaluate_WhileReturningAndNewTargetIsDetected_StartsChasing()
         {
             var brain = CreateBrain();
             brain.Evaluate(true, true, true, distanceToTarget: 5f, distanceToHome: 0f);
@@ -140,7 +140,7 @@ namespace DungeonTeam.Gameplay.EnemyAI.Tests
 
             var state = brain.Evaluate(
                 hasTarget: true,
-                canSeeTarget: true,
+                targetDetected: true,
                 canAttackTarget: true,
                 distanceToTarget: 4f,
                 distanceToHome: 3f);

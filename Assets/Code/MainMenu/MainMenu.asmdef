@@ -5,6 +5,7 @@
     "UniTask",
     "DungeonTeam.Addressables",
     "DungeonTeam.MainMenu",
+    "DungeonTeam.DungeonRun.Application",
     "DungeonTeam.UIService",
     "MVVM.Core",
     "Disposable"

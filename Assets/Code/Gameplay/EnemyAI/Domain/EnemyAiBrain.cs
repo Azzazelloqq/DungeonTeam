@@ -45,7 +45,7 @@ namespace DungeonTeam.Gameplay.EnemyAI.Domain
 
         public EnemyAiState Evaluate(
             bool hasTarget,
-            bool canSeeTarget,
+            bool targetDetected,
             bool canAttackTarget,
             float distanceToTarget,
             float distanceToHome)
@@ -64,7 +64,7 @@ namespace DungeonTeam.Gameplay.EnemyAI.Domain
             {
                 EnemyAiState.Idle => EvaluateIdle(
                     hasTarget,
-                    canSeeTarget,
+                    targetDetected,
                     canAttackTarget,
                     distanceToTarget),
                 EnemyAiState.Chase or EnemyAiState.Attack => EvaluateEngaged(
@@ -73,7 +73,7 @@ namespace DungeonTeam.Gameplay.EnemyAI.Domain
                     distanceToTarget),
                 EnemyAiState.Return => EvaluateReturn(
                     hasTarget,
-                    canSeeTarget,
+                    targetDetected,
                     canAttackTarget,
                     distanceToTarget,
                     distanceToHome),
@@ -85,11 +85,11 @@ namespace DungeonTeam.Gameplay.EnemyAI.Domain
 
         private EnemyAiState EvaluateIdle(
             bool hasTarget,
-            bool canSeeTarget,
+            bool targetDetected,
             bool canAttackTarget,
             float distanceToTarget)
         {
-            return hasTarget && canSeeTarget
+            return hasTarget && targetDetected
                 ? EvaluateCombatDistance(distanceToTarget, canAttackTarget)
                 : EnemyAiState.Idle;
         }
@@ -109,12 +109,12 @@ namespace DungeonTeam.Gameplay.EnemyAI.Domain
 
         private EnemyAiState EvaluateReturn(
             bool hasTarget,
-            bool canSeeTarget,
+            bool targetDetected,
             bool canAttackTarget,
             float distanceToTarget,
             float distanceToHome)
         {
-            if (hasTarget && canSeeTarget)
+            if (hasTarget && targetDetected)
             {
                 return EvaluateCombatDistance(distanceToTarget, canAttackTarget);
             }

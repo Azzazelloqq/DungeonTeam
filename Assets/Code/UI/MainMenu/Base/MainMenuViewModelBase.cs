@@ -1,5 +1,7 @@
+using System.Collections.Generic;
 using Azzazelloqq.MVVM.Core;
 using Azzazelloqq.MVVM.ReactiveLibrary;
+using Code.UI.MainMenu.TeamMemberSelection.Base;
 
 namespace Code.UI.MainMenu
 {
@@ -18,6 +20,12 @@ namespace Code.UI.MainMenu
         public abstract IReadOnlyReactiveProperty<string> SeedLabel { get; }
 
         public abstract IReadOnlyReactiveProperty<string> PreviewSummary { get; }
+
+        public abstract IReadOnlyReactiveProperty<string> TeamSummary { get; }
+
+        public abstract IReadOnlyReactiveProperty<bool> CanPlay { get; }
+
+        public abstract IReadOnlyList<MainMenuTeamMemberViewModelBase> TeamMembers { get; }
 
         public abstract IActionCommand PlayCommand { get; }
 

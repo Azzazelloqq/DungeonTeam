@@ -1,5 +1,4 @@
 using System;
-using DungeonTeam.Gameplay.Actors.Runtime.Presentation.Gameplay.Actor.Base;
 using DungeonTeam.Gameplay.ContextActions.Runtime;
 using DungeonTeam.Gameplay.ContextActions.Runtime.Base;
 using UnityEngine;
@@ -10,117 +9,132 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
     public sealed class DungeonRunBindings
     {
         [SerializeField]
-        private ActorViewBase _actorPrefab;
-
-        [SerializeField]
         private ContextActionsViewBase _contextActionsPrefab;
 
-        [SerializeField]
-        private GreyboxActorSettings _leader = new(
-            maximumHealth: 100,
-            movementSpeed: 4f,
-            color: new Color(0.2f, 0.55f, 1f));
+        [SerializeField, Min(0.1f)]
+        private float _rewardPickupDistance = 2f;
 
-        [SerializeField]
-        private GreyboxActorSettings _companion = new(
-            maximumHealth: 80,
-            movementSpeed: 4f,
-            color: new Color(0.2f, 1f, 0.4f));
+        [SerializeField, Min(0.1f)]
+        private float _chestOpenDistance = 2f;
 
-        [SerializeField]
-        private GreyboxActorSettings _enemy = new(
-            maximumHealth: 60,
-            movementSpeed: 3.5f,
-            color: new Color(1f, 0.25f, 0.2f));
+        [SerializeField, Min(0.1f)]
+        private float _exitDistance = 2f;
 
-        [SerializeField]
-        private Vector3 _companionOffset = new(1.25f, 0f, -1.25f);
+        [SerializeField, Min(0.1f)]
+        private float _companionSpawnSpacing = 1.25f;
+
+        [SerializeField, Min(0.1f)]
+        private float _companionSpawnRowSpacing = 1.25f;
+
+        [SerializeField, Range(0.01f, 0.5f)]
+        [Tooltip("Wall cutout radius relative to screen height.")]
+        private float _wallOcclusionRadius = 0.18f;
+
+        [SerializeField, Range(0f, 0.2f)]
+        [Tooltip("Dithered cutout edge width relative to screen height.")]
+        private float _wallOcclusionFeather = 0.025f;
+
+        [SerializeField, Min(0f)]
+        [Tooltip("Minimum camera-space gap between a wall and a hero.")]
+        private float _wallOcclusionDepthBias = 0.1f;
+
+        [SerializeField, Min(0f)]
+        [Tooltip("Vertical offset from each hero origin to the cutout center.")]
+        private float _wallOcclusionTargetHeight = 1f;
 
         public DungeonRunBindings()
         {
         }
 
-        public DungeonRunBindings(
-            ActorViewBase actorPrefab,
-            ContextActionsViewBase contextActionsPrefab)
+        public DungeonRunBindings(ContextActionsViewBase contextActionsPrefab)
         {
-            _actorPrefab = actorPrefab != null
-                ? actorPrefab
-                : throw new ArgumentNullException(nameof(actorPrefab));
             _contextActionsPrefab = contextActionsPrefab != null
                 ? contextActionsPrefab
                 : throw new ArgumentNullException(nameof(contextActionsPrefab));
         }
 
-        internal ActorViewBase ActorPrefab => _actorPrefab;
         internal ContextActionsViewBase ContextActionsPrefab => _contextActionsPrefab;
-        internal GreyboxActorSettings Leader => _leader;
-        internal GreyboxActorSettings Companion => _companion;
-        internal GreyboxActorSettings Enemy => _enemy;
-        internal Vector3 CompanionOffset => _companionOffset;
+        internal float RewardPickupDistance => _rewardPickupDistance;
+        internal float ChestOpenDistance => _chestOpenDistance;
+        internal float ExitDistance => _exitDistance;
+        internal Vector3 GetCompanionSpawnOffset(int companionIndex)
+        {
+            if (companionIndex < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(companionIndex));
+            }
+
+            var row = companionIndex / 2 + 1;
+            var side = companionIndex % 2 == 0 ? 1f : -1f;
+            return new Vector3(
+                side * _companionSpawnSpacing,
+                0f,
+                -row * _companionSpawnRowSpacing);
+        }
+        internal float WallOcclusionRadius => _wallOcclusionRadius;
+        internal float WallOcclusionFeather => _wallOcclusionFeather;
+        internal float WallOcclusionDepthBias => _wallOcclusionDepthBias;
+        internal float WallOcclusionTargetHeight => _wallOcclusionTargetHeight;
 
         internal void Validate()
         {
-            if (_actorPrefab == null)
-            {
-                throw new InvalidOperationException("Dungeon Run requires an Actor prefab binding.");
-            }
-
             if (_contextActionsPrefab == null)
             {
                 throw new InvalidOperationException(
                     "Dungeon Run requires a Context Actions prefab binding.");
             }
 
-            RequireSettings(_leader, nameof(_leader)).Validate(nameof(_leader));
-            RequireSettings(_companion, nameof(_companion)).Validate(nameof(_companion));
-            RequireSettings(_enemy, nameof(_enemy)).Validate(nameof(_enemy));
-        }
-
-        private static GreyboxActorSettings RequireSettings(
-            GreyboxActorSettings settings,
-            string fieldName)
-        {
-            return settings ?? throw new InvalidOperationException(
-                $"Dungeon Run actor settings '{fieldName}' are missing.");
-        }
-    }
-
-    [Serializable]
-    internal sealed class GreyboxActorSettings
-    {
-        [SerializeField, Min(1)]
-        private int _maximumHealth = 1;
-
-        [SerializeField, Min(0.1f)]
-        private float _movementSpeed = 1f;
-
-        [SerializeField]
-        private Color _color = Color.white;
-
-        public GreyboxActorSettings(int maximumHealth, float movementSpeed, Color color)
-        {
-            _maximumHealth = maximumHealth;
-            _movementSpeed = movementSpeed;
-            _color = color;
-        }
-
-        public int MaximumHealth => _maximumHealth;
-        public float MovementSpeed => _movementSpeed;
-        public Color Color => _color;
-
-        public void Validate(string fieldName)
-        {
-            if (_maximumHealth <= 0)
+            if (_rewardPickupDistance <= 0f)
             {
                 throw new InvalidOperationException(
-                    $"Dungeon Run actor settings '{fieldName}' require positive health.");
+                    "Dungeon Run reward pickup distance must be positive.");
             }
 
-            if (_movementSpeed <= 0f)
+            if (_chestOpenDistance <= 0f)
             {
                 throw new InvalidOperationException(
-                    $"Dungeon Run actor settings '{fieldName}' require positive movement speed.");
+                    "Dungeon Run chest open distance must be positive.");
+            }
+
+            if (_exitDistance <= 0f)
+            {
+                throw new InvalidOperationException(
+                    "Dungeon Run exit distance must be positive.");
+            }
+
+            if (_companionSpawnSpacing <= 0f || _companionSpawnRowSpacing <= 0f)
+            {
+                throw new InvalidOperationException(
+                    "Dungeon Run companion spawn spacing must be positive.");
+            }
+
+            ValidateWallOcclusionSettings();
+        }
+
+        internal void ValidateWallOcclusionSettings()
+        {
+            if (_wallOcclusionRadius <= 0f)
+            {
+                throw new InvalidOperationException(
+                    "Dungeon Run wall occlusion radius must be positive.");
+            }
+
+            if (_wallOcclusionFeather < 0f)
+            {
+                throw new InvalidOperationException(
+                    "Dungeon Run wall occlusion feather cannot be negative.");
+            }
+
+            if (_wallOcclusionDepthBias < 0f)
+            {
+                throw new InvalidOperationException(
+                    "Dungeon Run wall occlusion depth bias cannot be negative.");
+            }
+
+            if (_wallOcclusionTargetHeight < 0f)
+            {
+                throw new InvalidOperationException(
+                    "Dungeon Run wall occlusion target height cannot be negative.");
             }
         }
     }

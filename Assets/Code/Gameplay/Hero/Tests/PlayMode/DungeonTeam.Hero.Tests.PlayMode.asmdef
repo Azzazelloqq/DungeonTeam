@@ -1,0 +1,16 @@
+{
+  "name": "DungeonTeam.Hero.Tests.PlayMode",
+  "rootNamespace": "DungeonTeam.Gameplay.Hero.Tests.PlayMode",
+  "references": [
+    "DungeonTeam.Actors.Domain",
+    "DungeonTeam.Actors.Runtime",
+    "DungeonTeam.Hero.Runtime",
+    "Disposable",
+    "MVP",
+    "TickHandler"
+  ],
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ],
+  "autoReferenced": false
+}

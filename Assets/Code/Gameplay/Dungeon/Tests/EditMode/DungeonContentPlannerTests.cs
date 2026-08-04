@@ -23,6 +23,7 @@ namespace DungeonTeam.Gameplay.Dungeon.Tests.EditMode
                         DungeonPlacementMode.Fixed,
                         null,
                         "enemy.designer",
+                        "behavior.enemy.designer",
                         "encounter.designer",
                         Pose)
                 },
@@ -37,11 +38,28 @@ namespace DungeonTeam.Gameplay.Dungeon.Tests.EditMode
                         Pose)
                 },
                 Array.Empty<ObjectivePlacement>(),
-                CreateEmptyScenario(),
+                new DungeonScenario(
+                    "scenario",
+                    threatBudget: 0,
+                    Array.Empty<EnemyCandidate>(),
+                    Array.Empty<InterestPointRule>(),
+                    Array.Empty<string>(),
+                    Array.Empty<RequiredObjective>(),
+                    new[]
+                    {
+                        new DungeonRewardProfile(
+                            "reward.designer",
+                            new[] { new DungeonRewardEntry("reward.gold", 2) })
+                    },
+                    Array.Empty<EnemyRewardRule>(),
+                    completionRewardProfileId: null),
                 CreateNormalDifficulty());
 
             Assert.That(plan.EnemySpawns, Has.Count.EqualTo(1));
             Assert.That(plan.EnemySpawns[0].EnemyId, Is.EqualTo("enemy.designer"));
+            Assert.That(
+                plan.EnemySpawns[0].BehaviorId,
+                Is.EqualTo("behavior.enemy.designer"));
             Assert.That(plan.EnemySpawns[0].EncounterGroupId, Is.EqualTo("encounter.designer"));
             Assert.That(plan.InterestPointSpawns, Has.Count.EqualTo(1));
             Assert.That(plan.InterestPointSpawns[0].InterestPointId, Is.EqualTo("interest.designer"));
@@ -59,6 +77,7 @@ namespace DungeonTeam.Gameplay.Dungeon.Tests.EditMode
                     DungeonPlacementMode.OptionalFixed,
                     null,
                     "enemy.disabled",
+                    "behavior.enemy.disabled",
                     null,
                     Pose),
                 new EnemyPlacement(
@@ -67,6 +86,7 @@ namespace DungeonTeam.Gameplay.Dungeon.Tests.EditMode
                     DungeonPlacementMode.OptionalFixed,
                     null,
                     "enemy.enabled",
+                    "behavior.enemy.enabled",
                     null,
                     Pose)
             };
@@ -88,6 +108,9 @@ namespace DungeonTeam.Gameplay.Dungeon.Tests.EditMode
 
             Assert.That(plan.EnemySpawns, Has.Count.EqualTo(1));
             Assert.That(plan.EnemySpawns[0].EnemyId, Is.EqualTo("enemy.enabled"));
+            Assert.That(
+                plan.EnemySpawns[0].BehaviorId,
+                Is.EqualTo("behavior.enemy.enabled"));
             Assert.That(plan.EnemySpawns[0].PlacementId, Is.EqualTo("chunk0.enemy-enabled"));
         }
 
@@ -97,16 +120,40 @@ namespace DungeonTeam.Gameplay.Dungeon.Tests.EditMode
             var planner = new DungeonContentPlanner();
             var placements = new[]
             {
-                new EnemyPlacement("slot-1", DungeonPlacementMode.Slot, "melee", null, "encounter", Pose),
-                new EnemyPlacement("slot-2", DungeonPlacementMode.Slot, "melee", null, "encounter", Pose)
+                new EnemyPlacement(
+                    "slot-1",
+                    DungeonPlacementMode.Slot,
+                    "melee",
+                    null,
+                    null,
+                    "encounter",
+                    Pose),
+                new EnemyPlacement(
+                    "slot-2",
+                    DungeonPlacementMode.Slot,
+                    "melee",
+                    null,
+                    null,
+                    "encounter",
+                    Pose)
             };
             var scenario = new DungeonScenario(
                 "scenario",
                 threatBudget: 1,
                 new[]
                 {
-                    new EnemyCandidate("enemy.ranged", cost: 1, weight: 1, new[] { "ranged" }),
-                    new EnemyCandidate("enemy.melee", cost: 1, weight: 1, new[] { "melee" })
+                    new EnemyCandidate(
+                        "enemy.ranged",
+                        "behavior.enemy.ranged",
+                        cost: 1,
+                        weight: 1,
+                        new[] { "ranged" }),
+                    new EnemyCandidate(
+                        "enemy.melee",
+                        "behavior.enemy.melee",
+                        cost: 1,
+                        weight: 1,
+                        new[] { "melee" })
                 },
                 Array.Empty<InterestPointRule>(),
                 Array.Empty<string>(),
@@ -122,6 +169,9 @@ namespace DungeonTeam.Gameplay.Dungeon.Tests.EditMode
 
             Assert.That(plan.EnemySpawns, Has.Count.EqualTo(1));
             Assert.That(plan.EnemySpawns[0].EnemyId, Is.EqualTo("enemy.melee"));
+            Assert.That(
+                plan.EnemySpawns[0].BehaviorId,
+                Is.EqualTo("behavior.enemy.melee"));
         }
 
         [Test]
@@ -157,7 +207,15 @@ namespace DungeonTeam.Gameplay.Dungeon.Tests.EditMode
                         })
                 },
                 Array.Empty<string>(),
-                Array.Empty<RequiredObjective>());
+                Array.Empty<RequiredObjective>(),
+                new[]
+                {
+                    new DungeonRewardProfile(
+                        "reward.common",
+                        new[] { new DungeonRewardEntry("reward.gold", 2) })
+                },
+                Array.Empty<EnemyRewardRule>(),
+                completionRewardProfileId: null);
             var difficulty = new DungeonDifficulty(
                 "normal",
                 threatBudgetMultiplier: 1f,
@@ -175,7 +233,87 @@ namespace DungeonTeam.Gameplay.Dungeon.Tests.EditMode
             Assert.That(plan.InterestPointSpawns, Has.Count.EqualTo(1));
             Assert.That(plan.InterestPointSpawns[0].InterestPointId, Is.EqualTo("interest.chest"));
             Assert.That(plan.InterestPointSpawns[0].RewardProfileId, Is.EqualTo("reward.common"));
+            Assert.That(plan.InterestPointSpawns[0].Rewards[0].RewardId, Is.EqualTo("reward.gold"));
+            Assert.That(plan.InterestPointSpawns[0].Rewards[0].Amount, Is.EqualTo(3));
             Assert.That(plan.RewardBudgetMultiplier, Is.EqualTo(1.5f));
+        }
+
+        [Test]
+        public void Build_WithScenarioRewards_ResolvesEnemyAndCompletionRewards()
+        {
+            var planner = new DungeonContentPlanner();
+            var scenario = new DungeonScenario(
+                "scenario",
+                threatBudget: 0,
+                Array.Empty<EnemyCandidate>(),
+                Array.Empty<InterestPointRule>(),
+                Array.Empty<string>(),
+                Array.Empty<RequiredObjective>(),
+                new[]
+                {
+                    new DungeonRewardProfile(
+                        "reward.enemy",
+                        new[] { new DungeonRewardEntry("reward.gold", 2) }),
+                    new DungeonRewardProfile(
+                        "reward.completion",
+                        new[] { new DungeonRewardEntry("reward.crystal", 1) })
+                },
+                new[] { new EnemyRewardRule("enemy.grunt", "reward.enemy") },
+                "reward.completion");
+            var difficulty = new DungeonDifficulty(
+                "hard",
+                threatBudgetMultiplier: 1f,
+                interestPointCountMultiplier: 1f,
+                rewardBudgetMultiplier: 2f);
+
+            var plan = planner.Build(
+                seed: 42,
+                new[]
+                {
+                    new EnemyPlacement(
+                        "enemy-fixed",
+                        DungeonPlacementMode.Fixed,
+                        null,
+                        "enemy.grunt",
+                        "behavior.enemy.melee",
+                        null,
+                        Pose)
+                },
+                Array.Empty<InterestPointPlacement>(),
+                Array.Empty<ObjectivePlacement>(),
+                scenario,
+                difficulty);
+
+            Assert.That(plan.EnemySpawns[0].Rewards[0].RewardId, Is.EqualTo("reward.gold"));
+            Assert.That(plan.EnemySpawns[0].Rewards[0].Amount, Is.EqualTo(4));
+            Assert.That(plan.CompletionRewards[0].RewardId, Is.EqualTo("reward.crystal"));
+            Assert.That(plan.CompletionRewards[0].Amount, Is.EqualTo(2));
+        }
+
+        [TestCase(DungeonPlacementMode.Fixed)]
+        [TestCase(DungeonPlacementMode.OptionalFixed)]
+        public void CreateEnemyPlacement_WithFixedModeAndMissingBehaviorId_Throws(
+            DungeonPlacementMode mode)
+        {
+            Assert.Throws<ArgumentException>(() => new EnemyPlacement(
+                "enemy-fixed",
+                mode,
+                slotTag: null,
+                fixedEnemyId: "enemy.grunt",
+                fixedBehaviorId: null,
+                encounterGroupId: null,
+                Pose));
+        }
+
+        [Test]
+        public void CreateEnemyCandidate_WithMissingBehaviorId_Throws()
+        {
+            Assert.Throws<ArgumentException>(() => new EnemyCandidate(
+                "enemy.grunt",
+                behaviorId: null,
+                cost: 1,
+                weight: 1,
+                new[] { "enemy.common" }));
         }
 
         [Test]

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using DungeonTeam.Gameplay.Actors.Domain;
 using DungeonTeam.Gameplay.Actors.Runtime;
 using DungeonTeam.Gameplay.EnemyAI.Domain;
@@ -12,8 +13,7 @@ namespace DungeonTeam.Gameplay.EnemyAI.Runtime
         private const float DestinationUpdateDistance = 0.5f;
 
         private readonly ActorInstance _enemy;
-        private readonly ActorInstance _leader;
-        private readonly ActorInstance _companion;
+        private readonly ActorInstance[] _targets;
         private readonly ITickHandler _tickHandler;
         private readonly EnemyAiSettings _settings;
         private readonly EnemyAiBrain _brain;
@@ -26,19 +26,37 @@ namespace DungeonTeam.Gameplay.EnemyAI.Runtime
         private Vector3 _lastDestination;
         private bool _hasDestination;
         private bool _isMoving;
+        private bool _wasProvoked;
         private bool _isInitialized;
         private bool _isDisposed;
 
         public EnemyAiController(
             ActorInstance enemy,
-            ActorInstance leader,
-            ActorInstance companion,
+            IReadOnlyList<ActorInstance> targets,
             ITickHandler tickHandler,
             EnemyAiSettings settings)
         {
             _enemy = enemy ?? throw new ArgumentNullException(nameof(enemy));
-            _leader = leader ?? throw new ArgumentNullException(nameof(leader));
-            _companion = companion ?? throw new ArgumentNullException(nameof(companion));
+            if (targets == null)
+            {
+                throw new ArgumentNullException(nameof(targets));
+            }
+
+            if (targets.Count == 0)
+            {
+                throw new ArgumentException(
+                    "Enemy AI requires at least one target.",
+                    nameof(targets));
+            }
+
+            _targets = new ActorInstance[targets.Count];
+            for (var index = 0; index < targets.Count; index++)
+            {
+                _targets[index] = targets[index] ?? throw new ArgumentException(
+                    $"Enemy AI target at index {index} is missing.",
+                    nameof(targets));
+            }
+
             _tickHandler = tickHandler ?? throw new ArgumentNullException(nameof(tickHandler));
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
             _settings.Validate();
@@ -67,6 +85,7 @@ namespace DungeonTeam.Gameplay.EnemyAI.Runtime
             _visionArea = new EnemyVisionArea(_settings);
             UpdateVisionArea(deltaTime: 0f);
             _tickHandler.SubscribeOnFrameUpdate(OnFrameUpdate);
+            _enemy.AttackedBy += OnAttacked;
             _isInitialized = true;
         }
 
@@ -80,6 +99,7 @@ namespace DungeonTeam.Gameplay.EnemyAI.Runtime
             _isDisposed = true;
             if (_isInitialized)
             {
+                _enemy.AttackedBy -= OnAttacked;
                 _tickHandler.UnsubscribeOnFrameUpdate(OnFrameUpdate);
                 _enemy.StopMovement();
             }
@@ -87,6 +107,7 @@ namespace DungeonTeam.Gameplay.EnemyAI.Runtime
             _visionArea?.Dispose();
             _visionArea = null;
             _target = null;
+            _wasProvoked = false;
         }
 
         private void OnFrameUpdate(float deltaTime)
@@ -100,6 +121,8 @@ namespace DungeonTeam.Gameplay.EnemyAI.Runtime
 
             _visionArea.SetVisible(true);
             var targetWasSeen = AcquireTargetIfNeeded();
+            var targetWasProvoked = _wasProvoked;
+            _wasProvoked = false;
             var hasTarget = _target != null && _target.IsAlive;
             var targetDistance = hasTarget
                 ? PlanarDistance(_enemy.Position, _target.Position)
@@ -111,7 +134,7 @@ namespace DungeonTeam.Gameplay.EnemyAI.Runtime
 
             var state = _brain.Evaluate(
                 hasTarget,
-                targetWasSeen,
+                targetWasSeen || targetWasProvoked,
                 canAttackTarget,
                 targetDistance,
                 distanceToHome);
@@ -126,6 +149,7 @@ namespace DungeonTeam.Gameplay.EnemyAI.Runtime
                     break;
                 case EnemyAiState.Attack:
                     StopMovement();
+                    _enemy.TryFaceTowards(_target.Position);
                     if (shouldAttack)
                     {
                         AttackTarget();
@@ -146,6 +170,23 @@ namespace DungeonTeam.Gameplay.EnemyAI.Runtime
             UpdateVisionArea(deltaTime);
         }
 
+        private void OnAttacked(ActorInstance attacker)
+        {
+            if (!_enemy.IsAlive ||
+                attacker == null ||
+                !attacker.IsAlive ||
+                !IsConfiguredTarget(attacker) ||
+                (_target != null && _target.IsAlive) ||
+                PlanarSqrDistance(_enemy.Position, attacker.Position) >
+                _settings.TargetLossDistance * _settings.TargetLossDistance)
+            {
+                return;
+            }
+
+            _target = attacker;
+            _wasProvoked = true;
+        }
+
         private bool AcquireTargetIfNeeded()
         {
             if (_target != null && _target.IsAlive)
@@ -154,29 +195,41 @@ namespace DungeonTeam.Gameplay.EnemyAI.Runtime
             }
 
             _target = null;
-            var leaderVisible = CanSee(_leader);
-            var companionVisible = CanSee(_companion);
-            if (!leaderVisible && !companionVisible)
+            var nearestDistanceSqr = float.MaxValue;
+            for (var index = 0; index < _targets.Length; index++)
             {
-                return false;
+                var candidate = _targets[index];
+                if (!CanSee(candidate))
+                {
+                    continue;
+                }
+
+                var distanceSqr = PlanarSqrDistance(
+                    _enemy.Position,
+                    candidate.Position);
+                if (distanceSqr >= nearestDistanceSqr)
+                {
+                    continue;
+                }
+
+                nearestDistanceSqr = distanceSqr;
+                _target = candidate;
             }
 
-            if (!leaderVisible)
+            return _target != null;
+        }
+
+        private bool IsConfiguredTarget(ActorInstance actor)
+        {
+            for (var index = 0; index < _targets.Length; index++)
             {
-                _target = _companion;
-            }
-            else if (!companionVisible)
-            {
-                _target = _leader;
-            }
-            else
-            {
-                var leaderDistance = PlanarSqrDistance(_enemy.Position, _leader.Position);
-                var companionDistance = PlanarSqrDistance(_enemy.Position, _companion.Position);
-                _target = leaderDistance <= companionDistance ? _leader : _companion;
+                if (ReferenceEquals(_targets[index], actor))
+                {
+                    return true;
+                }
             }
 
-            return true;
+            return false;
         }
 
         private bool CanSee(ActorInstance candidate)

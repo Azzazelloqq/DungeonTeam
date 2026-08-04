@@ -3,8 +3,12 @@
   "rootNamespace": "DungeonTeam.Gameplay.Actors.Runtime",
   "references": [
     "DungeonTeam.Actors.Domain",
+    "DungeonTeam.Addressables",
+    "DungeonTeam.Configuration",
     "MVP",
     "Disposable",
+    "ResourceLoader",
+    "UniTask",
     "Unity.TextMeshPro"
   ],
   "autoReferenced": false

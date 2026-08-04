@@ -4,6 +4,7 @@ using Code.Addressables.Generated;
 using Code.UI.MainMenu;
 using Code.UIService;
 using Cysharp.Threading.Tasks;
+using DungeonTeam.Gameplay.DungeonRun.Application;
 using RootPattern;
 
 namespace Code.MainMenu
@@ -11,6 +12,7 @@ namespace Code.MainMenu
     public sealed class MainMenuRoot : Root
     {
         private readonly IUiService _uiService;
+        private readonly DungeonRunTeamSetup _teamSetup;
         private readonly Action<MainMenuPlayRequest> _playRequested;
         private readonly Action _backRequested;
         private readonly Action _quitConfirmed;
@@ -19,11 +21,13 @@ namespace Code.MainMenu
 
         public MainMenuRoot(
             IUiService uiService,
+            DungeonRunTeamSetup teamSetup,
             Action<MainMenuPlayRequest> playRequested,
             Action backRequested,
             Action quitConfirmed)
         {
             _uiService = uiService ?? throw new ArgumentNullException(nameof(uiService));
+            _teamSetup = teamSetup ?? throw new ArgumentNullException(nameof(teamSetup));
             _playRequested = playRequested ?? throw new ArgumentNullException(nameof(playRequested));
             _backRequested = backRequested ?? throw new ArgumentNullException(nameof(backRequested));
             _quitConfirmed = quitConfirmed ?? throw new ArgumentNullException(nameof(quitConfirmed));
@@ -38,6 +42,7 @@ namespace Code.MainMenu
             _viewModel = new MainMenuViewModel(
                 new MainMenuModel(),
                 CreateDungeonOptions(),
+                _teamSetup,
                 _playRequested,
                 _backRequested,
                 _quitConfirmed);

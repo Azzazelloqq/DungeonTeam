@@ -1,4 +1,4 @@
 interface:
   display_name: "Unity Validation"
-  short_description: "Selects Unity proof levels"
-  default_prompt: "Use $dungeonte-unity-validation to plan validation for this change."
+  short_description: "Selects and runs Unity validation"
+  default_prompt: "Use $dungeonte-unity-validation to choose proof levels and run mechanical checks for this change."

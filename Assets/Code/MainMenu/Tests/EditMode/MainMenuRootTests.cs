@@ -6,6 +6,7 @@ using Code.Addressables.Generated;
 using Code.UI.MainMenu;
 using Code.UIService;
 using Cysharp.Threading.Tasks;
+using DungeonTeam.Gameplay.DungeonRun.Application;
 using NUnit.Framework;
 using UnityEngine;
 using Object = UnityEngine.Object;
@@ -24,6 +25,7 @@ namespace Code.MainMenu.Tests
             var quitRequestCount = 0;
             using var root = new MainMenuRoot(
                 uiService,
+                CreateTeamSetup(),
                 _ => playRequestCount++,
                 () => { },
                 () => quitRequestCount++);
@@ -57,7 +59,12 @@ namespace Code.MainMenu.Tests
             var gameObject = new GameObject("MainMenuView", typeof(FakeMainMenuView));
             var view = gameObject.GetComponent<FakeMainMenuView>();
             var uiService = new FakeUiService(view);
-            var root = new MainMenuRoot(uiService, _ => { }, () => { }, () => { });
+            var root = new MainMenuRoot(
+                uiService,
+                CreateTeamSetup(),
+                _ => { },
+                () => { },
+                () => { });
 
             try
             {
@@ -127,6 +134,21 @@ namespace Code.MainMenu.Tests
             public void Dispose()
             {
             }
+        }
+
+        private static DungeonRunTeamSetup CreateTeamSetup()
+        {
+            return new DungeonRunTeamSetup(
+                new[]
+                {
+                    new DungeonRunTeamMemberOption("actor.king", "KING"),
+                    new DungeonRunTeamMemberOption("actor.druid", "DRUID")
+                },
+                2,
+                2,
+                new DungeonRunTeamSelection(
+                    "actor.king",
+                    new[] { "actor.druid" }));
         }
 
         private sealed class FakeMainMenuView : MainMenuViewBase

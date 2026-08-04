@@ -1,0 +1,19 @@
+{
+  "name": "DungeonTeam.Rewards.Tests.EditMode",
+  "rootNamespace": "DungeonTeam.Gameplay.Rewards.Tests",
+  "references": [
+    "DungeonTeam.Rewards.Runtime",
+    "MVP",
+    "Disposable",
+    "ResourceLoader",
+    "UniTask",
+    "DungeonTeam.Chests.Runtime"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ],
+  "autoReferenced": false
+}

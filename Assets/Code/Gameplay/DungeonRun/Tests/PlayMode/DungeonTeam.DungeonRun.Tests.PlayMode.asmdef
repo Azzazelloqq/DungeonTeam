@@ -4,11 +4,15 @@
   "references": [
     "DungeonTeam.Actors.Domain",
     "DungeonTeam.Actors.Runtime",
+    "DungeonTeam.Chests.Runtime",
     "DungeonTeam.ContextActions.Runtime",
     "DungeonTeam.Dungeon.Application",
     "DungeonTeam.Dungeon.Domain",
+    "DungeonTeam.DungeonRun.Application",
     "DungeonTeam.DungeonRun.Runtime",
     "DungeonTeam.EnemyAI.Runtime",
+    "DungeonTeam.Hero.Runtime",
+    "DungeonTeam.Rewards.Runtime",
     "DungeonTeam.Team.Runtime",
     "MVP",
     "MVVM.Core",
@@ -16,6 +20,7 @@
     "Root",
     "TickHandler",
     "UniTask",
+    "Unity.TextMeshPro",
     "UnityEngine.UI"
   ],
   "optionalUnityReferences": [

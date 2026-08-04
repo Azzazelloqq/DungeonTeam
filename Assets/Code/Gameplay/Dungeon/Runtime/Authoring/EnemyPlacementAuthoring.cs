@@ -18,6 +18,9 @@ namespace DungeonTeam.Gameplay.Dungeon.Runtime.Authoring
         private string _fixedEnemyId;
 
         [SerializeField]
+        private string _fixedBehaviorId;
+
+        [SerializeField]
         private string _encounterGroupId;
 
         internal EnemyPlacement ToDomain(
@@ -30,6 +33,7 @@ namespace DungeonTeam.Gameplay.Dungeon.Runtime.Authoring
                 _mode,
                 _slotTag,
                 _fixedEnemyId,
+                _fixedBehaviorId,
                 runtimeEncounterGroupId,
                 transform.ToDungeonPose());
         }

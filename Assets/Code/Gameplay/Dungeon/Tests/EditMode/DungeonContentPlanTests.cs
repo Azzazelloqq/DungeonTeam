@@ -12,7 +12,12 @@ namespace DungeonTeam.Gameplay.Dungeon.Tests.EditMode
             var pose = new DungeonPose(0f, 0f, 0f, 0f, 0f, 0f, 1f);
             var source = new[]
             {
-                new EnemySpawnPlan("placement-1", "enemy-1", "encounter-1", pose)
+                new EnemySpawnPlan(
+                    "placement-1",
+                    "enemy-1",
+                    "behavior-1",
+                    "encounter-1",
+                    pose)
             };
 
             var plan = new DungeonContentPlan(
@@ -21,9 +26,28 @@ namespace DungeonTeam.Gameplay.Dungeon.Tests.EditMode
                 Array.Empty<ObjectiveSpawnPlan>(),
                 rewardBudgetMultiplier: 1f);
 
-            source[0] = new EnemySpawnPlan("placement-2", "enemy-2", "encounter-2", pose);
+            source[0] = new EnemySpawnPlan(
+                "placement-2",
+                "enemy-2",
+                "behavior-2",
+                "encounter-2",
+                pose);
 
             Assert.That(plan.EnemySpawns[0].EnemyId, Is.EqualTo("enemy-1"));
+            Assert.That(plan.EnemySpawns[0].BehaviorId, Is.EqualTo("behavior-1"));
+        }
+
+        [Test]
+        public void CreateEnemySpawnPlan_WithMissingBehaviorId_Throws()
+        {
+            var pose = new DungeonPose(0f, 0f, 0f, 0f, 0f, 0f, 1f);
+
+            Assert.Throws<ArgumentException>(() => new EnemySpawnPlan(
+                "placement-1",
+                "enemy-1",
+                behaviorId: null,
+                encounterGroupId: null,
+                pose));
         }
 
         [Test]

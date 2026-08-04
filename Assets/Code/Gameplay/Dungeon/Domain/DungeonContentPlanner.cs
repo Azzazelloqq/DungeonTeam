@@ -60,6 +60,10 @@ namespace DungeonTeam.Gameplay.Dungeon.Domain
                 enemySpawns.ToArray(),
                 interestPointSpawns.ToArray(),
                 objectiveSpawns.ToArray(),
+                BuildRewardGrants(
+                    scenario.CompletionRewardProfileId,
+                    scenario,
+                    difficulty.RewardBudgetMultiplier),
                 difficulty.RewardBudgetMultiplier);
         }
 
@@ -82,8 +86,15 @@ namespace DungeonTeam.Gameplay.Dungeon.Domain
                     spawns.Add(new EnemySpawnPlan(
                         placement.PlacementId,
                         placement.FixedEnemyId,
+                        placement.FixedBehaviorId,
                         placement.EncounterGroupId,
-                        placement.Pose));
+                        placement.Pose,
+                        BuildRewardGrants(
+                            ResolveEnemyRewardProfileId(
+                                placement.FixedEnemyId,
+                                scenario.EnemyRewardRules),
+                            scenario,
+                            difficulty.RewardBudgetMultiplier)));
                 }
             }
 
@@ -107,8 +118,15 @@ namespace DungeonTeam.Gameplay.Dungeon.Domain
                 spawns.Add(new EnemySpawnPlan(
                     placement.PlacementId,
                     candidate.EnemyId,
+                    candidate.BehaviorId,
                     placement.EncounterGroupId,
-                    placement.Pose));
+                    placement.Pose,
+                    BuildRewardGrants(
+                        ResolveEnemyRewardProfileId(
+                            candidate.EnemyId,
+                            scenario.EnemyRewardRules),
+                        scenario,
+                        difficulty.RewardBudgetMultiplier)));
                 remainingBudget -= candidate.Cost;
             }
 
@@ -136,7 +154,11 @@ namespace DungeonTeam.Gameplay.Dungeon.Domain
                         placement.PlacementId,
                         placement.FixedInterestPointId,
                         placement.FixedRewardProfileId,
-                        placement.Pose));
+                        placement.Pose,
+                        BuildRewardGrants(
+                            placement.FixedRewardProfileId,
+                            scenario,
+                            difficulty.RewardBudgetMultiplier)));
                     usedPlacements.Add(placement.PlacementId);
                 }
             }
@@ -165,7 +187,11 @@ namespace DungeonTeam.Gameplay.Dungeon.Domain
                         placement.PlacementId,
                         candidate.InterestPointId,
                         candidate.RewardProfileId,
-                        placement.Pose));
+                        placement.Pose,
+                        BuildRewardGrants(
+                            candidate.RewardProfileId,
+                            scenario,
+                            difficulty.RewardBudgetMultiplier)));
                     usedPlacements.Add(placement.PlacementId);
                     targetCount--;
                 }
@@ -303,6 +329,88 @@ namespace DungeonTeam.Gameplay.Dungeon.Domain
             }
 
             throw new InvalidOperationException("Weighted interest point selection failed.");
+        }
+
+        private static string ResolveEnemyRewardProfileId(
+            string enemyId,
+            IReadOnlyList<EnemyRewardRule> rules)
+        {
+            string profileId = null;
+            for (var index = 0; index < rules.Count; index++)
+            {
+                var rule = rules[index];
+                if (!string.Equals(rule.EnemyId, enemyId, StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                if (profileId != null)
+                {
+                    throw new InvalidOperationException(
+                        $"Enemy reward rule for '{enemyId}' is configured more than once.");
+                }
+
+                profileId = rule.RewardProfileId;
+            }
+
+            return profileId;
+        }
+
+        private static DungeonRewardGrantPlan[] BuildRewardGrants(
+            string profileId,
+            DungeonScenario scenario,
+            float rewardBudgetMultiplier)
+        {
+            if (string.IsNullOrWhiteSpace(profileId))
+            {
+                return Array.Empty<DungeonRewardGrantPlan>();
+            }
+
+            DungeonRewardProfile profile = null;
+            for (var index = 0; index < scenario.RewardProfiles.Count; index++)
+            {
+                var candidate = scenario.RewardProfiles[index];
+                if (!string.Equals(candidate.ProfileId, profileId, StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                if (profile != null)
+                {
+                    throw new InvalidOperationException(
+                        $"Reward profile '{profileId}' is configured more than once.");
+                }
+
+                profile = candidate;
+            }
+
+            if (profile == null)
+            {
+                throw new InvalidOperationException(
+                    $"Reward profile '{profileId}' is not configured in scenario " +
+                    $"'{scenario.ScenarioId}'.");
+            }
+
+            var rewardIds = new HashSet<string>(StringComparer.Ordinal);
+            var grants = new List<DungeonRewardGrantPlan>(profile.Entries.Count);
+            for (var index = 0; index < profile.Entries.Count; index++)
+            {
+                var entry = profile.Entries[index];
+                if (!rewardIds.Add(entry.RewardId))
+                {
+                    throw new InvalidOperationException(
+                        $"Reward profile '{profileId}' contains reward '{entry.RewardId}' more " +
+                        "than once.");
+                }
+
+                var amount = (int)Math.Floor(entry.Amount * rewardBudgetMultiplier);
+                if (amount > 0)
+                {
+                    grants.Add(new DungeonRewardGrantPlan(entry.RewardId, amount));
+                }
+            }
+
+            return grants.ToArray();
         }
 
     }

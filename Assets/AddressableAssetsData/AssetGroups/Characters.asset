@@ -1,0 +1,53 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
+  m_Name: Characters
+  m_EditorClassIdentifier: Unity.Addressables.Editor::UnityEditor.AddressableAssets.Settings.AddressableAssetGroup
+  m_GroupName: Characters
+  m_GUID: a93915d2008ef384ebcf17f51862f286
+  m_SerializeEntries:
+  - m_GUID: 00a456c7fcad512429dfd56d6a75eda2
+    m_Address: Characters/CharacterMaleKing
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2444c42dcaa2b104fa803c3179c0faa8
+    m_Address: Characters/CharacterMaleRouge
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6c3bd0cc025b291418aa437e08f32764
+    m_Address: Characters/CharacterSkeletonWarrior
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6e95aa03574f95f428dfc19ac9455918
+    m_Address: Characters/CharacterSkeletonMage
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9fb52cbae5825f04da51ff7b7c388671
+    m_Address: Characters/CharacterMaleWizard
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d89eb11cdf02e0645ab9ec901011f452
+    m_Address: Characters/CharacterFemaleDruid
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  m_ReadOnly: 0
+  m_Settings: {fileID: 11400000, guid: daef036da91545b4e8e92deee338648e, type: 2}
+  m_SchemaSet:
+    m_Schemas:
+    - {fileID: 11400000, guid: 84cdce10f3de2474399d5da5c9143e8d, type: 2}
+    - {fileID: 11400000, guid: 1008d540b6b88d74eb6c3ddabb61ee48, type: 2}

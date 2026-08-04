@@ -4,7 +4,7 @@ using Code.UIService;
 using Cysharp.Threading.Tasks;
 using DungeonTeam.Feedback.Runtime;
 using DungeonTeam.Gameplay.DungeonRun.Runtime;
-using DungeonTeam.Gameplay.EnemyAI.Runtime;
+using DungeonTeam.Gameplay.Hero.Runtime;
 using DungeonTeam.Gameplay.Team.Runtime;
 using UnityEngine;
 
@@ -28,7 +28,7 @@ namespace Code.ApplicationRoot
 		private TeamControlSettings _teamControlSettings = new();
 
 		[SerializeField]
-		private EnemyAiSettings _enemyAiSettings = new();
+		private HeroControlSettings _heroControlSettings = new();
 
 		[SerializeField]
 		private FeedbackRuntimeSettings _feedbackRuntimeSettings = new();
@@ -44,7 +44,7 @@ namespace Code.ApplicationRoot
 				_worldCamera,
 				_dungeonRunBindings,
 				_teamControlSettings,
-				_enemyAiSettings,
+				_heroControlSettings,
 				_feedbackRuntimeSettings);
 
 			try

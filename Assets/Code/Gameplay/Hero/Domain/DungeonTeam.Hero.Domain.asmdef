@@ -1,0 +1,7 @@
+{
+  "name": "DungeonTeam.Hero.Domain",
+  "rootNamespace": "DungeonTeam.Gameplay.Hero.Domain",
+  "references": [],
+  "autoReferenced": false,
+  "noEngineReferences": true
+}

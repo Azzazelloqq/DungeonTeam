@@ -11,19 +11,25 @@ namespace DungeonTeam.Gameplay.Actors.Runtime.Presentation.Gameplay.Actor.Base
 
         public abstract bool IsOnNavMesh { get; }
 
-        public abstract void Configure(Color color, float movementSpeed);
+        public abstract Transform WeaponAnchor { get; }
+
+        public abstract Transform HitVfxAnchor { get; }
+
+        public abstract Transform OverheadAnchor { get; }
+
+        public abstract void Configure(float movementSpeed);
 
         public abstract bool TryMoveTo(Vector3 destination);
 
         public abstract bool SetMoveDirection(Vector3 direction);
 
+        public abstract bool TryFaceTowards(Vector3 targetPosition);
+
         public abstract void StopMovement();
 
         public abstract void PlayAttackFeedback();
 
-        public abstract void SetTargetHighlighted(bool isHighlighted);
-
-        public abstract void PlayDamageFeedback(int amount);
+        public abstract void PlayDamageFeedback(int amount, bool isFatal);
 
         public abstract void PlayDeathFeedback();
     }

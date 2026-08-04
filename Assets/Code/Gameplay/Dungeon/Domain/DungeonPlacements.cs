@@ -16,6 +16,7 @@ namespace DungeonTeam.Gameplay.Dungeon.Domain
             DungeonPlacementMode mode,
             string slotTag,
             string fixedEnemyId,
+            string fixedBehaviorId,
             string encounterGroupId,
             DungeonPose pose)
             : this(
@@ -24,6 +25,7 @@ namespace DungeonTeam.Gameplay.Dungeon.Domain
                 mode,
                 slotTag,
                 fixedEnemyId,
+                fixedBehaviorId,
                 encounterGroupId,
                 pose)
         {
@@ -35,16 +37,18 @@ namespace DungeonTeam.Gameplay.Dungeon.Domain
             DungeonPlacementMode mode,
             string slotTag,
             string fixedEnemyId,
+            string fixedBehaviorId,
             string encounterGroupId,
             DungeonPose pose)
         {
             PlacementId = RequireId(placementId, nameof(placementId));
             AuthoringId = RequireId(authoringId, nameof(authoringId));
-            ValidateMode(mode, slotTag, fixedEnemyId, nameof(fixedEnemyId));
+            ValidateMode(mode, slotTag, fixedEnemyId, fixedBehaviorId);
 
             Mode = mode;
             SlotTag = slotTag;
             FixedEnemyId = fixedEnemyId;
+            FixedBehaviorId = fixedBehaviorId;
             EncounterGroupId = encounterGroupId;
             Pose = pose;
         }
@@ -54,18 +58,26 @@ namespace DungeonTeam.Gameplay.Dungeon.Domain
         public DungeonPlacementMode Mode { get; }
         public string SlotTag { get; }
         public string FixedEnemyId { get; }
+        public string FixedBehaviorId { get; }
         public string EncounterGroupId { get; }
         public DungeonPose Pose { get; }
 
         private static void ValidateMode(
             DungeonPlacementMode mode,
             string slotTag,
-            string fixedContentId,
-            string fixedContentParameterName)
+            string fixedEnemyId,
+            string fixedBehaviorId)
         {
             if (mode == DungeonPlacementMode.Slot)
             {
                 RequireId(slotTag, nameof(slotTag));
+                if (!string.IsNullOrWhiteSpace(fixedEnemyId) ||
+                    !string.IsNullOrWhiteSpace(fixedBehaviorId))
+                {
+                    throw new ArgumentException(
+                        "Slot enemy placement cannot contain fixed enemy or behavior IDs.");
+                }
+
                 return;
             }
 
@@ -74,7 +86,8 @@ namespace DungeonTeam.Gameplay.Dungeon.Domain
                 throw new ArgumentOutOfRangeException(nameof(mode), mode, "Unknown placement mode.");
             }
 
-            RequireId(fixedContentId, fixedContentParameterName);
+            RequireId(fixedEnemyId, nameof(fixedEnemyId));
+            RequireId(fixedBehaviorId, nameof(fixedBehaviorId));
         }
 
         private static string RequireId(string value, string parameterName)

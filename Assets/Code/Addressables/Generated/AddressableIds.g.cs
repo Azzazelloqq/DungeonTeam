@@ -3,6 +3,19 @@ namespace Code.Addressables.Generated
 {
     public static class AddressableIds
     {
+        public static class Characters
+        {
+            public const string CharactersCharacterFemaleDruid = "Characters/CharacterFemaleDruid";
+            public const string CharactersCharacterMaleKing = "Characters/CharacterMaleKing";
+            public const string CharactersCharacterMaleRouge = "Characters/CharacterMaleRouge";
+            public const string CharactersCharacterMaleWizard = "Characters/CharacterMaleWizard";
+            public const string CharactersCharacterSkeletonMage = "Characters/CharacterSkeletonMage";
+            public const string CharactersCharacterSkeletonWarrior = "Characters/CharacterSkeletonWarrior";
+        }
+        public static class Chests
+        {
+            public const string ChestsCommonChest = "Chests/CommonChest";
+        }
         public static class Dungeons
         {
             public const string DungeonChunksEntry = "Dungeon/Chunks/Entry";
@@ -11,6 +24,12 @@ namespace Code.Addressables.Generated
             public const string DungeonChunksRoom = "Dungeon/Chunks/Room";
             public const string DungeonMapsAuthoredDungeonDemo = "Dungeon/Maps/AuthoredDungeonDemo";
             public const string DungeonTileSetsDemo = "Dungeon/TileSets/Demo";
+        }
+        public static class Rewards
+        {
+            public const string RewardsCrystalRewardPickup = "Rewards/CrystalRewardPickup";
+            public const string RewardsGoldRewardPickup = "Rewards/GoldRewardPickup";
+            public const string RewardsRewardPickupSilver = "Rewards/RewardPickupSilver";
         }
         public static class UI
         {

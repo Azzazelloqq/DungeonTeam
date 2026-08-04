@@ -8,17 +8,14 @@ namespace DungeonTeam.Gameplay.Actors.Runtime.Presentation.Gameplay.Actor
 {
     public sealed class ActorPresenter : ActorPresenterBase
     {
-        private readonly Color _color;
         private readonly float _movementSpeed;
 
         public ActorPresenter(
             ActorViewBase view,
             ActorModelBase model,
-            Color color,
             float movementSpeed)
             : base(view, model)
         {
-            _color = color;
             _movementSpeed = movementSpeed;
         }
 
@@ -30,6 +27,12 @@ namespace DungeonTeam.Gameplay.Actors.Runtime.Presentation.Gameplay.Actor
 
         public override bool IsAlive => model.IsAlive;
 
+        public override Transform WeaponAnchor => view.WeaponAnchor;
+
+        public override Transform HitVfxAnchor => view.HitVfxAnchor;
+
+        public override Transform OverheadAnchor => view.OverheadAnchor;
+
         public override bool TryMoveTo(Vector3 destination)
         {
             return model.IsAlive && view.TryMoveTo(destination);
@@ -38,6 +41,11 @@ namespace DungeonTeam.Gameplay.Actors.Runtime.Presentation.Gameplay.Actor
         public override bool SetMoveDirection(Vector3 direction)
         {
             return model.IsAlive && view.SetMoveDirection(direction);
+        }
+
+        public override bool TryFaceTowards(Vector3 targetPosition)
+        {
+            return model.IsAlive && view.TryFaceTowards(targetPosition);
         }
 
         public override void StopMovement()
@@ -53,17 +61,12 @@ namespace DungeonTeam.Gameplay.Actors.Runtime.Presentation.Gameplay.Actor
             }
         }
 
-        public override void SetTargetHighlighted(bool isHighlighted)
-        {
-            view.SetTargetHighlighted(model.IsAlive && isHighlighted);
-        }
-
         public override ActorDamageResult ApplyDamage(int amount)
         {
             var result = model.ApplyDamage(amount);
             if (result != ActorDamageResult.Ignored)
             {
-                view.PlayDamageFeedback(amount);
+                view.PlayDamageFeedback(amount, result == ActorDamageResult.Killed);
             }
 
             if (result == ActorDamageResult.Killed)
@@ -76,7 +79,7 @@ namespace DungeonTeam.Gameplay.Actors.Runtime.Presentation.Gameplay.Actor
 
         protected override void OnInitialize()
         {
-            view.Configure(_color, _movementSpeed);
+            view.Configure(_movementSpeed);
         }
 
         protected override ValueTask OnInitializeAsync(CancellationToken token)

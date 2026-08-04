@@ -3,10 +3,15 @@
   "rootNamespace": "DungeonTeam.Gameplay.DungeonRun.Runtime",
   "references": [
     "DungeonTeam.Actors.Runtime",
+    "DungeonTeam.Chests.Runtime",
     "DungeonTeam.ContextActions.Runtime",
+    "DungeonTeam.Configuration",
     "DungeonTeam.Dungeon.Application",
     "DungeonTeam.Dungeon.Domain",
+    "DungeonTeam.DungeonRun.Application",
     "DungeonTeam.EnemyAI.Runtime",
+    "DungeonTeam.Hero.Runtime",
+    "DungeonTeam.Rewards.Runtime",
     "DungeonTeam.Team.Runtime",
     "Disposable",
     "MVP",
@@ -14,7 +19,9 @@
     "Root",
     "TickHandler",
     "UniTask",
-    "Unity.AI.Navigation"
+    "Unity.AI.Navigation",
+    "Unity.InputSystem",
+    "UnityEngine.UI"
   ],
   "autoReferenced": false
 }

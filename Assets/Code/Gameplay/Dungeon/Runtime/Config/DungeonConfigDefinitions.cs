@@ -107,6 +107,17 @@ namespace DungeonTeam.Gameplay.Dungeon.Runtime.Config
         private RequiredObjectiveDefinition[] _requiredObjectives =
             Array.Empty<RequiredObjectiveDefinition>();
 
+        [SerializeField]
+        private DungeonRewardProfileDefinition[] _rewardProfiles =
+            Array.Empty<DungeonRewardProfileDefinition>();
+
+        [SerializeField]
+        private EnemyRewardRuleDefinition[] _enemyRewardRules =
+            Array.Empty<EnemyRewardRuleDefinition>();
+
+        [SerializeField]
+        private string _completionRewardProfileId;
+
         public string ScenarioId => _scenarioId;
 
         internal DungeonScenario ToDomain()
@@ -123,7 +134,16 @@ namespace DungeonTeam.Gameplay.Dungeon.Runtime.Config
                 Convert(
                     _requiredObjectives,
                     definition => definition.ToDomain(),
-                    nameof(_requiredObjectives)));
+                    nameof(_requiredObjectives)),
+                Convert(
+                    _rewardProfiles,
+                    definition => definition.ToDomain(),
+                    nameof(_rewardProfiles)),
+                Convert(
+                    _enemyRewardRules,
+                    definition => definition.ToDomain(),
+                    nameof(_enemyRewardRules)),
+                _completionRewardProfileId);
         }
 
         private static TResult[] Convert<TDefinition, TResult>(
@@ -160,10 +180,73 @@ namespace DungeonTeam.Gameplay.Dungeon.Runtime.Config
     }
 
     [Serializable]
+    public sealed class DungeonRewardProfileDefinition
+    {
+        [SerializeField]
+        private string _profileId;
+
+        [SerializeField]
+        private DungeonRewardEntryDefinition[] _entries =
+            Array.Empty<DungeonRewardEntryDefinition>();
+
+        internal DungeonRewardProfile ToDomain()
+        {
+            if (_entries == null)
+            {
+                throw new InvalidOperationException(
+                    $"Reward profile '{_profileId}' entries cannot be null.");
+            }
+
+            var entries = new DungeonRewardEntry[_entries.Length];
+            for (var index = 0; index < _entries.Length; index++)
+            {
+                var entry = _entries[index] ?? throw new InvalidOperationException(
+                    $"Reward profile '{_profileId}' has an empty entry at index {index}.");
+                entries[index] = entry.ToDomain();
+            }
+
+            return new DungeonRewardProfile(_profileId, entries);
+        }
+    }
+
+    [Serializable]
+    public sealed class DungeonRewardEntryDefinition
+    {
+        [SerializeField]
+        private string _rewardId;
+
+        [SerializeField, Min(1)]
+        private int _amount = 1;
+
+        internal DungeonRewardEntry ToDomain()
+        {
+            return new DungeonRewardEntry(_rewardId, _amount);
+        }
+    }
+
+    [Serializable]
+    public sealed class EnemyRewardRuleDefinition
+    {
+        [SerializeField]
+        private string _enemyId;
+
+        [SerializeField]
+        private string _rewardProfileId;
+
+        internal EnemyRewardRule ToDomain()
+        {
+            return new EnemyRewardRule(_enemyId, _rewardProfileId);
+        }
+    }
+
+    [Serializable]
     public sealed class EnemyCandidateDefinition
     {
         [SerializeField]
         private string _enemyId;
+
+        [SerializeField]
+        private string _behaviorId;
 
         [SerializeField, Min(1)]
         private int _cost = 1;
@@ -176,7 +259,12 @@ namespace DungeonTeam.Gameplay.Dungeon.Runtime.Config
 
         internal EnemyCandidate ToDomain()
         {
-            return new EnemyCandidate(_enemyId, _cost, _weight, _allowedSlotTags);
+            return new EnemyCandidate(
+                _enemyId,
+                _behaviorId,
+                _cost,
+                _weight,
+                _allowedSlotTags);
         }
     }
 

@@ -1,0 +1,12 @@
+{
+  "name": "DungeonTeam.Chests.Runtime",
+  "rootNamespace": "DungeonTeam.Gameplay.Chests.Runtime",
+  "references": [
+    "DungeonTeam.Addressables",
+    "MVP",
+    "Disposable",
+    "ResourceLoader",
+    "UniTask"
+  ],
+  "autoReferenced": false
+}

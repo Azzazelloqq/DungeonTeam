@@ -1,0 +1,11 @@
+{
+  "name": "DungeonTeam.Hero.Runtime",
+  "rootNamespace": "DungeonTeam.Gameplay.Hero.Runtime",
+  "references": [
+    "DungeonTeam.Actors.Domain",
+    "DungeonTeam.Actors.Runtime",
+    "DungeonTeam.Hero.Domain",
+    "TickHandler"
+  ],
+  "autoReferenced": false
+}

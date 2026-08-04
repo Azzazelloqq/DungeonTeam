@@ -42,10 +42,40 @@ namespace DungeonTeam.Gameplay.EnemyAI.Runtime
         [SerializeField]
         private Color _alertVisionColor = new(1f, 0.15f, 0.1f, 0.3f);
 
+        public EnemyAiSettings()
+        {
+        }
+
+        public EnemyAiSettings(
+            float viewDistance,
+            float viewAngle,
+            float targetLossDistance,
+            float attackRange,
+            int attackDamage,
+            float attackCooldown,
+            float homeArrivalDistance = 0.25f,
+            float eyeHeight = 1f,
+            float visionAreaHeight = 0.04f,
+            int obstacleMask = ~0)
+        {
+            _viewDistance = viewDistance;
+            _viewAngle = viewAngle;
+            _targetLossDistance = targetLossDistance;
+            _attackRange = attackRange;
+            _attackDamage = attackDamage;
+            _attackCooldown = attackCooldown;
+            _homeArrivalDistance = homeArrivalDistance;
+            _eyeHeight = eyeHeight;
+            _visionAreaHeight = visionAreaHeight;
+            _obstacleMask = obstacleMask;
+            Validate();
+        }
+
+        public float AttackRange => _attackRange;
+
         internal float ViewDistance => _viewDistance;
         internal float ViewAngle => _viewAngle;
         internal float TargetLossDistance => _targetLossDistance;
-        internal float AttackRange => _attackRange;
         internal int AttackDamage => _attackDamage;
         internal float AttackCooldown => _attackCooldown;
         internal float HomeArrivalDistance => _homeArrivalDistance;
