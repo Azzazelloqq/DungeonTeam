@@ -2,6 +2,7 @@ using System;
 using Code.Configuration;
 using DungeonTeam.Gameplay.Actors.Runtime;
 using DungeonTeam.Gameplay.DungeonRun.Application;
+using DungeonTeam.Gameplay.Skills.Runtime;
 using UnityEngine;
 
 namespace DungeonTeam.Gameplay.DungeonRun.Runtime
@@ -14,6 +15,9 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
         [SerializeField]
         private string[] _allowedTeamActorIds = Array.Empty<string>();
 
+        [SerializeField]
+        private string[] _allowedLoadoutIds = Array.Empty<string>();
+
         [SerializeField, Min(1)]
         private int _minimumTeamSize = 2;
 
@@ -21,34 +25,96 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
         private int _maximumTeamSize = 4;
 
         [SerializeField]
-        private string _defaultLeaderActorId;
+        private DungeonRunActorSelectionConfig _defaultLeader;
 
         [SerializeField]
-        private string[] _defaultCompanionActorIds = Array.Empty<string>();
+        private DungeonRunActorSelectionConfig[] _defaultCompanions =
+            Array.Empty<DungeonRunActorSelectionConfig>();
 
-        public DungeonRunTeamSetup CreateTeamSetup(ActorConfigCatalog actorCatalog)
+        public DungeonRunTeamSetup CreateTeamSetup(
+            ActorConfigCatalog actorCatalog,
+            SkillCatalog skillCatalog)
         {
             if (actorCatalog == null)
             {
                 throw new ArgumentNullException(nameof(actorCatalog));
             }
 
+            if (skillCatalog == null)
+            {
+                throw new ArgumentNullException(nameof(skillCatalog));
+            }
+
+            for (var index = 0; index < _allowedLoadoutIds.Length; index++)
+            {
+                skillCatalog.RequireLoadout(_allowedLoadoutIds[index]);
+            }
+
             var members = new DungeonRunTeamMemberOption[_allowedTeamActorIds.Length];
             for (var index = 0; index < _allowedTeamActorIds.Length; index++)
             {
                 var actor = actorCatalog.Require(_allowedTeamActorIds[index]);
+                var levels = new int[actor.Levels.Count];
+                for (var levelIndex = 0; levelIndex < actor.Levels.Count; levelIndex++)
+                {
+                    levels[levelIndex] = actor.Levels[levelIndex].Level;
+                }
+
                 members[index] = new DungeonRunTeamMemberOption(
                     actor.ActorId,
-                    actor.DisplayName);
+                    actor.DisplayName,
+                    levels,
+                    _allowedLoadoutIds);
             }
 
             return new DungeonRunTeamSetup(
                 members,
                 _minimumTeamSize,
                 _maximumTeamSize,
-                new DungeonRunTeamSelection(
-                    _defaultLeaderActorId,
-                    _defaultCompanionActorIds));
+                CreateDefaultSelection());
         }
+
+        private DungeonRunTeamSelection CreateDefaultSelection()
+        {
+            if (_defaultLeader == null)
+            {
+                throw new InvalidOperationException("Default team leader is required.");
+            }
+
+            if (_defaultCompanions == null)
+            {
+                throw new InvalidOperationException("Default team companions cannot be null.");
+            }
+
+            var companions = new DungeonRunActorSelection[_defaultCompanions.Length];
+            for (var index = 0; index < companions.Length; index++)
+            {
+                var companion = _defaultCompanions[index] ?? throw new InvalidOperationException(
+                    $"Default team companion at index {index} is missing.");
+                companions[index] = companion.ToDomain();
+            }
+
+            return new DungeonRunTeamSelection(
+                _defaultLeader.ToDomain(),
+                companions);
+        }
+    }
+
+    [Serializable]
+    public sealed class DungeonRunActorSelectionConfig
+    {
+        [SerializeField]
+        private string _actorId;
+
+        [SerializeField, Min(1)]
+        private int _level = 1;
+
+        internal DungeonRunActorSelection ToDomain()
+        {
+            return new DungeonRunActorSelection(_actorId, _level, _loadoutId);
+        }
+
+        [SerializeField]
+        private string _loadoutId;
     }
 }

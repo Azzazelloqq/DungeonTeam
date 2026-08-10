@@ -21,6 +21,12 @@ namespace DungeonTeam.Gameplay.Dungeon.Runtime.Authoring
         private string _fixedBehaviorId;
 
         [SerializeField]
+        private string _fixedLoadoutId;
+
+        [SerializeField, Min(1)]
+        private int _fixedActorLevel = 1;
+
+        [SerializeField]
         private string _encounterGroupId;
 
         internal EnemyPlacement ToDomain(
@@ -34,6 +40,8 @@ namespace DungeonTeam.Gameplay.Dungeon.Runtime.Authoring
                 _slotTag,
                 _fixedEnemyId,
                 _fixedBehaviorId,
+                _fixedLoadoutId,
+                _fixedActorLevel,
                 runtimeEncounterGroupId,
                 transform.ToDungeonPose());
         }

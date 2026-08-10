@@ -31,6 +31,23 @@ namespace Code.Addressables.Generated
             public const string RewardsGoldRewardPickup = "Rewards/GoldRewardPickup";
             public const string RewardsRewardPickupSilver = "Rewards/RewardPickupSilver";
         }
+        public static class Skills
+        {
+            public const string SkillsDruidBoltPresentation = "Skills/Druid/Bolt/Presentation";
+            public const string SkillsDruidBoltProjectile = "Skills/Druid/Bolt/Projectile";
+            public const string SkillsDruidNatureLancePresentation = "Skills/Druid/NatureLance/Presentation";
+            public const string SkillsDruidNatureLanceProjectile = "Skills/Druid/NatureLance/Projectile";
+            public const string SkillsFireballPresentation = "Skills/Fireball/Presentation";
+            public const string SkillsFireballProjectile = "Skills/Fireball/Projectile";
+            public const string SkillsKingSmitePresentation = "Skills/King/Smite/Presentation";
+            public const string SkillsKingStrikePresentation = "Skills/King/Strike/Presentation";
+            public const string SkillsMeleePresentation = "Skills/Melee/Presentation";
+            public const string SkillsRogueShadowKnifePresentation = "Skills/Rogue/ShadowKnife/Presentation";
+            public const string SkillsRogueShadowKnifeProjectile = "Skills/Rogue/ShadowKnife/Projectile";
+            public const string SkillsRogueStrikePresentation = "Skills/Rogue/Strike/Presentation";
+            public const string SkillsWizardArcaneBoltPresentation = "Skills/Wizard/ArcaneBolt/Presentation";
+            public const string SkillsWizardArcaneBoltProjectile = "Skills/Wizard/ArcaneBolt/Projectile";
+        }
         public static class UI
         {
             public const string GeneralUICanvas = "General/UICanvas";

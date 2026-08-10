@@ -4,57 +4,78 @@ using System.Collections.ObjectModel;
 
 namespace DungeonTeam.Gameplay.DungeonRun.Application
 {
+    public readonly struct DungeonRunActorSelection
+    {
+        public DungeonRunActorSelection(string actorId, int level, string loadoutId)
+        {
+            ActorId = !string.IsNullOrWhiteSpace(actorId)
+                ? actorId
+                : throw new ArgumentException("Actor ID cannot be empty.", nameof(actorId));
+            Level = level > 0
+                ? level
+                : throw new ArgumentOutOfRangeException(nameof(level));
+            LoadoutId = !string.IsNullOrWhiteSpace(loadoutId)
+                ? loadoutId
+                : throw new ArgumentException("Loadout ID cannot be empty.", nameof(loadoutId));
+        }
+
+        public string ActorId { get; }
+        public int Level { get; }
+        public string LoadoutId { get; }
+    }
+
     public sealed class DungeonRunTeamSelection
     {
+        private readonly ReadOnlyCollection<DungeonRunActorSelection> _companions;
         private readonly ReadOnlyCollection<string> _companionActorIds;
 
         public DungeonRunTeamSelection(
-            string leaderActorId,
-            IReadOnlyList<string> companionActorIds)
+            DungeonRunActorSelection leader,
+            IReadOnlyList<DungeonRunActorSelection> companions)
         {
-            LeaderActorId = RequireId(leaderActorId, nameof(leaderActorId));
-            if (companionActorIds == null)
+            Leader = leader;
+            if (companions == null)
             {
-                throw new ArgumentNullException(nameof(companionActorIds));
+                throw new ArgumentNullException(nameof(companions));
             }
 
-            var copiedActorIds = new string[companionActorIds.Count];
+            var copiedSelections = new DungeonRunActorSelection[companions.Count];
             var uniqueIds = new HashSet<string>(StringComparer.Ordinal)
             {
-                LeaderActorId
+                Leader.ActorId
             };
-            for (var index = 0; index < companionActorIds.Count; index++)
+            for (var index = 0; index < companions.Count; index++)
             {
-                var actorId = RequireId(
-                    companionActorIds[index],
-                    nameof(companionActorIds));
-                if (!uniqueIds.Add(actorId))
+                var selection = companions[index];
+                if (!uniqueIds.Add(selection.ActorId))
                 {
                     throw new ArgumentException(
-                        $"Actor ID '{actorId}' is selected more than once.",
-                        nameof(companionActorIds));
+                        $"Actor ID '{selection.ActorId}' is selected more than once.",
+                        nameof(companions));
                 }
 
-                copiedActorIds[index] = actorId;
+                copiedSelections[index] = selection;
             }
 
-            _companionActorIds = Array.AsReadOnly(copiedActorIds);
+            _companions = Array.AsReadOnly(copiedSelections);
+            var copiedIds = new string[copiedSelections.Length];
+            for (var index = 0; index < copiedSelections.Length; index++)
+            {
+                copiedIds[index] = copiedSelections[index].ActorId;
+            }
+
+            _companionActorIds = Array.AsReadOnly(copiedIds);
         }
 
-        public string LeaderActorId { get; }
+        public DungeonRunActorSelection Leader { get; }
+
+        public IReadOnlyList<DungeonRunActorSelection> Companions => _companions;
 
         public IReadOnlyList<string> CompanionActorIds => _companionActorIds;
 
-        public int MemberCount => _companionActorIds.Count + 1;
+        public string LeaderActorId => Leader.ActorId;
 
-        private static string RequireId(string value, string parameterName)
-        {
-            if (string.IsNullOrWhiteSpace(value))
-            {
-                throw new ArgumentException("Actor ID cannot be empty.", parameterName);
-            }
+        public int MemberCount => _companions.Count + 1;
 
-            return value;
-        }
     }
 }

@@ -66,9 +66,7 @@ namespace DungeonTeam.Gameplay.Actors.Runtime
 
                     definitions[index] = new ActorDefinition(
                         config.ActorId,
-                        prefab,
-                        config.MaximumHealth,
-                        config.MovementSpeed);
+                        prefab);
                 }
 
                 return new ActorDefinitionSet(

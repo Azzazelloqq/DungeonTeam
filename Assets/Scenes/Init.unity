@@ -197,14 +197,8 @@ MonoBehaviour:
     _obstacleMask:
       serializedVersion: 2
       m_Bits: 4294967295
-    _companionAttackRange: 1.5
     _companionTargetLossDistance: 12
-    _companionAttackDamage: 12
-    _companionAttackCooldown: 0.9
   _heroControlSettings:
-    _attackRange: 1.5
-    _attackDamage: 20
-    _attackCooldown: 0.8
     _targetSelectionRadius: 90
     _eyeHeight: 1
     _obstacleMask:

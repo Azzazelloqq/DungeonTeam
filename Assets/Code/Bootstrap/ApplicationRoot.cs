@@ -25,6 +25,7 @@ using DungeonTeam.Gameplay.EnemyAI.Runtime;
 using DungeonTeam.Gameplay.Hero.Runtime;
 using DungeonTeam.Gameplay.Rewards.Runtime;
 using DungeonTeam.Gameplay.Team.Runtime;
+using DungeonTeam.Gameplay.Skills.Runtime;
 using LightDI.Runtime;
 using ResourceLoader;
 using ResourceLoader.AddressableResourceLoader;
@@ -52,6 +53,9 @@ namespace Code.ApplicationRoot
 		private MainMenuRoot _mainMenuRoot;
 		private IDungeonFactory _dungeonFactory;
 		private IActorDefinitionLoader _actorDefinitionLoader;
+		private ActorConfigCatalog _actorCatalog;
+		private SkillCatalog _skillCatalog;
+		private ISkillViewLoader _skillViewLoader;
 		private IRewardPickupViewLoader _rewardPickupViewLoader;
 		private IChestViewLoader _chestViewLoader;
 		private RewardCatalog _rewardCatalog;
@@ -103,11 +107,13 @@ namespace Code.ApplicationRoot
 			_globalContainer.RegisterAsSingleton(config);
 			await config.InitializeAsync(token);
 			_dungeonFactory = new DungeonFactory(config.GetConfigPage<DungeonConfigPage>());
-			var actorCatalog = config.GetConfigPage<ActorConfigPage>().CreateCatalog();
-			_actorDefinitionLoader = new ActorDefinitionLoader(actorCatalog, resourceLoader);
+			_actorCatalog = config.GetConfigPage<ActorConfigPage>().CreateCatalog();
+			_skillCatalog = config.GetConfigPage<SkillConfigPage>().CreateCatalog();
+			_skillViewLoader = new SkillViewLoader(_skillCatalog, resourceLoader);
+			_actorDefinitionLoader = new ActorDefinitionLoader(_actorCatalog, resourceLoader);
 			_dungeonRunTeamSetup = config
 				.GetConfigPage<DungeonRunConfigPage>()
-				.CreateTeamSetup(actorCatalog);
+				.CreateTeamSetup(_actorCatalog, _skillCatalog);
 			_rewardPickupViewLoader = new RewardPickupViewLoader(resourceLoader);
 			_chestViewLoader = new ChestViewLoader(resourceLoader);
 			_rewardCatalog = config.GetConfigPage<RewardConfigPage>().CreateCatalog();
@@ -144,6 +150,9 @@ namespace Code.ApplicationRoot
 			DisposeDungeonRun();
 			_dungeonFactory = null;
 			_actorDefinitionLoader = null;
+			_actorCatalog = null;
+			_skillCatalog = null;
+			_skillViewLoader = null;
 			_rewardPickupViewLoader = null;
 			_chestViewLoader = null;
 			_rewardCatalog = null;
@@ -226,6 +235,9 @@ namespace Code.ApplicationRoot
 					CreateStartRequest(request),
 					_dungeonRunBindings,
 					_actorDefinitionLoader,
+					_actorCatalog,
+					_skillCatalog,
+					_skillViewLoader,
 					_rewardPickupViewLoader,
 					_chestViewLoader,
 					_canvasContext.GetParent(UIElementGroup.OverlayElement),

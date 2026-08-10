@@ -4,6 +4,7 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using DungeonTeam.Gameplay.Actors.Runtime;
 using DungeonTeam.Gameplay.Chests.Runtime;
+using DungeonTeam.Gameplay.Combat.Runtime;
 using DungeonTeam.Gameplay.ContextActions.Runtime;
 using DungeonTeam.Gameplay.ContextActions.Runtime.Base;
 using DungeonTeam.Gameplay.Dungeon.Application;
@@ -13,6 +14,7 @@ using DungeonTeam.Gameplay.EnemyAI.Runtime;
 using DungeonTeam.Gameplay.Hero.Runtime;
 using DungeonTeam.Gameplay.Rewards.Runtime;
 using DungeonTeam.Gameplay.Team.Runtime;
+using DungeonTeam.Gameplay.Skills.Runtime;
 using RootPattern;
 using TickHandler;
 using UnityEngine;
@@ -25,6 +27,9 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
         private readonly DungeonRunStartRequest _startRequest;
         private readonly DungeonRunBindings _bindings;
         private readonly IActorDefinitionLoader _actorDefinitionLoader;
+        private readonly ActorConfigCatalog _actorCatalog;
+        private readonly SkillCatalog _skillCatalog;
+        private readonly ISkillViewLoader _skillViewLoader;
         private readonly IRewardPickupViewLoader _rewardPickupViewLoader;
         private readonly IChestViewLoader _chestViewLoader;
         private readonly RectTransform _contextActionsParent;
@@ -40,6 +45,8 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
         private readonly List<ActorInstance> _companions = new();
         private readonly List<Vector3> _companionFormationOffsets = new();
         private readonly List<ActorInstance> _enemies = new();
+        private readonly List<ActorCombatController> _companionCombatControllers = new();
+        private readonly List<ActorCombatController> _enemyCombatControllers = new();
         private readonly List<EnemyAiController> _enemyAiControllers = new();
         private readonly List<RewardPickupInstance> _rewardPickups = new();
         private readonly List<ChestInstance> _chests = new();
@@ -49,7 +56,10 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
         private ActorDefinitionSet _actorDefinitions;
         private RewardPickupViewSet _rewardPickupViews;
         private ChestViewSet _chestViews;
+        private SkillViewSet _skillViews;
+        private SkillExecutionController _skillExecution;
         private HeroController _heroController;
+        private ActorCombatController _leaderCombatController;
         private TeamController _teamController;
         private WallOcclusionController _wallOcclusionController;
         private DungeonRunContextActionsController _contextActionsController;
@@ -60,6 +70,7 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
         private DungeonRunNavigation _navigation;
         private Vector3 _exitPosition;
         private GameObject _actorsRoot;
+        private GameObject _skillProjectilesRoot;
         private GameObject _rewardsRoot;
         private GameObject _interestsRoot;
         private bool _terminalShutdownScheduled;
@@ -74,6 +85,9 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
             DungeonRunStartRequest startRequest,
             DungeonRunBindings bindings,
             IActorDefinitionLoader actorDefinitionLoader,
+            ActorConfigCatalog actorCatalog,
+            SkillCatalog skillCatalog,
+            ISkillViewLoader skillViewLoader,
             IRewardPickupViewLoader rewardPickupViewLoader,
             IChestViewLoader chestViewLoader,
             RectTransform contextActionsParent,
@@ -90,6 +104,10 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
             _bindings = bindings ?? throw new ArgumentNullException(nameof(bindings));
             _actorDefinitionLoader = actorDefinitionLoader ??
                 throw new ArgumentNullException(nameof(actorDefinitionLoader));
+            _actorCatalog = actorCatalog ?? throw new ArgumentNullException(nameof(actorCatalog));
+            _skillCatalog = skillCatalog ?? throw new ArgumentNullException(nameof(skillCatalog));
+            _skillViewLoader = skillViewLoader ??
+                throw new ArgumentNullException(nameof(skillViewLoader));
             _rewardPickupViewLoader = rewardPickupViewLoader ??
                 throw new ArgumentNullException(nameof(rewardPickupViewLoader));
             _chestViewLoader = chestViewLoader ??
@@ -152,6 +170,7 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
             ownerToken.ThrowIfCancellationRequested();
             ValidateRewardPlans();
             ValidateEnemyBehaviors();
+            ValidateLoadouts();
 
             _navigation = new DungeonRunNavigation();
             _navigation.Build();
@@ -159,6 +178,10 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
 
             _actorDefinitions = await _actorDefinitionLoader.LoadAsync(
                 GetRequiredActorIds(),
+                ownerToken);
+            ownerToken.ThrowIfCancellationRequested();
+            _skillViews = await _skillViewLoader.LoadAsync(
+                GetRequiredLoadoutIds(),
                 ownerToken);
             ownerToken.ThrowIfCancellationRequested();
             _rewardPickupViews = await _rewardPickupViewLoader.LoadAsync(
@@ -171,6 +194,12 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
             ownerToken.ThrowIfCancellationRequested();
 
             _actorsRoot = new GameObject("DungeonRunActors");
+            _skillProjectilesRoot = new GameObject("DungeonRunSkillProjectiles");
+            _skillExecution = new SkillExecutionController(
+                _skillViews,
+                _tickHandler,
+                _skillProjectilesRoot.transform);
+            _skillExecution.Initialize();
             CreateActors();
             _progress = new DungeonRunProgress(_enemies.Count);
             _exitPosition = _navigation.RequireSpawnPosition(
@@ -188,12 +217,14 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
                 _worldCamera,
                 _tickHandler,
                 _input,
-                _heroControlSettings);
+                _heroControlSettings,
+                _leaderCombatController);
             _heroController.Initialize();
 
             _teamController = new TeamController(
                 Leader,
                 _companions,
+                _companionCombatControllers,
                 _companionFormationOffsets,
                 _enemies,
                 _worldCamera,
@@ -217,6 +248,8 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
         {
             _isDisposed = true;
             DisposeActiveControllers();
+            DisposeSkillExecution();
+            DisposeCombatControllers();
 
             _contextActionsView?.Dispose();
             _contextActionsView = null;
@@ -282,6 +315,9 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
             _actorDefinitions?.Dispose();
             _actorDefinitions = null;
 
+            _skillViews?.Dispose();
+            _skillViews = null;
+
             _rewardPickupViews?.Dispose();
             _rewardPickupViews = null;
 
@@ -307,11 +343,14 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
                 "Leader",
                 _navigation.RequireSpawnPosition(entryPosition),
                 entryRotation,
-                _actorDefinitions.Require(_startRequest.Team.LeaderActorId));
+                _startRequest.Team.Leader);
+            _leaderCombatController = CreateCombatController(
+                Leader,
+                _startRequest.Team.Leader);
             _heroes.Add(Leader);
 
             for (var index = 0;
-                 index < _startRequest.Team.CompanionActorIds.Count;
+                 index < _startRequest.Team.Companions.Count;
                  index++)
             {
                 var formationOffset = _bindings.GetCompanionSpawnOffset(index);
@@ -321,9 +360,11 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
                     _navigation.RequireSpawnPosition(
                         entryPosition + entryRotation * formationOffset),
                     entryRotation,
-                    _actorDefinitions.Require(
-                        _startRequest.Team.CompanionActorIds[index]));
+                    _startRequest.Team.Companions[index]);
                 _companions.Add(companion);
+                _companionCombatControllers.Add(CreateCombatController(
+                    companion,
+                    _startRequest.Team.Companions[index]));
                 _companionFormationOffsets.Add(formationOffset);
                 _heroes.Add(companion);
             }
@@ -337,8 +378,17 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
                     _navigation.RequireSpawnPosition(
                         DungeonPoseConversion.ToPosition(enemySpawn.Pose)),
                     DungeonPoseConversion.ToRotation(enemySpawn.Pose),
-                    _actorDefinitions.Require(enemySpawn.EnemyId));
+                    new DungeonRunActorSelection(
+                        enemySpawn.EnemyId,
+                        enemySpawn.ActorLevel,
+                        enemySpawn.LoadoutId));
                 _enemies.Add(enemy);
+                _enemyCombatControllers.Add(CreateCombatController(
+                    enemy,
+                    new DungeonRunActorSelection(
+                        enemySpawn.EnemyId,
+                        enemySpawn.ActorLevel,
+                        enemySpawn.LoadoutId)));
             }
         }
 
@@ -350,10 +400,10 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
                 _startRequest.Team.LeaderActorId
             };
             for (var index = 0;
-                 index < _startRequest.Team.CompanionActorIds.Count;
+                 index < _startRequest.Team.Companions.Count;
                  index++)
             {
-                actorIds.Add(_startRequest.Team.CompanionActorIds[index]);
+                actorIds.Add(_startRequest.Team.Companions[index].ActorId);
             }
 
             for (var index = 0; index < ContentPlan.EnemySpawns.Count; index++)
@@ -382,6 +432,26 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
             }
 
             return rewardIds;
+        }
+
+        private IReadOnlyList<string> GetRequiredLoadoutIds()
+        {
+            var loadoutIds = new List<string>(
+                ContentPlan.EnemySpawns.Count + _startRequest.Team.MemberCount)
+            {
+                _startRequest.Team.Leader.LoadoutId
+            };
+            for (var index = 0; index < _startRequest.Team.Companions.Count; index++)
+            {
+                loadoutIds.Add(_startRequest.Team.Companions[index].LoadoutId);
+            }
+
+            for (var index = 0; index < ContentPlan.EnemySpawns.Count; index++)
+            {
+                loadoutIds.Add(ContentPlan.EnemySpawns[index].LoadoutId);
+            }
+
+            return loadoutIds;
         }
 
         private IReadOnlyList<string> GetRequiredChestIds()
@@ -414,15 +484,30 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
             string instanceName,
             Vector3 position,
             Quaternion rotation,
-            ActorDefinition definition)
+            DungeonRunActorSelection selection)
         {
+            var runtimeDefinition = _actorCatalog.Resolve(
+                selection.ActorId,
+                selection.Level);
             return actorFactory.Create(
-                definition,
+                _actorDefinitions.Require(selection.ActorId),
+                runtimeDefinition,
                 new ActorSpawnRequest(
                     instanceName,
                     position,
                     rotation),
                 _actorsRoot.transform);
+        }
+
+        private ActorCombatController CreateCombatController(
+            ActorInstance actor,
+            DungeonRunActorSelection selection)
+        {
+            return new ActorCombatController(
+                actor,
+                _skillCatalog,
+                selection.LoadoutId,
+                _skillExecution);
         }
 
         private void CreateEnemyAiControllers()
@@ -434,7 +519,8 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
                     _enemies[index],
                     _heroes,
                     _tickHandler,
-                    _enemyBehaviorCatalog.Require(behaviorId));
+                    _enemyBehaviorCatalog.Require(behaviorId),
+                    _enemyCombatControllers[index]);
                 _enemyAiControllers.Add(controller);
                 controller.Initialize();
             }
@@ -636,6 +722,8 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
             }
 
             DisposeActiveControllers();
+            DisposeSkillExecution();
+            DisposeCombatControllers();
         }
 
         private void DisposeActiveControllers()
@@ -663,6 +751,35 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
             _input = null;
         }
 
+        private void DisposeSkillExecution()
+        {
+            _skillExecution?.Dispose();
+            _skillExecution = null;
+            if (_skillProjectilesRoot == null)
+                return;
+
+            DestroyGameObject(_skillProjectilesRoot);
+            _skillProjectilesRoot = null;
+        }
+
+        private void DisposeCombatControllers()
+        {
+            for (var index = _enemyCombatControllers.Count - 1; index >= 0; index--)
+            {
+                _enemyCombatControllers[index].Dispose();
+            }
+
+            _enemyCombatControllers.Clear();
+            for (var index = _companionCombatControllers.Count - 1; index >= 0; index--)
+            {
+                _companionCombatControllers[index].Dispose();
+            }
+
+            _companionCombatControllers.Clear();
+            _leaderCombatController?.Dispose();
+            _leaderCombatController = null;
+        }
+
         private void ValidateRewardPlans()
         {
             for (var index = 0; index < ContentPlan.EnemySpawns.Count; index++)
@@ -683,6 +800,15 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
             for (var index = 0; index < ContentPlan.EnemySpawns.Count; index++)
             {
                 _enemyBehaviorCatalog.Require(ContentPlan.EnemySpawns[index].BehaviorId);
+            }
+        }
+
+        private void ValidateLoadouts()
+        {
+            var loadoutIds = GetRequiredLoadoutIds();
+            for (var index = 0; index < loadoutIds.Count; index++)
+            {
+                _skillCatalog.RequireLoadout(loadoutIds[index]);
             }
         }
 

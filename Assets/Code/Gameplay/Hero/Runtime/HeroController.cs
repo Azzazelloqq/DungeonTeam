@@ -1,8 +1,9 @@
 using System;
 using System.Collections.Generic;
-using DungeonTeam.Gameplay.Actors.Domain;
 using DungeonTeam.Gameplay.Actors.Runtime;
+using DungeonTeam.Gameplay.Combat.Runtime;
 using DungeonTeam.Gameplay.Hero.Domain;
+using DungeonTeam.Gameplay.Skills.Domain;
 using TickHandler;
 using UnityEngine;
 
@@ -20,7 +21,7 @@ namespace DungeonTeam.Gameplay.Hero.Runtime
         private readonly IHeroInput _input;
         private readonly HeroControlSettings _settings;
         private readonly HeroBasicAttackBrain _attackBrain;
-        private readonly AttackCooldown _attackCooldown;
+        private readonly ActorCombatController _combat;
 
         private ActorInstance _target;
         private Vector3 _lastDestination;
@@ -35,7 +36,8 @@ namespace DungeonTeam.Gameplay.Hero.Runtime
             Camera camera,
             ITickHandler tickHandler,
             IHeroInput input,
-            HeroControlSettings settings)
+            HeroControlSettings settings,
+            ActorCombatController combat)
         {
             _hero = hero ?? throw new ArgumentNullException(nameof(hero));
             _enemies = enemies ?? throw new ArgumentNullException(nameof(enemies));
@@ -43,10 +45,16 @@ namespace DungeonTeam.Gameplay.Hero.Runtime
             _tickHandler = tickHandler ?? throw new ArgumentNullException(nameof(tickHandler));
             _input = input ?? throw new ArgumentNullException(nameof(input));
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
+            _combat = combat ?? throw new ArgumentNullException(nameof(combat));
+            if (!ReferenceEquals(_combat.Actor, _hero))
+            {
+                throw new ArgumentException(
+                    "Hero combat controller must belong to the hero.",
+                    nameof(combat));
+            }
             _settings.Validate();
 
-            _attackBrain = new HeroBasicAttackBrain(_settings.AttackRange);
-            _attackCooldown = new AttackCooldown(_settings.AttackCooldown);
+            _attackBrain = new HeroBasicAttackBrain(_combat.GetRange(SkillSlot.Primary));
         }
 
         public event Action TargetChanged;
@@ -132,7 +140,7 @@ namespace DungeonTeam.Gameplay.Hero.Runtime
             {
                 CancelActiveAttack();
                 MoveManually(movement);
-                _attackCooldown.Tick(deltaTime, canAttack: false);
+                _combat.Tick(deltaTime);
                 return;
             }
 
@@ -147,10 +155,11 @@ namespace DungeonTeam.Gameplay.Hero.Runtime
                 TryRequestBasicAttack();
             }
 
-            UpdateBasicAttack(deltaTime);
+            _combat.Tick(deltaTime);
+            UpdateBasicAttack();
         }
 
-        private void UpdateBasicAttack(float deltaTime)
+        private void UpdateBasicAttack()
         {
             if (_target != null && !_target.IsAlive)
             {
@@ -160,7 +169,6 @@ namespace DungeonTeam.Gameplay.Hero.Runtime
 
             if (_attackBrain.State == HeroBasicAttackState.Idle)
             {
-                _attackCooldown.Tick(deltaTime, canAttack: false);
                 StopAutomaticMovement();
                 return;
             }
@@ -173,10 +181,6 @@ namespace DungeonTeam.Gameplay.Hero.Runtime
                 hasTarget && _target.IsAlive,
                 distance,
                 hasTarget && HasClearLine(_target));
-            var shouldAttack = _attackCooldown.Tick(
-                deltaTime,
-                state == HeroBasicAttackState.ReadyToAttack);
-
             switch (state)
             {
                 case HeroBasicAttackState.Idle:
@@ -187,8 +191,7 @@ namespace DungeonTeam.Gameplay.Hero.Runtime
                     break;
                 case HeroBasicAttackState.ReadyToAttack:
                     StopAutomaticMovement();
-                    _hero.TryFaceTowards(_target.Position);
-                    if (shouldAttack && _attackBrain.ConsumeAttack())
+                    if (_combat.IsReady(SkillSlot.Primary) && _attackBrain.ConsumeAttack())
                     {
                         AttackTarget();
                     }
@@ -243,9 +246,11 @@ namespace DungeonTeam.Gameplay.Hero.Runtime
                 return;
             }
 
-            _hero.PlayAttackFeedback();
-            _target.ApplyDamage(_settings.AttackDamage, _hero);
-            if (!_target.IsAlive)
+            var result = _combat.TryUse(
+                SkillSlot.Primary,
+                _target,
+                HasClearLine(_target));
+            if (result == SkillUseResult.Executed && !_target.IsAlive)
             {
                 SetTarget(null);
             }
@@ -332,6 +337,7 @@ namespace DungeonTeam.Gameplay.Hero.Runtime
         private void CancelActiveAttack()
         {
             _attackBrain.Cancel();
+            _combat.CancelActiveUse();
             StopAutomaticMovement();
         }
 

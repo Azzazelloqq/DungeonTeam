@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 780a38cd0e6b48cb919b5318bc3415bb, type: 3}
+  m_Name: ShadowKnifePresentation
+  m_EditorClassIdentifier: DungeonTeam.Skills.Runtime::DungeonTeam.Gameplay.Skills.Runtime.SkillPresentationAsset
+  _animationCues:
+  - {_phase: 0, _delay: 0, _cue: 0}
+  _vfxCues:
+  - {_phase: 1, _delay: 0, _lifetime: 0.25, _anchor: 0, _followAnchor: 1,
+    _prefab: {fileID: 158090, guid: 4b452aeb22074b4eb5c606b9a20dcf4b, type: 3}}
+  - {_phase: 2, _delay: 0, _lifetime: 0.35, _anchor: 2, _followAnchor: 0,
+    _prefab: {fileID: 153390, guid: 21e10384f6aa46f9b0e16381bfd9264e, type: 3}}

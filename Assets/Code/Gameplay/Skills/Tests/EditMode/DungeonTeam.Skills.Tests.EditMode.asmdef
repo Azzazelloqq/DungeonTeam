@@ -1,0 +1,16 @@
+{
+  "name": "DungeonTeam.Skills.Tests.EditMode",
+  "rootNamespace": "DungeonTeam.Gameplay.Skills.Tests",
+  "references": [
+    "DungeonTeam.Actors.Runtime",
+    "DungeonTeam.Skills.Domain",
+    "DungeonTeam.Skills.Runtime"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ],
+  "autoReferenced": false
+}

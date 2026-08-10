@@ -1,0 +1,19 @@
+{
+  "name": "DungeonTeam.Skills.Tests.PlayMode",
+  "rootNamespace": "DungeonTeam.Gameplay.Skills.Tests.PlayMode",
+  "references": [
+    "DungeonTeam.Actors.Domain",
+    "DungeonTeam.Actors.Runtime",
+    "DungeonTeam.Skills.Domain",
+    "DungeonTeam.Skills.Runtime",
+    "Disposable",
+    "MVP",
+    "ResourceLoader",
+    "TickHandler",
+    "UniTask"
+  ],
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ],
+  "autoReferenced": false
+}

@@ -17,8 +17,20 @@ MonoBehaviour:
   - actor.druid
   - actor.rogue
   - actor.wizard
+  _allowedLoadoutIds:
+  - loadout.king
+  - loadout.druid
+  - loadout.rogue
+  - loadout.wizard
+  - loadout.skeleton.mage
+  - loadout.skeleton.warrior
   _minimumTeamSize: 2
   _maximumTeamSize: 4
-  _defaultLeaderActorId: actor.king
-  _defaultCompanionActorIds:
-  - actor.druid
+  _defaultLeader:
+    _actorId: actor.king
+    _level: 1
+    _loadoutId: loadout.king
+  _defaultCompanions:
+  - _actorId: actor.druid
+    _level: 1
+    _loadoutId: loadout.druid

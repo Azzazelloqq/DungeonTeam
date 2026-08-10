@@ -87,6 +87,8 @@ namespace DungeonTeam.Gameplay.Dungeon.Domain
                         placement.PlacementId,
                         placement.FixedEnemyId,
                         placement.FixedBehaviorId,
+                        placement.FixedLoadoutId,
+                        placement.FixedActorLevel,
                         placement.EncounterGroupId,
                         placement.Pose,
                         BuildRewardGrants(
@@ -119,6 +121,8 @@ namespace DungeonTeam.Gameplay.Dungeon.Domain
                     placement.PlacementId,
                     candidate.EnemyId,
                     candidate.BehaviorId,
+                    candidate.LoadoutId,
+                    candidate.ActorLevel,
                     placement.EncounterGroupId,
                     placement.Pose,
                     BuildRewardGrants(

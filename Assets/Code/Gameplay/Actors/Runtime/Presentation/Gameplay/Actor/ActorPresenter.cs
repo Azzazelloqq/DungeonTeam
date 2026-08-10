@@ -33,6 +33,8 @@ namespace DungeonTeam.Gameplay.Actors.Runtime.Presentation.Gameplay.Actor
 
         public override Transform OverheadAnchor => view.OverheadAnchor;
 
+        public override Transform SkillOriginAnchor => view.SkillOriginAnchor;
+
         public override bool TryMoveTo(Vector3 destination)
         {
             return model.IsAlive && view.TryMoveTo(destination);
@@ -58,6 +60,14 @@ namespace DungeonTeam.Gameplay.Actors.Runtime.Presentation.Gameplay.Actor
             if (model.IsAlive)
             {
                 view.PlayAttackFeedback();
+            }
+        }
+
+        public override void PlayCastFeedback()
+        {
+            if (model.IsAlive)
+            {
+                view.PlayCastFeedback();
             }
         }
 

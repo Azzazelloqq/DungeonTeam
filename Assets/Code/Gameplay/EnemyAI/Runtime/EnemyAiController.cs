@@ -1,8 +1,9 @@
 using System;
 using System.Collections.Generic;
-using DungeonTeam.Gameplay.Actors.Domain;
 using DungeonTeam.Gameplay.Actors.Runtime;
+using DungeonTeam.Gameplay.Combat.Runtime;
 using DungeonTeam.Gameplay.EnemyAI.Domain;
+using DungeonTeam.Gameplay.Skills.Domain;
 using TickHandler;
 using UnityEngine;
 
@@ -17,7 +18,7 @@ namespace DungeonTeam.Gameplay.EnemyAI.Runtime
         private readonly ITickHandler _tickHandler;
         private readonly EnemyAiSettings _settings;
         private readonly EnemyAiBrain _brain;
-        private readonly AttackCooldown _attackCooldown;
+        private readonly ActorCombatController _combat;
         private readonly Vector3 _homePosition;
         private readonly float _minimumViewDot;
 
@@ -34,7 +35,8 @@ namespace DungeonTeam.Gameplay.EnemyAI.Runtime
             ActorInstance enemy,
             IReadOnlyList<ActorInstance> targets,
             ITickHandler tickHandler,
-            EnemyAiSettings settings)
+            EnemyAiSettings settings,
+            ActorCombatController combat)
         {
             _enemy = enemy ?? throw new ArgumentNullException(nameof(enemy));
             if (targets == null)
@@ -59,15 +61,21 @@ namespace DungeonTeam.Gameplay.EnemyAI.Runtime
 
             _tickHandler = tickHandler ?? throw new ArgumentNullException(nameof(tickHandler));
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
+            _combat = combat ?? throw new ArgumentNullException(nameof(combat));
+            if (!ReferenceEquals(_combat.Actor, _enemy))
+            {
+                throw new ArgumentException(
+                    "Enemy combat controller must belong to the enemy.",
+                    nameof(combat));
+            }
             _settings.Validate();
 
             _homePosition = _enemy.Position;
             _minimumViewDot = Mathf.Cos(_settings.ViewAngle * 0.5f * Mathf.Deg2Rad);
             _brain = new EnemyAiBrain(
-                _settings.AttackRange,
+                _combat.GetRange(SkillSlot.Primary),
                 _settings.TargetLossDistance,
                 _settings.HomeArrivalDistance);
-            _attackCooldown = new AttackCooldown(_settings.AttackCooldown);
         }
 
         public void Initialize()
@@ -119,6 +127,8 @@ namespace DungeonTeam.Gameplay.EnemyAI.Runtime
                 return;
             }
 
+            _combat.Tick(deltaTime);
+
             _visionArea.SetVisible(true);
             var targetWasSeen = AcquireTargetIfNeeded();
             var targetWasProvoked = _wasProvoked;
@@ -129,7 +139,7 @@ namespace DungeonTeam.Gameplay.EnemyAI.Runtime
                 : 0f;
             var distanceToHome = PlanarDistance(_enemy.Position, _homePosition);
             var canAttackTarget = hasTarget &&
-                                  targetDistance <= _settings.AttackRange &&
+                                  targetDistance <= _combat.GetRange(SkillSlot.Primary) &&
                                   (targetWasSeen || HasClearLine(_target));
 
             var state = _brain.Evaluate(
@@ -138,10 +148,6 @@ namespace DungeonTeam.Gameplay.EnemyAI.Runtime
                 canAttackTarget,
                 targetDistance,
                 distanceToHome);
-            var shouldAttack = _attackCooldown.Tick(
-                deltaTime,
-                state == EnemyAiState.Attack);
-
             switch (state)
             {
                 case EnemyAiState.Idle:
@@ -149,11 +155,7 @@ namespace DungeonTeam.Gameplay.EnemyAI.Runtime
                     break;
                 case EnemyAiState.Attack:
                     StopMovement();
-                    _enemy.TryFaceTowards(_target.Position);
-                    if (shouldAttack)
-                    {
-                        AttackTarget();
-                    }
+                    AttackTarget();
 
                     break;
                 case EnemyAiState.Chase:
@@ -282,9 +284,11 @@ namespace DungeonTeam.Gameplay.EnemyAI.Runtime
                 return;
             }
 
-            _enemy.PlayAttackFeedback();
-            _target.ApplyDamage(_settings.AttackDamage, _enemy);
-            if (!_target.IsAlive)
+            var result = _combat.TryUse(
+                SkillSlot.Primary,
+                _target,
+                HasClearLine(_target));
+            if (result == SkillUseResult.Executed && !_target.IsAlive)
             {
                 _target = null;
             }
@@ -292,6 +296,7 @@ namespace DungeonTeam.Gameplay.EnemyAI.Runtime
 
         private void MoveTo(Vector3 destination)
         {
+            _combat.CancelActiveUse();
             if (_hasDestination &&
                 PlanarSqrDistance(_lastDestination, destination) <
                 DestinationUpdateDistance * DestinationUpdateDistance)

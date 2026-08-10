@@ -2,6 +2,10 @@ using System.Collections;
 using System.Threading;
 using System.Threading.Tasks;
 using DungeonTeam.Gameplay.Actors.Runtime;
+using DungeonTeam.Gameplay.Combat.Runtime;
+using DungeonTeam.Gameplay.Skills.Domain;
+using DungeonTeam.Gameplay.Skills.Runtime;
+using DungeonTeam.Gameplay.Skills.Runtime.Presentation.Gameplay.SkillProjectile;
 using DungeonTeam.Gameplay.Actors.Runtime.Presentation.Gameplay.Actor.Base;
 using NUnit.Framework;
 using TickHandler.UnityTickHandler;
@@ -66,6 +70,31 @@ namespace DungeonTeam.Gameplay.Hero.Runtime.Tests.PlayMode
         }
 
         [UnityTest]
+        public IEnumerator ManualMovement_CancelsPendingFireballCast()
+        {
+            var world = new TestWorld(useProjectileSkill: true);
+            try
+            {
+                world.Controller.TrySetTarget(world.Enemy);
+                world.Controller.TryRequestBasicAttack();
+                yield return null;
+
+                Assert.That(world.ActiveExecutionCount, Is.EqualTo(1));
+                world.Input.Movement = Vector2.left;
+                yield return null;
+
+                Assert.That(world.ActiveExecutionCount, Is.Zero);
+                Assert.That(world.ActiveProjectileCount, Is.Zero);
+                Assert.That(world.Enemy.CurrentHealth, Is.EqualTo(60));
+                Assert.That(world.Controller.Target, Is.SameAs(world.Enemy));
+            }
+            finally
+            {
+                world.Dispose();
+            }
+        }
+
+        [UnityTest]
         public IEnumerator Dispose_UnsubscribesInputDrivenMovement()
         {
             var world = new TestWorld();
@@ -111,8 +140,13 @@ namespace DungeonTeam.Gameplay.Hero.Runtime.Tests.PlayMode
             private readonly GameObject _cameraObject;
             private readonly GameObject _dispatcherObject;
             private readonly UnityTickHandler _tickHandler;
+            private readonly SkillViewSet _skillViews;
+            private readonly SkillExecutionController _skillExecution;
+            private readonly ActorCombatController _combat;
+            private readonly GameObject _projectilesRoot;
+            private readonly GameObject _projectilePrefabObject;
 
-            public TestWorld()
+            public TestWorld(bool useProjectileSkill = false)
             {
                 _actorPrefabObject = new GameObject("HeroTestActorPrefab");
                 _actorPrefabObject.SetActive(false);
@@ -122,7 +156,10 @@ namespace DungeonTeam.Gameplay.Hero.Runtime.Tests.PlayMode
                 Hero = factory.Create(
                     new ActorDefinition(
                         "actor.hero.test",
-                        actorPrefab,
+                        actorPrefab),
+                    new ActorRuntimeDefinition(
+                        "actor.hero.test",
+                        level: 1,
                         maximumHealth: 100,
                         movementSpeed: 4f),
                     new ActorSpawnRequest(
@@ -132,7 +169,10 @@ namespace DungeonTeam.Gameplay.Hero.Runtime.Tests.PlayMode
                 Enemy = factory.Create(
                     new ActorDefinition(
                         "actor.enemy.test",
-                        actorPrefab,
+                        actorPrefab),
+                    new ActorRuntimeDefinition(
+                        "actor.enemy.test",
+                        level: 1,
                         maximumHealth: 60,
                         movementSpeed: 3f),
                     new ActorSpawnRequest(
@@ -147,14 +187,47 @@ namespace DungeonTeam.Gameplay.Hero.Runtime.Tests.PlayMode
                 _dispatcherObject = new GameObject("HeroTestDispatcher");
                 var dispatcher = _dispatcherObject.AddComponent<UnityDispatcherBehaviour>();
                 _tickHandler = new UnityTickHandler(dispatcher);
+                _projectilePrefabObject = new GameObject("HeroTestProjectilePrefab");
+                _projectilePrefabObject.SetActive(false);
+                var projectilePrefab = _projectilePrefabObject.AddComponent<SkillProjectileView>();
+                _skillViews = useProjectileSkill
+                    ? new SkillViewSet(new[]
+                    {
+                        new SkillProjectileViewEntry("skill.fireball", projectilePrefab)
+                    }, new[]
+                    {
+                        new SkillPresentationViewEntry(
+                            "skill.fireball",
+                            EmptySequence())
+                    })
+                    : new SkillViewSet(
+                        System.Array.Empty<SkillProjectileViewEntry>(),
+                        new[]
+                        {
+                            new SkillPresentationViewEntry(
+                                "skill.test",
+                                EmptySequence())
+                        });
+                _projectilesRoot = new GameObject("HeroTestProjectiles");
+                _skillExecution = new SkillExecutionController(
+                    _skillViews,
+                    _tickHandler,
+                    _projectilesRoot.transform);
+                _skillExecution.Initialize();
                 Input = new FakeHeroInput();
+                _combat = new ActorCombatController(
+                    Hero,
+                    CreateSkillCatalog(useProjectileSkill),
+                    "loadout.test",
+                    _skillExecution);
                 Controller = new HeroController(
                     Hero,
                     new[] { Enemy },
                     camera,
                     _tickHandler,
                     Input,
-                    new HeroControlSettings());
+                    new HeroControlSettings(),
+                    _combat);
                 Controller.Initialize();
             }
 
@@ -162,16 +235,92 @@ namespace DungeonTeam.Gameplay.Hero.Runtime.Tests.PlayMode
             public ActorInstance Enemy { get; }
             public FakeHeroInput Input { get; }
             public HeroController Controller { get; }
+            public int ActiveExecutionCount => _skillExecution.ActiveExecutionCount;
+            public int ActiveProjectileCount => _skillExecution.ActiveProjectileCount;
 
             public void Dispose()
             {
                 Controller.Dispose();
+                _combat.Dispose();
+                _skillExecution.Dispose();
                 Hero.Dispose();
                 Enemy.Dispose();
+                _skillViews.Dispose();
                 _tickHandler.Dispose();
                 Object.Destroy(_actorPrefabObject);
                 Object.Destroy(_cameraObject);
                 Object.Destroy(_dispatcherObject);
+                Object.Destroy(_projectilesRoot);
+                Object.Destroy(_projectilePrefabObject);
+            }
+
+            private static SkillCatalog CreateSkillCatalog(bool useProjectileSkill)
+            {
+                if (useProjectileSkill)
+                {
+                    return new SkillCatalog(
+                        System.Array.Empty<DirectDamageSkillDefinitionConfig>(),
+                        new[]
+                        {
+                            new ProjectileDamageSkillDefinitionConfig(
+                                "skill.fireball",
+                                "Fireball",
+                                SkillTargetRule.EnemyActor,
+                                new[]
+                                {
+                                    new ProjectileDamageSkillLevelConfig(
+                                        1,
+                                        14,
+                                        6f,
+                                        1.2f,
+                                        8f,
+                                        commitDelay: 0.35f,
+                                        recoveryDuration: 0.25f)
+                                })
+                        },
+                        new[]
+                        {
+                            new CombatLoadoutDefinitionConfig(
+                                "loadout.test",
+                                new[]
+                                {
+                                    new CombatLoadoutSlotConfig(
+                                        SkillSlot.Primary,
+                                        "skill.fireball",
+                                        1)
+                                })
+                        });
+                }
+
+                return new SkillCatalog(
+                    new[]
+                    {
+                        new DirectDamageSkillDefinitionConfig(
+                            "skill.test",
+                            "Test",
+                            SkillTargetRule.EnemyActor,
+                            new[] { new DirectDamageSkillLevelConfig(1, 20, 1.5f, 0.8f) })
+                    },
+                    System.Array.Empty<ProjectileDamageSkillDefinitionConfig>(),
+                    new[]
+                    {
+                        new CombatLoadoutDefinitionConfig(
+                            "loadout.test",
+                            new[]
+                            {
+                                new CombatLoadoutSlotConfig(
+                                    SkillSlot.Primary,
+                                    "skill.test",
+                                    1)
+                            })
+                    });
+            }
+
+            private static SkillPresentationSequence EmptySequence()
+            {
+                return new SkillPresentationSequence(
+                    System.Array.Empty<SkillActorAnimationCue>(),
+                    System.Array.Empty<SkillVfxCue>());
             }
         }
 
@@ -194,6 +343,8 @@ namespace DungeonTeam.Gameplay.Hero.Runtime.Tests.PlayMode
             public override Transform HitVfxAnchor => null;
 
             public override Transform OverheadAnchor => null;
+
+            public override Transform SkillOriginAnchor => transform;
 
             public override void Configure(float movementSpeed)
             {
@@ -235,6 +386,10 @@ namespace DungeonTeam.Gameplay.Hero.Runtime.Tests.PlayMode
             }
 
             public override void PlayAttackFeedback()
+            {
+            }
+
+            public override void PlayCastFeedback()
             {
             }
 

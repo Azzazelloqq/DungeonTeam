@@ -30,6 +30,23 @@
 ## Actor identity и enemy behavior
 
 - `ActorId` определяет Actor MVP: identity, business stats и visual через Actor config и ViewAssetCatalog.
+- `ActorId + ActorLevel` выбирают только Actor MVP, immutable stats и visual. `ActorDefinition` хранит visual prefab, а Actor level не выбирает loadout и не меняет skill level.
+- `LoadoutId` независимо выбирает слоты. Каждый слот явно хранит `SkillId + SkillLevel`; Hero, companion и enemy controller используют слот, не ветвятся по ActorId или конкретному SkillId.
+- `SkillId` выбирает typed mechanic из `SkillCatalog`, а `SkillLevel` — её damage/range/cooldown и другие параметры конкретного типа. Gameplay-config не содержит prefab, material, clip или `AssetReference`.
 - `BehaviorId` определяет профиль runtime-controller; он не хранится во View, ActorDefinition или visual config.
-- Dungeon authoring, scenario и `EnemySpawnPlan` только переносят opaque `ActorId`/`BehaviorId` вместе с Pose и semantic data, не завися от Actor/EnemyAI/MVP/Addressables.
+- Dungeon authoring, scenario и `EnemySpawnPlan` только переносят opaque `ActorId`/`ActorLevel`/`BehaviorId`/`LoadoutId` вместе с Pose и semantic data, не завися от Skills/Combat/Actor MVP/Addressables.
 - Конкретный режим materializes Actor MVP по `ActorId`, выбирает controller settings по `BehaviorId`, создаёт controller и владеет его lifecycle.
+
+Skill visual идёт отдельным presentation-потоком:
+
+`SkillId -> SkillViewAssetCatalog -> AddressableIds -> SkillViewLoader -> SkillViewSet -> SkillProjectile MVP`.
+
+Actor предоставляет общий `SkillOriginAnchor` и semantic animation cues `Attack`/`Cast`. View не выбирает ID и не загружает Addressables. Root сначала освобождает controllers и активные skill executions/projectiles, затем Actor instances и только после этого `SkillViewSet` с загруженными prefab assets.
+
+## Skill use process и visual sequence
+
+- `SkillLevelDefinition.UseTiming` задаёт gameplay-authoritative `CommitDelay` и `RecoveryDuration`. Animation Event, VFX и presentation asset не применяют механику Skill.
+- Одно использование проходит `Preparing -> Commit -> Recovering -> Completed` либо `Cancelled`. До `Commit` отмена не создаёт projectile, не наносит урон и не запускает cooldown; после `Commit` typed-механика не откатывается.
+- `SkillPresentationAsset` содержит только typed animation/VFX cues относительно фаз `Start`, `Commit`, `Impact`, `Complete`, `Cancel`. Отложенные cues используют clock активного skill execution, а `Impact` приходит от фактического попадания projectile, не из фиксированного таймера.
+- Animation cue семантический и общий для Actor variants; `SkillId` не попадает в Animator. VFX выбирает только semantic anchor (`SourceOrigin`, `TargetHit`, `ImpactPosition`).
+- Presentation assets и их prefab dependencies загружаются на loading boundary через `SkillViewLoader`, остаются во владении `SkillViewSet`; активные cue instances принадлежат `SkillExecutionController` и уничтожаются до release `SkillViewSet`.

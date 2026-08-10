@@ -16,8 +16,11 @@ namespace DungeonTeam.Gameplay.Dungeon.Tests.EditMode
                     "placement-1",
                     "enemy-1",
                     "behavior-1",
+                    "loadout-1",
+                    1,
                     "encounter-1",
-                    pose)
+                    pose,
+                    Array.Empty<DungeonRewardGrantPlan>())
             };
 
             var plan = new DungeonContentPlan(
@@ -30,8 +33,11 @@ namespace DungeonTeam.Gameplay.Dungeon.Tests.EditMode
                 "placement-2",
                 "enemy-2",
                 "behavior-2",
+                "loadout-2",
+                1,
                 "encounter-2",
-                pose);
+                pose,
+                Array.Empty<DungeonRewardGrantPlan>());
 
             Assert.That(plan.EnemySpawns[0].EnemyId, Is.EqualTo("enemy-1"));
             Assert.That(plan.EnemySpawns[0].BehaviorId, Is.EqualTo("behavior-1"));
@@ -46,8 +52,11 @@ namespace DungeonTeam.Gameplay.Dungeon.Tests.EditMode
                 "placement-1",
                 "enemy-1",
                 behaviorId: null,
+                loadoutId: "loadout-1",
+                actorLevel: 1,
                 encounterGroupId: null,
-                pose));
+                pose,
+                Array.Empty<DungeonRewardGrantPlan>()));
         }
 
         [Test]

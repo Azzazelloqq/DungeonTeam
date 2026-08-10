@@ -11,8 +11,8 @@ namespace DungeonTeam.Gameplay.EnemyAI.Tests
         {
             var definitions = new[]
             {
-                Definition("behavior.enemy.melee.basic", attackRange: 1.5f),
-                Definition("behavior.enemy.melee.basic", attackRange: 2f)
+                Definition("behavior.enemy.melee.basic", viewDistance: 8f),
+                Definition("behavior.enemy.melee.basic", viewDistance: 10f)
             };
 
             var exception = Assert.Throws<ArgumentException>(
@@ -26,7 +26,7 @@ namespace DungeonTeam.Gameplay.EnemyAI.Tests
         {
             var catalog = new EnemyBehaviorCatalog(new[]
             {
-                Definition("behavior.enemy.melee.basic", attackRange: 1.5f)
+                Definition("behavior.enemy.melee.basic", viewDistance: 8f)
             });
 
             var exception = Assert.Throws<InvalidOperationException>(
@@ -36,34 +36,31 @@ namespace DungeonTeam.Gameplay.EnemyAI.Tests
         }
 
         [Test]
-        public void Require_WithMeleeAndRangedProfiles_ReturnsDifferentAttackRanges()
+        public void Require_WithMeleeAndRangedProfiles_ReturnsDifferentDecisionProfiles()
         {
             var catalog = new EnemyBehaviorCatalog(new[]
             {
-                Definition("behavior.enemy.melee.basic", attackRange: 1.5f),
-                Definition("behavior.enemy.ranged.basic", attackRange: 6f)
+                Definition("behavior.enemy.melee.basic", viewDistance: 8f),
+                Definition("behavior.enemy.ranged.basic", viewDistance: 12f)
             });
 
             var melee = catalog.Require("behavior.enemy.melee.basic");
             var ranged = catalog.Require("behavior.enemy.ranged.basic");
 
-            Assert.That(melee.AttackRange, Is.EqualTo(1.5f));
-            Assert.That(ranged.AttackRange, Is.EqualTo(6f));
+            Assert.That(melee.ViewDistance, Is.EqualTo(8f));
+            Assert.That(ranged.ViewDistance, Is.EqualTo(12f));
         }
 
         private static EnemyBehaviorDefinition Definition(
             string behaviorId,
-            float attackRange)
+            float viewDistance)
         {
             return new EnemyBehaviorDefinition(
                 behaviorId,
                 new EnemyAiSettings(
-                    viewDistance: 10f,
+                    viewDistance: viewDistance,
                     viewAngle: 90f,
-                    targetLossDistance: 15f,
-                    attackRange: attackRange,
-                    attackDamage: 10,
-                    attackCooldown: 1f));
+                    targetLossDistance: 15f));
         }
     }
 }

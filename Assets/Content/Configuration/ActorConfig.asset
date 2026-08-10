@@ -15,25 +15,55 @@ MonoBehaviour:
   _actors:
   - _actorId: actor.king
     _displayName: KING
-    _maximumHealth: 100
-    _movementSpeed: 4
+    _levels:
+    - _level: 1
+      _maximumHealth: 100
+      _movementSpeed: 4
+    - _level: 2
+      _maximumHealth: 120
+      _movementSpeed: 4
   - _actorId: actor.druid
     _displayName: DRUID
-    _maximumHealth: 80
-    _movementSpeed: 4
+    _levels:
+    - _level: 1
+      _maximumHealth: 80
+      _movementSpeed: 4
+    - _level: 2
+      _maximumHealth: 96
+      _movementSpeed: 4
   - _actorId: actor.rogue
     _displayName: ROGUE
-    _maximumHealth: 80
-    _movementSpeed: 4
+    _levels:
+    - _level: 1
+      _maximumHealth: 80
+      _movementSpeed: 4
+    - _level: 2
+      _maximumHealth: 96
+      _movementSpeed: 4
   - _actorId: actor.wizard
     _displayName: WIZARD
-    _maximumHealth: 80
-    _movementSpeed: 4
+    _levels:
+    - _level: 1
+      _maximumHealth: 80
+      _movementSpeed: 4
+    - _level: 2
+      _maximumHealth: 96
+      _movementSpeed: 4
   - _actorId: actor.skeleton.mage
     _displayName: SKELETON MAGE
-    _maximumHealth: 60
-    _movementSpeed: 3.5
+    _levels:
+    - _level: 1
+      _maximumHealth: 60
+      _movementSpeed: 3.5
+    - _level: 2
+      _maximumHealth: 72
+      _movementSpeed: 3.5
   - _actorId: actor.skeleton.warrior
     _displayName: SKELETON WARRIOR
-    _maximumHealth: 60
-    _movementSpeed: 3.5
+    _levels:
+    - _level: 1
+      _maximumHealth: 60
+      _movementSpeed: 3.5
+    - _level: 2
+      _maximumHealth: 72
+      _movementSpeed: 3.5

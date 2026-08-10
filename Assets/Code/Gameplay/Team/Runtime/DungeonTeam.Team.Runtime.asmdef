@@ -2,8 +2,9 @@
   "name": "DungeonTeam.Team.Runtime",
   "rootNamespace": "DungeonTeam.Gameplay.Team.Runtime",
   "references": [
-    "DungeonTeam.Actors.Domain",
     "DungeonTeam.Actors.Runtime",
+    "DungeonTeam.Combat.Runtime",
+    "DungeonTeam.Skills.Domain",
     "DungeonTeam.Team.Domain",
     "TickHandler"
   ],

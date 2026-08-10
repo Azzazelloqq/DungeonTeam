@@ -200,6 +200,8 @@ namespace DungeonTeam.Gameplay.Dungeon.Domain
         public EnemyCandidate(
             string enemyId,
             string behaviorId,
+            string loadoutId,
+            int actorLevel,
             int cost,
             int weight,
             string[] allowedSlotTags)
@@ -214,9 +216,19 @@ namespace DungeonTeam.Gameplay.Dungeon.Domain
                 throw new ArgumentException("Behavior ID cannot be empty.", nameof(behaviorId));
             }
 
+            if (string.IsNullOrWhiteSpace(loadoutId))
+            {
+                throw new ArgumentException("Loadout ID cannot be empty.", nameof(loadoutId));
+            }
+
             if (cost <= 0)
             {
                 throw new ArgumentOutOfRangeException(nameof(cost));
+            }
+
+            if (actorLevel <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(actorLevel));
             }
 
             if (weight <= 0)
@@ -231,6 +243,8 @@ namespace DungeonTeam.Gameplay.Dungeon.Domain
 
             EnemyId = enemyId;
             BehaviorId = behaviorId;
+            LoadoutId = loadoutId;
+            ActorLevel = actorLevel;
             Cost = cost;
             Weight = weight;
             AllowedSlotTags = Array.AsReadOnly((string[])allowedSlotTags.Clone());
@@ -238,6 +252,8 @@ namespace DungeonTeam.Gameplay.Dungeon.Domain
 
         public string EnemyId { get; }
         public string BehaviorId { get; }
+        public string LoadoutId { get; }
+        public int ActorLevel { get; }
         public int Cost { get; }
         public int Weight { get; }
         public IReadOnlyList<string> AllowedSlotTags { get; }

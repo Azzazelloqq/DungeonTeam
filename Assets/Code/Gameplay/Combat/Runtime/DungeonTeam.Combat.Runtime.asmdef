@@ -1,0 +1,10 @@
+{
+  "name": "DungeonTeam.Combat.Runtime",
+  "rootNamespace": "DungeonTeam.Gameplay.Combat.Runtime",
+  "references": [
+    "DungeonTeam.Actors.Runtime",
+    "DungeonTeam.Skills.Domain",
+    "DungeonTeam.Skills.Runtime"
+  ],
+  "autoReferenced": false
+}

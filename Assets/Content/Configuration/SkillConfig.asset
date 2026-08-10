@@ -1,0 +1,113 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2537c615ec7feee409d30409a2530bee, type: 3}
+  m_Name: SkillConfig
+  m_EditorClassIdentifier: DungeonTeam.Skills.Runtime::DungeonTeam.Gameplay.Skills.Runtime.SkillConfigPage
+  _directDamageSkills:
+  - _skillId: skill.strike.king
+    _displayName: King's Strike
+    _targetRule: 0
+    _levels:
+    - {_level: 1, _damage: 20, _range: 1.5, _cooldown: 0.6, _commitDelay: 0.2,
+      _recoveryDuration: 0.15}
+    - {_level: 2, _damage: 24, _range: 1.5, _cooldown: 0.6, _commitDelay: 0.2,
+      _recoveryDuration: 0.15}
+  - _skillId: skill.smite.king
+    _displayName: Royal Smite
+    _targetRule: 0
+    _levels:
+    - {_level: 1, _damage: 30, _range: 1.8, _cooldown: 1.8, _commitDelay: 0.4,
+      _recoveryDuration: 0.25}
+    - {_level: 2, _damage: 36, _range: 1.8, _cooldown: 1.8, _commitDelay: 0.4,
+      _recoveryDuration: 0.25}
+  - _skillId: skill.strike.rogue
+    _displayName: Rogue Strike
+    _targetRule: 0
+    _levels:
+    - {_level: 1, _damage: 18, _range: 1.5, _cooldown: 0.5, _commitDelay: 0.2,
+      _recoveryDuration: 0.1}
+    - {_level: 2, _damage: 22, _range: 1.5, _cooldown: 0.5, _commitDelay: 0.2,
+      _recoveryDuration: 0.1}
+  - _skillId: skill.strike.skeleton
+    _displayName: Skeleton Warrior Strike
+    _targetRule: 0
+    _levels:
+    - {_level: 1, _damage: 15, _range: 1.5, _cooldown: 1}
+    - {_level: 2, _damage: 18, _range: 1.5, _cooldown: 1}
+  _projectileDamageSkills:
+  - _skillId: skill.bolt.druid
+    _displayName: Druid Bolt
+    _targetRule: 0
+    _levels:
+    - {_level: 1, _damage: 12, _range: 5, _cooldown: 0.95, _projectileSpeed: 9,
+      _commitDelay: 0.25, _recoveryDuration: 0.15}
+    - {_level: 2, _damage: 14, _range: 5, _cooldown: 0.95, _projectileSpeed: 9,
+      _commitDelay: 0.25, _recoveryDuration: 0.15}
+  - _skillId: skill.lance.druid
+    _displayName: Nature Lance
+    _targetRule: 0
+    _levels:
+    - {_level: 1, _damage: 24, _range: 6, _cooldown: 2, _projectileSpeed: 7,
+      _commitDelay: 0.4, _recoveryDuration: 0.25}
+    - {_level: 2, _damage: 29, _range: 6, _cooldown: 2, _projectileSpeed: 7.5,
+      _commitDelay: 0.4, _recoveryDuration: 0.25}
+  - _skillId: skill.knife.rogue
+    _displayName: Shadow Knife
+    _targetRule: 0
+    _levels:
+    - {_level: 1, _damage: 26, _range: 5.5, _cooldown: 1.55, _projectileSpeed: 11,
+      _commitDelay: 0.25, _recoveryDuration: 0.15}
+    - {_level: 2, _damage: 31, _range: 5.5, _cooldown: 1.55, _projectileSpeed: 11,
+      _commitDelay: 0.25, _recoveryDuration: 0.15}
+  - _skillId: skill.bolt.arcane
+    _displayName: Arcane Bolt
+    _targetRule: 0
+    _levels:
+    - {_level: 1, _damage: 11, _range: 6, _cooldown: 0.65, _projectileSpeed: 10,
+      _commitDelay: 0.15, _recoveryDuration: 0.1}
+    - {_level: 2, _damage: 13, _range: 6, _cooldown: 0.65, _projectileSpeed: 10.5,
+      _commitDelay: 0.15, _recoveryDuration: 0.1}
+  - _skillId: skill.fireball
+    _displayName: Fireball
+    _targetRule: 0
+    _levels:
+    - {_level: 1, _damage: 14, _range: 6, _cooldown: 1.2, _projectileSpeed: 8,
+      _commitDelay: 0.35, _recoveryDuration: 0.25}
+    - {_level: 2, _damage: 17, _range: 6, _cooldown: 1.2, _projectileSpeed: 9,
+      _commitDelay: 0.35, _recoveryDuration: 0.25}
+    - {_level: 3, _damage: 10, _range: 6, _cooldown: 1.5, _projectileSpeed: 7,
+      _commitDelay: 0.35, _recoveryDuration: 0.25}
+  _loadouts:
+  - _loadoutId: loadout.king
+    _slots:
+    - {_slot: 0, _skillId: skill.strike.king, _skillLevel: 1}
+    - {_slot: 1, _skillId: skill.smite.king, _skillLevel: 1}
+  - _loadoutId: loadout.druid
+    _slots:
+    - {_slot: 0, _skillId: skill.bolt.druid, _skillLevel: 1}
+    - {_slot: 1, _skillId: skill.lance.druid, _skillLevel: 1}
+  - _loadoutId: loadout.rogue
+    _slots:
+    - {_slot: 0, _skillId: skill.strike.rogue, _skillLevel: 1}
+    - {_slot: 1, _skillId: skill.knife.rogue, _skillLevel: 1}
+  - _loadoutId: loadout.wizard
+    _slots:
+    - {_slot: 0, _skillId: skill.bolt.arcane, _skillLevel: 1}
+    - {_slot: 1, _skillId: skill.fireball, _skillLevel: 2}
+  - _loadoutId: loadout.skeleton.mage
+    _slots:
+    - {_slot: 0, _skillId: skill.fireball, _skillLevel: 3}
+    - {_slot: 1, _skillId: skill.fireball, _skillLevel: 1}
+  - _loadoutId: loadout.skeleton.warrior
+    _slots:
+    - {_slot: 0, _skillId: skill.strike.skeleton, _skillLevel: 1}
+    - {_slot: 1, _skillId: skill.fireball, _skillLevel: 1}

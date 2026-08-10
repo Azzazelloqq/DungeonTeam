@@ -5,6 +5,12 @@ using UnityEngine;
 
 namespace DungeonTeam.Gameplay.Actors.Runtime
 {
+    public enum ActorSkillAnimationCue
+    {
+        Attack = 0,
+        Cast = 1
+    }
+
     public sealed class ActorInstance : IDisposable
     {
         private ActorPresenterBase _presenter;
@@ -12,12 +18,16 @@ namespace DungeonTeam.Gameplay.Actors.Runtime
 
         internal ActorInstance(
             string actorId,
+            int level,
             ActorPresenterBase presenter,
             GameObject gameObject)
         {
             ActorId = !string.IsNullOrWhiteSpace(actorId)
                 ? actorId
                 : throw new ArgumentException("Actor ID cannot be empty.", nameof(actorId));
+            Level = level > 0
+                ? level
+                : throw new ArgumentOutOfRangeException(nameof(level));
             _presenter = presenter ?? throw new ArgumentNullException(nameof(presenter));
             _gameObject = gameObject != null
                 ? gameObject
@@ -25,6 +35,8 @@ namespace DungeonTeam.Gameplay.Actors.Runtime
         }
 
         public string ActorId { get; }
+
+        public int Level { get; }
 
         public Vector3 Position => RequirePresenter().Position;
 
@@ -39,6 +51,8 @@ namespace DungeonTeam.Gameplay.Actors.Runtime
         public Transform HitVfxAnchor => RequirePresenter().HitVfxAnchor;
 
         public Transform OverheadAnchor => RequirePresenter().OverheadAnchor;
+
+        public Transform SkillOriginAnchor => RequirePresenter().SkillOriginAnchor;
 
         public event Action<ActorInstance> AttackedBy;
 
@@ -67,6 +81,21 @@ namespace DungeonTeam.Gameplay.Actors.Runtime
         public void PlayAttackFeedback()
         {
             RequirePresenter().PlayAttackFeedback();
+        }
+
+        public void PlaySkillFeedback(ActorSkillAnimationCue cue)
+        {
+            switch (cue)
+            {
+                case ActorSkillAnimationCue.Attack:
+                    RequirePresenter().PlayAttackFeedback();
+                    break;
+                case ActorSkillAnimationCue.Cast:
+                    RequirePresenter().PlayCastFeedback();
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(cue), cue, null);
+            }
         }
 
         public ActorDamageResult ApplyDamage(int amount)

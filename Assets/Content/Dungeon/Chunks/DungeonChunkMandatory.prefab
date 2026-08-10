@@ -314,6 +314,8 @@ MonoBehaviour:
   _slotTag: 
   _fixedEnemyId: actor.skeleton.mage
   _fixedBehaviorId: behavior.enemy.ranged.basic
+  _fixedLoadoutId: loadout.skeleton.mage
+  _fixedActorLevel: 1
   _encounterGroupId: mandatory
 --- !u!1 &9006919792081932425
 GameObject:

@@ -2,8 +2,9 @@
   "name": "DungeonTeam.EnemyAI.Runtime",
   "rootNamespace": "DungeonTeam.Gameplay.EnemyAI.Runtime",
   "references": [
-    "DungeonTeam.Actors.Domain",
     "DungeonTeam.Actors.Runtime",
+    "DungeonTeam.Combat.Runtime",
+    "DungeonTeam.Skills.Domain",
     "DungeonTeam.Configuration",
     "DungeonTeam.EnemyAI.Domain",
     "TickHandler"

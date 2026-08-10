@@ -43,16 +43,7 @@ namespace DungeonTeam.Gameplay.Team.Runtime
         private LayerMask _obstacleMask = ~0;
 
         [SerializeField, Min(0.1f)]
-        private float _companionAttackRange = 1.5f;
-
-        [SerializeField, Min(0.1f)]
         private float _companionTargetLossDistance = 12f;
-
-        [SerializeField, Min(1)]
-        private int _companionAttackDamage = 12;
-
-        [SerializeField, Min(0.01f)]
-        private float _companionAttackCooldown = 0.9f;
 
         internal float StartFollowingDistance => _startFollowingDistance;
         internal float StopFollowingDistance => _stopFollowingDistance;
@@ -66,10 +57,7 @@ namespace DungeonTeam.Gameplay.Team.Runtime
         internal float CommandViewAngle => _commandViewAngle;
         internal float CommandEyeHeight => _commandEyeHeight;
         internal LayerMask ObstacleMask => _obstacleMask;
-        internal float CompanionAttackRange => _companionAttackRange;
         internal float CompanionTargetLossDistance => _companionTargetLossDistance;
-        internal int CompanionAttackDamage => _companionAttackDamage;
-        internal float CompanionAttackCooldown => _companionAttackCooldown;
 
         internal void Validate()
         {
@@ -102,10 +90,7 @@ namespace DungeonTeam.Gameplay.Team.Runtime
                     "Team Control command visibility settings are invalid.");
             }
 
-            if (_companionAttackRange <= 0f ||
-                _companionTargetLossDistance <= _companionAttackRange ||
-                _companionAttackDamage <= 0 ||
-                _companionAttackCooldown <= 0f)
+            if (_companionTargetLossDistance <= 0f)
             {
                 throw new InvalidOperationException(
                     "Team Control companion combat settings are invalid.");

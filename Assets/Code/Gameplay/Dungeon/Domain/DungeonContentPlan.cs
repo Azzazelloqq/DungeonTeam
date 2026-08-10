@@ -63,22 +63,8 @@ namespace DungeonTeam.Gameplay.Dungeon.Domain
             string placementId,
             string enemyId,
             string behaviorId,
-            string encounterGroupId,
-            DungeonPose pose)
-            : this(
-                placementId,
-                enemyId,
-                behaviorId,
-                encounterGroupId,
-                pose,
-                Array.Empty<DungeonRewardGrantPlan>())
-        {
-        }
-
-        public EnemySpawnPlan(
-            string placementId,
-            string enemyId,
-            string behaviorId,
+            string loadoutId,
+            int actorLevel,
             string encounterGroupId,
             DungeonPose pose,
             DungeonRewardGrantPlan[] rewards)
@@ -86,6 +72,10 @@ namespace DungeonTeam.Gameplay.Dungeon.Domain
             PlacementId = RequireId(placementId, nameof(placementId));
             EnemyId = RequireId(enemyId, nameof(enemyId));
             BehaviorId = RequireId(behaviorId, nameof(behaviorId));
+            LoadoutId = RequireId(loadoutId, nameof(loadoutId));
+            ActorLevel = actorLevel > 0
+                ? actorLevel
+                : throw new ArgumentOutOfRangeException(nameof(actorLevel));
             EncounterGroupId = encounterGroupId;
             Pose = pose;
             Rewards = rewards != null
@@ -96,6 +86,8 @@ namespace DungeonTeam.Gameplay.Dungeon.Domain
         public string PlacementId { get; }
         public string EnemyId { get; }
         public string BehaviorId { get; }
+        public string LoadoutId { get; }
+        public int ActorLevel { get; }
         public string EncounterGroupId { get; }
         public DungeonPose Pose { get; }
         public IReadOnlyList<DungeonRewardGrantPlan> Rewards { get; }

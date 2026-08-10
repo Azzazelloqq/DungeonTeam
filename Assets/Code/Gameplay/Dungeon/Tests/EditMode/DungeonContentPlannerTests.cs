@@ -20,12 +20,15 @@ namespace DungeonTeam.Gameplay.Dungeon.Tests.EditMode
                 {
                     new EnemyPlacement(
                         "enemy-fixed",
+                        "enemy-fixed",
                         DungeonPlacementMode.Fixed,
                         null,
                         "enemy.designer",
                         "behavior.enemy.designer",
-                        "encounter.designer",
-                        Pose)
+                        "loadout.designer",
+                        fixedActorLevel: 3,
+                        encounterGroupId: "encounter.designer",
+                        pose: Pose)
                 },
                 new[]
                 {
@@ -60,6 +63,8 @@ namespace DungeonTeam.Gameplay.Dungeon.Tests.EditMode
             Assert.That(
                 plan.EnemySpawns[0].BehaviorId,
                 Is.EqualTo("behavior.enemy.designer"));
+            Assert.That(plan.EnemySpawns[0].ActorLevel, Is.EqualTo(3));
+            Assert.That(plan.EnemySpawns[0].LoadoutId, Is.EqualTo("loadout.designer"));
             Assert.That(plan.EnemySpawns[0].EncounterGroupId, Is.EqualTo("encounter.designer"));
             Assert.That(plan.InterestPointSpawns, Has.Count.EqualTo(1));
             Assert.That(plan.InterestPointSpawns[0].InterestPointId, Is.EqualTo("interest.designer"));
@@ -78,6 +83,7 @@ namespace DungeonTeam.Gameplay.Dungeon.Tests.EditMode
                     null,
                     "enemy.disabled",
                     "behavior.enemy.disabled",
+                    "loadout.disabled",
                     null,
                     Pose),
                 new EnemyPlacement(
@@ -87,6 +93,7 @@ namespace DungeonTeam.Gameplay.Dungeon.Tests.EditMode
                     null,
                     "enemy.enabled",
                     "behavior.enemy.enabled",
+                    "loadout.enabled",
                     null,
                     Pose)
             };
@@ -126,12 +133,14 @@ namespace DungeonTeam.Gameplay.Dungeon.Tests.EditMode
                     "melee",
                     null,
                     null,
+                    null,
                     "encounter",
                     Pose),
                 new EnemyPlacement(
                     "slot-2",
                     DungeonPlacementMode.Slot,
                     "melee",
+                    null,
                     null,
                     null,
                     "encounter",
@@ -145,15 +154,19 @@ namespace DungeonTeam.Gameplay.Dungeon.Tests.EditMode
                     new EnemyCandidate(
                         "enemy.ranged",
                         "behavior.enemy.ranged",
+                        "loadout.ranged",
+                        actorLevel: 1,
                         cost: 1,
                         weight: 1,
                         new[] { "ranged" }),
                     new EnemyCandidate(
                         "enemy.melee",
                         "behavior.enemy.melee",
+                        "loadout.melee",
+                        actorLevel: 4,
                         cost: 1,
                         weight: 1,
-                        new[] { "melee" })
+                        allowedSlotTags: new[] { "melee" })
                 },
                 Array.Empty<InterestPointRule>(),
                 Array.Empty<string>(),
@@ -172,6 +185,8 @@ namespace DungeonTeam.Gameplay.Dungeon.Tests.EditMode
             Assert.That(
                 plan.EnemySpawns[0].BehaviorId,
                 Is.EqualTo("behavior.enemy.melee"));
+            Assert.That(plan.EnemySpawns[0].ActorLevel, Is.EqualTo(4));
+            Assert.That(plan.EnemySpawns[0].LoadoutId, Is.EqualTo("loadout.melee"));
         }
 
         [Test]
@@ -276,6 +291,7 @@ namespace DungeonTeam.Gameplay.Dungeon.Tests.EditMode
                         null,
                         "enemy.grunt",
                         "behavior.enemy.melee",
+                        "loadout.melee",
                         null,
                         Pose)
                 },
@@ -301,6 +317,7 @@ namespace DungeonTeam.Gameplay.Dungeon.Tests.EditMode
                 slotTag: null,
                 fixedEnemyId: "enemy.grunt",
                 fixedBehaviorId: null,
+                fixedLoadoutId: "loadout.melee",
                 encounterGroupId: null,
                 Pose));
         }
@@ -311,6 +328,8 @@ namespace DungeonTeam.Gameplay.Dungeon.Tests.EditMode
             Assert.Throws<ArgumentException>(() => new EnemyCandidate(
                 "enemy.grunt",
                 behaviorId: null,
+                loadoutId: "loadout.melee",
+                actorLevel: 1,
                 cost: 1,
                 weight: 1,
                 new[] { "enemy.common" }));

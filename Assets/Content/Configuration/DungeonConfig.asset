@@ -39,6 +39,8 @@ MonoBehaviour:
     _enemyCandidates:
     - _enemyId: actor.skeleton.warrior
       _behaviorId: behavior.enemy.melee.basic
+      _loadoutId: loadout.skeleton.warrior
+      _actorLevel: 1
       _cost: 1
       _weight: 1
       _allowedSlotTags:

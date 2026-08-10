@@ -7,6 +7,7 @@ using DungeonTeam.Gameplay.Actors.Runtime;
 using DungeonTeam.Gameplay.Actors.Runtime.Presentation.Gameplay.Actor.Base;
 using DungeonTeam.Gameplay.Chests.Runtime;
 using DungeonTeam.Gameplay.Chests.Runtime.Presentation.Gameplay.Chest.Base;
+using DungeonTeam.Gameplay.Combat.Runtime;
 using DungeonTeam.Gameplay.ContextActions.Runtime;
 using DungeonTeam.Gameplay.Dungeon.Application;
 using DungeonTeam.Gameplay.Dungeon.Domain;
@@ -17,6 +18,8 @@ using DungeonTeam.Gameplay.Hero.Runtime;
 using DungeonTeam.Gameplay.Rewards.Runtime;
 using DungeonTeam.Gameplay.Rewards.Runtime.Presentation.Gameplay.RewardPickup.Base;
 using DungeonTeam.Gameplay.Team.Runtime;
+using DungeonTeam.Gameplay.Skills.Domain;
+using DungeonTeam.Gameplay.Skills.Runtime;
 using NUnit.Framework;
 using TMPro;
 using TickHandler.UnityTickHandler;
@@ -56,9 +59,12 @@ namespace DungeonTeam.Gameplay.DungeonRun.Tests.PlayMode
             var actorLoader = new FakeActorDefinitionLoader(actorPrefab);
             var root = new DungeonRunRoot(
                 new FakeDungeonFactory(),
-                CreateStartRequest(seed: 42),
+                CreateStartRequestAtLevel(seed: 42, level: 2),
                 new DungeonRunBindings(contextActionsPrefab),
                 actorLoader,
+                CreateActorCatalog(),
+                CreateSkillCatalog(),
+                new FakeSkillViewLoader(),
                 new FakeRewardPickupViewLoader(rewardPickupPrefab),
                 new FakeChestViewLoader(chestPrefab),
                 contextActionsParent,
@@ -89,6 +95,9 @@ namespace DungeonTeam.Gameplay.DungeonRun.Tests.PlayMode
             try
             {
                 yield return root.InitializeAsync(default).ToCoroutine();
+
+                Assert.That(root.Leader.Level, Is.EqualTo(2));
+                Assert.That(root.Leader.CurrentHealth, Is.EqualTo(120));
 
                 mapRoot = GameObject.Find("DungeonTestMap");
                 navigationRoot = GameObject.Find("DungeonRunNavigation");
@@ -358,6 +367,9 @@ namespace DungeonTeam.Gameplay.DungeonRun.Tests.PlayMode
                     "actor.hero.wizard"),
                 new DungeonRunBindings(contextActionsPrefab),
                 actorLoader,
+                CreateActorCatalog(),
+                CreateSkillCatalog(),
+                new FakeSkillViewLoader(),
                 new FakeRewardPickupViewLoader(rewardPickupPrefab),
                 new FakeChestViewLoader(chestPrefab),
                 contextActionsParentObject.GetComponent<RectTransform>(),
@@ -448,6 +460,9 @@ namespace DungeonTeam.Gameplay.DungeonRun.Tests.PlayMode
                 CreateStartRequest(seed: 17),
                 new DungeonRunBindings(contextActionsPrefab),
                 new FakeActorDefinitionLoader(actorPrefab),
+                CreateActorCatalog(),
+                CreateSkillCatalog(),
+                new FakeSkillViewLoader(),
                 new FakeRewardPickupViewLoader(rewardPickupPrefab),
                 new FakeChestViewLoader(chestPrefab),
                 contextActionsParentObject.GetComponent<RectTransform>(),
@@ -546,6 +561,9 @@ namespace DungeonTeam.Gameplay.DungeonRun.Tests.PlayMode
                 CreateStartRequest(seed: 7),
                 new DungeonRunBindings(contextActionsPrefab),
                 actorLoader,
+                CreateActorCatalog(),
+                CreateSkillCatalog(),
+                new FakeSkillViewLoader(),
                 new FakeRewardPickupViewLoader(rewardPickupPrefab),
                 new FakeChestViewLoader(chestPrefab),
                 contextActionsParentObject.GetComponent<RectTransform>(),
@@ -639,8 +657,35 @@ namespace DungeonTeam.Gameplay.DungeonRun.Tests.PlayMode
                     "normal",
                     seed),
                 new DungeonRunTeamSelection(
-                    "actor.hero.leader",
-                    companionActorIds));
+                    new DungeonRunActorSelection(
+                        "actor.hero.leader",
+                        1,
+                        "loadout.hero.melee"),
+                    CreateCompanionSelections(companionActorIds)));
+        }
+
+        private static DungeonRunStartRequest CreateStartRequestAtLevel(
+            int seed,
+            int level)
+        {
+            return new DungeonRunStartRequest(
+                new DungeonBuildRequest(
+                    "dungeon.test",
+                    "scenario.test",
+                    "normal",
+                    seed),
+                new DungeonRunTeamSelection(
+                    new DungeonRunActorSelection(
+                        "actor.hero.leader",
+                        level,
+                        "loadout.hero.melee"),
+                    new[]
+                    {
+                        new DungeonRunActorSelection(
+                            "actor.hero.companion",
+                            1,
+                            "loadout.hero.melee")
+                    }));
         }
 
         private static EnemyBehaviorCatalog CreateEnemyBehaviorCatalog()
@@ -652,20 +697,121 @@ namespace DungeonTeam.Gameplay.DungeonRun.Tests.PlayMode
                     new EnemyAiSettings(
                         viewDistance: 8f,
                         viewAngle: 90f,
-                        targetLossDistance: 12f,
-                        attackRange: 1.5f,
-                        attackDamage: 15,
-                        attackCooldown: 1f)),
+                        targetLossDistance: 12f)),
                 new EnemyBehaviorDefinition(
                     "behavior.enemy.ranged.basic",
                     new EnemyAiSettings(
                         viewDistance: 12f,
                         viewAngle: 100f,
-                        targetLossDistance: 18f,
-                        attackRange: 6f,
-                        attackDamage: 10,
-                        attackCooldown: 1.5f))
+                        targetLossDistance: 18f))
             });
+        }
+
+        private static ActorConfigCatalog CreateActorCatalog()
+        {
+            return new ActorConfigCatalog(new[]
+            {
+                ActorConfig("actor.hero.leader", 100, 4f),
+                ActorConfig("actor.hero.companion", 80, 4f),
+                ActorConfig("actor.hero.rogue", 80, 4f),
+                ActorConfig("actor.hero.wizard", 80, 4f),
+                ActorConfig("enemy.grunt", 60, 3.5f),
+                ActorConfig("enemy.guard", 60, 3.5f)
+            });
+        }
+
+        private static ActorDefinitionConfig ActorConfig(
+            string actorId,
+            int health,
+            float speed)
+        {
+            return new ActorDefinitionConfig(
+                actorId,
+                actorId,
+                new[]
+                {
+                    new ActorLevelDefinitionConfig(1, health, speed),
+                    new ActorLevelDefinitionConfig(2, health + health / 5, speed)
+                });
+        }
+
+        private static SkillCatalog CreateSkillCatalog()
+        {
+            return new SkillCatalog(
+                new[]
+                {
+                    DirectSkill(
+                        "skill.hero.melee",
+                        "Hero Melee",
+                        20,
+                        1.5f,
+                        0.8f),
+                    DirectSkill(
+                        "skill.hero.ranged",
+                        "Hero Ranged",
+                        14,
+                        6f,
+                        1.2f),
+                    DirectSkill(
+                        "skill.enemy.melee",
+                        "Enemy Melee",
+                        15,
+                        1.5f,
+                        1f),
+                    DirectSkill(
+                        "skill.enemy.ranged",
+                        "Enemy Ranged",
+                        10,
+                        6f,
+                        1.5f)
+                },
+                System.Array.Empty<ProjectileDamageSkillDefinitionConfig>(),
+                new[]
+                {
+                    Loadout("loadout.hero.melee", "skill.hero.melee"),
+                    Loadout("loadout.hero.ranged", "skill.hero.ranged"),
+                    Loadout("loadout.enemy.melee", "skill.enemy.melee"),
+                    Loadout("loadout.enemy.ranged", "skill.enemy.ranged")
+                });
+        }
+
+        private static DirectDamageSkillDefinitionConfig DirectSkill(
+            string skillId,
+            string displayName,
+            int damage,
+            float range,
+            float cooldown)
+        {
+            return new DirectDamageSkillDefinitionConfig(
+                skillId,
+                displayName,
+                SkillTargetRule.EnemyActor,
+                new[]
+                {
+                    new DirectDamageSkillLevelConfig(1, damage, range, cooldown),
+                    new DirectDamageSkillLevelConfig(2, damage + 4, range, cooldown)
+                });
+        }
+
+        private static CombatLoadoutDefinitionConfig Loadout(string loadoutId, string skillId)
+        {
+            return new CombatLoadoutDefinitionConfig(
+                loadoutId,
+                new[] { new CombatLoadoutSlotConfig(SkillSlot.Primary, skillId, 1) });
+        }
+
+        private static DungeonRunActorSelection[] CreateCompanionSelections(string[] actorIds)
+        {
+            var selections = new DungeonRunActorSelection[actorIds.Length];
+            for (var index = 0; index < actorIds.Length; index++)
+            {
+                selections[index] = new DungeonRunActorSelection(
+                    actorIds[index],
+                    1,
+                    "loadout.hero.melee");
+            }
+
+            return selections;
         }
 
         private sealed class FakeDungeonFactory : IDungeonFactory
@@ -702,6 +848,8 @@ namespace DungeonTeam.Gameplay.DungeonRun.Tests.PlayMode
                             "enemy.test.a",
                             "enemy.grunt",
                             "behavior.enemy.melee.basic",
+                            "loadout.enemy.melee",
+                            1,
                             "",
                             Pose(3f, 3f),
                             new[] { new DungeonRewardGrantPlan("reward.gold", 1) }),
@@ -709,6 +857,8 @@ namespace DungeonTeam.Gameplay.DungeonRun.Tests.PlayMode
                             "enemy.test.b",
                             "enemy.guard",
                             "behavior.enemy.ranged.basic",
+                            "loadout.enemy.ranged",
+                            1,
                             "",
                             Pose(-3f, 3f),
                             new[] { new DungeonRewardGrantPlan("reward.gold", 1) })
@@ -774,26 +924,51 @@ namespace DungeonTeam.Gameplay.DungeonRun.Tests.PlayMode
                 LastRequestedIds = requestedIds;
                 LastLoadedSet = new ActorDefinitionSet(new[]
                 {
-                    Definition("actor.hero.leader", 100, 4f),
-                    Definition("actor.hero.companion", 80, 4f),
-                    Definition("actor.hero.rogue", 80, 4f),
-                    Definition("actor.hero.wizard", 80, 4f),
-                    Definition("enemy.grunt", 60, 3.5f),
-                    Definition("enemy.guard", 60, 3.5f)
+                    Definition("actor.hero.leader"),
+                    Definition("actor.hero.companion"),
+                    Definition("actor.hero.rogue"),
+                    Definition("actor.hero.wizard"),
+                    Definition("enemy.grunt"),
+                    Definition("enemy.guard")
                 });
                 return UniTask.FromResult(LastLoadedSet);
             }
 
             private ActorDefinition Definition(
-                string actorId,
-                int maximumHealth,
-                float movementSpeed)
+                string actorId)
             {
                 return new ActorDefinition(
                     actorId,
-                    _prefab,
-                    maximumHealth,
-                    movementSpeed);
+                    _prefab);
+            }
+        }
+
+        private sealed class FakeSkillViewLoader : ISkillViewLoader
+        {
+            public UniTask<SkillViewSet> LoadAsync(
+                IReadOnlyList<string> loadoutIds,
+                CancellationToken token)
+            {
+                token.ThrowIfCancellationRequested();
+                return UniTask.FromResult(
+                    new SkillViewSet(
+                        System.Array.Empty<SkillProjectileViewEntry>(),
+                        new[]
+                        {
+                            Presentation("skill.hero.melee"),
+                            Presentation("skill.hero.ranged"),
+                            Presentation("skill.enemy.melee"),
+                            Presentation("skill.enemy.ranged")
+                        }));
+            }
+
+            private static SkillPresentationViewEntry Presentation(string skillId)
+            {
+                return new SkillPresentationViewEntry(
+                    skillId,
+                    new SkillPresentationSequence(
+                        System.Array.Empty<SkillActorAnimationCue>(),
+                        System.Array.Empty<SkillVfxCue>()));
             }
         }
 
@@ -876,6 +1051,8 @@ namespace DungeonTeam.Gameplay.DungeonRun.Tests.PlayMode
 
             public override Transform OverheadAnchor => null;
 
+            public override Transform SkillOriginAnchor => transform;
+
             public override void Configure(float movementSpeed)
             {
             }
@@ -916,6 +1093,10 @@ namespace DungeonTeam.Gameplay.DungeonRun.Tests.PlayMode
             }
 
             public override void PlayAttackFeedback()
+            {
+            }
+
+            public override void PlayCastFeedback()
             {
             }
 

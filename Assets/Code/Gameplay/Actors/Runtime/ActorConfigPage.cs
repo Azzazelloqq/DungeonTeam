@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Code.Configuration;
 using UnityEngine;
 
@@ -27,31 +28,42 @@ namespace DungeonTeam.Gameplay.Actors.Runtime
         [SerializeField]
         private string _displayName;
 
-        [SerializeField, Min(1)]
-        private int _maximumHealth = 1;
-
-        [SerializeField, Min(0.1f)]
-        private float _movementSpeed = 1f;
+        [SerializeField]
+        private ActorLevelDefinitionConfig[] _levels =
+            Array.Empty<ActorLevelDefinitionConfig>();
 
         public ActorDefinitionConfig(
             string actorId,
             string displayName,
-            int maximumHealth,
-            float movementSpeed)
+            ActorLevelDefinitionConfig[] levels)
         {
             _actorId = actorId;
             _displayName = displayName;
-            _maximumHealth = maximumHealth;
-            _movementSpeed = movementSpeed;
+            _levels = levels;
         }
 
         public string ActorId => _actorId;
 
         public string DisplayName => _displayName;
 
-        internal int MaximumHealth => _maximumHealth;
+        internal ActorConfigDefinition ToDefinition()
+        {
+            var levels = new ActorRuntimeDefinition[_levels.Length];
+            for (var index = 0; index < _levels.Length; index++)
+            {
+                var definition = _levels[index];
+                levels[index] = new ActorRuntimeDefinition(
+                    _actorId,
+                    definition.Level,
+                    definition.MaximumHealth,
+                    definition.MovementSpeed);
+            }
 
-        internal float MovementSpeed => _movementSpeed;
+            return new ActorConfigDefinition(
+                _actorId,
+                _displayName,
+                levels);
+        }
 
         internal void Validate(int index)
         {
@@ -67,16 +79,60 @@ namespace DungeonTeam.Gameplay.Actors.Runtime
                     $"{location} ('{_actorId}') has an empty display name.");
             }
 
-            if (_maximumHealth <= 0)
+            if (_levels == null || _levels.Length == 0)
             {
                 throw new ArgumentException(
-                    $"{location} ('{_actorId}') requires positive health.");
+                    $"{location} ('{_actorId}') requires at least one level.");
             }
 
-            if (_movementSpeed <= 0f)
+            var levels = new HashSet<int>();
+            for (var levelIndex = 0; levelIndex < _levels.Length; levelIndex++)
+            {
+                var level = _levels[levelIndex] ?? throw new ArgumentException(
+                    $"{location} ('{_actorId}') has a missing level at index {levelIndex}.");
+                level.Validate(_actorId);
+                if (!levels.Add(level.Level))
+                {
+                    throw new ArgumentException(
+                        $"{location} ('{_actorId}') contains level {level.Level} more than once.");
+                }
+            }
+        }
+    }
+
+    [Serializable]
+    public sealed class ActorLevelDefinitionConfig
+    {
+        [SerializeField, Min(1)]
+        private int _level = 1;
+
+        [SerializeField, Min(1)]
+        private int _maximumHealth = 1;
+
+        [SerializeField, Min(0.1f)]
+        private float _movementSpeed = 1f;
+
+        public ActorLevelDefinitionConfig(
+            int level,
+            int maximumHealth,
+            float movementSpeed)
+        {
+            _level = level;
+            _maximumHealth = maximumHealth;
+            _movementSpeed = movementSpeed;
+        }
+
+        public int Level => _level;
+        public int MaximumHealth => _maximumHealth;
+        public float MovementSpeed => _movementSpeed;
+        internal void Validate(string actorId)
+        {
+            if (_level <= 0 ||
+                _maximumHealth <= 0 ||
+                _movementSpeed <= 0f)
             {
                 throw new ArgumentException(
-                    $"{location} ('{_actorId}') requires positive movement speed.");
+                    $"Actor '{actorId}' level values must be positive.");
             }
         }
     }

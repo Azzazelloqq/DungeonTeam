@@ -152,6 +152,7 @@ namespace DungeonTeam.Gameplay.Dungeon.Runtime.Infrastructure
                     EnemySlotTag,
                     fixedEnemyId: null,
                     fixedBehaviorId: null,
+                    fixedLoadoutId: null,
                     encounterGroupId: null,
                     ToPose(center + tileSet.EnemySlotOffset)));
             }

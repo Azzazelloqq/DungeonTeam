@@ -151,21 +151,55 @@ namespace Code.UI.MainMenu.Tests
             Assert.That(playCount, Is.Zero);
         }
 
+        [Test]
+        public void TeamSelection_IncreaseLevel_UsesConfiguredLevelInRequest()
+        {
+            MainMenuPlayRequest request = default;
+            using var viewModel = new MainMenuViewModel(
+                new MainMenuModel(),
+                CreateDungeonOptions(),
+                CreateTeamSetup(),
+                value => request = value,
+                () => { },
+                () => { });
+            viewModel.Initialize();
+
+            viewModel.TeamMembers[0].IncreaseLevelCommand.Execute();
+            viewModel.PlayCommand.Execute();
+
+            Assert.That(request.Team.Leader.Level, Is.EqualTo(2));
+            Assert.That(viewModel.TeamMembers[0].LevelLabel.Value, Is.EqualTo("LVL 2"));
+        }
+
         private static DungeonRunTeamSetup CreateTeamSetup()
         {
             return new DungeonRunTeamSetup(
                 new[]
                 {
-                    new DungeonRunTeamMemberOption("actor.king", "KING"),
-                    new DungeonRunTeamMemberOption("actor.druid", "DRUID"),
-                    new DungeonRunTeamMemberOption("actor.rogue", "ROGUE"),
-                    new DungeonRunTeamMemberOption("actor.wizard", "WIZARD")
+                    Option("actor.king", "KING"),
+                    Option("actor.druid", "DRUID"),
+                    Option("actor.rogue", "ROGUE"),
+                    Option("actor.wizard", "WIZARD")
                 },
                 2,
                 4,
                 new DungeonRunTeamSelection(
-                    "actor.king",
-                    new[] { "actor.druid" }));
+                    Selection("actor.king", "loadout.king"),
+                    new[] { Selection("actor.druid", "loadout.druid") }));
+        }
+
+        private static DungeonRunTeamMemberOption Option(string actorId, string displayName)
+        {
+            return new DungeonRunTeamMemberOption(
+                actorId,
+                displayName,
+                new[] { 1, 2 },
+                new[] { "loadout.king", "loadout.druid" });
+        }
+
+        private static DungeonRunActorSelection Selection(string actorId, string loadoutId)
+        {
+            return new DungeonRunActorSelection(actorId, 1, loadoutId);
         }
     }
 }
