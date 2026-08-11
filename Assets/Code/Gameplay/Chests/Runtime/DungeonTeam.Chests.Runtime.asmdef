@@ -5,6 +5,7 @@
     "DungeonTeam.Addressables",
     "MVP",
     "Disposable",
+    "LightDI",
     "ResourceLoader",
     "UniTask"
   ],

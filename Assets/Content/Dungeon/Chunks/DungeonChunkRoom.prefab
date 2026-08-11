@@ -293,6 +293,7 @@ MonoBehaviour:
   _slotTag: enemy.common
   _fixedEnemyId: 
   _fixedBehaviorId:
+  _fixedActorLevel: 1
   _encounterGroupId: room
 --- !u!1 &7587161300190262416
 GameObject:

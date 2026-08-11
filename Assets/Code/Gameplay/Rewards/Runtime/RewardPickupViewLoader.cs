@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using DungeonTeam.Gameplay.Rewards.Runtime.Presentation.Gameplay.RewardPickup.Base;
+using LightDI.Runtime;
 using ResourceLoader;
 using UnityEngine;
 
@@ -12,7 +13,7 @@ namespace DungeonTeam.Gameplay.Rewards.Runtime
     {
         private readonly IResourceLoader _resourceLoader;
 
-        public RewardPickupViewLoader(IResourceLoader resourceLoader)
+        public RewardPickupViewLoader([Inject] IResourceLoader resourceLoader)
         {
             _resourceLoader = resourceLoader ??
                 throw new ArgumentNullException(nameof(resourceLoader));

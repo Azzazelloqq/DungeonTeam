@@ -249,6 +249,9 @@ namespace DungeonTeam.Gameplay.Dungeon.Runtime.Config
         private string _behaviorId;
 
         [SerializeField, Min(1)]
+        private int _actorLevel = 1;
+
+        [SerializeField, Min(1)]
         private int _cost = 1;
 
         [SerializeField, Min(1)]
@@ -262,6 +265,7 @@ namespace DungeonTeam.Gameplay.Dungeon.Runtime.Config
             return new EnemyCandidate(
                 _enemyId,
                 _behaviorId,
+                _actorLevel,
                 _cost,
                 _weight,
                 _allowedSlotTags);

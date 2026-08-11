@@ -21,10 +21,11 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
         private int _maximumTeamSize = 4;
 
         [SerializeField]
-        private string _defaultLeaderActorId;
+        private DungeonRunActorSelectionConfig _defaultLeader;
 
         [SerializeField]
-        private string[] _defaultCompanionActorIds = Array.Empty<string>();
+        private DungeonRunActorSelectionConfig[] _defaultCompanions =
+            Array.Empty<DungeonRunActorSelectionConfig>();
 
         public DungeonRunTeamSetup CreateTeamSetup(ActorConfigCatalog actorCatalog)
         {
@@ -37,18 +38,63 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
             for (var index = 0; index < _allowedTeamActorIds.Length; index++)
             {
                 var actor = actorCatalog.Require(_allowedTeamActorIds[index]);
+                var levels = new int[actor.Levels.Count];
+                for (var levelIndex = 0; levelIndex < actor.Levels.Count; levelIndex++)
+                {
+                    levels[levelIndex] = actor.Levels[levelIndex].Level;
+                }
+
                 members[index] = new DungeonRunTeamMemberOption(
                     actor.ActorId,
-                    actor.DisplayName);
+                    actor.DisplayName,
+                    levels);
             }
 
             return new DungeonRunTeamSetup(
                 members,
                 _minimumTeamSize,
                 _maximumTeamSize,
-                new DungeonRunTeamSelection(
-                    _defaultLeaderActorId,
-                    _defaultCompanionActorIds));
+                CreateDefaultSelection());
+        }
+
+        private DungeonRunTeamSelection CreateDefaultSelection()
+        {
+            if (_defaultLeader == null)
+            {
+                throw new InvalidOperationException("Default team leader is required.");
+            }
+
+            if (_defaultCompanions == null)
+            {
+                throw new InvalidOperationException("Default team companions cannot be null.");
+            }
+
+            var companions = new DungeonRunActorSelection[_defaultCompanions.Length];
+            for (var index = 0; index < companions.Length; index++)
+            {
+                var companion = _defaultCompanions[index] ?? throw new InvalidOperationException(
+                    $"Default team companion at index {index} is missing.");
+                companions[index] = companion.ToDomain();
+            }
+
+            return new DungeonRunTeamSelection(
+                _defaultLeader.ToDomain(),
+                companions);
+        }
+    }
+
+    [Serializable]
+    public sealed class DungeonRunActorSelectionConfig
+    {
+        [SerializeField]
+        private string _actorId;
+
+        [SerializeField, Min(1)]
+        private int _level = 1;
+
+        internal DungeonRunActorSelection ToDomain()
+        {
+            return new DungeonRunActorSelection(_actorId, _level);
         }
     }
 }

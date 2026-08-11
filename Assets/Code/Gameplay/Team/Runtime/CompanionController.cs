@@ -1,6 +1,6 @@
 using System;
-using DungeonTeam.Gameplay.Actors.Domain;
 using DungeonTeam.Gameplay.Actors.Runtime;
+using DungeonTeam.Gameplay.Combat.Runtime;
 using DungeonTeam.Gameplay.Team.Domain;
 using UnityEngine;
 
@@ -15,7 +15,7 @@ namespace DungeonTeam.Gameplay.Team.Runtime
         private readonly TeamControlSettings _settings;
         private readonly CompanionFollowBrain _followBrain;
         private readonly CompanionCombatBrain _combatBrain;
-        private readonly AttackCooldown _attackCooldown;
+        private readonly ActorCombatController _combat;
 
         private Vector3 _lastDestination;
         private bool _hasDestination;
@@ -25,18 +25,25 @@ namespace DungeonTeam.Gameplay.Team.Runtime
         public CompanionController(
             ActorInstance actor,
             Vector3 formationOffset,
-            TeamControlSettings settings)
+            TeamControlSettings settings,
+            ActorCombatController combat)
         {
             _actor = actor ?? throw new ArgumentNullException(nameof(actor));
             _formationOffset = formationOffset;
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
+            _combat = combat ?? throw new ArgumentNullException(nameof(combat));
+            if (!ReferenceEquals(_combat.Actor, _actor))
+            {
+                throw new ArgumentException(
+                    "Companion combat controller must belong to the companion.",
+                    nameof(combat));
+            }
             _followBrain = new CompanionFollowBrain(
                 settings.StartFollowingDistance,
                 settings.StopFollowingDistance);
             _combatBrain = new CompanionCombatBrain(
-                settings.CompanionAttackRange,
+                _combat.PrimaryAttackRange,
                 settings.CompanionTargetLossDistance);
-            _attackCooldown = new AttackCooldown(settings.CompanionAttackCooldown);
         }
 
         public ActorInstance Actor => _actor;
@@ -54,7 +61,7 @@ namespace DungeonTeam.Gameplay.Team.Runtime
 
             if (!_actor.IsAlive)
             {
-                _attackCooldown.Tick(deltaTime, canAttack: false);
+                _combat.Tick(deltaTime);
                 Stop();
                 return;
             }
@@ -65,7 +72,7 @@ namespace DungeonTeam.Gameplay.Team.Runtime
                 return;
             }
 
-            _attackCooldown.Tick(deltaTime, canAttack: false);
+            _combat.Tick(deltaTime);
             if (!leader.IsAlive)
             {
                 Stop();
@@ -102,9 +109,7 @@ namespace DungeonTeam.Gameplay.Team.Runtime
                 target.IsAlive,
                 HasClearLine(target),
                 distance);
-            var shouldAttack = _attackCooldown.Tick(
-                deltaTime,
-                state == CompanionCombatState.Attack);
+            _combat.Tick(deltaTime);
 
             switch (state)
             {
@@ -116,26 +121,12 @@ namespace DungeonTeam.Gameplay.Team.Runtime
                     break;
                 case CompanionCombatState.Attack:
                     Stop();
-                    if (shouldAttack)
-                    {
-                        Attack(target);
-                    }
+                    _combat.TryUsePrimaryAttack(target, HasClearLine(target));
 
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();
             }
-        }
-
-        private void Attack(ActorInstance target)
-        {
-            if (!target.IsAlive)
-            {
-                return;
-            }
-
-            _actor.PlayAttackFeedback();
-            target.ApplyDamage(_settings.CompanionAttackDamage, _actor);
         }
 
         private Vector3 GetFollowPosition(ActorInstance leader)

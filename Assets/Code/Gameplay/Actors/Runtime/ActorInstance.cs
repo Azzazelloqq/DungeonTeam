@@ -12,12 +12,16 @@ namespace DungeonTeam.Gameplay.Actors.Runtime
 
         internal ActorInstance(
             string actorId,
+            int level,
             ActorPresenterBase presenter,
             GameObject gameObject)
         {
             ActorId = !string.IsNullOrWhiteSpace(actorId)
                 ? actorId
                 : throw new ArgumentException("Actor ID cannot be empty.", nameof(actorId));
+            Level = level > 0
+                ? level
+                : throw new ArgumentOutOfRangeException(nameof(level));
             _presenter = presenter ?? throw new ArgumentNullException(nameof(presenter));
             _gameObject = gameObject != null
                 ? gameObject
@@ -25,6 +29,8 @@ namespace DungeonTeam.Gameplay.Actors.Runtime
         }
 
         public string ActorId { get; }
+
+        public int Level { get; }
 
         public Vector3 Position => RequirePresenter().Position;
 

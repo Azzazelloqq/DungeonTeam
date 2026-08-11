@@ -18,9 +18,6 @@ MonoBehaviour:
       _viewDistance: 8
       _viewAngle: 90
       _targetLossDistance: 12
-      _attackRange: 1.5
-      _attackDamage: 15
-      _attackCooldown: 1
       _homeArrivalDistance: 0.25
       _eyeHeight: 1
       _visionAreaHeight: 0.04
@@ -34,9 +31,6 @@ MonoBehaviour:
       _viewDistance: 12
       _viewAngle: 100
       _targetLossDistance: 18
-      _attackRange: 6
-      _attackDamage: 10
-      _attackCooldown: 1.5
       _homeArrivalDistance: 0.25
       _eyeHeight: 1
       _visionAreaHeight: 0.04

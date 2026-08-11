@@ -30,6 +30,8 @@
 ## Actor identity и enemy behavior
 
 - `ActorId` определяет Actor MVP: identity, business stats и visual через Actor config и ViewAssetCatalog.
+- `ActorId + Level` выбирают immutable runtime stats и rank combat loadout; `ActorDefinition` хранит только visual prefab и не является источником gameplay-баланса.
+- `CombatLoadoutId` определяет набор доступных combat actions, а rank выбирает параметры конкретного действия из Combat config. Hero, companion и enemy controller используют один и тот же runtime combat-контур.
 - `BehaviorId` определяет профиль runtime-controller; он не хранится во View, ActorDefinition или visual config.
 - Dungeon authoring, scenario и `EnemySpawnPlan` только переносят opaque `ActorId`/`BehaviorId` вместе с Pose и semantic data, не завися от Actor/EnemyAI/MVP/Addressables.
 - Конкретный режим materializes Actor MVP по `ActorId`, выбирает controller settings по `BehaviorId`, создаёт controller и владеет его lifecycle.

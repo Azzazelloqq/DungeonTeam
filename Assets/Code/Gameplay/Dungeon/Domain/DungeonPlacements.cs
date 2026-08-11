@@ -26,6 +26,7 @@ namespace DungeonTeam.Gameplay.Dungeon.Domain
                 slotTag,
                 fixedEnemyId,
                 fixedBehaviorId,
+                1,
                 encounterGroupId,
                 pose)
         {
@@ -40,6 +41,29 @@ namespace DungeonTeam.Gameplay.Dungeon.Domain
             string fixedBehaviorId,
             string encounterGroupId,
             DungeonPose pose)
+            : this(
+                placementId,
+                authoringId,
+                mode,
+                slotTag,
+                fixedEnemyId,
+                fixedBehaviorId,
+                1,
+                encounterGroupId,
+                pose)
+        {
+        }
+
+        public EnemyPlacement(
+            string placementId,
+            string authoringId,
+            DungeonPlacementMode mode,
+            string slotTag,
+            string fixedEnemyId,
+            string fixedBehaviorId,
+            int fixedActorLevel,
+            string encounterGroupId,
+            DungeonPose pose)
         {
             PlacementId = RequireId(placementId, nameof(placementId));
             AuthoringId = RequireId(authoringId, nameof(authoringId));
@@ -49,6 +73,9 @@ namespace DungeonTeam.Gameplay.Dungeon.Domain
             SlotTag = slotTag;
             FixedEnemyId = fixedEnemyId;
             FixedBehaviorId = fixedBehaviorId;
+            FixedActorLevel = mode == DungeonPlacementMode.Slot
+                ? 0
+                : RequirePositive(fixedActorLevel, nameof(fixedActorLevel));
             EncounterGroupId = encounterGroupId;
             Pose = pose;
         }
@@ -59,6 +86,7 @@ namespace DungeonTeam.Gameplay.Dungeon.Domain
         public string SlotTag { get; }
         public string FixedEnemyId { get; }
         public string FixedBehaviorId { get; }
+        public int FixedActorLevel { get; }
         public string EncounterGroupId { get; }
         public DungeonPose Pose { get; }
 
@@ -98,6 +126,13 @@ namespace DungeonTeam.Gameplay.Dungeon.Domain
             }
 
             return value;
+        }
+
+        private static int RequirePositive(int value, string parameterName)
+        {
+            return value > 0
+                ? value
+                : throw new ArgumentOutOfRangeException(parameterName);
         }
     }
 

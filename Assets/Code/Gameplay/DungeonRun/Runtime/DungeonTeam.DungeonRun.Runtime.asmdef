@@ -4,6 +4,8 @@
   "references": [
     "DungeonTeam.Actors.Runtime",
     "DungeonTeam.Chests.Runtime",
+    "DungeonTeam.Combat.Runtime",
+    "DungeonTeam.Combat.Domain",
     "DungeonTeam.ContextActions.Runtime",
     "DungeonTeam.Configuration",
     "DungeonTeam.Dungeon.Application",
@@ -14,6 +16,7 @@
     "DungeonTeam.Rewards.Runtime",
     "DungeonTeam.Team.Runtime",
     "Disposable",
+    "LightDI",
     "MVP",
     "MVVM.Core",
     "Root",

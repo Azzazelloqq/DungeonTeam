@@ -7,6 +7,7 @@ using DungeonTeam.Gameplay.Actors.Runtime;
 using DungeonTeam.Gameplay.Actors.Runtime.Presentation.Gameplay.Actor.Base;
 using DungeonTeam.Gameplay.Chests.Runtime;
 using DungeonTeam.Gameplay.Chests.Runtime.Presentation.Gameplay.Chest.Base;
+using DungeonTeam.Gameplay.Combat.Runtime;
 using DungeonTeam.Gameplay.ContextActions.Runtime;
 using DungeonTeam.Gameplay.Dungeon.Application;
 using DungeonTeam.Gameplay.Dungeon.Domain;
@@ -56,9 +57,11 @@ namespace DungeonTeam.Gameplay.DungeonRun.Tests.PlayMode
             var actorLoader = new FakeActorDefinitionLoader(actorPrefab);
             var root = new DungeonRunRoot(
                 new FakeDungeonFactory(),
-                CreateStartRequest(seed: 42),
+                CreateStartRequestAtLevel(seed: 42, level: 2),
                 new DungeonRunBindings(contextActionsPrefab),
                 actorLoader,
+                CreateActorCatalog(),
+                CreateCombatCatalog(),
                 new FakeRewardPickupViewLoader(rewardPickupPrefab),
                 new FakeChestViewLoader(chestPrefab),
                 contextActionsParent,
@@ -89,6 +92,9 @@ namespace DungeonTeam.Gameplay.DungeonRun.Tests.PlayMode
             try
             {
                 yield return root.InitializeAsync(default).ToCoroutine();
+
+                Assert.That(root.Leader.Level, Is.EqualTo(2));
+                Assert.That(root.Leader.CurrentHealth, Is.EqualTo(120));
 
                 mapRoot = GameObject.Find("DungeonTestMap");
                 navigationRoot = GameObject.Find("DungeonRunNavigation");
@@ -358,6 +364,8 @@ namespace DungeonTeam.Gameplay.DungeonRun.Tests.PlayMode
                     "actor.hero.wizard"),
                 new DungeonRunBindings(contextActionsPrefab),
                 actorLoader,
+                CreateActorCatalog(),
+                CreateCombatCatalog(),
                 new FakeRewardPickupViewLoader(rewardPickupPrefab),
                 new FakeChestViewLoader(chestPrefab),
                 contextActionsParentObject.GetComponent<RectTransform>(),
@@ -448,6 +456,8 @@ namespace DungeonTeam.Gameplay.DungeonRun.Tests.PlayMode
                 CreateStartRequest(seed: 17),
                 new DungeonRunBindings(contextActionsPrefab),
                 new FakeActorDefinitionLoader(actorPrefab),
+                CreateActorCatalog(),
+                CreateCombatCatalog(),
                 new FakeRewardPickupViewLoader(rewardPickupPrefab),
                 new FakeChestViewLoader(chestPrefab),
                 contextActionsParentObject.GetComponent<RectTransform>(),
@@ -546,6 +556,8 @@ namespace DungeonTeam.Gameplay.DungeonRun.Tests.PlayMode
                 CreateStartRequest(seed: 7),
                 new DungeonRunBindings(contextActionsPrefab),
                 actorLoader,
+                CreateActorCatalog(),
+                CreateCombatCatalog(),
                 new FakeRewardPickupViewLoader(rewardPickupPrefab),
                 new FakeChestViewLoader(chestPrefab),
                 contextActionsParentObject.GetComponent<RectTransform>(),
@@ -643,6 +655,24 @@ namespace DungeonTeam.Gameplay.DungeonRun.Tests.PlayMode
                     companionActorIds));
         }
 
+        private static DungeonRunStartRequest CreateStartRequestAtLevel(
+            int seed,
+            int level)
+        {
+            return new DungeonRunStartRequest(
+                new DungeonBuildRequest(
+                    "dungeon.test",
+                    "scenario.test",
+                    "normal",
+                    seed),
+                new DungeonRunTeamSelection(
+                    new DungeonRunActorSelection("actor.hero.leader", level),
+                    new[]
+                    {
+                        new DungeonRunActorSelection("actor.hero.companion", 1)
+                    }));
+        }
+
         private static EnemyBehaviorCatalog CreateEnemyBehaviorCatalog()
         {
             return new EnemyBehaviorCatalog(new[]
@@ -652,20 +682,91 @@ namespace DungeonTeam.Gameplay.DungeonRun.Tests.PlayMode
                     new EnemyAiSettings(
                         viewDistance: 8f,
                         viewAngle: 90f,
-                        targetLossDistance: 12f,
-                        attackRange: 1.5f,
-                        attackDamage: 15,
-                        attackCooldown: 1f)),
+                        targetLossDistance: 12f)),
                 new EnemyBehaviorDefinition(
                     "behavior.enemy.ranged.basic",
                     new EnemyAiSettings(
                         viewDistance: 12f,
                         viewAngle: 100f,
-                        targetLossDistance: 18f,
-                        attackRange: 6f,
-                        attackDamage: 10,
-                        attackCooldown: 1.5f))
+                        targetLossDistance: 18f))
             });
+        }
+
+        private static ActorConfigCatalog CreateActorCatalog()
+        {
+            return new ActorConfigCatalog(new[]
+            {
+                ActorConfig("actor.hero.leader", 100, 4f, "loadout.hero.melee"),
+                ActorConfig("actor.hero.companion", 80, 4f, "loadout.hero.melee"),
+                ActorConfig("actor.hero.rogue", 80, 4f, "loadout.hero.melee"),
+                ActorConfig("actor.hero.wizard", 80, 4f, "loadout.hero.ranged"),
+                ActorConfig("enemy.grunt", 60, 3.5f, "loadout.enemy.melee"),
+                ActorConfig("enemy.guard", 60, 3.5f, "loadout.enemy.ranged")
+            });
+        }
+
+        private static ActorDefinitionConfig ActorConfig(
+            string actorId,
+            int health,
+            float speed,
+            string loadoutId)
+        {
+            return new ActorDefinitionConfig(
+                actorId,
+                actorId,
+                loadoutId,
+                new[]
+                {
+                    new ActorLevelDefinitionConfig(1, health, speed, 1),
+                    new ActorLevelDefinitionConfig(2, health + health / 5, speed, 2)
+                });
+        }
+
+        private static CombatCatalog CreateCombatCatalog()
+        {
+            return new CombatCatalog(
+                new[]
+                {
+                    new AttackDefinitionConfig(
+                        "attack.hero.melee",
+                        "Hero Melee",
+                        new[]
+                        {
+                            new AttackRankDefinitionConfig(1, 20, 1.5f, 0.8f),
+                            new AttackRankDefinitionConfig(2, 24, 1.5f, 0.8f)
+                        }),
+                    new AttackDefinitionConfig(
+                        "attack.hero.ranged",
+                        "Hero Ranged",
+                        new[]
+                        {
+                            new AttackRankDefinitionConfig(1, 14, 6f, 1.2f),
+                            new AttackRankDefinitionConfig(2, 17, 6f, 1.2f)
+                        }),
+                    new AttackDefinitionConfig(
+                        "attack.enemy.melee",
+                        "Enemy Melee",
+                        new[]
+                        {
+                            new AttackRankDefinitionConfig(1, 15, 1.5f, 1f),
+                            new AttackRankDefinitionConfig(2, 18, 1.5f, 1f)
+                        }),
+                    new AttackDefinitionConfig(
+                        "attack.enemy.ranged",
+                        "Enemy Ranged",
+                        new[]
+                        {
+                            new AttackRankDefinitionConfig(1, 10, 6f, 1.5f),
+                            new AttackRankDefinitionConfig(2, 12, 6f, 1.5f)
+                        })
+                },
+                new[]
+                {
+                    new CombatLoadoutDefinitionConfig("loadout.hero.melee", "attack.hero.melee"),
+                    new CombatLoadoutDefinitionConfig("loadout.hero.ranged", "attack.hero.ranged"),
+                    new CombatLoadoutDefinitionConfig("loadout.enemy.melee", "attack.enemy.melee"),
+                    new CombatLoadoutDefinitionConfig("loadout.enemy.ranged", "attack.enemy.ranged")
+                });
         }
 
         private sealed class FakeDungeonFactory : IDungeonFactory
@@ -774,26 +875,22 @@ namespace DungeonTeam.Gameplay.DungeonRun.Tests.PlayMode
                 LastRequestedIds = requestedIds;
                 LastLoadedSet = new ActorDefinitionSet(new[]
                 {
-                    Definition("actor.hero.leader", 100, 4f),
-                    Definition("actor.hero.companion", 80, 4f),
-                    Definition("actor.hero.rogue", 80, 4f),
-                    Definition("actor.hero.wizard", 80, 4f),
-                    Definition("enemy.grunt", 60, 3.5f),
-                    Definition("enemy.guard", 60, 3.5f)
+                    Definition("actor.hero.leader"),
+                    Definition("actor.hero.companion"),
+                    Definition("actor.hero.rogue"),
+                    Definition("actor.hero.wizard"),
+                    Definition("enemy.grunt"),
+                    Definition("enemy.guard")
                 });
                 return UniTask.FromResult(LastLoadedSet);
             }
 
             private ActorDefinition Definition(
-                string actorId,
-                int maximumHealth,
-                float movementSpeed)
+                string actorId)
             {
                 return new ActorDefinition(
                     actorId,
-                    _prefab,
-                    maximumHealth,
-                    movementSpeed);
+                    _prefab);
             }
         }
 

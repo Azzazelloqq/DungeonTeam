@@ -7,9 +7,7 @@ namespace DungeonTeam.Gameplay.Actors.Runtime
     {
         public ActorDefinition(
             string actorId,
-            ActorViewBase prefab,
-            int maximumHealth,
-            float movementSpeed)
+            ActorViewBase prefab)
         {
             if (string.IsNullOrWhiteSpace(actorId))
             {
@@ -20,21 +18,11 @@ namespace DungeonTeam.Gameplay.Actors.Runtime
             Prefab = prefab != null
                 ? prefab
                 : throw new ArgumentNullException(nameof(prefab));
-            MaximumHealth = maximumHealth > 0
-                ? maximumHealth
-                : throw new ArgumentOutOfRangeException(nameof(maximumHealth));
-            MovementSpeed = movementSpeed > 0f
-                ? movementSpeed
-                : throw new ArgumentOutOfRangeException(nameof(movementSpeed));
         }
 
         public string ActorId { get; }
 
         public ActorViewBase Prefab { get; }
-
-        public int MaximumHealth { get; }
-
-        public float MovementSpeed { get; }
 
     }
 }

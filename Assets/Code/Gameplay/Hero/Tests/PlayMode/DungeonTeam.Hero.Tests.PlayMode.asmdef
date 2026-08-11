@@ -4,6 +4,8 @@
   "references": [
     "DungeonTeam.Actors.Domain",
     "DungeonTeam.Actors.Runtime",
+    "DungeonTeam.Combat.Domain",
+    "DungeonTeam.Combat.Runtime",
     "DungeonTeam.Hero.Runtime",
     "Disposable",
     "MVP",

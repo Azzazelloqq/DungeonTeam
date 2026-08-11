@@ -2,6 +2,7 @@
   "name": "DungeonTeam.Feedback.Runtime",
   "rootNamespace": "DungeonTeam.Feedback.Runtime",
   "references": [
+    "LightDI",
     "ResourceLoader",
     "TickHandler",
     "UniTask",

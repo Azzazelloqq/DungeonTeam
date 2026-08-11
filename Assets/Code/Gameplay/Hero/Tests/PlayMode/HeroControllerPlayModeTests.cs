@@ -2,6 +2,8 @@ using System.Collections;
 using System.Threading;
 using System.Threading.Tasks;
 using DungeonTeam.Gameplay.Actors.Runtime;
+using DungeonTeam.Gameplay.Combat.Domain;
+using DungeonTeam.Gameplay.Combat.Runtime;
 using DungeonTeam.Gameplay.Actors.Runtime.Presentation.Gameplay.Actor.Base;
 using NUnit.Framework;
 using TickHandler.UnityTickHandler;
@@ -122,9 +124,14 @@ namespace DungeonTeam.Gameplay.Hero.Runtime.Tests.PlayMode
                 Hero = factory.Create(
                     new ActorDefinition(
                         "actor.hero.test",
-                        actorPrefab,
+                        actorPrefab),
+                    new ActorRuntimeDefinition(
+                        "actor.hero.test",
+                        level: 1,
                         maximumHealth: 100,
-                        movementSpeed: 4f),
+                        movementSpeed: 4f,
+                        combatLoadoutId: "loadout.test",
+                        primaryAttackRank: 1),
                     new ActorSpawnRequest(
                         "Hero",
                         Vector3.zero,
@@ -132,9 +139,14 @@ namespace DungeonTeam.Gameplay.Hero.Runtime.Tests.PlayMode
                 Enemy = factory.Create(
                     new ActorDefinition(
                         "actor.enemy.test",
-                        actorPrefab,
+                        actorPrefab),
+                    new ActorRuntimeDefinition(
+                        "actor.enemy.test",
+                        level: 1,
                         maximumHealth: 60,
-                        movementSpeed: 3f),
+                        movementSpeed: 3f,
+                        combatLoadoutId: "loadout.test",
+                        primaryAttackRank: 1),
                     new ActorSpawnRequest(
                         "Enemy",
                         new Vector3(5f, 0f, 0f),
@@ -154,7 +166,14 @@ namespace DungeonTeam.Gameplay.Hero.Runtime.Tests.PlayMode
                     camera,
                     _tickHandler,
                     Input,
-                    new HeroControlSettings());
+                    new HeroControlSettings(),
+                    new ActorCombatController(
+                        Hero,
+                        new AttackRankDefinition(
+                            rank: 1,
+                            damage: 20,
+                            range: 1.5f,
+                            cooldown: 0.8f)));
                 Controller.Initialize();
             }
 

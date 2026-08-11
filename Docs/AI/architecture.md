@@ -60,11 +60,17 @@ ApplicationRoot
 
 LightDI — инструмент composition, а не глобальный доступ к зависимостям.
 
-- Глобальный контейнер допустим только для application-lifetime сервисов.
-- Local container создаётся на границе изолированного assembly-модуля. Библиотека допускает только один local container на assembly, поэтому он не подходит для повторно создаваемых экземпляров одной feature.
-- Для повторно создаваемых SceneRoot/FeatureRoot зависимости передаются напрямую конструктором или создаются фабрикой root-а.
-- Контейнер оправдан, когда scope содержит несколько взаимосвязанных сервисов, скрытых от остального проекта. Для 1–3 объектов используется прямой конструктор.
-- `Resolve` допустим только в документированном инфраструктурном исключении. Новое исключение требует ADR.
+- Для стабильного application или изолированного assembly-module graph, использующего контейнер, предпочтительны generated factories и `[Inject]` на параметрах конструктора. Фабрики вызываются только из composition boundary; тесты создают те же классы обычным конструктором.
+- Глобальный контейнер допустим только для application-lifetime сервисов. Проект использует один application container, если иное решение не задокументировано.
+- Local container привязан к assembly, которая вызывает `CreateLocalContainer()`, а generated factory ищет его по assembly целевого класса. Module composition и injected targets должны находиться в одном asmdef. Затем выполняется fallback к global containers.
+- LightDI допускает только один активный local container на assembly. После его `Dispose` можно последовательно создать новый, но этот статический assembly slot не используется как per-instance scope повторно создаваемой feature.
+- Для повторно создаваемых SceneRoot/FeatureRoot зависимости передаются напрямую конструктором или создаются явной root-фабрикой.
+- Для маленького graph, runtime/per-instance значений или объектов без container services используется прямой конструктор.
+- Ручной `DiContainerProvider.Resolve<T>()` запрещён вне документированного инфраструктурного исключения; внутренний resolve generated factory разрешён. Новое рукописное исключение требует ADR.
+- `[Inject]` применяется к параметрам конструктора. Field injection без отдельного обоснования запрещён.
+- Container ownership не заменяет root lifecycle: нельзя дублировать владельца `IDisposable`, а строгий порядок освобождения остаётся ответственностью root.
+
+Подробные правила assembly lookup, generated factories и disposal описаны в [libraries/lightdi.md](libraries/lightdi.md).
 
 ## Presentation
 

@@ -21,9 +21,19 @@ namespace Code.UI.MainMenu.TeamMemberSelection.Base
 
         public abstract IReadOnlyReactiveProperty<bool> CanToggleCompanion { get; }
 
+        public abstract IReadOnlyReactiveProperty<string> LevelLabel { get; }
+
+        public abstract IReadOnlyReactiveProperty<bool> CanDecreaseLevel { get; }
+
+        public abstract IReadOnlyReactiveProperty<bool> CanIncreaseLevel { get; }
+
         public abstract IActionCommand SelectLeaderCommand { get; }
 
         public abstract IActionCommand ToggleCompanionCommand { get; }
+
+        public abstract IActionCommand DecreaseLevelCommand { get; }
+
+        public abstract IActionCommand IncreaseLevelCommand { get; }
 
         internal abstract void SetSelectionState(
             bool isLeader,

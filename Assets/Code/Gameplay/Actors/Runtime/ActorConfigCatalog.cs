@@ -1,11 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
 namespace DungeonTeam.Gameplay.Actors.Runtime
 {
     public sealed class ActorConfigCatalog
     {
-        private readonly Dictionary<string, ActorDefinitionConfig> _definitions;
+        private readonly Dictionary<string, ActorConfigDefinition> _definitions;
+        private readonly ReadOnlyCollection<ActorConfigDefinition> _allDefinitions;
 
         public ActorConfigCatalog(ActorDefinitionConfig[] definitions)
         {
@@ -14,25 +16,33 @@ namespace DungeonTeam.Gameplay.Actors.Runtime
                 throw new ArgumentNullException(nameof(definitions));
             }
 
-            _definitions = new Dictionary<string, ActorDefinitionConfig>(
+            _definitions = new Dictionary<string, ActorConfigDefinition>(
                 definitions.Length,
                 StringComparer.Ordinal);
+            var allDefinitions = new ActorConfigDefinition[definitions.Length];
             for (var index = 0; index < definitions.Length; index++)
             {
                 var definition = definitions[index] ?? throw new ArgumentException(
                     $"Actor definition at index {index} is missing.",
                     nameof(definitions));
                 definition.Validate(index);
-                if (!_definitions.TryAdd(definition.ActorId, definition))
+                var immutableDefinition = definition.ToDefinition();
+                if (!_definitions.TryAdd(immutableDefinition.ActorId, immutableDefinition))
                 {
                     throw new ArgumentException(
-                        $"Actor ID '{definition.ActorId}' is configured more than once.",
+                        $"Actor ID '{immutableDefinition.ActorId}' is configured more than once.",
                         nameof(definitions));
                 }
+
+                allDefinitions[index] = immutableDefinition;
             }
+
+            _allDefinitions = Array.AsReadOnly(allDefinitions);
         }
 
-        public ActorDefinitionConfig Require(string actorId)
+        public IReadOnlyList<ActorConfigDefinition> Definitions => _allDefinitions;
+
+        public ActorConfigDefinition Require(string actorId)
         {
             if (string.IsNullOrWhiteSpace(actorId))
             {
@@ -46,6 +56,11 @@ namespace DungeonTeam.Gameplay.Actors.Runtime
             }
 
             return definition;
+        }
+
+        public ActorRuntimeDefinition Resolve(string actorId, int level)
+        {
+            return Require(actorId).RequireLevel(level);
         }
     }
 }

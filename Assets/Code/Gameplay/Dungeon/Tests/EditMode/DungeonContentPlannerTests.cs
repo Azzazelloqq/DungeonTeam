@@ -20,12 +20,14 @@ namespace DungeonTeam.Gameplay.Dungeon.Tests.EditMode
                 {
                     new EnemyPlacement(
                         "enemy-fixed",
+                        "enemy-fixed",
                         DungeonPlacementMode.Fixed,
                         null,
                         "enemy.designer",
                         "behavior.enemy.designer",
-                        "encounter.designer",
-                        Pose)
+                        fixedActorLevel: 3,
+                        encounterGroupId: "encounter.designer",
+                        pose: Pose)
                 },
                 new[]
                 {
@@ -60,6 +62,7 @@ namespace DungeonTeam.Gameplay.Dungeon.Tests.EditMode
             Assert.That(
                 plan.EnemySpawns[0].BehaviorId,
                 Is.EqualTo("behavior.enemy.designer"));
+            Assert.That(plan.EnemySpawns[0].ActorLevel, Is.EqualTo(3));
             Assert.That(plan.EnemySpawns[0].EncounterGroupId, Is.EqualTo("encounter.designer"));
             Assert.That(plan.InterestPointSpawns, Has.Count.EqualTo(1));
             Assert.That(plan.InterestPointSpawns[0].InterestPointId, Is.EqualTo("interest.designer"));
@@ -151,9 +154,10 @@ namespace DungeonTeam.Gameplay.Dungeon.Tests.EditMode
                     new EnemyCandidate(
                         "enemy.melee",
                         "behavior.enemy.melee",
+                        actorLevel: 4,
                         cost: 1,
                         weight: 1,
-                        new[] { "melee" })
+                        allowedSlotTags: new[] { "melee" })
                 },
                 Array.Empty<InterestPointRule>(),
                 Array.Empty<string>(),
@@ -172,6 +176,7 @@ namespace DungeonTeam.Gameplay.Dungeon.Tests.EditMode
             Assert.That(
                 plan.EnemySpawns[0].BehaviorId,
                 Is.EqualTo("behavior.enemy.melee"));
+            Assert.That(plan.EnemySpawns[0].ActorLevel, Is.EqualTo(4));
         }
 
         [Test]

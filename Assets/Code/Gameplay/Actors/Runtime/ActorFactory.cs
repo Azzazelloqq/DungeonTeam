@@ -9,11 +9,22 @@ namespace DungeonTeam.Gameplay.Actors.Runtime
     {
         public ActorInstance Create(
             ActorDefinition definition,
+            ActorRuntimeDefinition runtimeDefinition,
             ActorSpawnRequest request,
             Transform parent = null)
         {
             if (definition == null)
                 throw new ArgumentNullException(nameof(definition));
+            if (!string.Equals(
+                    definition.ActorId,
+                    runtimeDefinition.ActorId,
+                    StringComparison.Ordinal))
+            {
+                throw new ArgumentException(
+                    $"Actor view ID '{definition.ActorId}' does not match runtime actor ID " +
+                    $"'{runtimeDefinition.ActorId}'.",
+                    nameof(runtimeDefinition));
+            }
 
             ActorPresenterBase presenter = null;
             ActorViewBase view = null;
@@ -26,14 +37,15 @@ namespace DungeonTeam.Gameplay.Actors.Runtime
                     parent);
                 view.name = request.InstanceName;
 
-                var model = new ActorModel(definition.MaximumHealth);
+                var model = new ActorModel(runtimeDefinition.MaximumHealth);
                 presenter = new ActorPresenter(
                     view,
                     model,
-                    definition.MovementSpeed);
+                    runtimeDefinition.MovementSpeed);
                 presenter.Initialize();
                 return new ActorInstance(
                     definition.ActorId,
+                    runtimeDefinition.Level,
                     presenter,
                     view.gameObject);
             }

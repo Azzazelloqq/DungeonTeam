@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using DungeonTeam.Gameplay.Chests.Runtime.Presentation.Gameplay.Chest.Base;
+using LightDI.Runtime;
 using ResourceLoader;
 using UnityEngine;
 
@@ -12,7 +13,7 @@ namespace DungeonTeam.Gameplay.Chests.Runtime
     {
         private readonly IResourceLoader _resourceLoader;
 
-        public ChestViewLoader(IResourceLoader resourceLoader)
+        public ChestViewLoader([Inject] IResourceLoader resourceLoader)
         {
             _resourceLoader = resourceLoader ??
                 throw new ArgumentNullException(nameof(resourceLoader));

@@ -1,6 +1,6 @@
 using System;
 
-namespace DungeonTeam.Gameplay.Actors.Domain
+namespace DungeonTeam.Gameplay.Combat.Domain
 {
     public sealed class AttackCooldown
     {
@@ -17,7 +17,11 @@ namespace DungeonTeam.Gameplay.Actors.Domain
             _duration = duration;
         }
 
-        public bool Tick(float deltaTime, bool canAttack)
+        public bool IsReady => _remaining <= 0f;
+
+        public float Remaining => _remaining;
+
+        public void Tick(float deltaTime)
         {
             if (deltaTime < 0f)
             {
@@ -25,7 +29,11 @@ namespace DungeonTeam.Gameplay.Actors.Domain
             }
 
             _remaining = Math.Max(0f, _remaining - deltaTime);
-            if (!canAttack || _remaining > 0f)
+        }
+
+        public bool TryConsume()
+        {
+            if (!IsReady)
             {
                 return false;
             }

@@ -5,6 +5,7 @@ using Code.UI.MainMenu;
 using Code.UIService;
 using Cysharp.Threading.Tasks;
 using DungeonTeam.Gameplay.DungeonRun.Application;
+using LightDI.Runtime;
 using RootPattern;
 
 namespace Code.MainMenu
@@ -20,8 +21,8 @@ namespace Code.MainMenu
         private MainMenuViewModel _viewModel;
 
         public MainMenuRoot(
-            IUiService uiService,
-            DungeonRunTeamSetup teamSetup,
+            [Inject] IUiService uiService,
+            [Inject] DungeonRunTeamSetup teamSetup,
             Action<MainMenuPlayRequest> playRequested,
             Action backRequested,
             Action quitConfirmed)

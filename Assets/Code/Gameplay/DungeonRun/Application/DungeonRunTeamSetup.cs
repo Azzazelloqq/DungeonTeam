@@ -6,15 +6,64 @@ namespace DungeonTeam.Gameplay.DungeonRun.Application
 {
     public readonly struct DungeonRunTeamMemberOption
     {
-        public DungeonRunTeamMemberOption(string actorId, string displayName)
+        private readonly ReadOnlyCollection<int> _availableLevels;
+
+        public DungeonRunTeamMemberOption(
+            string actorId,
+            string displayName,
+            IReadOnlyList<int> availableLevels)
         {
             ActorId = RequireValue(actorId, nameof(actorId));
             DisplayName = RequireValue(displayName, nameof(displayName));
+            if (availableLevels == null || availableLevels.Count == 0)
+            {
+                throw new ArgumentException(
+                    "At least one actor level is required.",
+                    nameof(availableLevels));
+            }
+
+            var copiedLevels = new int[availableLevels.Count];
+            var uniqueLevels = new HashSet<int>();
+            for (var index = 0; index < availableLevels.Count; index++)
+            {
+                var level = availableLevels[index];
+                if (level <= 0 || !uniqueLevels.Add(level))
+                {
+                    throw new ArgumentException(
+                        "Actor levels must be positive and unique.",
+                        nameof(availableLevels));
+                }
+
+                copiedLevels[index] = level;
+            }
+
+            Array.Sort(copiedLevels);
+            _availableLevels = Array.AsReadOnly(copiedLevels);
+        }
+
+        public DungeonRunTeamMemberOption(string actorId, string displayName)
+            : this(actorId, displayName, new[] { 1 })
+        {
         }
 
         public string ActorId { get; }
 
         public string DisplayName { get; }
+
+        public IReadOnlyList<int> AvailableLevels => _availableLevels;
+
+        public bool SupportsLevel(int level)
+        {
+            for (var index = 0; index < _availableLevels.Count; index++)
+            {
+                if (_availableLevels[index] == level)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
 
         private static string RequireValue(string value, string parameterName)
         {
@@ -30,7 +79,7 @@ namespace DungeonTeam.Gameplay.DungeonRun.Application
     public sealed class DungeonRunTeamSetup
     {
         private readonly ReadOnlyCollection<DungeonRunTeamMemberOption> _members;
-        private readonly HashSet<string> _allowedActorIds;
+        private readonly Dictionary<string, DungeonRunTeamMemberOption> _membersByActorId;
 
         public DungeonRunTeamSetup(
             IReadOnlyList<DungeonRunTeamMemberOption> members,
@@ -65,11 +114,13 @@ namespace DungeonTeam.Gameplay.DungeonRun.Application
             }
 
             var copiedMembers = new DungeonRunTeamMemberOption[members.Count];
-            _allowedActorIds = new HashSet<string>(StringComparer.Ordinal);
+            _membersByActorId = new Dictionary<string, DungeonRunTeamMemberOption>(
+                members.Count,
+                StringComparer.Ordinal);
             for (var index = 0; index < members.Count; index++)
             {
                 var member = members[index];
-                if (!_allowedActorIds.Add(member.ActorId))
+                if (_membersByActorId.ContainsKey(member.ActorId))
                 {
                     throw new ArgumentException(
                         $"Actor ID '{member.ActorId}' is configured more than once in the team roster.",
@@ -77,6 +128,7 @@ namespace DungeonTeam.Gameplay.DungeonRun.Application
                 }
 
                 copiedMembers[index] = member;
+                _membersByActorId.Add(member.ActorId, member);
             }
 
             _members = Array.AsReadOnly(copiedMembers);
@@ -124,21 +176,41 @@ namespace DungeonTeam.Gameplay.DungeonRun.Application
                        $"{MinimumTeamSize}..{MaximumTeamSize}.";
             }
 
-            if (!_allowedActorIds.Contains(selection.LeaderActorId))
+            if (!IsAllowed(selection.Leader, out var leaderError))
             {
-                return $"Actor ID '{selection.LeaderActorId}' is not available for this run.";
+                return leaderError;
             }
 
-            for (var index = 0; index < selection.CompanionActorIds.Count; index++)
+            for (var index = 0; index < selection.Companions.Count; index++)
             {
-                var actorId = selection.CompanionActorIds[index];
-                if (!_allowedActorIds.Contains(actorId))
+                if (!IsAllowed(selection.Companions[index], out var companionError))
                 {
-                    return $"Actor ID '{actorId}' is not available for this run.";
+                    return companionError;
                 }
             }
 
             return null;
+        }
+
+        private bool IsAllowed(
+            DungeonRunActorSelection selection,
+            out string error)
+        {
+            if (!_membersByActorId.TryGetValue(selection.ActorId, out var member))
+            {
+                error = $"Actor ID '{selection.ActorId}' is not available for this run.";
+                return false;
+            }
+
+            if (!member.SupportsLevel(selection.Level))
+            {
+                error = $"Actor ID '{selection.ActorId}' level {selection.Level} is not " +
+                        "available for this run.";
+                return false;
+            }
+
+            error = null;
+            return true;
         }
     }
 }

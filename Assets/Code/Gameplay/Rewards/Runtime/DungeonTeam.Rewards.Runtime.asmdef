@@ -6,6 +6,7 @@
     "DungeonTeam.Configuration",
     "MVP",
     "Disposable",
+    "LightDI",
     "ResourceLoader",
     "UniTask"
   ],

@@ -79,16 +79,27 @@ namespace DungeonTeam.Gameplay.DungeonRun.Tests.Application
             Assert.That(setup.IsValid(selection), Is.True);
         }
 
+        [Test]
+        public void IsValid_UnavailableActorLevel_ReturnsFalse()
+        {
+            var setup = CreateSetup();
+            var selection = new DungeonRunTeamSelection(
+                new DungeonRunActorSelection("actor.king", 3),
+                new[] { new DungeonRunActorSelection("actor.druid", 1) });
+
+            Assert.That(setup.IsValid(selection), Is.False);
+        }
+
         private static DungeonRunTeamSetup CreateSetup()
         {
             return new DungeonRunTeamSetup(
                 new[]
                 {
-                    new DungeonRunTeamMemberOption("actor.king", "KING"),
-                    new DungeonRunTeamMemberOption("actor.druid", "DRUID"),
-                    new DungeonRunTeamMemberOption("actor.rogue", "ROGUE"),
-                    new DungeonRunTeamMemberOption("actor.wizard", "WIZARD"),
-                    new DungeonRunTeamMemberOption("actor.extra", "EXTRA")
+                    new DungeonRunTeamMemberOption("actor.king", "KING", new[] { 1, 2 }),
+                    new DungeonRunTeamMemberOption("actor.druid", "DRUID", new[] { 1, 2 }),
+                    new DungeonRunTeamMemberOption("actor.rogue", "ROGUE", new[] { 1, 2 }),
+                    new DungeonRunTeamMemberOption("actor.wizard", "WIZARD", new[] { 1, 2 }),
+                    new DungeonRunTeamMemberOption("actor.extra", "EXTRA", new[] { 1, 2 })
                 },
                 2,
                 4,

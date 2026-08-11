@@ -20,6 +20,9 @@ namespace DungeonTeam.Gameplay.Dungeon.Runtime.Authoring
         [SerializeField]
         private string _fixedBehaviorId;
 
+        [SerializeField, Min(1)]
+        private int _fixedActorLevel = 1;
+
         [SerializeField]
         private string _encounterGroupId;
 
@@ -34,6 +37,7 @@ namespace DungeonTeam.Gameplay.Dungeon.Runtime.Authoring
                 _slotTag,
                 _fixedEnemyId,
                 _fixedBehaviorId,
+                _fixedActorLevel,
                 runtimeEncounterGroupId,
                 transform.ToDungeonPose());
         }

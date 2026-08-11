@@ -3,6 +3,7 @@
   "references": [
     "Root",
     "UniTask",
+    "LightDI",
     "DungeonTeam.Addressables",
     "DungeonTeam.MainMenu",
     "DungeonTeam.DungeonRun.Application",

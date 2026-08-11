@@ -41,6 +41,31 @@ namespace DungeonTeam.Gameplay.Actors.Tests
         }
 
         [Test]
+        public void Catalog_ResolveDifferentLevels_ReturnsConfiguredStatsAndAttackRanks()
+        {
+            var catalog = new ActorConfigCatalog(new[]
+            {
+                new ActorDefinitionConfig(
+                    "actor.king",
+                    "KING",
+                    "loadout.actor.king",
+                    new[]
+                    {
+                        new ActorLevelDefinitionConfig(1, 100, 4f, 1),
+                        new ActorLevelDefinitionConfig(2, 120, 4f, 2)
+                    })
+            });
+
+            var first = catalog.Resolve("actor.king", 1);
+            var second = catalog.Resolve("actor.king", 2);
+
+            Assert.That(first.MaximumHealth, Is.EqualTo(100));
+            Assert.That(first.PrimaryAttackRank, Is.EqualTo(1));
+            Assert.That(second.MaximumHealth, Is.EqualTo(120));
+            Assert.That(second.PrimaryAttackRank, Is.EqualTo(2));
+        }
+
+        [Test]
         public async Task LoadAsync_DuplicateRequests_LoadsDistinctActorsAndReleasesOnce()
         {
             var prefabObject = new GameObject("ActorDefinitionTestPrefab");
@@ -62,8 +87,8 @@ namespace DungeonTeam.Gameplay.Actors.Tests
                     CancellationToken.None);
 
                 Assert.That(resourceLoader.LoadCount, Is.EqualTo(2));
-                Assert.That(definitions.Require("actor.king").MaximumHealth, Is.EqualTo(10));
-                Assert.That(definitions.Require("actor.druid").MaximumHealth, Is.EqualTo(20));
+                Assert.That(definitions.Require("actor.king").ActorId, Is.EqualTo("actor.king"));
+                Assert.That(definitions.Require("actor.druid").ActorId, Is.EqualTo("actor.druid"));
 
                 definitions.Dispose();
                 definitions.Dispose();
@@ -94,7 +119,7 @@ namespace DungeonTeam.Gameplay.Actors.Tests
 
             try
             {
-                Assert.ThrowsAsync<OperationCanceledException>(async () =>
+                Assert.CatchAsync<OperationCanceledException>(async () =>
                     await loader.LoadAsync(
                         new[] { "actor.king" },
                         cancellation.Token));
@@ -114,8 +139,15 @@ namespace DungeonTeam.Gameplay.Actors.Tests
             return new ActorDefinitionConfig(
                 actorId,
                 actorId,
-                maximumHealth,
-                movementSpeed: 3f);
+                "loadout.test",
+                new[]
+                {
+                    new ActorLevelDefinitionConfig(
+                        1,
+                        maximumHealth,
+                        movementSpeed: 3f,
+                        primaryAttackRank: 1)
+                });
         }
 
         private sealed class FakeResourceLoader : IResourceLoader

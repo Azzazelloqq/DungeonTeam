@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using DungeonTeam.Gameplay.Actors.Runtime;
+using DungeonTeam.Gameplay.Combat.Runtime;
 using TickHandler;
 using UnityEngine;
 
@@ -33,6 +34,7 @@ namespace DungeonTeam.Gameplay.Team.Runtime
         public TeamController(
             ActorInstance leader,
             IReadOnlyList<ActorInstance> companions,
+            IReadOnlyList<ActorCombatController> companionCombatControllers,
             IReadOnlyList<Vector3> formationOffsets,
             IReadOnlyList<ActorInstance> enemies,
             Camera camera,
@@ -51,7 +53,13 @@ namespace DungeonTeam.Gameplay.Team.Runtime
                 throw new ArgumentNullException(nameof(formationOffsets));
             }
 
-            if (companions.Count != formationOffsets.Count)
+            if (companionCombatControllers == null)
+            {
+                throw new ArgumentNullException(nameof(companionCombatControllers));
+            }
+
+            if (companions.Count != formationOffsets.Count ||
+                companions.Count != companionCombatControllers.Count)
             {
                 throw new ArgumentException(
                     "Each companion requires one formation offset.",
@@ -75,7 +83,8 @@ namespace DungeonTeam.Gameplay.Team.Runtime
                         $"Companion at index {index} is missing.",
                         nameof(companions)),
                     formationOffsets[index],
-                    settings));
+                    settings,
+                    companionCombatControllers[index]));
             }
 
             _minimumCommandViewDot = Mathf.Cos(

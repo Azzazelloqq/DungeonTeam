@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using LightDI.Runtime;
 using ResourceLoader;
 
 namespace DungeonTeam.Feedback.Runtime.Banks
@@ -11,8 +12,8 @@ namespace DungeonTeam.Feedback.Runtime.Banks
         private readonly IFeedbackService _feedbackService;
 
         public FeedbackBankLoader(
-            IResourceLoader resourceLoader,
-            IFeedbackService feedbackService)
+            [Inject] IResourceLoader resourceLoader,
+            [Inject] IFeedbackService feedbackService)
         {
             _resourceLoader = resourceLoader ??
                               throw new ArgumentNullException(nameof(resourceLoader));

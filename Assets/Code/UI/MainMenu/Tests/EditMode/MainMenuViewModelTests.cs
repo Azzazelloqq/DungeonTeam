@@ -151,15 +151,35 @@ namespace Code.UI.MainMenu.Tests
             Assert.That(playCount, Is.Zero);
         }
 
+        [Test]
+        public void TeamSelection_IncreaseLevel_UsesConfiguredLevelInRequest()
+        {
+            MainMenuPlayRequest request = default;
+            using var viewModel = new MainMenuViewModel(
+                new MainMenuModel(),
+                CreateDungeonOptions(),
+                CreateTeamSetup(),
+                value => request = value,
+                () => { },
+                () => { });
+            viewModel.Initialize();
+
+            viewModel.TeamMembers[0].IncreaseLevelCommand.Execute();
+            viewModel.PlayCommand.Execute();
+
+            Assert.That(request.Team.Leader.Level, Is.EqualTo(2));
+            Assert.That(viewModel.TeamMembers[0].LevelLabel.Value, Is.EqualTo("LVL 2"));
+        }
+
         private static DungeonRunTeamSetup CreateTeamSetup()
         {
             return new DungeonRunTeamSetup(
                 new[]
                 {
-                    new DungeonRunTeamMemberOption("actor.king", "KING"),
-                    new DungeonRunTeamMemberOption("actor.druid", "DRUID"),
-                    new DungeonRunTeamMemberOption("actor.rogue", "ROGUE"),
-                    new DungeonRunTeamMemberOption("actor.wizard", "WIZARD")
+                    new DungeonRunTeamMemberOption("actor.king", "KING", new[] { 1, 2 }),
+                    new DungeonRunTeamMemberOption("actor.druid", "DRUID", new[] { 1, 2 }),
+                    new DungeonRunTeamMemberOption("actor.rogue", "ROGUE", new[] { 1, 2 }),
+                    new DungeonRunTeamMemberOption("actor.wizard", "WIZARD", new[] { 1, 2 })
                 },
                 2,
                 4,

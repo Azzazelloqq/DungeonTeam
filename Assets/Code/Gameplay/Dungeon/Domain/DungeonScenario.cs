@@ -203,6 +203,17 @@ namespace DungeonTeam.Gameplay.Dungeon.Domain
             int cost,
             int weight,
             string[] allowedSlotTags)
+            : this(enemyId, behaviorId, 1, cost, weight, allowedSlotTags)
+        {
+        }
+
+        public EnemyCandidate(
+            string enemyId,
+            string behaviorId,
+            int actorLevel,
+            int cost,
+            int weight,
+            string[] allowedSlotTags)
         {
             if (string.IsNullOrWhiteSpace(enemyId))
             {
@@ -219,6 +230,11 @@ namespace DungeonTeam.Gameplay.Dungeon.Domain
                 throw new ArgumentOutOfRangeException(nameof(cost));
             }
 
+            if (actorLevel <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(actorLevel));
+            }
+
             if (weight <= 0)
             {
                 throw new ArgumentOutOfRangeException(nameof(weight));
@@ -231,6 +247,7 @@ namespace DungeonTeam.Gameplay.Dungeon.Domain
 
             EnemyId = enemyId;
             BehaviorId = behaviorId;
+            ActorLevel = actorLevel;
             Cost = cost;
             Weight = weight;
             AllowedSlotTags = Array.AsReadOnly((string[])allowedSlotTags.Clone());
@@ -238,6 +255,7 @@ namespace DungeonTeam.Gameplay.Dungeon.Domain
 
         public string EnemyId { get; }
         public string BehaviorId { get; }
+        public int ActorLevel { get; }
         public int Cost { get; }
         public int Weight { get; }
         public IReadOnlyList<string> AllowedSlotTags { get; }

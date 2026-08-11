@@ -15,15 +15,6 @@ namespace DungeonTeam.Gameplay.EnemyAI.Runtime
         [SerializeField, Min(0.1f)]
         private float _targetLossDistance = 12f;
 
-        [SerializeField, Min(0.1f)]
-        private float _attackRange = 1.5f;
-
-        [SerializeField, Min(1)]
-        private int _attackDamage = 15;
-
-        [SerializeField, Min(0.01f)]
-        private float _attackCooldown = 1f;
-
         [SerializeField, Min(0f)]
         private float _homeArrivalDistance = 0.25f;
 
@@ -50,9 +41,6 @@ namespace DungeonTeam.Gameplay.EnemyAI.Runtime
             float viewDistance,
             float viewAngle,
             float targetLossDistance,
-            float attackRange,
-            int attackDamage,
-            float attackCooldown,
             float homeArrivalDistance = 0.25f,
             float eyeHeight = 1f,
             float visionAreaHeight = 0.04f,
@@ -61,9 +49,6 @@ namespace DungeonTeam.Gameplay.EnemyAI.Runtime
             _viewDistance = viewDistance;
             _viewAngle = viewAngle;
             _targetLossDistance = targetLossDistance;
-            _attackRange = attackRange;
-            _attackDamage = attackDamage;
-            _attackCooldown = attackCooldown;
             _homeArrivalDistance = homeArrivalDistance;
             _eyeHeight = eyeHeight;
             _visionAreaHeight = visionAreaHeight;
@@ -71,13 +56,9 @@ namespace DungeonTeam.Gameplay.EnemyAI.Runtime
             Validate();
         }
 
-        public float AttackRange => _attackRange;
-
-        internal float ViewDistance => _viewDistance;
+        public float ViewDistance => _viewDistance;
         internal float ViewAngle => _viewAngle;
         internal float TargetLossDistance => _targetLossDistance;
-        internal int AttackDamage => _attackDamage;
-        internal float AttackCooldown => _attackCooldown;
         internal float HomeArrivalDistance => _homeArrivalDistance;
         internal float EyeHeight => _eyeHeight;
         internal float VisionAreaHeight => _visionAreaHeight;
@@ -96,18 +77,6 @@ namespace DungeonTeam.Gameplay.EnemyAI.Runtime
             {
                 throw new InvalidOperationException(
                     "Enemy AI view angle must be between 0 and 180 degrees.");
-            }
-
-            if (_attackRange <= 0f || _targetLossDistance <= _attackRange)
-            {
-                throw new InvalidOperationException(
-                    "Enemy AI target loss distance must exceed attack range.");
-            }
-
-            if (_attackDamage <= 0 || _attackCooldown <= 0f)
-            {
-                throw new InvalidOperationException(
-                    "Enemy AI attack damage and cooldown must be positive.");
             }
 
             if (_targetLossDistance <= _viewDistance)

@@ -17,6 +17,7 @@
 | Документ | Отвечает на вопрос |
 | --- | --- |
 | [Experience Direction](./ExperienceDirection.md) | Какой игровой опыт создаём и какие у него границы? |
+| [Product MVP GDD](./ProductMvpGDD.md) | Как выглядит минимальный цельный цикл вокруг боёв, хаба и повторных экспедиций? |
 | [Market & References](./MarketAndReferences.md) | Где продукт находится на рынке и чему учимся у референсов? |
 | [Product Validation Plan](./ProductValidationPlan.md) | Какие гипотезы, в каком порядке и по каким gates проверяем? |
 | [Publisher Vertical Slice Brief](./PublisherVerticalSliceBrief.md) | Что именно должен доказать издательский slice и что в него не входит? |

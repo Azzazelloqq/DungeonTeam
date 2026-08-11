@@ -19,6 +19,9 @@ MonoBehaviour:
   - actor.wizard
   _minimumTeamSize: 2
   _maximumTeamSize: 4
-  _defaultLeaderActorId: actor.king
-  _defaultCompanionActorIds:
-  - actor.druid
+  _defaultLeader:
+    _actorId: actor.king
+    _level: 1
+  _defaultCompanions:
+  - _actorId: actor.druid
+    _level: 1

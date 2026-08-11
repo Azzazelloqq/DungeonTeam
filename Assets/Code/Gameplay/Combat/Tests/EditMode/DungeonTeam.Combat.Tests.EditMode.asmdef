@@ -1,0 +1,15 @@
+{
+  "name": "DungeonTeam.Combat.Tests.EditMode",
+  "rootNamespace": "DungeonTeam.Gameplay.Combat.Tests",
+  "references": [
+    "DungeonTeam.Combat.Domain",
+    "DungeonTeam.Combat.Runtime"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ],
+  "autoReferenced": false
+}

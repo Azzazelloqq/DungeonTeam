@@ -5,6 +5,8 @@
     "DungeonTeam.Actors.Domain",
     "DungeonTeam.Actors.Runtime",
     "DungeonTeam.Chests.Runtime",
+    "DungeonTeam.Combat.Domain",
+    "DungeonTeam.Combat.Runtime",
     "DungeonTeam.ContextActions.Runtime",
     "DungeonTeam.Dungeon.Application",
     "DungeonTeam.Dungeon.Domain",
