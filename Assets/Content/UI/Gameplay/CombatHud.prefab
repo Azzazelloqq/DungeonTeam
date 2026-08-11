@@ -1,0 +1,69 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &720000
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 720001}
+  - component: {fileID: 720002}
+  m_Layer: 5
+  m_Name: CombatHud
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &720001
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 720000}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &720002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 720000}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 058781351024468396da55a0ed41a9c8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DungeonTeam.CombatHud::DungeonTeam.UI.CombatHud.CombatHudView
+  _joystickDisc: {fileID: 2800000, guid: 8bb6960fb1c04143a87ebd30615feef4, type: 3}
+  _circleMaterial: {fileID: 2100000, guid: d69345ec799f4353b02f73a8ff42e7aa, type: 2}
+  _joystickDiameter: 224
+  _joystickKnobDiameter: 92
+  _primarySkillSize: 152
+  _activeSkillSize: 112
+  _edgePadding: {x: 52, y: 48}
+  _activeSkillOffset: {x: -132, y: 122}
+  _skillIconInset: 0.12
+  _statusFontSize: 24
+  _readyColor: {r: 0.48, g: 0.76, b: 1, a: 1}
+  _selectedColor: {r: 0.38, g: 0.92, b: 1, a: 1}
+  _pendingColor: {r: 0.32, g: 0.72, b: 1, a: 1}
+  _activeColor: {r: 1, g: 0.62, b: 0.24, a: 1}
+  _disabledColor: {r: 0.26, g: 0.32, b: 0.4, a: 0.72}
+  _cooldownColor: {r: 0.015, g: 0.025, b: 0.045, a: 0.82}
+  _textColor: {r: 1, g: 1, b: 1, a: 1}
+  _joystickBaseColor: {r: 0.48, g: 0.75, b: 1, a: 0.58}
+  _joystickKnobColor: {r: 0.72, g: 0.9, b: 1, a: 0.94}

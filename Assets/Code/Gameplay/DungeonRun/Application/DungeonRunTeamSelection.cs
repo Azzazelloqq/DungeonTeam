@@ -6,7 +6,7 @@ namespace DungeonTeam.Gameplay.DungeonRun.Application
 {
     public readonly struct DungeonRunActorSelection
     {
-        public DungeonRunActorSelection(string actorId, int level)
+        public DungeonRunActorSelection(string actorId, int level, string loadoutId)
         {
             ActorId = !string.IsNullOrWhiteSpace(actorId)
                 ? actorId
@@ -14,10 +14,14 @@ namespace DungeonTeam.Gameplay.DungeonRun.Application
             Level = level > 0
                 ? level
                 : throw new ArgumentOutOfRangeException(nameof(level));
+            LoadoutId = !string.IsNullOrWhiteSpace(loadoutId)
+                ? loadoutId
+                : throw new ArgumentException("Loadout ID cannot be empty.", nameof(loadoutId));
         }
 
         public string ActorId { get; }
         public int Level { get; }
+        public string LoadoutId { get; }
     }
 
     public sealed class DungeonRunTeamSelection
@@ -63,15 +67,6 @@ namespace DungeonTeam.Gameplay.DungeonRun.Application
             _companionActorIds = Array.AsReadOnly(copiedIds);
         }
 
-        public DungeonRunTeamSelection(
-            string leaderActorId,
-            IReadOnlyList<string> companionActorIds)
-            : this(
-                new DungeonRunActorSelection(leaderActorId, 1),
-                ToLevelOneSelections(companionActorIds))
-        {
-        }
-
         public DungeonRunActorSelection Leader { get; }
 
         public IReadOnlyList<DungeonRunActorSelection> Companions => _companions;
@@ -82,21 +77,5 @@ namespace DungeonTeam.Gameplay.DungeonRun.Application
 
         public int MemberCount => _companions.Count + 1;
 
-        private static IReadOnlyList<DungeonRunActorSelection> ToLevelOneSelections(
-            IReadOnlyList<string> actorIds)
-        {
-            if (actorIds == null)
-            {
-                throw new ArgumentNullException(nameof(actorIds));
-            }
-
-            var selections = new DungeonRunActorSelection[actorIds.Count];
-            for (var index = 0; index < actorIds.Count; index++)
-            {
-                selections[index] = new DungeonRunActorSelection(actorIds[index], 1);
-            }
-
-            return selections;
-        }
     }
 }

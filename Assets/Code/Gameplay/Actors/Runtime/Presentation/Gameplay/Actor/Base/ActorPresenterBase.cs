@@ -17,6 +17,8 @@ namespace DungeonTeam.Gameplay.Actors.Runtime.Presentation.Gameplay.Actor.Base
 
         public abstract int CurrentHealth { get; }
 
+        public abstract int MaximumHealth { get; }
+
         public abstract bool IsAlive { get; }
 
         public abstract Transform WeaponAnchor { get; }
@@ -24,6 +26,8 @@ namespace DungeonTeam.Gameplay.Actors.Runtime.Presentation.Gameplay.Actor.Base
         public abstract Transform HitVfxAnchor { get; }
 
         public abstract Transform OverheadAnchor { get; }
+
+        public abstract Transform SkillOriginAnchor { get; }
 
         public abstract bool TryMoveTo(Vector3 destination);
 
@@ -35,6 +39,10 @@ namespace DungeonTeam.Gameplay.Actors.Runtime.Presentation.Gameplay.Actor.Base
 
         public abstract void PlayAttackFeedback();
 
+        public abstract void PlayCastFeedback();
+
         public abstract ActorDamageResult ApplyDamage(int amount);
+
+        public abstract ActorHealResult ApplyHeal(int amount);
     }
 }

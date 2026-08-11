@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using DungeonTeam.Gameplay.Actors.Runtime;
 using DungeonTeam.Gameplay.Chests.Runtime;
 using DungeonTeam.Gameplay.ContextActions.Runtime;
-using DungeonTeam.Gameplay.Hero.Runtime;
 using DungeonTeam.Gameplay.Rewards.Runtime;
 using DungeonTeam.Gameplay.Team.Runtime;
 using TickHandler;
@@ -13,7 +12,6 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
 {
     internal sealed class DungeonRunContextActionsController : IDisposable
     {
-        private readonly HeroController _heroController;
         private readonly TeamController _teamController;
         private readonly ActorInstance _leader;
         private readonly DungeonRunProgress _progress;
@@ -29,7 +27,6 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
         private readonly float _exitDistanceSqr;
         private readonly Vector3 _exitPosition;
         private readonly List<ContextAction> _availableActions = new(6);
-        private readonly ContextAction _heroAttackAction;
         private readonly ContextAction _orderAttackAction;
         private readonly ContextAction _followAction;
         private readonly ContextAction _pickupAction;
@@ -44,7 +41,6 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
         private bool _isDisposed;
 
         public DungeonRunContextActionsController(
-            HeroController heroController,
             TeamController teamController,
             ActorInstance leader,
             DungeonRunProgress progress,
@@ -60,7 +56,6 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
             Action<ChestInstance> chestOpened,
             Action exitRequested)
         {
-            _heroController = heroController ?? throw new ArgumentNullException(nameof(heroController));
             _teamController = teamController ?? throw new ArgumentNullException(nameof(teamController));
             _leader = leader ?? throw new ArgumentNullException(nameof(leader));
             _progress = progress ?? throw new ArgumentNullException(nameof(progress));
@@ -92,7 +87,6 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
             _chestOpened = chestOpened ?? throw new ArgumentNullException(nameof(chestOpened));
             _exitRequested = exitRequested ?? throw new ArgumentNullException(nameof(exitRequested));
 
-            _heroAttackAction = new ContextAction("ATTACK", ExecuteHeroAttack);
             _orderAttackAction = new ContextAction("ORDER ATTACK", ExecuteOrderAttack);
             _followAction = new ContextAction("FOLLOW", _teamController.OrderFollow);
             _pickupAction = new ContextAction("PICK UP", ExecutePickup);
@@ -113,7 +107,6 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
                     "Dungeon Run context actions are already initialized.");
             }
 
-            _heroController.TargetChanged += Refresh;
             _teamController.CommandsChanged += Refresh;
             _tickHandler.SubscribeOnFrameUpdate(OnFrameUpdate);
             _isInitialized = true;
@@ -146,7 +139,6 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
             if (_isInitialized)
             {
                 _tickHandler.UnsubscribeOnFrameUpdate(OnFrameUpdate);
-                _heroController.TargetChanged -= Refresh;
                 _teamController.CommandsChanged -= Refresh;
                 _model.SetActions(Array.Empty<ContextAction>());
             }
@@ -163,11 +155,6 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
             {
                 _model.SetActions(_availableActions);
                 return;
-            }
-
-            if (_heroController.CanAttack)
-            {
-                _availableActions.Add(_heroAttackAction);
             }
 
             if (_teamController.CanOrderAttack)
@@ -196,11 +183,6 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
             }
 
             _model.SetActions(_availableActions);
-        }
-
-        private void ExecuteHeroAttack()
-        {
-            _heroController.TryRequestBasicAttack();
         }
 
         private void ExecuteOrderAttack()

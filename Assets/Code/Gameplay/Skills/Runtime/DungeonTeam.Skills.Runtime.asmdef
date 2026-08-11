@@ -1,0 +1,17 @@
+{
+  "name": "DungeonTeam.Skills.Runtime",
+  "rootNamespace": "DungeonTeam.Gameplay.Skills.Runtime",
+  "references": [
+    "DungeonTeam.Actors.Domain",
+    "DungeonTeam.Actors.Runtime",
+    "DungeonTeam.Addressables",
+    "DungeonTeam.Configuration",
+    "DungeonTeam.Skills.Domain",
+    "Disposable",
+    "MVP",
+    "ResourceLoader",
+    "TickHandler",
+    "UniTask"
+  ],
+  "autoReferenced": false
+}

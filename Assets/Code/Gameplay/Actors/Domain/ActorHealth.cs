@@ -9,6 +9,12 @@ namespace DungeonTeam.Gameplay.Actors.Domain
         Ignored
     }
 
+    public enum ActorHealResult
+    {
+        Healed,
+        Ignored
+    }
+
     public sealed class ActorHealth
     {
         public ActorHealth(int maximum)
@@ -44,6 +50,20 @@ namespace DungeonTeam.Gameplay.Actors.Domain
             return Current == 0
                 ? ActorDamageResult.Killed
                 : ActorDamageResult.Damaged;
+        }
+
+        public ActorHealResult ApplyHeal(int amount)
+        {
+            if (amount <= 0)
+                throw new ArgumentOutOfRangeException(nameof(amount));
+            if (!IsAlive || Current >= Maximum)
+                return ActorHealResult.Ignored;
+
+            var missingHealth = Maximum - Current;
+            Current = amount >= missingHealth
+                ? Maximum
+                : Current + amount;
+            return ActorHealResult.Healed;
         }
     }
 }

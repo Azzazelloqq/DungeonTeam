@@ -1,6 +1,0 @@
-{
-  "name": "DungeonTeam.Combat.Domain",
-  "rootNamespace": "DungeonTeam.Gameplay.Combat.Domain",
-  "autoReferenced": false,
-  "noEngineReferences": true
-}

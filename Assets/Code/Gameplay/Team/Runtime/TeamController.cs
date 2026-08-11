@@ -2,11 +2,19 @@ using System;
 using System.Collections.Generic;
 using DungeonTeam.Gameplay.Actors.Runtime;
 using DungeonTeam.Gameplay.Combat.Runtime;
+using DungeonTeam.Gameplay.Team.Domain;
 using TickHandler;
 using UnityEngine;
 
 namespace DungeonTeam.Gameplay.Team.Runtime
 {
+    internal enum TeamCommandMode
+    {
+        Autonomous,
+        Attack,
+        Follow
+    }
+
     public sealed class TeamController : IDisposable
     {
         private const float MovementThreshold = 0.0001f;
@@ -18,12 +26,14 @@ namespace DungeonTeam.Gameplay.Team.Runtime
         private readonly ITeamCameraInput _cameraInput;
         private readonly TeamControlSettings _settings;
         private readonly List<CompanionController> _companions;
+        private readonly CompanionHealthSnapshot[] _healthSnapshots;
         private readonly float _minimumCommandViewDot;
 
         private ActorInstance _availableAttackTarget;
-        private ActorInstance _combatTarget;
+        private ActorInstance _orderedAttackTarget;
+        private ActorInstance _retaliationTarget;
+        private TeamCommandMode _commandMode;
         private float _cameraYaw;
-        private bool _isForcedFollow;
         private bool _lastCanOrderAttack;
         private bool _lastCanOrderFollow;
         private bool _isInitialized;
@@ -76,6 +86,7 @@ namespace DungeonTeam.Gameplay.Team.Runtime
             _settings.Validate();
 
             _companions = new List<CompanionController>(companions.Count);
+            _healthSnapshots = new CompanionHealthSnapshot[companions.Count + 1];
             for (var index = 0; index < companions.Count; index++)
             {
                 _companions.Add(new CompanionController(
@@ -93,12 +104,17 @@ namespace DungeonTeam.Gameplay.Team.Runtime
         }
 
         public bool CanOrderAttack =>
-            HasLivingCompanion() && _combatTarget == null && _availableAttackTarget != null;
+            HasLivingCompanion() &&
+            _commandMode != TeamCommandMode.Attack &&
+            _availableAttackTarget != null;
 
         public bool CanOrderFollow =>
             HasLivingCompanion() &&
-            !_isForcedFollow &&
-            (_combatTarget != null || _availableAttackTarget != null);
+            _commandMode != TeamCommandMode.Follow &&
+            (_commandMode == TeamCommandMode.Attack ||
+             _retaliationTarget != null ||
+             _availableAttackTarget != null ||
+             HasCompanionPreCommitAction());
 
         public void Initialize()
         {
@@ -149,7 +165,8 @@ namespace DungeonTeam.Gameplay.Team.Runtime
             }
 
             _availableAttackTarget = null;
-            _combatTarget = null;
+            _orderedAttackTarget = null;
+            _retaliationTarget = null;
             CommandsChanged = null;
         }
 
@@ -162,32 +179,43 @@ namespace DungeonTeam.Gameplay.Team.Runtime
                 return false;
             }
 
-            _combatTarget = _availableAttackTarget;
+            _commandMode = TeamCommandMode.Attack;
+            _orderedAttackTarget = _availableAttackTarget;
+            _retaliationTarget = null;
             _availableAttackTarget = null;
-            _isForcedFollow = false;
+            CancelCompanionPreCommitActions();
             PublishCommandAvailabilityIfChanged();
             return true;
         }
 
         public void OrderFollow()
         {
-            _isForcedFollow = true;
-            _combatTarget = null;
+            _commandMode = TeamCommandMode.Follow;
+            _orderedAttackTarget = null;
+            _retaliationTarget = null;
+            CancelCompanionPreCommitActions();
             RefreshAvailableAttackTarget();
             PublishCommandAvailabilityIfChanged();
         }
 
         private void OnFrameUpdate(float deltaTime)
         {
-            UpdateCombatTarget();
+            UpdateCommandTargets();
             RefreshAvailableAttackTarget();
+            var healTarget = _commandMode == TeamCommandMode.Autonomous
+                ? SelectHealTarget()
+                : null;
+            var attackTarget = _commandMode == TeamCommandMode.Attack
+                ? _orderedAttackTarget
+                : _retaliationTarget;
             for (var index = 0; index < _companions.Count; index++)
             {
                 _companions[index].Tick(
                     deltaTime,
                     _leader,
-                    _combatTarget,
-                    _isForcedFollow);
+                    healTarget,
+                    attackTarget,
+                    _commandMode);
             }
 
             PublishCommandAvailabilityIfChanged();
@@ -199,16 +227,24 @@ namespace DungeonTeam.Gameplay.Team.Runtime
             PositionCamera(immediate: false, deltaTime);
         }
 
-        private void UpdateCombatTarget()
+        private void UpdateCommandTargets()
         {
-            if (_combatTarget == null)
+            if (_orderedAttackTarget != null &&
+                (!_orderedAttackTarget.IsAlive ||
+                 !CanAnyCompanionContinueCombat(_orderedAttackTarget)))
             {
-                return;
+                _orderedAttackTarget = null;
+                if (_commandMode == TeamCommandMode.Attack)
+                {
+                    _commandMode = TeamCommandMode.Autonomous;
+                }
             }
 
-            if (!_combatTarget.IsAlive || !CanAnyCompanionContinueCombat(_combatTarget))
+            if (_retaliationTarget != null &&
+                (!_retaliationTarget.IsAlive ||
+                 !CanAnyCompanionContinueCombat(_retaliationTarget)))
             {
-                _combatTarget = null;
+                _retaliationTarget = null;
             }
         }
 
@@ -231,7 +267,7 @@ namespace DungeonTeam.Gameplay.Team.Runtime
 
         private void RefreshAvailableAttackTarget()
         {
-            if (_combatTarget != null || !HasLivingCompanion())
+            if (_commandMode == TeamCommandMode.Attack || !HasLivingCompanion())
             {
                 _availableAttackTarget = null;
                 return;
@@ -324,8 +360,7 @@ namespace DungeonTeam.Gameplay.Team.Runtime
 
         private void OnTeamMemberAttacked(ActorInstance attacker)
         {
-            if (_isForcedFollow ||
-                _combatTarget != null ||
+            if (_commandMode != TeamCommandMode.Autonomous ||
                 !HasLivingCompanion() ||
                 attacker == null ||
                 !attacker.IsAlive ||
@@ -334,9 +369,43 @@ namespace DungeonTeam.Gameplay.Team.Runtime
                 return;
             }
 
-            _combatTarget = attacker;
-            _availableAttackTarget = null;
+            _retaliationTarget = attacker;
             PublishCommandAvailabilityIfChanged();
+        }
+
+        private ActorInstance SelectHealTarget()
+        {
+            _healthSnapshots[0] = CreateHealthSnapshot(_leader);
+            for (var index = 0; index < _companions.Count; index++)
+            {
+                _healthSnapshots[index + 1] =
+                    CreateHealthSnapshot(_companions[index].Actor);
+            }
+
+            var selectedIndex = CompanionHealTargetSelector.Select(
+                _healthSnapshots,
+                _settings.CompanionHealHealthRatio);
+            if (selectedIndex < 0)
+            {
+                return null;
+            }
+
+            return selectedIndex == 0
+                ? _leader
+                : _companions[selectedIndex - 1].Actor;
+        }
+
+        private void CancelCompanionPreCommitActions()
+        {
+            for (var index = 0; index < _companions.Count; index++)
+            {
+                _companions[index].CancelPreCommitAction();
+            }
+        }
+
+        private static CompanionHealthSnapshot CreateHealthSnapshot(ActorInstance actor)
+        {
+            return new CompanionHealthSnapshot(actor.CurrentHealth, actor.MaximumHealth);
         }
 
         private bool IsEnemy(ActorInstance actor)
@@ -357,6 +426,19 @@ namespace DungeonTeam.Gameplay.Team.Runtime
             for (var index = 0; index < _companions.Count; index++)
             {
                 if (_companions[index].Actor.IsAlive)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private bool HasCompanionPreCommitAction()
+        {
+            for (var index = 0; index < _companions.Count; index++)
+            {
+                if (_companions[index].CanCancelPreCommitAction)
                 {
                     return true;
                 }

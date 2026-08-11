@@ -2,8 +2,14 @@
   "name": "DungeonTeam.Combat.Tests.EditMode",
   "rootNamespace": "DungeonTeam.Gameplay.Combat.Tests",
   "references": [
-    "DungeonTeam.Combat.Domain",
-    "DungeonTeam.Combat.Runtime"
+    "DungeonTeam.Actors.Domain",
+    "DungeonTeam.Actors.Runtime",
+    "DungeonTeam.Combat.Runtime",
+    "DungeonTeam.Skills.Domain",
+    "DungeonTeam.Skills.Runtime",
+    "Disposable",
+    "MVP",
+    "TickHandler"
   ],
   "includePlatforms": [
     "Editor"

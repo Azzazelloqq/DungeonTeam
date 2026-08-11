@@ -7,11 +7,13 @@ namespace DungeonTeam.Gameplay.DungeonRun.Application
     public readonly struct DungeonRunTeamMemberOption
     {
         private readonly ReadOnlyCollection<int> _availableLevels;
+        private readonly ReadOnlyCollection<string> _availableLoadoutIds;
 
         public DungeonRunTeamMemberOption(
             string actorId,
             string displayName,
-            IReadOnlyList<int> availableLevels)
+            IReadOnlyList<int> availableLevels,
+            IReadOnlyList<string> availableLoadoutIds)
         {
             ActorId = RequireValue(actorId, nameof(actorId));
             DisplayName = RequireValue(displayName, nameof(displayName));
@@ -39,11 +41,29 @@ namespace DungeonTeam.Gameplay.DungeonRun.Application
 
             Array.Sort(copiedLevels);
             _availableLevels = Array.AsReadOnly(copiedLevels);
-        }
+            if (availableLoadoutIds == null || availableLoadoutIds.Count == 0)
+            {
+                throw new ArgumentException(
+                    "At least one combat loadout is required.",
+                    nameof(availableLoadoutIds));
+            }
 
-        public DungeonRunTeamMemberOption(string actorId, string displayName)
-            : this(actorId, displayName, new[] { 1 })
-        {
+            var copiedLoadoutIds = new string[availableLoadoutIds.Count];
+            var uniqueLoadoutIds = new HashSet<string>(StringComparer.Ordinal);
+            for (var index = 0; index < copiedLoadoutIds.Length; index++)
+            {
+                var loadoutId = availableLoadoutIds[index];
+                if (string.IsNullOrWhiteSpace(loadoutId) || !uniqueLoadoutIds.Add(loadoutId))
+                {
+                    throw new ArgumentException(
+                        "Combat loadout IDs must be non-empty and unique.",
+                        nameof(availableLoadoutIds));
+                }
+
+                copiedLoadoutIds[index] = loadoutId;
+            }
+
+            _availableLoadoutIds = Array.AsReadOnly(copiedLoadoutIds);
         }
 
         public string ActorId { get; }
@@ -51,12 +71,29 @@ namespace DungeonTeam.Gameplay.DungeonRun.Application
         public string DisplayName { get; }
 
         public IReadOnlyList<int> AvailableLevels => _availableLevels;
+        public IReadOnlyList<string> AvailableLoadoutIds => _availableLoadoutIds;
 
         public bool SupportsLevel(int level)
         {
             for (var index = 0; index < _availableLevels.Count; index++)
             {
                 if (_availableLevels[index] == level)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        public bool SupportsLoadout(string loadoutId)
+        {
+            for (var index = 0; index < _availableLoadoutIds.Count; index++)
+            {
+                if (string.Equals(
+                        _availableLoadoutIds[index],
+                        loadoutId,
+                        StringComparison.Ordinal))
                 {
                     return true;
                 }
@@ -206,6 +243,13 @@ namespace DungeonTeam.Gameplay.DungeonRun.Application
             {
                 error = $"Actor ID '{selection.ActorId}' level {selection.Level} is not " +
                         "available for this run.";
+                return false;
+            }
+
+            if (!member.SupportsLoadout(selection.LoadoutId))
+            {
+                error = $"Loadout ID '{selection.LoadoutId}' is not available for actor " +
+                        $"'{selection.ActorId}' in this run.";
                 return false;
             }
 

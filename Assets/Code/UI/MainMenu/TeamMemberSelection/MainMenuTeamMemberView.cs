@@ -30,12 +30,23 @@ namespace Code.UI.MainMenu.TeamMemberSelection
         [SerializeField]
         private Button _increaseLevelButton;
 
+        [SerializeField]
+        private Text _loadoutLabel;
+
+        [SerializeField]
+        private Button _decreaseLoadoutButton;
+
+        [SerializeField]
+        private Button _increaseLoadoutButton;
+
         protected override void OnInitialize()
         {
             _leaderButton.onClick.AddListener(OnLeaderClicked);
             _companionButton.onClick.AddListener(OnCompanionClicked);
             _decreaseLevelButton.onClick.AddListener(OnDecreaseLevelClicked);
             _increaseLevelButton.onClick.AddListener(OnIncreaseLevelClicked);
+            _decreaseLoadoutButton.onClick.AddListener(OnDecreaseLoadoutClicked);
+            _increaseLoadoutButton.onClick.AddListener(OnIncreaseLoadoutClicked);
             viewModel.Label.Subscribe(SetLabel).AddTo(compositeDisposable);
             viewModel.IsLeader.Subscribe(SetLeader).AddTo(compositeDisposable);
             viewModel.IsCompanion.Subscribe(SetCompanion).AddTo(compositeDisposable);
@@ -43,6 +54,9 @@ namespace Code.UI.MainMenu.TeamMemberSelection
             viewModel.LevelLabel.Subscribe(SetLevelLabel).AddTo(compositeDisposable);
             viewModel.CanDecreaseLevel.Subscribe(SetCanDecreaseLevel).AddTo(compositeDisposable);
             viewModel.CanIncreaseLevel.Subscribe(SetCanIncreaseLevel).AddTo(compositeDisposable);
+            viewModel.LoadoutLabel.Subscribe(SetLoadoutLabel).AddTo(compositeDisposable);
+            viewModel.CanDecreaseLoadout.Subscribe(SetCanDecreaseLoadout).AddTo(compositeDisposable);
+            viewModel.CanIncreaseLoadout.Subscribe(SetCanIncreaseLoadout).AddTo(compositeDisposable);
         }
 
         protected override ValueTask OnInitializeAsync(CancellationToken token)
@@ -56,6 +70,8 @@ namespace Code.UI.MainMenu.TeamMemberSelection
             _companionButton.onClick.RemoveListener(OnCompanionClicked);
             _decreaseLevelButton.onClick.RemoveListener(OnDecreaseLevelClicked);
             _increaseLevelButton.onClick.RemoveListener(OnIncreaseLevelClicked);
+            _decreaseLoadoutButton.onClick.RemoveListener(OnDecreaseLoadoutClicked);
+            _increaseLoadoutButton.onClick.RemoveListener(OnIncreaseLoadoutClicked);
         }
 
         protected override ValueTask OnDisposeAsync(CancellationToken token)
@@ -116,6 +132,31 @@ namespace Code.UI.MainMenu.TeamMemberSelection
         private void OnIncreaseLevelClicked()
         {
             viewModel.IncreaseLevelCommand.Execute();
+        }
+
+        private void SetLoadoutLabel(string value)
+        {
+            _loadoutLabel.text = value;
+        }
+
+        private void SetCanDecreaseLoadout(bool value)
+        {
+            _decreaseLoadoutButton.interactable = value;
+        }
+
+        private void SetCanIncreaseLoadout(bool value)
+        {
+            _increaseLoadoutButton.interactable = value;
+        }
+
+        private void OnDecreaseLoadoutClicked()
+        {
+            viewModel.DecreaseLoadoutCommand.Execute();
+        }
+
+        private void OnIncreaseLoadoutClicked()
+        {
+            viewModel.IncreaseLoadoutCommand.Execute();
         }
     }
 }

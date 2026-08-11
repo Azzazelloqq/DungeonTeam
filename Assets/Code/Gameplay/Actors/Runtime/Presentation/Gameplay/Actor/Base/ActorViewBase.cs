@@ -17,6 +17,8 @@ namespace DungeonTeam.Gameplay.Actors.Runtime.Presentation.Gameplay.Actor.Base
 
         public abstract Transform OverheadAnchor { get; }
 
+        public abstract Transform SkillOriginAnchor { get; }
+
         public abstract void Configure(float movementSpeed);
 
         public abstract bool TryMoveTo(Vector3 destination);
@@ -28,6 +30,8 @@ namespace DungeonTeam.Gameplay.Actors.Runtime.Presentation.Gameplay.Actor.Base
         public abstract void StopMovement();
 
         public abstract void PlayAttackFeedback();
+
+        public abstract void PlayCastFeedback();
 
         public abstract void PlayDamageFeedback(int amount, bool isFatal);
 

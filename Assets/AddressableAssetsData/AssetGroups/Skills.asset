@@ -1,0 +1,148 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
+  m_Name: Skills
+  m_EditorClassIdentifier: Unity.Addressables.Editor::UnityEditor.AddressableAssets.Settings.AddressableAssetGroup
+  m_GroupName: Skills
+  m_GUID: 6d34ed6b2388488185968e9a335108ff
+  m_SerializeEntries:
+  - m_GUID: 97d6299ad8d94d519db1d078aee4a05b
+    m_Address: Skills/Fireball/Projectile
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ec2aee9222ec45feacbde408db3d497a
+    m_Address: Skills/Fireball/Presentation
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: bf6f1d86f9b94198966f48c47ca569ab
+    m_Address: Skills/Melee/Presentation
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f00d52bc455447c8b423ec99a1a05147
+    m_Address: Skills/King/Strike/Presentation
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ab038ed20ca0447486582f261289a303
+    m_Address: Skills/King/Smite/Presentation
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ff7cda33a5d24a7a82478d630913dc6c
+    m_Address: Skills/Druid/Bolt/Projectile
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 57190cf2032e41f8bbf76f4c74f52266
+    m_Address: Skills/Druid/Bolt/Presentation
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5b8cac32f148442383e16580d00996c9
+    m_Address: Skills/Druid/NatureLance/Projectile
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4d0c31fd94174f16b902526237021b05
+    m_Address: Skills/Druid/NatureLance/Presentation
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 169a28f0619f40e59827c1dc9c2070fc
+    m_Address: Skills/Rogue/Strike/Presentation
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2ee42c5cc31147c88b1a67b4a892cde1
+    m_Address: Skills/Rogue/ShadowKnife/Projectile
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5a444a1f01ae473c9264a985ab73465e
+    m_Address: Skills/Rogue/ShadowKnife/Presentation
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 59d6a23eeb06485a84d98aa2499bc805
+    m_Address: Skills/Wizard/ArcaneBolt/Projectile
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ec6161c4ce4b41d39ce240b2066fe185
+    m_Address: Skills/Wizard/ArcaneBolt/Presentation
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b6a57d710dd14f8d9598a8ff83037d81
+    m_Address: Skills/Druid/Heal/Presentation
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: fbe0700bd85c4bedbeca21df8c53d7d4
+    m_Address: Skills/King/Strike/Icon
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a5265a8c888a45789026caf25b4ecfc3
+    m_Address: Skills/King/Smite/Icon
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8efbaabcc4024a1587c1d164ed9d2457
+    m_Address: Skills/Druid/Bolt/Icon
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e0e460198b3a4d568aa9990a8e196ef9
+    m_Address: Skills/Druid/NatureLance/Icon
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d6eaaf192d804acbad2e0d85a485428e
+    m_Address: Skills/Rogue/Strike/Icon
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 58fc7979d3e94fbcabd15e9ba1d52fec
+    m_Address: Skills/Rogue/ShadowKnife/Icon
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: aff0b980a066482fbdf6683889a983a8
+    m_Address: Skills/Wizard/ArcaneBolt/Icon
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 85c11f61f2ea4864b73fa1ca2d1323c1
+    m_Address: Skills/Skeleton/Strike/Icon
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 956b8021c8e04499af494efe0363d4c6
+    m_Address: Skills/Fireball/Icon
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 0e09c554924c4e0d9138a823de8182e6
+    m_Address: Skills/Druid/Heal/Icon
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  m_ReadOnly: 0
+  m_Settings: {fileID: 11400000, guid: daef036da91545b4e8e92deee338648e, type: 2}
+  m_SchemaSet:
+    m_Schemas:
+    - {fileID: 11400000, guid: 029e440d1fd94b1fbe38e87ab8294a21, type: 2}
+    - {fileID: 11400000, guid: d51904f1f2e447ff9daf6c7fd5fc9d2d, type: 2}

@@ -45,6 +45,9 @@ namespace DungeonTeam.Gameplay.Team.Runtime
         [SerializeField, Min(0.1f)]
         private float _companionTargetLossDistance = 12f;
 
+        [SerializeField, Range(0.01f, 0.99f)]
+        private float _companionHealHealthRatio = 0.6f;
+
         internal float StartFollowingDistance => _startFollowingDistance;
         internal float StopFollowingDistance => _stopFollowingDistance;
         internal float CameraDistance => _cameraDistance;
@@ -58,6 +61,7 @@ namespace DungeonTeam.Gameplay.Team.Runtime
         internal float CommandEyeHeight => _commandEyeHeight;
         internal LayerMask ObstacleMask => _obstacleMask;
         internal float CompanionTargetLossDistance => _companionTargetLossDistance;
+        internal float CompanionHealHealthRatio => _companionHealHealthRatio;
 
         internal void Validate()
         {
@@ -90,7 +94,8 @@ namespace DungeonTeam.Gameplay.Team.Runtime
                     "Team Control command visibility settings are invalid.");
             }
 
-            if (_companionTargetLossDistance <= 0f)
+            if (_companionTargetLossDistance <= 0f ||
+                _companionHealHealthRatio is <= 0f or >= 1f)
             {
                 throw new InvalidOperationException(
                     "Team Control companion combat settings are invalid.");

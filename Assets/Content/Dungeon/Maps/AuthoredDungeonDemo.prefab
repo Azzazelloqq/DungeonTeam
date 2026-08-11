@@ -129,6 +129,7 @@ MonoBehaviour:
   _slotTag: enemy.common
   _fixedEnemyId: 
   _fixedBehaviorId:
+  _fixedLoadoutId:
   _fixedActorLevel: 1
   _encounterGroupId: encounter.main
 --- !u!1 &2504710365481718181
@@ -534,6 +535,7 @@ MonoBehaviour:
   _slotTag: 
   _fixedEnemyId: actor.skeleton.warrior
   _fixedBehaviorId: behavior.enemy.melee.basic
+  _fixedLoadoutId: loadout.skeleton.warrior
   _fixedActorLevel: 1
   _encounterGroupId: encounter.main
 --- !u!1 &5840648469246130020

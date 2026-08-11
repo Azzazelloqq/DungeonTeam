@@ -25,6 +25,8 @@ namespace DungeonTeam.Gameplay.Actors.Runtime.Presentation.Gameplay.Actor
 
         public override int CurrentHealth => model.CurrentHealth;
 
+        public override int MaximumHealth => model.MaximumHealth;
+
         public override bool IsAlive => model.IsAlive;
 
         public override Transform WeaponAnchor => view.WeaponAnchor;
@@ -32,6 +34,8 @@ namespace DungeonTeam.Gameplay.Actors.Runtime.Presentation.Gameplay.Actor
         public override Transform HitVfxAnchor => view.HitVfxAnchor;
 
         public override Transform OverheadAnchor => view.OverheadAnchor;
+
+        public override Transform SkillOriginAnchor => view.SkillOriginAnchor;
 
         public override bool TryMoveTo(Vector3 destination)
         {
@@ -61,6 +65,14 @@ namespace DungeonTeam.Gameplay.Actors.Runtime.Presentation.Gameplay.Actor
             }
         }
 
+        public override void PlayCastFeedback()
+        {
+            if (model.IsAlive)
+            {
+                view.PlayCastFeedback();
+            }
+        }
+
         public override ActorDamageResult ApplyDamage(int amount)
         {
             var result = model.ApplyDamage(amount);
@@ -75,6 +87,11 @@ namespace DungeonTeam.Gameplay.Actors.Runtime.Presentation.Gameplay.Actor
             }
 
             return result;
+        }
+
+        public override ActorHealResult ApplyHeal(int amount)
+        {
+            return model.ApplyHeal(amount);
         }
 
         protected override void OnInitialize()

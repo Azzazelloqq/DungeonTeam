@@ -1,0 +1,13 @@
+{
+  "name": "DungeonTeam.CombatHud",
+  "rootNamespace": "DungeonTeam.UI.CombatHud",
+  "references": [
+    "DungeonTeam.Skills.Domain",
+    "MVVM.Core",
+    "MVVM.Reactive",
+    "Disposable",
+    "UnityEngine.UI",
+    "Unity.TextMeshPro"
+  ],
+  "autoReferenced": false
+}

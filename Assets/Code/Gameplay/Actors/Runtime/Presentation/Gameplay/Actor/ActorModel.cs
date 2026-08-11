@@ -25,6 +25,11 @@ namespace DungeonTeam.Gameplay.Actors.Runtime.Presentation.Gameplay.Actor
             return _health.ApplyDamage(amount);
         }
 
+        public override ActorHealResult ApplyHeal(int amount)
+        {
+            return _health.ApplyHeal(amount);
+        }
+
         protected override void OnInitialize()
         {
         }

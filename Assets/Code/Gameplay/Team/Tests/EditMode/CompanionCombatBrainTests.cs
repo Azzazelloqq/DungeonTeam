@@ -10,7 +10,7 @@ namespace DungeonTeam.Gameplay.Team.Tests
         {
             var brain = CreateBrain();
 
-            var state = brain.Evaluate(false, false, 0f);
+            var state = brain.Evaluate(false, false, 0f, skillRange: 1.5f);
 
             Assert.That(state, Is.EqualTo(CompanionCombatState.Follow));
         }
@@ -20,7 +20,7 @@ namespace DungeonTeam.Gameplay.Team.Tests
         {
             var brain = CreateBrain();
 
-            var state = brain.Evaluate(true, true, 5f);
+            var state = brain.Evaluate(true, true, 5f, skillRange: 1.5f);
 
             Assert.That(state, Is.EqualTo(CompanionCombatState.Chase));
         }
@@ -30,9 +30,9 @@ namespace DungeonTeam.Gameplay.Team.Tests
         {
             var brain = CreateBrain();
 
-            var state = brain.Evaluate(true, true, 1f);
+            var state = brain.Evaluate(true, true, 1f, skillRange: 1.5f);
 
-            Assert.That(state, Is.EqualTo(CompanionCombatState.Attack));
+            Assert.That(state, Is.EqualTo(CompanionCombatState.UseSkill));
         }
 
         [Test]
@@ -40,7 +40,7 @@ namespace DungeonTeam.Gameplay.Team.Tests
         {
             var brain = CreateBrain();
 
-            var state = brain.Evaluate(true, false, 1f);
+            var state = brain.Evaluate(true, false, 1f, skillRange: 1.5f);
 
             Assert.That(state, Is.EqualTo(CompanionCombatState.Chase));
         }
@@ -50,14 +50,27 @@ namespace DungeonTeam.Gameplay.Team.Tests
         {
             var brain = CreateBrain();
 
-            var state = brain.Evaluate(true, true, 13f);
+            var state = brain.Evaluate(true, true, 13f, skillRange: 1.5f);
 
             Assert.That(state, Is.EqualTo(CompanionCombatState.Follow));
         }
 
         private static CompanionCombatBrain CreateBrain()
         {
-            return new CompanionCombatBrain(attackRange: 1.5f, targetLossDistance: 12f);
+            return new CompanionCombatBrain(targetLossDistance: 12f);
+        }
+
+        [Test]
+        public void Evaluate_UsesRangeOfCurrentlySelectedSkill()
+        {
+            var brain = CreateBrain();
+
+            Assert.That(
+                brain.Evaluate(true, true, 4f, skillRange: 5f),
+                Is.EqualTo(CompanionCombatState.UseSkill));
+            Assert.That(
+                brain.Evaluate(true, true, 4f, skillRange: 1.5f),
+                Is.EqualTo(CompanionCombatState.Chase));
         }
     }
 }

@@ -55,5 +55,61 @@ namespace DungeonTeam.Gameplay.Actors.Tests
 
             Assert.Throws<ArgumentOutOfRangeException>(() => health.ApplyDamage(0));
         }
+
+        [Test]
+        public void ApplyHeal_WithWoundedActor_RestoresAndClampsHealth()
+        {
+            var health = new ActorHealth(10);
+            health.ApplyDamage(7);
+
+            var result = health.ApplyHeal(20);
+
+            Assert.That(result, Is.EqualTo(ActorHealResult.Healed));
+            Assert.That(health.Current, Is.EqualTo(health.Maximum));
+        }
+
+        [Test]
+        public void ApplyHeal_WithFullHealth_IsIgnored()
+        {
+            var health = new ActorHealth(10);
+
+            var result = health.ApplyHeal(3);
+
+            Assert.That(result, Is.EqualTo(ActorHealResult.Ignored));
+            Assert.That(health.Current, Is.EqualTo(10));
+        }
+
+        [Test]
+        public void ApplyHeal_WithMaximumInteger_ClampsWithoutOverflow()
+        {
+            var health = new ActorHealth(10);
+            health.ApplyDamage(7);
+
+            var result = health.ApplyHeal(int.MaxValue);
+
+            Assert.That(result, Is.EqualTo(ActorHealResult.Healed));
+            Assert.That(health.Current, Is.EqualTo(health.Maximum));
+        }
+
+        [Test]
+        public void ApplyHeal_AfterDeath_DoesNotResurrect()
+        {
+            var health = new ActorHealth(10);
+            health.ApplyDamage(10);
+
+            var result = health.ApplyHeal(5);
+
+            Assert.That(result, Is.EqualTo(ActorHealResult.Ignored));
+            Assert.That(health.IsAlive, Is.False);
+            Assert.That(health.Current, Is.Zero);
+        }
+
+        [Test]
+        public void ApplyHeal_WithNonPositiveAmount_Throws()
+        {
+            var health = new ActorHealth(10);
+
+            Assert.Throws<ArgumentOutOfRangeException>(() => health.ApplyHeal(0));
+        }
     }
 }

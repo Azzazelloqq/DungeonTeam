@@ -15,73 +15,55 @@ MonoBehaviour:
   _actors:
   - _actorId: actor.king
     _displayName: KING
-    _combatLoadoutId: loadout.actor.king
     _levels:
     - _level: 1
       _maximumHealth: 100
       _movementSpeed: 4
-      _primaryAttackRank: 1
     - _level: 2
       _maximumHealth: 120
       _movementSpeed: 4
-      _primaryAttackRank: 2
   - _actorId: actor.druid
     _displayName: DRUID
-    _combatLoadoutId: loadout.actor.druid
     _levels:
     - _level: 1
       _maximumHealth: 80
       _movementSpeed: 4
-      _primaryAttackRank: 1
     - _level: 2
       _maximumHealth: 96
       _movementSpeed: 4
-      _primaryAttackRank: 2
   - _actorId: actor.rogue
     _displayName: ROGUE
-    _combatLoadoutId: loadout.actor.rogue
     _levels:
     - _level: 1
       _maximumHealth: 80
       _movementSpeed: 4
-      _primaryAttackRank: 1
     - _level: 2
       _maximumHealth: 96
       _movementSpeed: 4
-      _primaryAttackRank: 2
   - _actorId: actor.wizard
     _displayName: WIZARD
-    _combatLoadoutId: loadout.actor.wizard
     _levels:
     - _level: 1
       _maximumHealth: 80
       _movementSpeed: 4
-      _primaryAttackRank: 1
     - _level: 2
       _maximumHealth: 96
       _movementSpeed: 4
-      _primaryAttackRank: 2
   - _actorId: actor.skeleton.mage
     _displayName: SKELETON MAGE
-    _combatLoadoutId: loadout.actor.skeleton.mage
     _levels:
     - _level: 1
       _maximumHealth: 60
       _movementSpeed: 3.5
-      _primaryAttackRank: 1
     - _level: 2
       _maximumHealth: 72
       _movementSpeed: 3.5
-      _primaryAttackRank: 2
   - _actorId: actor.skeleton.warrior
     _displayName: SKELETON WARRIOR
-    _combatLoadoutId: loadout.actor.skeleton.warrior
     _levels:
     - _level: 1
       _maximumHealth: 60
       _movementSpeed: 3.5
-      _primaryAttackRank: 1
     - _level: 2
       _maximumHealth: 72
       _movementSpeed: 3.5
-      _primaryAttackRank: 2

@@ -4,6 +4,8 @@
   "references": [
     "DungeonTeam.DungeonRun.Application",
     "DungeonTeam.DungeonRun.Runtime",
+    "DungeonTeam.Hero.Runtime",
+    "DungeonTeam.Skills.Domain",
     "DungeonTeam.Rewards.Runtime"
   ],
   "includePlatforms": [

@@ -29,15 +29,20 @@ namespace DungeonTeam.Gameplay.Dungeon.Tests.PlayMode
             "\"_mainRouteCellCount\":7,\"_maxGenerationAttempts\":8}]," +
             "\"_scenarios\":[{\"_scenarioId\":\"scenario.demo\"," +
             "\"_baseThreatBudget\":1," +
-            "\"_enemyCandidates\":[{\"_enemyId\":\"enemy.grunt\",\"_cost\":1," +
-            "\"_weight\":1,\"_allowedSlotTags\":[\"enemy.common\"]}]," +
+            "\"_enemyCandidates\":[{\"_enemyId\":\"enemy.grunt\"," +
+            "\"_behaviorId\":\"behavior.enemy.melee.basic\"," +
+            "\"_loadoutId\":\"loadout.skeleton.warrior\",\"_actorLevel\":1," +
+            "\"_cost\":1,\"_weight\":1," +
+            "\"_allowedSlotTags\":[\"enemy.common\"]}]," +
             "\"_interestPointRules\":[{\"_slotTag\":\"interest.common\"," +
             "\"_minCount\":1,\"_maxCount\":1," +
             "\"_candidates\":[{\"_interestPointId\":\"interest.chest.basic\"," +
             "\"_weight\":1,\"_rewardProfileId\":\"reward.common\"}]}]," +
             "\"_enabledOptionalPlacementIds\":[\"interest.optional.chest\"]," +
             "\"_requiredObjectives\":[{\"_objectiveId\":\"objective.exit\"," +
-            "\"_requiredSlotTag\":\"objective.exit\"}]}]," +
+            "\"_requiredSlotTag\":\"objective.exit\"}]," +
+            "\"_rewardProfiles\":[{\"_profileId\":\"reward.common\"," +
+            "\"_entries\":[{\"_rewardId\":\"reward.gold\",\"_amount\":1}]}]}]," +
             "\"_difficulties\":[{\"_difficultyId\":\"normal\"," +
             "\"_threatBudgetMultiplier\":1," +
             "\"_interestPointCountMultiplier\":1," +

@@ -12,7 +12,6 @@ namespace DungeonTeam.Gameplay.Actors.Runtime
         public ActorConfigDefinition(
             string actorId,
             string displayName,
-            string combatLoadoutId,
             IReadOnlyList<ActorRuntimeDefinition> levels)
         {
             ActorId = !string.IsNullOrWhiteSpace(actorId)
@@ -23,11 +22,6 @@ namespace DungeonTeam.Gameplay.Actors.Runtime
                 : throw new ArgumentException(
                     "Display name cannot be empty.",
                     nameof(displayName));
-            CombatLoadoutId = !string.IsNullOrWhiteSpace(combatLoadoutId)
-                ? combatLoadoutId
-                : throw new ArgumentException(
-                    "Combat loadout ID cannot be empty.",
-                    nameof(combatLoadoutId));
             if (levels == null || levels.Count == 0)
             {
                 throw new ArgumentException("Actor levels are required.", nameof(levels));
@@ -61,7 +55,6 @@ namespace DungeonTeam.Gameplay.Actors.Runtime
 
         public string ActorId { get; }
         public string DisplayName { get; }
-        public string CombatLoadoutId { get; }
         public IReadOnlyList<ActorRuntimeDefinition> Levels => _levels;
 
         public ActorRuntimeDefinition RequireLevel(int level)
@@ -82,9 +75,7 @@ namespace DungeonTeam.Gameplay.Actors.Runtime
             string actorId,
             int level,
             int maximumHealth,
-            float movementSpeed,
-            string combatLoadoutId,
-            int primaryAttackRank)
+            float movementSpeed)
         {
             ActorId = !string.IsNullOrWhiteSpace(actorId)
                 ? actorId
@@ -96,21 +87,11 @@ namespace DungeonTeam.Gameplay.Actors.Runtime
             MovementSpeed = movementSpeed > 0f
                 ? movementSpeed
                 : throw new ArgumentOutOfRangeException(nameof(movementSpeed));
-            CombatLoadoutId = !string.IsNullOrWhiteSpace(combatLoadoutId)
-                ? combatLoadoutId
-                : throw new ArgumentException(
-                    "Combat loadout ID cannot be empty.",
-                    nameof(combatLoadoutId));
-            PrimaryAttackRank = primaryAttackRank > 0
-                ? primaryAttackRank
-                : throw new ArgumentOutOfRangeException(nameof(primaryAttackRank));
         }
 
         public string ActorId { get; }
         public int Level { get; }
         public int MaximumHealth { get; }
         public float MovementSpeed { get; }
-        public string CombatLoadoutId { get; }
-        public int PrimaryAttackRank { get; }
     }
 }

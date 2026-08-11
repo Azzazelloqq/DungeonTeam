@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using DungeonTeam.Gameplay.Actors.Runtime;
 using DungeonTeam.Gameplay.Combat.Runtime;
 using DungeonTeam.Gameplay.EnemyAI.Domain;
+using DungeonTeam.Gameplay.Skills.Domain;
 using TickHandler;
 using UnityEngine;
 
@@ -72,7 +73,7 @@ namespace DungeonTeam.Gameplay.EnemyAI.Runtime
             _homePosition = _enemy.Position;
             _minimumViewDot = Mathf.Cos(_settings.ViewAngle * 0.5f * Mathf.Deg2Rad);
             _brain = new EnemyAiBrain(
-                _combat.PrimaryAttackRange,
+                _combat.GetRange(SkillSlot.Primary),
                 _settings.TargetLossDistance,
                 _settings.HomeArrivalDistance);
         }
@@ -138,7 +139,7 @@ namespace DungeonTeam.Gameplay.EnemyAI.Runtime
                 : 0f;
             var distanceToHome = PlanarDistance(_enemy.Position, _homePosition);
             var canAttackTarget = hasTarget &&
-                                  targetDistance <= _combat.PrimaryAttackRange &&
+                                  targetDistance <= _combat.GetRange(SkillSlot.Primary) &&
                                   (targetWasSeen || HasClearLine(_target));
 
             var state = _brain.Evaluate(
@@ -283,8 +284,12 @@ namespace DungeonTeam.Gameplay.EnemyAI.Runtime
                 return;
             }
 
-            var result = _combat.TryUsePrimaryAttack(_target, HasClearLine(_target));
-            if (result == AttackExecutionResult.Executed && !_target.IsAlive)
+            var result = _combat.TryUse(new SkillUseRequest(
+                SkillSlot.Primary,
+                _target,
+                SkillTargetRelation.Enemy,
+                HasClearLine(_target)));
+            if (result == SkillUseResult.Executed && !_target.IsAlive)
             {
                 _target = null;
             }
@@ -292,6 +297,7 @@ namespace DungeonTeam.Gameplay.EnemyAI.Runtime
 
         private void MoveTo(Vector3 destination)
         {
+            _combat.CancelActiveUse();
             if (_hasDestination &&
                 PlanarSqrDistance(_lastDestination, destination) <
                 DestinationUpdateDistance * DestinationUpdateDistance)

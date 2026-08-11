@@ -16,7 +16,6 @@ using DungeonTeam.Feedback.Runtime.Haptics;
 using DungeonTeam.Feedback.Runtime.Music;
 using DungeonTeam.Gameplay.Actors.Runtime;
 using DungeonTeam.Gameplay.Chests.Runtime;
-using DungeonTeam.Gameplay.Combat.Runtime;
 using DungeonTeam.Gameplay.Dungeon.Application;
 using DungeonTeam.Gameplay.DungeonRun.Application;
 using DungeonTeam.Gameplay.DungeonRun.Runtime;
@@ -26,6 +25,7 @@ using DungeonTeam.Gameplay.EnemyAI.Runtime;
 using DungeonTeam.Gameplay.Hero.Runtime;
 using DungeonTeam.Gameplay.Rewards.Runtime;
 using DungeonTeam.Gameplay.Team.Runtime;
+using DungeonTeam.Gameplay.Skills.Runtime;
 using LightDI.Runtime;
 using ResourceLoader;
 using ResourceLoader.AddressableResourceLoader;
@@ -51,9 +51,20 @@ namespace Code.ApplicationRoot
 		private LoadingScreenViewBase _loadingScreen;
 		private LoadingScreenViewModel _loadingScreenViewModel;
 		private MainMenuRoot _mainMenuRoot;
+		private IDungeonFactory _dungeonFactory;
+		private IActorDefinitionLoader _actorDefinitionLoader;
+		private ActorConfigCatalog _actorCatalog;
+		private SkillCatalog _skillCatalog;
+		private ISkillViewLoader _skillViewLoader;
+		private IRewardPickupViewLoader _rewardPickupViewLoader;
+		private IChestViewLoader _chestViewLoader;
 		private RewardCatalog _rewardCatalog;
+		private EnemyBehaviorCatalog _enemyBehaviorCatalog;
 		private DungeonRunTeamSetup _dungeonRunTeamSetup;
+		private ITickHandler _tickHandler;
 		private IFeedbackService _feedbackService;
+		private IMusicPlayer _musicPlayer;
+		private FeedbackBankLoader _feedbackBankLoader;
 		private DungeonRunRoot _dungeonRunRoot;
 		private bool _isDungeonTransitioning;
 
@@ -87,56 +98,45 @@ namespace Code.ApplicationRoot
 
 			IResourceLoader resourceLoader = new AddressableResourceLoader();
 			_uiService = new UIService.UIService(resourceLoader, _canvasContext);
-			_globalContainer.RegisterAsSingleton<IUiService>(_uiService);
-			_globalContainer.RegisterAsSingleton<IResourceLoader>(resourceLoader);
+			_globalContainer.RegisterAsSingleton(_uiService);
+			_globalContainer.RegisterAsSingleton(resourceLoader);
 
 			await ShowLoadingScreenAsync(token);
 
 			IConfig config = new Config(new ScriptableObjectConfigParser(_configCatalog));
-			_globalContainer.RegisterAsSingleton<IConfig>(config);
+			_globalContainer.RegisterAsSingleton(config);
 			await config.InitializeAsync(token);
-			IDungeonFactory dungeonFactory = new DungeonFactory(config.GetConfigPage<DungeonConfigPage>());
-			_globalContainer.RegisterAsSingleton<IDungeonFactory>(dungeonFactory);
-			var actorCatalog = config.GetConfigPage<ActorConfigPage>().CreateCatalog();
-			_globalContainer.RegisterAsSingleton(actorCatalog);
-			var combatCatalog = config.GetConfigPage<CombatConfigPage>().CreateCatalog();
-			_globalContainer.RegisterAsSingleton(combatCatalog);
-			ValidateActorCombatConfiguration(actorCatalog, combatCatalog);
-			IActorDefinitionLoader actorDefinitionLoader =
-				ActorDefinitionLoaderFactory.CreateActorDefinitionLoader();
-			_globalContainer.RegisterAsSingleton<IActorDefinitionLoader>(actorDefinitionLoader);
+			_dungeonFactory = new DungeonFactory(config.GetConfigPage<DungeonConfigPage>());
+			_actorCatalog = config.GetConfigPage<ActorConfigPage>().CreateCatalog();
+			_skillCatalog = config.GetConfigPage<SkillConfigPage>().CreateCatalog();
+			_skillViewLoader = new SkillViewLoader(_skillCatalog, resourceLoader);
+			_actorDefinitionLoader = new ActorDefinitionLoader(_actorCatalog, resourceLoader);
 			_dungeonRunTeamSetup = config
 				.GetConfigPage<DungeonRunConfigPage>()
-				.CreateTeamSetup(actorCatalog);
-			_globalContainer.RegisterAsSingleton(_dungeonRunTeamSetup);
-			IRewardPickupViewLoader rewardPickupViewLoader =
-				RewardPickupViewLoaderFactory.CreateRewardPickupViewLoader();
-			_globalContainer.RegisterAsSingleton<IRewardPickupViewLoader>(rewardPickupViewLoader);
-			IChestViewLoader chestViewLoader = ChestViewLoaderFactory.CreateChestViewLoader();
-			_globalContainer.RegisterAsSingleton<IChestViewLoader>(chestViewLoader);
+				.CreateTeamSetup(_actorCatalog, _skillCatalog);
+			_rewardPickupViewLoader = new RewardPickupViewLoader(resourceLoader);
+			_chestViewLoader = new ChestViewLoader(resourceLoader);
 			_rewardCatalog = config.GetConfigPage<RewardConfigPage>().CreateCatalog();
-			_globalContainer.RegisterAsSingleton(_rewardCatalog);
-			var enemyBehaviorCatalog = config
+			_enemyBehaviorCatalog = config
 				.GetConfigPage<EnemyBehaviorConfigPage>()
 				.CreateCatalog();
-			_globalContainer.RegisterAsSingleton(enemyBehaviorCatalog);
-			_globalContainer.RegisterAsSingleton(_teamControlSettings);
-			_globalContainer.RegisterAsSingleton(_heroControlSettings);
 
 			var dispatcher = new GameObject("TickHandlerDispatcher");
 			var unityDispatcherBehaviour = dispatcher.AddComponent<UnityDispatcherBehaviour>();
-			ITickHandler tickHandler = new UnityTickHandler(unityDispatcherBehaviour);
+			_tickHandler = new UnityTickHandler(unityDispatcherBehaviour);
+			_globalContainer.RegisterAsSingleton(_tickHandler);
 
 			_feedbackRuntimeSettings.Validate();
-			_feedbackService = CreateFeedbackService(tickHandler, _feedbackRuntimeSettings);
-			_globalContainer.RegisterAsSingleton<IFeedbackService>(_feedbackService);
-			_globalContainer.RegisterAsSingleton<ITickHandler>(tickHandler);
-			IMusicPlayer musicPlayer = new MusicPlayer();
-			_globalContainer.RegisterAsSingleton<IMusicPlayer>(musicPlayer);
-			var feedbackBankLoader = FeedbackBankLoaderFactory.CreateFeedbackBankLoader();
-			_globalContainer.RegisterAsSingleton(feedbackBankLoader);
+			_feedbackService = CreateFeedbackService(_tickHandler, _feedbackRuntimeSettings);
+			_globalContainer.RegisterAsSingleton(_feedbackService);
+			_musicPlayer = new MusicPlayer();
+			_globalContainer.RegisterAsSingleton(_musicPlayer);
+			_feedbackBankLoader = new FeedbackBankLoader(resourceLoader, _feedbackService);
+			_globalContainer.RegisterAsSingleton(_feedbackBankLoader);
 
-			_mainMenuRoot = MainMenuRootFactory.CreateMainMenuRoot(
+			_mainMenuRoot = new MainMenuRoot(
+				_uiService,
+				_dungeonRunTeamSetup,
 				OnPlayRequested,
 				OnBackRequested,
 				Application.Quit);
@@ -148,7 +148,15 @@ namespace Code.ApplicationRoot
 		protected override void OnDispose()
 		{
 			DisposeDungeonRun();
+			_dungeonFactory = null;
+			_actorDefinitionLoader = null;
+			_actorCatalog = null;
+			_skillCatalog = null;
+			_skillViewLoader = null;
+			_rewardPickupViewLoader = null;
+			_chestViewLoader = null;
 			_rewardCatalog = null;
+			_enemyBehaviorCatalog = null;
 			_dungeonRunTeamSetup = null;
 
 			_mainMenuRoot?.Dispose();
@@ -165,7 +173,10 @@ namespace Code.ApplicationRoot
 			finally
 			{
 				_globalContainer = null;
+				_feedbackBankLoader = null;
+				_musicPlayer = null;
 				_feedbackService = null;
+				_tickHandler = null;
 				_uiService = null;
 			}
 		}
@@ -209,26 +220,6 @@ namespace Code.ApplicationRoot
 			StartDungeonPreviewAsync(request, CancellationToken).Forget(Debug.LogException);
 		}
 
-		private static void ValidateActorCombatConfiguration(
-			ActorConfigCatalog actorCatalog,
-			CombatCatalog combatCatalog)
-		{
-			for (var actorIndex = 0;
-			     actorIndex < actorCatalog.Definitions.Count;
-			     actorIndex++)
-			{
-				var actor = actorCatalog.Definitions[actorIndex];
-				combatCatalog.RequireLoadout(actor.CombatLoadoutId);
-				for (var levelIndex = 0; levelIndex < actor.Levels.Count; levelIndex++)
-				{
-					var level = actor.Levels[levelIndex];
-					combatCatalog.ResolvePrimaryAttack(
-						actor.CombatLoadoutId,
-						level.PrimaryAttackRank);
-				}
-			}
-		}
-
 		private async UniTask StartDungeonPreviewAsync(
 			MainMenuPlayRequest request,
 			CancellationToken token)
@@ -239,12 +230,24 @@ namespace Code.ApplicationRoot
 			{
 				await ShowLoadingScreenAsync(token);
 
-				_dungeonRunRoot = DungeonRunRootFactory.CreateDungeonRunRoot(
+				_dungeonRunRoot = new DungeonRunRoot(
+					_dungeonFactory,
 					CreateStartRequest(request),
 					_dungeonRunBindings,
+					_actorDefinitionLoader,
+					_actorCatalog,
+					_skillCatalog,
+					_skillViewLoader,
+					_rewardPickupViewLoader,
+					_chestViewLoader,
 					_canvasContext.GetParent(UIElementGroup.OverlayElement),
 					_worldCamera,
-					new DesktopDungeonRunInput());
+					_tickHandler,
+					new DesktopDungeonRunInput(),
+					_rewardCatalog,
+					_teamControlSettings,
+					_heroControlSettings,
+					_enemyBehaviorCatalog);
 				await _dungeonRunRoot.InitializeAsync(token);
 				_dungeonRunRoot.ProgressChanged += OnDungeonRunProgressChanged;
 				_dungeonRunRoot.Finished += OnDungeonRunFinished;

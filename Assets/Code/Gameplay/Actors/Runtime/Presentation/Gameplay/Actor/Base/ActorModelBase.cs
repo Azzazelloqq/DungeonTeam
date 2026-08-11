@@ -12,5 +12,7 @@ namespace DungeonTeam.Gameplay.Actors.Runtime.Presentation.Gameplay.Actor.Base
         public abstract bool IsAlive { get; }
 
         public abstract ActorDamageResult ApplyDamage(int amount);
+
+        public abstract ActorHealResult ApplyHeal(int amount);
     }
 }

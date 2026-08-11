@@ -2,6 +2,7 @@ using System;
 using Code.Configuration;
 using DungeonTeam.Gameplay.Actors.Runtime;
 using DungeonTeam.Gameplay.DungeonRun.Application;
+using DungeonTeam.Gameplay.Skills.Runtime;
 using UnityEngine;
 
 namespace DungeonTeam.Gameplay.DungeonRun.Runtime
@@ -13,6 +14,9 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
     {
         [SerializeField]
         private string[] _allowedTeamActorIds = Array.Empty<string>();
+
+        [SerializeField]
+        private string[] _allowedLoadoutIds = Array.Empty<string>();
 
         [SerializeField, Min(1)]
         private int _minimumTeamSize = 2;
@@ -27,11 +31,23 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
         private DungeonRunActorSelectionConfig[] _defaultCompanions =
             Array.Empty<DungeonRunActorSelectionConfig>();
 
-        public DungeonRunTeamSetup CreateTeamSetup(ActorConfigCatalog actorCatalog)
+        public DungeonRunTeamSetup CreateTeamSetup(
+            ActorConfigCatalog actorCatalog,
+            SkillCatalog skillCatalog)
         {
             if (actorCatalog == null)
             {
                 throw new ArgumentNullException(nameof(actorCatalog));
+            }
+
+            if (skillCatalog == null)
+            {
+                throw new ArgumentNullException(nameof(skillCatalog));
+            }
+
+            for (var index = 0; index < _allowedLoadoutIds.Length; index++)
+            {
+                skillCatalog.RequireLoadout(_allowedLoadoutIds[index]);
             }
 
             var members = new DungeonRunTeamMemberOption[_allowedTeamActorIds.Length];
@@ -47,7 +63,8 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
                 members[index] = new DungeonRunTeamMemberOption(
                     actor.ActorId,
                     actor.DisplayName,
-                    levels);
+                    levels,
+                    _allowedLoadoutIds);
             }
 
             return new DungeonRunTeamSetup(
@@ -94,7 +111,10 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
 
         internal DungeonRunActorSelection ToDomain()
         {
-            return new DungeonRunActorSelection(_actorId, _level);
+            return new DungeonRunActorSelection(_actorId, _level, _loadoutId);
         }
+
+        [SerializeField]
+        private string _loadoutId;
     }
 }

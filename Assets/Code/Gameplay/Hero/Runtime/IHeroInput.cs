@@ -1,3 +1,4 @@
+using DungeonTeam.Gameplay.Skills.Domain;
 using UnityEngine;
 
 namespace DungeonTeam.Gameplay.Hero.Runtime
@@ -6,10 +7,8 @@ namespace DungeonTeam.Gameplay.Hero.Runtime
     {
         Vector2 Movement { get; }
 
-        bool TargetSelectionWasPressed { get; }
+        bool TryConsumeTargetSelection(out Vector2 screenPosition);
 
-        Vector2 PointerPosition { get; }
-
-        bool BasicAttackWasPressed { get; }
+        bool TryConsumeSkillRequest(out SkillSlot slot);
     }
 }

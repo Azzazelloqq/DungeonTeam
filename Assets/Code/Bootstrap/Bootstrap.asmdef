@@ -16,7 +16,6 @@
     "DungeonTeam.Actors.Runtime",
     "DungeonTeam.Chests.Runtime",
     "DungeonTeam.Combat.Runtime",
-    "DungeonTeam.Combat.Domain",
     "DungeonTeam.Dungeon.Application",
     "DungeonTeam.Dungeon.Domain",
     "DungeonTeam.DungeonRun.Application",
@@ -27,6 +26,7 @@
     "DungeonTeam.Hero.Runtime",
     "DungeonTeam.Rewards.Runtime",
     "DungeonTeam.Team.Runtime",
+    "DungeonTeam.Skills.Runtime",
     "MVVM.Core",
     "Disposable"
   ]

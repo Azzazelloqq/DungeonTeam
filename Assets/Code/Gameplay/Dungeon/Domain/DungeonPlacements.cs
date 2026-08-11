@@ -17,6 +17,7 @@ namespace DungeonTeam.Gameplay.Dungeon.Domain
             string slotTag,
             string fixedEnemyId,
             string fixedBehaviorId,
+            string fixedLoadoutId,
             string encounterGroupId,
             DungeonPose pose)
             : this(
@@ -26,6 +27,7 @@ namespace DungeonTeam.Gameplay.Dungeon.Domain
                 slotTag,
                 fixedEnemyId,
                 fixedBehaviorId,
+                fixedLoadoutId,
                 1,
                 encounterGroupId,
                 pose)
@@ -39,6 +41,7 @@ namespace DungeonTeam.Gameplay.Dungeon.Domain
             string slotTag,
             string fixedEnemyId,
             string fixedBehaviorId,
+            string fixedLoadoutId,
             string encounterGroupId,
             DungeonPose pose)
             : this(
@@ -48,6 +51,7 @@ namespace DungeonTeam.Gameplay.Dungeon.Domain
                 slotTag,
                 fixedEnemyId,
                 fixedBehaviorId,
+                fixedLoadoutId,
                 1,
                 encounterGroupId,
                 pose)
@@ -61,18 +65,20 @@ namespace DungeonTeam.Gameplay.Dungeon.Domain
             string slotTag,
             string fixedEnemyId,
             string fixedBehaviorId,
+            string fixedLoadoutId,
             int fixedActorLevel,
             string encounterGroupId,
             DungeonPose pose)
         {
             PlacementId = RequireId(placementId, nameof(placementId));
             AuthoringId = RequireId(authoringId, nameof(authoringId));
-            ValidateMode(mode, slotTag, fixedEnemyId, fixedBehaviorId);
+            ValidateMode(mode, slotTag, fixedEnemyId, fixedBehaviorId, fixedLoadoutId);
 
             Mode = mode;
             SlotTag = slotTag;
             FixedEnemyId = fixedEnemyId;
             FixedBehaviorId = fixedBehaviorId;
+            FixedLoadoutId = fixedLoadoutId;
             FixedActorLevel = mode == DungeonPlacementMode.Slot
                 ? 0
                 : RequirePositive(fixedActorLevel, nameof(fixedActorLevel));
@@ -86,6 +92,7 @@ namespace DungeonTeam.Gameplay.Dungeon.Domain
         public string SlotTag { get; }
         public string FixedEnemyId { get; }
         public string FixedBehaviorId { get; }
+        public string FixedLoadoutId { get; }
         public int FixedActorLevel { get; }
         public string EncounterGroupId { get; }
         public DungeonPose Pose { get; }
@@ -94,13 +101,15 @@ namespace DungeonTeam.Gameplay.Dungeon.Domain
             DungeonPlacementMode mode,
             string slotTag,
             string fixedEnemyId,
-            string fixedBehaviorId)
+            string fixedBehaviorId,
+            string fixedLoadoutId)
         {
             if (mode == DungeonPlacementMode.Slot)
             {
                 RequireId(slotTag, nameof(slotTag));
                 if (!string.IsNullOrWhiteSpace(fixedEnemyId) ||
-                    !string.IsNullOrWhiteSpace(fixedBehaviorId))
+                    !string.IsNullOrWhiteSpace(fixedBehaviorId) ||
+                    !string.IsNullOrWhiteSpace(fixedLoadoutId))
                 {
                     throw new ArgumentException(
                         "Slot enemy placement cannot contain fixed enemy or behavior IDs.");
@@ -116,6 +125,7 @@ namespace DungeonTeam.Gameplay.Dungeon.Domain
 
             RequireId(fixedEnemyId, nameof(fixedEnemyId));
             RequireId(fixedBehaviorId, nameof(fixedBehaviorId));
+            RequireId(fixedLoadoutId, nameof(fixedLoadoutId));
         }
 
         private static string RequireId(string value, string parameterName)

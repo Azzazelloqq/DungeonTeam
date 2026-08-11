@@ -4,6 +4,7 @@
   "references": [
     "DungeonTeam.Actors.Runtime",
     "DungeonTeam.Combat.Runtime",
+    "DungeonTeam.Skills.Domain",
     "DungeonTeam.Configuration",
     "DungeonTeam.EnemyAI.Domain",
     "TickHandler"

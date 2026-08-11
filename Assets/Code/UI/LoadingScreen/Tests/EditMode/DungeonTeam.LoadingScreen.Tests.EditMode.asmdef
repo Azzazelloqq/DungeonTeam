@@ -1,8 +1,9 @@
 {
   "name": "DungeonTeam.LoadingScreen.Tests.EditMode",
   "rootNamespace": "Code.UI.LoadingScreen.Tests",
-  "references": [
+    "references": [
     "DungeonTeam.LoadingScreen",
+    "DungeonTeam.UIService",
     "MVVM.Core",
     "Disposable",
     "MVVM.Reactive"

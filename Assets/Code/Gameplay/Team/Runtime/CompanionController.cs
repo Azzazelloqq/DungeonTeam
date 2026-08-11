@@ -2,6 +2,7 @@ using System;
 using DungeonTeam.Gameplay.Actors.Runtime;
 using DungeonTeam.Gameplay.Combat.Runtime;
 using DungeonTeam.Gameplay.Team.Domain;
+using DungeonTeam.Gameplay.Skills.Domain;
 using UnityEngine;
 
 namespace DungeonTeam.Gameplay.Team.Runtime
@@ -41,38 +42,88 @@ namespace DungeonTeam.Gameplay.Team.Runtime
             _followBrain = new CompanionFollowBrain(
                 settings.StartFollowingDistance,
                 settings.StopFollowingDistance);
-            _combatBrain = new CompanionCombatBrain(
-                _combat.PrimaryAttackRange,
-                settings.CompanionTargetLossDistance);
+            _combatBrain = new CompanionCombatBrain(settings.CompanionTargetLossDistance);
         }
 
         public ActorInstance Actor => _actor;
 
+        public bool CanCancelPreCommitAction =>
+            !_isDisposed && _combat.CanCancelActiveUse;
+
         public void Tick(
             float deltaTime,
             ActorInstance leader,
-            ActorInstance combatTarget,
-            bool isForcedFollow)
+            ActorInstance healTarget,
+            ActorInstance attackTarget,
+            TeamCommandMode commandMode)
         {
             if (_isDisposed)
             {
                 return;
             }
 
+            _combat.Tick(deltaTime);
             if (!_actor.IsAlive)
             {
-                _combat.Tick(deltaTime);
                 Stop();
                 return;
             }
 
-            if (!isForcedFollow && combatTarget != null && combatTarget.IsAlive)
+            if (_combat.IsBusy)
             {
-                UpdateCombat(deltaTime, combatTarget);
+                Stop();
                 return;
             }
 
-            _combat.Tick(deltaTime);
+            switch (commandMode)
+            {
+                case TeamCommandMode.Follow:
+                    UpdateFollow(leader);
+                    return;
+                case TeamCommandMode.Attack:
+                    if (!TryUseAttackSkill(attackTarget))
+                    {
+                        Stop();
+                    }
+
+                    return;
+                case TeamCommandMode.Autonomous:
+                    if (TryUseHealSkill(healTarget) || TryUseAttackSkill(attackTarget))
+                    {
+                        return;
+                    }
+
+                    UpdateFollow(leader);
+                    return;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(commandMode));
+            }
+        }
+
+        public void CancelPreCommitAction()
+        {
+            if (_isDisposed)
+            {
+                return;
+            }
+
+            _combat.CancelActiveUse();
+            Stop();
+        }
+
+        public void Dispose()
+        {
+            if (_isDisposed)
+            {
+                return;
+            }
+
+            _isDisposed = true;
+            Stop();
+        }
+
+        private void UpdateFollow(ActorInstance leader)
+        {
             if (!leader.IsAlive)
             {
                 Stop();
@@ -91,39 +142,154 @@ namespace DungeonTeam.Gameplay.Team.Runtime
             MoveTo(followPosition);
         }
 
-        public void Dispose()
+        private bool TryUseHealSkill(ActorInstance target)
         {
-            if (_isDisposed)
+            if (target == null || !target.IsAlive)
             {
-                return;
+                return false;
             }
 
-            _isDisposed = true;
-            Stop();
+            var relation = ReferenceEquals(_actor, target)
+                ? SkillTargetRelation.Self
+                : SkillTargetRelation.Ally;
+            var slots = _combat.Slots;
+            for (var index = 0; index < slots.Count; index++)
+            {
+                var slot = slots[index];
+                if (!slot.IsReady ||
+                    slot.Skill is not DirectHealSkillDefinition ||
+                    !_combat.CanTarget(slot.Slot, target, relation))
+                {
+                    continue;
+                }
+
+                return TryUseSkill(slot, target, relation);
+            }
+
+            return false;
         }
 
-        private void UpdateCombat(float deltaTime, ActorInstance target)
+        private bool TryUseAttackSkill(ActorInstance target)
         {
+            if (target == null || !target.IsAlive)
+            {
+                return false;
+            }
+
+            CombatSkillSlotState? readyChaseSlot = null;
+            CombatSkillSlotState? cooldownSlot = null;
+            var hasClearLine = HasClearLine(target);
             var distance = PlanarDistance(_actor.Position, target.Position);
+            var slots = _combat.Slots;
+            for (var index = 0; index < slots.Count; index++)
+            {
+                var slot = slots[index];
+                if (slot.Skill.TargetRule != SkillTargetRule.EnemyActor ||
+                    !_combat.CanTarget(slot.Slot, target, SkillTargetRelation.Enemy))
+                {
+                    continue;
+                }
+
+                var state = _combatBrain.Evaluate(
+                    hasTarget: true,
+                    hasClearLine,
+                    distance,
+                    slot.Level.Range);
+                if (state == CompanionCombatState.Follow)
+                {
+                    continue;
+                }
+
+                if (slot.IsReady)
+                {
+                    if (state == CompanionCombatState.UseSkill)
+                    {
+                        Stop();
+                        return _combat.TryUse(new SkillUseRequest(
+                            slot.Slot,
+                            target,
+                            SkillTargetRelation.Enemy,
+                            hasClearLine)) == SkillUseResult.Executed;
+                    }
+
+                    SelectLongerRangeSlot(ref readyChaseSlot, slot);
+                    continue;
+                }
+
+                SelectLongerRangeSlot(ref cooldownSlot, slot);
+            }
+
+            if (readyChaseSlot.HasValue)
+            {
+                return TryMaintainSkillRange(readyChaseSlot.Value, target);
+            }
+
+            return cooldownSlot.HasValue &&
+                   TryMaintainSkillRange(cooldownSlot.Value, target);
+        }
+
+        private static void SelectLongerRangeSlot(
+            ref CombatSkillSlotState? selected,
+            CombatSkillSlotState candidate)
+        {
+            if (!selected.HasValue ||
+                candidate.Level.Range > selected.Value.Level.Range)
+            {
+                selected = candidate;
+            }
+        }
+
+        private bool TryMaintainSkillRange(
+            CombatSkillSlotState slot,
+            ActorInstance target)
+        {
             var state = _combatBrain.Evaluate(
                 target.IsAlive,
                 HasClearLine(target),
-                distance);
-            _combat.Tick(deltaTime);
+                PlanarDistance(_actor.Position, target.Position),
+                slot.Level.Range);
 
             switch (state)
             {
                 case CompanionCombatState.Follow:
-                    Stop();
-                    break;
+                    return false;
                 case CompanionCombatState.Chase:
                     MoveTo(target.Position);
-                    break;
-                case CompanionCombatState.Attack:
+                    return true;
+                case CompanionCombatState.UseSkill:
                     Stop();
-                    _combat.TryUsePrimaryAttack(target, HasClearLine(target));
+                    return true;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+        }
 
-                    break;
+        private bool TryUseSkill(
+            CombatSkillSlotState slot,
+            ActorInstance target,
+            SkillTargetRelation relation)
+        {
+            var hasClearLine = relation == SkillTargetRelation.Self || HasClearLine(target);
+            var state = _combatBrain.Evaluate(
+                target.IsAlive,
+                hasClearLine,
+                PlanarDistance(_actor.Position, target.Position),
+                slot.Level.Range);
+
+            switch (state)
+            {
+                case CompanionCombatState.Follow:
+                    return false;
+                case CompanionCombatState.Chase:
+                    MoveTo(target.Position);
+                    return true;
+                case CompanionCombatState.UseSkill:
+                    Stop();
+                    return _combat.TryUse(new SkillUseRequest(
+                        slot.Slot,
+                        target,
+                        relation,
+                        hasClearLine)) == SkillUseResult.Executed;
                 default:
                     throw new ArgumentOutOfRangeException();
             }

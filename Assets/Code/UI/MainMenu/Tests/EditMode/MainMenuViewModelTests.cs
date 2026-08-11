@@ -176,16 +176,30 @@ namespace Code.UI.MainMenu.Tests
             return new DungeonRunTeamSetup(
                 new[]
                 {
-                    new DungeonRunTeamMemberOption("actor.king", "KING", new[] { 1, 2 }),
-                    new DungeonRunTeamMemberOption("actor.druid", "DRUID", new[] { 1, 2 }),
-                    new DungeonRunTeamMemberOption("actor.rogue", "ROGUE", new[] { 1, 2 }),
-                    new DungeonRunTeamMemberOption("actor.wizard", "WIZARD", new[] { 1, 2 })
+                    Option("actor.king", "KING"),
+                    Option("actor.druid", "DRUID"),
+                    Option("actor.rogue", "ROGUE"),
+                    Option("actor.wizard", "WIZARD")
                 },
                 2,
                 4,
                 new DungeonRunTeamSelection(
-                    "actor.king",
-                    new[] { "actor.druid" }));
+                    Selection("actor.king", "loadout.king"),
+                    new[] { Selection("actor.druid", "loadout.druid") }));
+        }
+
+        private static DungeonRunTeamMemberOption Option(string actorId, string displayName)
+        {
+            return new DungeonRunTeamMemberOption(
+                actorId,
+                displayName,
+                new[] { 1, 2 },
+                new[] { "loadout.king", "loadout.druid" });
+        }
+
+        private static DungeonRunActorSelection Selection(string actorId, string loadoutId)
+        {
+            return new DungeonRunActorSelection(actorId, 1, loadoutId);
         }
     }
 }

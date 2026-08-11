@@ -1,0 +1,18 @@
+{
+  "name": "DungeonTeam.CombatHud.Tests.EditMode",
+  "rootNamespace": "DungeonTeam.UI.CombatHud.Tests",
+  "references": [
+    "DungeonTeam.CombatHud",
+    "DungeonTeam.Skills.Domain",
+    "MVVM.Core",
+    "MVVM.Reactive",
+    "Disposable"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ],
+  "autoReferenced": false
+}

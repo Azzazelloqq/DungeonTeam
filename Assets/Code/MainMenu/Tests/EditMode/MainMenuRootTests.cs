@@ -141,14 +141,25 @@ namespace Code.MainMenu.Tests
             return new DungeonRunTeamSetup(
                 new[]
                 {
-                    new DungeonRunTeamMemberOption("actor.king", "KING"),
-                    new DungeonRunTeamMemberOption("actor.druid", "DRUID")
+                    new DungeonRunTeamMemberOption(
+                        "actor.king",
+                        "KING",
+                        new[] { 1 },
+                        new[] { "loadout.king" }),
+                    new DungeonRunTeamMemberOption(
+                        "actor.druid",
+                        "DRUID",
+                        new[] { 1 },
+                        new[] { "loadout.druid" })
                 },
                 2,
                 2,
                 new DungeonRunTeamSelection(
-                    "actor.king",
-                    new[] { "actor.druid" }));
+                    new DungeonRunActorSelection("actor.king", 1, "loadout.king"),
+                    new[]
+                    {
+                        new DungeonRunActorSelection("actor.druid", 1, "loadout.druid")
+                    }));
         }
 
         private sealed class FakeMainMenuView : MainMenuViewBase

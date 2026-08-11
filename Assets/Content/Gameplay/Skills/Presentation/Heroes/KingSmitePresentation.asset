@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4f2ce7f81c234d7f8f7d7ab74be588f9, type: 3}
+  m_Name: KingSmitePresentation
+  m_EditorClassIdentifier: DungeonTeam.Skills.Runtime::DungeonTeam.Gameplay.Skills.Runtime.SkillPresentationAsset
+  _animationCues:
+  - {_phase: 0, _delay: 0, _cue: 0}
+  _vfxCues:
+  - {_phase: 1, _delay: 0, _lifetime: 0.55, _anchor: 0, _followAnchor: 1,
+    _prefab: {fileID: 151854, guid: 1ad4a4300a204373b835fbb0b8717877, type: 3}}
+  - {_phase: 2, _delay: 0, _lifetime: 0.65, _anchor: 2, _followAnchor: 0,
+    _prefab: {fileID: 123640, guid: f4abe3bf61bd4ad2b4ec85aeb77cae59, type: 3}}

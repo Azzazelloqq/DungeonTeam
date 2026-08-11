@@ -41,18 +41,17 @@ namespace DungeonTeam.Gameplay.Actors.Tests
         }
 
         [Test]
-        public void Catalog_ResolveDifferentLevels_ReturnsConfiguredStatsAndAttackRanks()
+        public void Catalog_ResolveDifferentLevels_ReturnsOnlyConfiguredActorStats()
         {
             var catalog = new ActorConfigCatalog(new[]
             {
                 new ActorDefinitionConfig(
                     "actor.king",
                     "KING",
-                    "loadout.actor.king",
                     new[]
                     {
-                        new ActorLevelDefinitionConfig(1, 100, 4f, 1),
-                        new ActorLevelDefinitionConfig(2, 120, 4f, 2)
+                        new ActorLevelDefinitionConfig(1, 100, 4f),
+                        new ActorLevelDefinitionConfig(2, 120, 4f)
                     })
             });
 
@@ -60,9 +59,8 @@ namespace DungeonTeam.Gameplay.Actors.Tests
             var second = catalog.Resolve("actor.king", 2);
 
             Assert.That(first.MaximumHealth, Is.EqualTo(100));
-            Assert.That(first.PrimaryAttackRank, Is.EqualTo(1));
             Assert.That(second.MaximumHealth, Is.EqualTo(120));
-            Assert.That(second.PrimaryAttackRank, Is.EqualTo(2));
+            Assert.That(first.MovementSpeed, Is.EqualTo(second.MovementSpeed));
         }
 
         [Test]
@@ -139,14 +137,12 @@ namespace DungeonTeam.Gameplay.Actors.Tests
             return new ActorDefinitionConfig(
                 actorId,
                 actorId,
-                "loadout.test",
                 new[]
                 {
                     new ActorLevelDefinitionConfig(
                         1,
                         maximumHealth,
-                        movementSpeed: 3f,
-                        primaryAttackRank: 1)
+                        movementSpeed: 3f)
                 });
         }
 

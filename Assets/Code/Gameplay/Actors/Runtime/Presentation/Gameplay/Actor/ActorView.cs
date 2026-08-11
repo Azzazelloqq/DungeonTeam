@@ -12,12 +12,12 @@ namespace DungeonTeam.Gameplay.Actors.Runtime.Presentation.Gameplay.Actor
     {
         public const string MoveSpeedParameter = "MoveSpeed";
         public const string AttackParameter = "Attack";
-        public const string HitParameter = "Hit";
+        public const string CastParameter = "Cast";
         public const string DeathParameter = "Death";
 
         private static readonly int MoveSpeedHash = Animator.StringToHash(MoveSpeedParameter);
         private static readonly int AttackHash = Animator.StringToHash(AttackParameter);
-        private static readonly int HitHash = Animator.StringToHash(HitParameter);
+        private static readonly int CastHash = Animator.StringToHash(CastParameter);
         private static readonly int DeathHash = Animator.StringToHash(DeathParameter);
 
         [SerializeField]
@@ -27,7 +27,7 @@ namespace DungeonTeam.Gameplay.Actors.Runtime.Presentation.Gameplay.Actor
         private ActorCombatFeedback _combatFeedback;
 
         [SerializeField, Tooltip(
-            "Optional. Controller parameters: Float MoveSpeed, Triggers Attack, Hit and Death. " +
+            "Optional. Controller parameters: Float MoveSpeed; Triggers Attack, Cast and Death. " +
             "Root Motion must be disabled.")]
         private Animator _animator;
 
@@ -39,6 +39,9 @@ namespace DungeonTeam.Gameplay.Actors.Runtime.Presentation.Gameplay.Actor
 
         [SerializeField, Tooltip("Optional anchor for health bars and other overhead UI.")]
         private Transform _overheadAnchor;
+
+        [SerializeField, Tooltip("Required origin for actor-independent skill visuals.")]
+        private Transform _skillOriginAnchor;
 
         [SerializeField, Min(0f)]
         private float _moveAnimationDampTime = 0.1f;
@@ -58,6 +61,8 @@ namespace DungeonTeam.Gameplay.Actors.Runtime.Presentation.Gameplay.Actor
         public override Transform HitVfxAnchor => _hitVfxAnchor;
 
         public override Transform OverheadAnchor => _overheadAnchor;
+
+        public override Transform SkillOriginAnchor => _skillOriginAnchor;
 
         public override void Configure(float movementSpeed)
         {
@@ -139,13 +144,13 @@ namespace DungeonTeam.Gameplay.Actors.Runtime.Presentation.Gameplay.Actor
             _animator?.SetTrigger(AttackHash);
         }
 
+        public override void PlayCastFeedback()
+        {
+            _animator?.SetTrigger(CastHash);
+        }
+
         public override void PlayDamageFeedback(int amount, bool isFatal)
         {
-            if (!isFatal)
-            {
-                _animator?.SetTrigger(HitHash);
-            }
-
             _combatFeedback.PlayDamage(amount);
         }
 
@@ -157,7 +162,7 @@ namespace DungeonTeam.Gameplay.Actors.Runtime.Presentation.Gameplay.Actor
             {
                 _animator.SetFloat(MoveSpeedHash, 0f);
                 _animator.ResetTrigger(AttackHash);
-                _animator.ResetTrigger(HitHash);
+                _animator.ResetTrigger(CastHash);
                 _animator.SetTrigger(DeathHash);
             }
 
@@ -175,6 +180,12 @@ namespace DungeonTeam.Gameplay.Actors.Runtime.Presentation.Gameplay.Actor
             {
                 throw new InvalidOperationException(
                     "Actor View requires an Actor Combat Feedback binding.");
+            }
+
+            if (_skillOriginAnchor == null)
+            {
+                throw new InvalidOperationException(
+                    "Actor View requires a Skill Origin Anchor binding.");
             }
 
             ValidateAnimator();
@@ -235,8 +246,8 @@ namespace DungeonTeam.Gameplay.Actors.Runtime.Presentation.Gameplay.Actor
                 AttackHash,
                 AnimatorControllerParameterType.Trigger);
             RequireAnimatorParameter(
-                HitParameter,
-                HitHash,
+                CastParameter,
+                CastHash,
                 AnimatorControllerParameterType.Trigger);
             RequireAnimatorParameter(
                 DeathParameter,

@@ -6,38 +6,43 @@ namespace DungeonTeam.Gameplay.Team.Domain
     {
         Follow,
         Chase,
-        Attack
+        UseSkill
     }
 
     public sealed class CompanionCombatBrain
     {
-        private readonly float _attackRange;
         private readonly float _targetLossDistance;
 
-        public CompanionCombatBrain(float attackRange, float targetLossDistance)
+        public CompanionCombatBrain(float targetLossDistance)
         {
-            if (attackRange <= 0f)
-            {
-                throw new ArgumentOutOfRangeException(nameof(attackRange));
-            }
-
-            if (targetLossDistance <= attackRange)
+            if (float.IsNaN(targetLossDistance) ||
+                float.IsInfinity(targetLossDistance) ||
+                targetLossDistance <= 0f)
             {
                 throw new ArgumentOutOfRangeException(nameof(targetLossDistance));
             }
 
-            _attackRange = attackRange;
             _targetLossDistance = targetLossDistance;
         }
 
         public CompanionCombatState Evaluate(
             bool hasTarget,
             bool hasClearLine,
-            float distanceToTarget)
+            float distanceToTarget,
+            float skillRange)
         {
-            if (distanceToTarget < 0f)
+            if (float.IsNaN(distanceToTarget) ||
+                float.IsInfinity(distanceToTarget) ||
+                distanceToTarget < 0f)
             {
                 throw new ArgumentOutOfRangeException(nameof(distanceToTarget));
+            }
+
+            if (float.IsNaN(skillRange) ||
+                float.IsInfinity(skillRange) ||
+                skillRange <= 0f)
+            {
+                throw new ArgumentOutOfRangeException(nameof(skillRange));
             }
 
             if (!hasTarget || distanceToTarget > _targetLossDistance)
@@ -45,8 +50,8 @@ namespace DungeonTeam.Gameplay.Team.Domain
                 return CompanionCombatState.Follow;
             }
 
-            return distanceToTarget <= _attackRange && hasClearLine
-                ? CompanionCombatState.Attack
+            return distanceToTarget <= skillRange && hasClearLine
+                ? CompanionCombatState.UseSkill
                 : CompanionCombatState.Chase;
         }
     }

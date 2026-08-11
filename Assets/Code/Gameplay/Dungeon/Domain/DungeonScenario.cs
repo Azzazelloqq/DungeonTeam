@@ -200,16 +200,7 @@ namespace DungeonTeam.Gameplay.Dungeon.Domain
         public EnemyCandidate(
             string enemyId,
             string behaviorId,
-            int cost,
-            int weight,
-            string[] allowedSlotTags)
-            : this(enemyId, behaviorId, 1, cost, weight, allowedSlotTags)
-        {
-        }
-
-        public EnemyCandidate(
-            string enemyId,
-            string behaviorId,
+            string loadoutId,
             int actorLevel,
             int cost,
             int weight,
@@ -223,6 +214,11 @@ namespace DungeonTeam.Gameplay.Dungeon.Domain
             if (string.IsNullOrWhiteSpace(behaviorId))
             {
                 throw new ArgumentException("Behavior ID cannot be empty.", nameof(behaviorId));
+            }
+
+            if (string.IsNullOrWhiteSpace(loadoutId))
+            {
+                throw new ArgumentException("Loadout ID cannot be empty.", nameof(loadoutId));
             }
 
             if (cost <= 0)
@@ -247,6 +243,7 @@ namespace DungeonTeam.Gameplay.Dungeon.Domain
 
             EnemyId = enemyId;
             BehaviorId = behaviorId;
+            LoadoutId = loadoutId;
             ActorLevel = actorLevel;
             Cost = cost;
             Weight = weight;
@@ -255,6 +252,7 @@ namespace DungeonTeam.Gameplay.Dungeon.Domain
 
         public string EnemyId { get; }
         public string BehaviorId { get; }
+        public string LoadoutId { get; }
         public int ActorLevel { get; }
         public int Cost { get; }
         public int Weight { get; }

@@ -29,29 +29,22 @@ namespace DungeonTeam.Gameplay.Actors.Runtime
         private string _displayName;
 
         [SerializeField]
-        private string _combatLoadoutId;
-
-        [SerializeField]
         private ActorLevelDefinitionConfig[] _levels =
             Array.Empty<ActorLevelDefinitionConfig>();
 
         public ActorDefinitionConfig(
             string actorId,
             string displayName,
-            string combatLoadoutId,
             ActorLevelDefinitionConfig[] levels)
         {
             _actorId = actorId;
             _displayName = displayName;
-            _combatLoadoutId = combatLoadoutId;
             _levels = levels;
         }
 
         public string ActorId => _actorId;
 
         public string DisplayName => _displayName;
-
-        public string CombatLoadoutId => _combatLoadoutId;
 
         internal ActorConfigDefinition ToDefinition()
         {
@@ -63,15 +56,12 @@ namespace DungeonTeam.Gameplay.Actors.Runtime
                     _actorId,
                     definition.Level,
                     definition.MaximumHealth,
-                    definition.MovementSpeed,
-                    _combatLoadoutId,
-                    definition.PrimaryAttackRank);
+                    definition.MovementSpeed);
             }
 
             return new ActorConfigDefinition(
                 _actorId,
                 _displayName,
-                _combatLoadoutId,
                 levels);
         }
 
@@ -87,12 +77,6 @@ namespace DungeonTeam.Gameplay.Actors.Runtime
             {
                 throw new ArgumentException(
                     $"{location} ('{_actorId}') has an empty display name.");
-            }
-
-            if (string.IsNullOrWhiteSpace(_combatLoadoutId))
-            {
-                throw new ArgumentException(
-                    $"{location} ('{_actorId}') has an empty combat loadout ID.");
             }
 
             if (_levels == null || _levels.Length == 0)
@@ -128,32 +112,24 @@ namespace DungeonTeam.Gameplay.Actors.Runtime
         [SerializeField, Min(0.1f)]
         private float _movementSpeed = 1f;
 
-        [SerializeField, Min(1)]
-        private int _primaryAttackRank = 1;
-
         public ActorLevelDefinitionConfig(
             int level,
             int maximumHealth,
-            float movementSpeed,
-            int primaryAttackRank)
+            float movementSpeed)
         {
             _level = level;
             _maximumHealth = maximumHealth;
             _movementSpeed = movementSpeed;
-            _primaryAttackRank = primaryAttackRank;
         }
 
         public int Level => _level;
         public int MaximumHealth => _maximumHealth;
         public float MovementSpeed => _movementSpeed;
-        public int PrimaryAttackRank => _primaryAttackRank;
-
         internal void Validate(string actorId)
         {
             if (_level <= 0 ||
                 _maximumHealth <= 0 ||
-                _movementSpeed <= 0f ||
-                _primaryAttackRank <= 0)
+                _movementSpeed <= 0f)
             {
                 throw new ArgumentException(
                     $"Actor '{actorId}' level values must be positive.");

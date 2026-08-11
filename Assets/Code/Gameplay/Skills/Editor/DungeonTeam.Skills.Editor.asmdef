@@ -1,0 +1,11 @@
+{
+  "name": "DungeonTeam.Skills.Editor",
+  "rootNamespace": "DungeonTeam.Gameplay.Skills.Editor",
+  "references": [
+    "DungeonTeam.Skills.Runtime"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "autoReferenced": false
+}

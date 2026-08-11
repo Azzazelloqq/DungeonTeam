@@ -18,6 +18,9 @@ using DungeonTeam.Gameplay.Hero.Runtime;
 using DungeonTeam.Gameplay.Rewards.Runtime;
 using DungeonTeam.Gameplay.Rewards.Runtime.Presentation.Gameplay.RewardPickup.Base;
 using DungeonTeam.Gameplay.Team.Runtime;
+using DungeonTeam.Gameplay.Skills.Domain;
+using DungeonTeam.Gameplay.Skills.Runtime;
+using DungeonTeam.UI.CombatHud;
 using NUnit.Framework;
 using TMPro;
 using TickHandler.UnityTickHandler;
@@ -40,6 +43,11 @@ namespace DungeonTeam.Gameplay.DungeonRun.Tests.PlayMode
                 typeof(RectTransform));
             contextActionsPrefabObject.SetActive(false);
             var contextActionsPrefab = contextActionsPrefabObject.AddComponent<ContextActionsView>();
+            var combatHudPrefabObject = new GameObject(
+                "CombatHudTestPrefab",
+                typeof(RectTransform));
+            combatHudPrefabObject.SetActive(false);
+            var combatHudPrefab = combatHudPrefabObject.AddComponent<CombatHudView>();
             var rewardPickupPrefabObject = new GameObject("RewardPickupTestPrefab");
             var rewardPickupPrefab = rewardPickupPrefabObject.AddComponent<TestRewardPickupView>();
             var chestPrefabObject = new GameObject("ChestTestPrefab");
@@ -58,10 +66,11 @@ namespace DungeonTeam.Gameplay.DungeonRun.Tests.PlayMode
             var root = new DungeonRunRoot(
                 new FakeDungeonFactory(),
                 CreateStartRequestAtLevel(seed: 42, level: 2),
-                new DungeonRunBindings(contextActionsPrefab),
+                new DungeonRunBindings(contextActionsPrefab, combatHudPrefab),
                 actorLoader,
                 CreateActorCatalog(),
-                CreateCombatCatalog(),
+                CreateSkillCatalog(),
+                new FakeSkillViewLoader(),
                 new FakeRewardPickupViewLoader(rewardPickupPrefab),
                 new FakeChestViewLoader(chestPrefab),
                 contextActionsParent,
@@ -85,6 +94,7 @@ namespace DungeonTeam.Gameplay.DungeonRun.Tests.PlayMode
             GameObject actorsRoot = null;
             GameObject visionArea = null;
             GameObject contextActions = null;
+            GameObject combatHud = null;
             GameObject rewardsRoot = null;
             GameObject interestsRoot = null;
             GameObject chestObject = null;
@@ -101,6 +111,7 @@ namespace DungeonTeam.Gameplay.DungeonRun.Tests.PlayMode
                 actorsRoot = GameObject.Find("DungeonRunActors");
                 visionArea = GameObject.Find("EnemyVisionArea");
                 contextActions = GameObject.Find("ContextActions");
+                combatHud = GameObject.Find("CombatHud");
                 rewardsRoot = GameObject.Find("DungeonRunRewards");
                 interestsRoot = GameObject.Find("DungeonRunInterests");
                 chestObject = GameObject.Find("Chest_interest.test.chest");
@@ -133,6 +144,7 @@ namespace DungeonTeam.Gameplay.DungeonRun.Tests.PlayMode
                 Assert.That(actorsRoot, Is.Not.Null);
                 Assert.That(visionArea, Is.Not.Null);
                 Assert.That(contextActions, Is.Not.Null);
+                Assert.That(combatHud, Is.Not.Null);
                 Assert.That(rewardsRoot, Is.Not.Null);
                 Assert.That(interestsRoot, Is.Not.Null);
                 Assert.That(chestObject, Is.Not.Null);
@@ -141,9 +153,30 @@ namespace DungeonTeam.Gameplay.DungeonRun.Tests.PlayMode
                 Assert.That(FindButton(contextActions, "OPEN"), Is.Null);
                 Assert.That(FindButton(contextActions, "ATTACK"), Is.Null);
                 Assert.That(FindButton(contextActions, "ORDER ATTACK"), Is.Not.Null);
+                var primarySkillButton = FindButtonByName(combatHud, "Skill_Primary");
+                var activeSkillButton = FindButtonByName(combatHud, "Skill_Active1");
+                Assert.That(primarySkillButton, Is.Not.Null);
+                Assert.That(activeSkillButton, Is.Not.Null);
+                Assert.That(
+                    combatHud.transform.Find("SafeArea/MovementJoystick"),
+                    Is.Not.Null);
+                Assert.That(combatHud.GetComponentsInChildren<Button>(), Has.Length.EqualTo(2));
+                Assert.That(primarySkillButton.interactable, Is.True);
+                Assert.That(activeSkillButton.interactable, Is.True);
                 Assert.That(actorsRoot.transform.childCount, Is.EqualTo(4));
                 Assert.That(actorsRoot.transform.Find("Enemy_enemy.test.a"), Is.Not.Null);
                 Assert.That(actorsRoot.transform.Find("Enemy_enemy.test.b"), Is.Not.Null);
+
+                root.Leader.ApplyDamage(50);
+                yield return null;
+                yield return null;
+                Assert.That(root.Leader.CurrentHealth, Is.EqualTo(95),
+                    "Healer companion must autonomously use its loadout heal slot.");
+
+                var followButton = FindButton(contextActions, "FOLLOW");
+                Assert.That(followButton, Is.Not.Null);
+                followButton.onClick.Invoke();
+                yield return null;
 
                 var firstEnemyHealth = root.Enemies[0].CurrentHealth;
                 var secondEnemyHealth = root.Enemies[1].CurrentHealth;
@@ -156,7 +189,9 @@ namespace DungeonTeam.Gameplay.DungeonRun.Tests.PlayMode
                 yield return null;
                 input.TargetSelectionWasPressed = false;
 
-                Assert.That(FindButton(contextActions, "ATTACK"), Is.Not.Null);
+                Assert.That(FindButton(contextActions, "ATTACK"), Is.Null);
+                Assert.That(primarySkillButton.interactable, Is.True);
+                Assert.That(activeSkillButton.interactable, Is.True);
                 var attackButton = FindButton(contextActions, "ORDER ATTACK");
                 Assert.That(attackButton, Is.Not.Null);
 
@@ -168,6 +203,8 @@ namespace DungeonTeam.Gameplay.DungeonRun.Tests.PlayMode
                 Assert.That(root.Companions[0].CurrentHealth, Is.EqualTo(companionHealth));
 
                 var healthBeforeTeamAttack = root.Enemies[0].CurrentHealth;
+                root.Companions[0].ApplyDamage(50);
+                var woundedCompanionHealth = root.Companions[0].CurrentHealth;
                 attackButton.onClick.Invoke();
                 yield return null;
                 yield return null;
@@ -176,6 +213,9 @@ namespace DungeonTeam.Gameplay.DungeonRun.Tests.PlayMode
                 Assert.That(root.Enemies[0].CurrentHealth, Is.LessThan(healthBeforeTeamAttack));
                 Assert.That(root.Enemies[1].CurrentHealth, Is.EqualTo(secondEnemyHealth),
                     "Team command target must remain independent from HeroTarget.");
+                Assert.That(root.Companions[0].CurrentHealth,
+                    Is.LessThanOrEqualTo(woundedCompanionHealth),
+                    "Explicit attack command must outrank autonomous healing.");
                 Assert.That(root.Companions[0].CurrentHealth, Is.LessThan(companionHealth),
                     "Enemy attacked from outside its vision must retaliate against the attacker.");
                 var directionToCompanion = root.Companions[0].Position - root.Enemies[0].Position;
@@ -184,12 +224,6 @@ namespace DungeonTeam.Gameplay.DungeonRun.Tests.PlayMode
                     Vector3.Dot(root.Enemies[0].Forward, directionToCompanion.normalized),
                     Is.GreaterThan(0.99f),
                     "Enemy and its vision cone must face the target before attacking.");
-
-                input.PointerPosition = new Vector2(-1000f, -1000f);
-                input.TargetSelectionWasPressed = true;
-                yield return null;
-                input.TargetSelectionWasPressed = false;
-                Assert.That(FindButton(contextActions, "ATTACK"), Is.Null);
 
                 root.Enemies[0].ApplyDamage(root.Enemies[0].CurrentHealth);
                 yield return null;
@@ -263,6 +297,48 @@ namespace DungeonTeam.Gameplay.DungeonRun.Tests.PlayMode
                 Assert.That(root.Enemies[1].CurrentHealth, Is.EqualTo(secondEnemyHealth),
                     "Companion must not automatically chain to the next target.");
 
+                root.Leader.SetMoveDirection(
+                    root.Enemies[1].Position - root.Leader.Position);
+                var heroSkillHitCount = 0;
+                int? healthAfterHeroSkill = null;
+                void CaptureHeroSkillHit(ActorInstance attacker)
+                {
+                    if (!ReferenceEquals(attacker, root.Leader))
+                        return;
+
+                    heroSkillHitCount++;
+                    healthAfterHeroSkill = root.Enemies[1].CurrentHealth;
+                }
+
+                root.Enemies[1].AttackedBy += CaptureHeroSkillHit;
+                activeSkillButton.onClick.Invoke();
+                yield return null;
+
+                Assert.That(activeSkillButton.interactable, Is.False);
+                Assert.That(HasText(activeSkillButton, "CAST"), Is.True);
+
+                yield return new WaitForSeconds(0.4f);
+
+                root.Enemies[1].AttackedBy -= CaptureHeroSkillHit;
+                Assert.That(heroSkillHitCount, Is.EqualTo(1));
+                Assert.That(healthAfterHeroSkill, Is.EqualTo(secondEnemyHealth - 14),
+                    "HUD Active1 must execute its own loadout skill and level.");
+                Assert.That(activeSkillButton.interactable, Is.False,
+                    "Committed Active1 must expose cooldown/busy state.");
+
+                yield return new WaitForSeconds(1.4f);
+
+                Assert.That(activeSkillButton.interactable, Is.True,
+                    "Active1 must become ready again after its configured cooldown.");
+
+                input.PointerPosition = new Vector2(-1000f, -1000f);
+                input.TargetSelectionWasPressed = true;
+                yield return null;
+                input.TargetSelectionWasPressed = false;
+                Assert.That(FindButton(contextActions, "ATTACK"), Is.Null);
+                Assert.That(primarySkillButton.interactable, Is.True);
+                Assert.That(activeSkillButton.interactable, Is.True);
+
                 root.Enemies[1].ApplyDamage(root.Enemies[1].CurrentHealth);
                 yield return null;
 
@@ -310,6 +386,7 @@ namespace DungeonTeam.Gameplay.DungeonRun.Tests.PlayMode
                 tickHandler.Dispose();
                 Object.Destroy(actorPrefabObject);
                 Object.Destroy(contextActionsPrefabObject);
+                Object.Destroy(combatHudPrefabObject);
                 Object.Destroy(rewardPickupPrefabObject);
                 Object.Destroy(chestPrefabObject);
                 Object.Destroy(contextActionsParentObject);
@@ -324,6 +401,7 @@ namespace DungeonTeam.Gameplay.DungeonRun.Tests.PlayMode
             Assert.That(actorsRoot == null, Is.True);
             Assert.That(visionArea == null, Is.True);
             Assert.That(contextActions == null, Is.True);
+            Assert.That(combatHud == null, Is.True);
             Assert.That(rewardsRoot == null, Is.True);
             Assert.That(interestsRoot == null, Is.True);
             Assert.That(chestObject == null, Is.True);
@@ -343,6 +421,11 @@ namespace DungeonTeam.Gameplay.DungeonRun.Tests.PlayMode
                 typeof(RectTransform));
             contextActionsPrefabObject.SetActive(false);
             var contextActionsPrefab = contextActionsPrefabObject.AddComponent<ContextActionsView>();
+            var combatHudPrefabObject = new GameObject(
+                "MultiCombatHudTestPrefab",
+                typeof(RectTransform));
+            combatHudPrefabObject.SetActive(false);
+            var combatHudPrefab = combatHudPrefabObject.AddComponent<CombatHudView>();
             var rewardPickupPrefabObject = new GameObject("MultiRewardPickupTestPrefab");
             var rewardPickupPrefab = rewardPickupPrefabObject.AddComponent<TestRewardPickupView>();
             var chestPrefabObject = new GameObject("MultiChestTestPrefab");
@@ -362,10 +445,11 @@ namespace DungeonTeam.Gameplay.DungeonRun.Tests.PlayMode
                     "actor.hero.companion",
                     "actor.hero.rogue",
                     "actor.hero.wizard"),
-                new DungeonRunBindings(contextActionsPrefab),
+                new DungeonRunBindings(contextActionsPrefab, combatHudPrefab),
                 actorLoader,
                 CreateActorCatalog(),
-                CreateCombatCatalog(),
+                CreateSkillCatalog(),
+                new FakeSkillViewLoader(),
                 new FakeRewardPickupViewLoader(rewardPickupPrefab),
                 new FakeChestViewLoader(chestPrefab),
                 contextActionsParentObject.GetComponent<RectTransform>(),
@@ -418,6 +502,7 @@ namespace DungeonTeam.Gameplay.DungeonRun.Tests.PlayMode
                 tickHandler.Dispose();
                 Object.Destroy(actorPrefabObject);
                 Object.Destroy(contextActionsPrefabObject);
+                Object.Destroy(combatHudPrefabObject);
                 Object.Destroy(rewardPickupPrefabObject);
                 Object.Destroy(chestPrefabObject);
                 Object.Destroy(contextActionsParentObject);
@@ -439,6 +524,11 @@ namespace DungeonTeam.Gameplay.DungeonRun.Tests.PlayMode
                 typeof(RectTransform));
             contextActionsPrefabObject.SetActive(false);
             var contextActionsPrefab = contextActionsPrefabObject.AddComponent<ContextActionsView>();
+            var combatHudPrefabObject = new GameObject(
+                "BehaviorCombatHudTestPrefab",
+                typeof(RectTransform));
+            combatHudPrefabObject.SetActive(false);
+            var combatHudPrefab = combatHudPrefabObject.AddComponent<CombatHudView>();
             var rewardPickupPrefabObject = new GameObject("BehaviorRewardPickupTestPrefab");
             var rewardPickupPrefab = rewardPickupPrefabObject.AddComponent<TestRewardPickupView>();
             var chestPrefabObject = new GameObject("BehaviorChestTestPrefab");
@@ -454,10 +544,11 @@ namespace DungeonTeam.Gameplay.DungeonRun.Tests.PlayMode
             var root = new DungeonRunRoot(
                 new FakeDungeonFactory(),
                 CreateStartRequest(seed: 17),
-                new DungeonRunBindings(contextActionsPrefab),
+                new DungeonRunBindings(contextActionsPrefab, combatHudPrefab),
                 new FakeActorDefinitionLoader(actorPrefab),
                 CreateActorCatalog(),
-                CreateCombatCatalog(),
+                CreateSkillCatalog(),
+                new FakeSkillViewLoader(),
                 new FakeRewardPickupViewLoader(rewardPickupPrefab),
                 new FakeChestViewLoader(chestPrefab),
                 contextActionsParentObject.GetComponent<RectTransform>(),
@@ -519,6 +610,7 @@ namespace DungeonTeam.Gameplay.DungeonRun.Tests.PlayMode
                 tickHandler.Dispose();
                 Object.Destroy(actorPrefabObject);
                 Object.Destroy(contextActionsPrefabObject);
+                Object.Destroy(combatHudPrefabObject);
                 Object.Destroy(rewardPickupPrefabObject);
                 Object.Destroy(chestPrefabObject);
                 Object.Destroy(contextActionsParentObject);
@@ -538,6 +630,11 @@ namespace DungeonTeam.Gameplay.DungeonRun.Tests.PlayMode
                 typeof(RectTransform));
             contextActionsPrefabObject.SetActive(false);
             var contextActionsPrefab = contextActionsPrefabObject.AddComponent<ContextActionsView>();
+            var combatHudPrefabObject = new GameObject(
+                "DefeatCombatHudTestPrefab",
+                typeof(RectTransform));
+            combatHudPrefabObject.SetActive(false);
+            var combatHudPrefab = combatHudPrefabObject.AddComponent<CombatHudView>();
             var rewardPickupPrefabObject = new GameObject("DefeatRewardPickupTestPrefab");
             var rewardPickupPrefab = rewardPickupPrefabObject.AddComponent<TestRewardPickupView>();
             var chestPrefabObject = new GameObject("DefeatChestTestPrefab");
@@ -554,10 +651,11 @@ namespace DungeonTeam.Gameplay.DungeonRun.Tests.PlayMode
             var root = new DungeonRunRoot(
                 new FakeDungeonFactory(),
                 CreateStartRequest(seed: 7),
-                new DungeonRunBindings(contextActionsPrefab),
+                new DungeonRunBindings(contextActionsPrefab, combatHudPrefab),
                 actorLoader,
                 CreateActorCatalog(),
-                CreateCombatCatalog(),
+                CreateSkillCatalog(),
+                new FakeSkillViewLoader(),
                 new FakeRewardPickupViewLoader(rewardPickupPrefab),
                 new FakeChestViewLoader(chestPrefab),
                 contextActionsParentObject.GetComponent<RectTransform>(),
@@ -596,6 +694,11 @@ namespace DungeonTeam.Gameplay.DungeonRun.Tests.PlayMode
                 Assert.That(input.IsDisposed, Is.True);
                 var contextActions = GameObject.Find("ContextActions");
                 Assert.That(contextActions.GetComponentsInChildren<Button>(), Is.Empty);
+                var combatHud = GameObject.Find("CombatHud");
+                var skillButtons = combatHud.GetComponentsInChildren<Button>();
+                Assert.That(skillButtons, Is.Not.Empty);
+                for (var index = 0; index < skillButtons.Length; index++)
+                    Assert.That(skillButtons[index].interactable, Is.False);
             }
             finally
             {
@@ -603,6 +706,7 @@ namespace DungeonTeam.Gameplay.DungeonRun.Tests.PlayMode
                 tickHandler.Dispose();
                 Object.Destroy(actorPrefabObject);
                 Object.Destroy(contextActionsPrefabObject);
+                Object.Destroy(combatHudPrefabObject);
                 Object.Destroy(rewardPickupPrefabObject);
                 Object.Destroy(chestPrefabObject);
                 Object.Destroy(contextActionsParentObject);
@@ -624,6 +728,30 @@ namespace DungeonTeam.Gameplay.DungeonRun.Tests.PlayMode
             }
 
             return null;
+        }
+
+        private static Button FindButtonByName(GameObject root, string objectName)
+        {
+            var buttons = root.GetComponentsInChildren<Button>();
+            for (var index = 0; index < buttons.Length; index++)
+            {
+                if (buttons[index].name == objectName)
+                    return buttons[index];
+            }
+
+            return null;
+        }
+
+        private static bool HasText(Button button, string text)
+        {
+            var labels = button.GetComponentsInChildren<TMP_Text>();
+            for (var index = 0; index < labels.Length; index++)
+            {
+                if (labels[index].text == text)
+                    return true;
+            }
+
+            return false;
         }
 
         private static RewardCatalog CreateRewardCatalog()
@@ -651,8 +779,11 @@ namespace DungeonTeam.Gameplay.DungeonRun.Tests.PlayMode
                     "normal",
                     seed),
                 new DungeonRunTeamSelection(
-                    "actor.hero.leader",
-                    companionActorIds));
+                    new DungeonRunActorSelection(
+                        "actor.hero.leader",
+                        1,
+                        "loadout.hero.leader"),
+                    CreateCompanionSelections(companionActorIds)));
         }
 
         private static DungeonRunStartRequest CreateStartRequestAtLevel(
@@ -666,10 +797,16 @@ namespace DungeonTeam.Gameplay.DungeonRun.Tests.PlayMode
                     "normal",
                     seed),
                 new DungeonRunTeamSelection(
-                    new DungeonRunActorSelection("actor.hero.leader", level),
+                    new DungeonRunActorSelection(
+                        "actor.hero.leader",
+                        level,
+                        "loadout.hero.leader"),
                     new[]
                     {
-                        new DungeonRunActorSelection("actor.hero.companion", 1)
+                        new DungeonRunActorSelection(
+                            "actor.hero.companion",
+                            1,
+                            "loadout.hero.healer")
                     }));
         }
 
@@ -696,77 +833,158 @@ namespace DungeonTeam.Gameplay.DungeonRun.Tests.PlayMode
         {
             return new ActorConfigCatalog(new[]
             {
-                ActorConfig("actor.hero.leader", 100, 4f, "loadout.hero.melee"),
-                ActorConfig("actor.hero.companion", 80, 4f, "loadout.hero.melee"),
-                ActorConfig("actor.hero.rogue", 80, 4f, "loadout.hero.melee"),
-                ActorConfig("actor.hero.wizard", 80, 4f, "loadout.hero.ranged"),
-                ActorConfig("enemy.grunt", 60, 3.5f, "loadout.enemy.melee"),
-                ActorConfig("enemy.guard", 60, 3.5f, "loadout.enemy.ranged")
+                ActorConfig("actor.hero.leader", 100, 4f),
+                ActorConfig("actor.hero.companion", 80, 4f),
+                ActorConfig("actor.hero.rogue", 80, 4f),
+                ActorConfig("actor.hero.wizard", 80, 4f),
+                ActorConfig("enemy.grunt", 60, 3.5f),
+                ActorConfig("enemy.guard", 60, 3.5f)
             });
         }
 
         private static ActorDefinitionConfig ActorConfig(
             string actorId,
             int health,
-            float speed,
-            string loadoutId)
+            float speed)
         {
             return new ActorDefinitionConfig(
                 actorId,
                 actorId,
-                loadoutId,
                 new[]
                 {
-                    new ActorLevelDefinitionConfig(1, health, speed, 1),
-                    new ActorLevelDefinitionConfig(2, health + health / 5, speed, 2)
+                    new ActorLevelDefinitionConfig(1, health, speed),
+                    new ActorLevelDefinitionConfig(2, health + health / 5, speed)
                 });
         }
 
-        private static CombatCatalog CreateCombatCatalog()
+        private static SkillCatalog CreateSkillCatalog()
         {
-            return new CombatCatalog(
+            return new SkillCatalog(
                 new[]
                 {
-                    new AttackDefinitionConfig(
-                        "attack.hero.melee",
+                    DirectSkill(
+                        "skill.hero.melee",
                         "Hero Melee",
-                        new[]
-                        {
-                            new AttackRankDefinitionConfig(1, 20, 1.5f, 0.8f),
-                            new AttackRankDefinitionConfig(2, 24, 1.5f, 0.8f)
-                        }),
-                    new AttackDefinitionConfig(
-                        "attack.hero.ranged",
+                        20,
+                        1.5f,
+                        0.8f),
+                    DirectSkill(
+                        "skill.hero.ranged",
                         "Hero Ranged",
-                        new[]
-                        {
-                            new AttackRankDefinitionConfig(1, 14, 6f, 1.2f),
-                            new AttackRankDefinitionConfig(2, 17, 6f, 1.2f)
-                        }),
-                    new AttackDefinitionConfig(
-                        "attack.enemy.melee",
+                        14,
+                        6f,
+                        1.2f,
+                        commitDelay: 0.35f,
+                        recoveryDuration: 0.25f),
+                    DirectSkill(
+                        "skill.enemy.melee",
                         "Enemy Melee",
-                        new[]
-                        {
-                            new AttackRankDefinitionConfig(1, 15, 1.5f, 1f),
-                            new AttackRankDefinitionConfig(2, 18, 1.5f, 1f)
-                        }),
-                    new AttackDefinitionConfig(
-                        "attack.enemy.ranged",
+                        15,
+                        1.5f,
+                        1f),
+                    DirectSkill(
+                        "skill.enemy.ranged",
                         "Enemy Ranged",
+                        10,
+                        6f,
+                        1.5f)
+                },
+                System.Array.Empty<ProjectileDamageSkillDefinitionConfig>(),
+                new[]
+                {
+                    new DirectHealSkillDefinitionConfig(
+                        "skill.hero.heal",
+                        "Hero Heal",
+                        SkillTargetRule.AllyOrSelfActor,
                         new[]
                         {
-                            new AttackRankDefinitionConfig(1, 10, 6f, 1.5f),
-                            new AttackRankDefinitionConfig(2, 12, 6f, 1.5f)
+                            new DirectHealSkillLevelConfig(
+                                1,
+                                healAmount: 25,
+                                range: 8f,
+                                cooldown: 1f)
                         })
                 },
                 new[]
                 {
-                    new CombatLoadoutDefinitionConfig("loadout.hero.melee", "attack.hero.melee"),
-                    new CombatLoadoutDefinitionConfig("loadout.hero.ranged", "attack.hero.ranged"),
-                    new CombatLoadoutDefinitionConfig("loadout.enemy.melee", "attack.enemy.melee"),
-                    new CombatLoadoutDefinitionConfig("loadout.enemy.ranged", "attack.enemy.ranged")
+                    new CombatLoadoutDefinitionConfig(
+                        "loadout.hero.leader",
+                        new[]
+                        {
+                            new CombatLoadoutSlotConfig(
+                                SkillSlot.Primary,
+                                "skill.hero.melee",
+                                1),
+                            new CombatLoadoutSlotConfig(
+                                SkillSlot.Active1,
+                                "skill.hero.ranged",
+                                1)
+                        }),
+                    Loadout("loadout.hero.melee", "skill.hero.melee"),
+                    Loadout("loadout.hero.ranged", "skill.hero.ranged"),
+                    new CombatLoadoutDefinitionConfig(
+                        "loadout.hero.healer",
+                        new[]
+                        {
+                            new CombatLoadoutSlotConfig(
+                                SkillSlot.Primary,
+                                "skill.hero.melee",
+                                1),
+                            new CombatLoadoutSlotConfig(
+                                SkillSlot.Active1,
+                                "skill.hero.heal",
+                                1)
+                        }),
+                    Loadout("loadout.enemy.melee", "skill.enemy.melee"),
+                    Loadout("loadout.enemy.ranged", "skill.enemy.ranged")
                 });
+        }
+
+        private static DirectDamageSkillDefinitionConfig DirectSkill(
+            string skillId,
+            string displayName,
+            int damage,
+            float range,
+            float cooldown,
+            float commitDelay = 0f,
+            float recoveryDuration = 0f)
+        {
+            return new DirectDamageSkillDefinitionConfig(
+                skillId,
+                displayName,
+                SkillTargetRule.EnemyActor,
+                new[]
+                {
+                    new DirectDamageSkillLevelConfig(
+                        1,
+                        damage,
+                        range,
+                        cooldown,
+                        commitDelay,
+                        recoveryDuration),
+                    new DirectDamageSkillLevelConfig(2, damage + 4, range, cooldown)
+                });
+        }
+
+        private static CombatLoadoutDefinitionConfig Loadout(string loadoutId, string skillId)
+        {
+            return new CombatLoadoutDefinitionConfig(
+                loadoutId,
+                new[] { new CombatLoadoutSlotConfig(SkillSlot.Primary, skillId, 1) });
+        }
+
+        private static DungeonRunActorSelection[] CreateCompanionSelections(string[] actorIds)
+        {
+            var selections = new DungeonRunActorSelection[actorIds.Length];
+            for (var index = 0; index < actorIds.Length; index++)
+            {
+                selections[index] = new DungeonRunActorSelection(
+                    actorIds[index],
+                    1,
+                    "loadout.hero.melee");
+            }
+
+            return selections;
         }
 
         private sealed class FakeDungeonFactory : IDungeonFactory
@@ -803,6 +1021,8 @@ namespace DungeonTeam.Gameplay.DungeonRun.Tests.PlayMode
                             "enemy.test.a",
                             "enemy.grunt",
                             "behavior.enemy.melee.basic",
+                            "loadout.enemy.melee",
+                            1,
                             "",
                             Pose(3f, 3f),
                             new[] { new DungeonRewardGrantPlan("reward.gold", 1) }),
@@ -810,6 +1030,8 @@ namespace DungeonTeam.Gameplay.DungeonRun.Tests.PlayMode
                             "enemy.test.b",
                             "enemy.guard",
                             "behavior.enemy.ranged.basic",
+                            "loadout.enemy.ranged",
+                            1,
                             "",
                             Pose(-3f, 3f),
                             new[] { new DungeonRewardGrantPlan("reward.gold", 1) })
@@ -894,6 +1116,49 @@ namespace DungeonTeam.Gameplay.DungeonRun.Tests.PlayMode
             }
         }
 
+        private sealed class FakeSkillViewLoader : ISkillViewLoader
+        {
+            public UniTask<SkillViewSet> LoadAsync(
+                IReadOnlyList<string> loadoutIds,
+                CancellationToken token)
+            {
+                token.ThrowIfCancellationRequested();
+                return UniTask.FromResult(
+                    new SkillViewSet(
+                        System.Array.Empty<SkillProjectileViewEntry>(),
+                        new[]
+                        {
+                            Presentation("skill.hero.melee"),
+                            Presentation("skill.hero.ranged"),
+                            Presentation("skill.hero.heal"),
+                            Presentation("skill.enemy.melee"),
+                            Presentation("skill.enemy.ranged")
+                        },
+                        new[]
+                        {
+                            Icon("skill.hero.melee"),
+                            Icon("skill.hero.ranged"),
+                            Icon("skill.hero.heal"),
+                            Icon("skill.enemy.melee"),
+                            Icon("skill.enemy.ranged")
+                        }));
+            }
+
+            private static SkillPresentationViewEntry Presentation(string skillId)
+            {
+                return new SkillPresentationViewEntry(
+                    skillId,
+                    new SkillPresentationSequence(
+                        System.Array.Empty<SkillActorAnimationCue>(),
+                        System.Array.Empty<SkillVfxCue>()));
+            }
+
+            private static SkillIconViewEntry Icon(string skillId)
+            {
+                return new SkillIconViewEntry(skillId, Texture2D.whiteTexture);
+            }
+        }
+
         private sealed class FakeRewardPickupViewLoader : IRewardPickupViewLoader
         {
             private readonly RewardPickupViewBase _prefab;
@@ -973,6 +1238,8 @@ namespace DungeonTeam.Gameplay.DungeonRun.Tests.PlayMode
 
             public override Transform OverheadAnchor => null;
 
+            public override Transform SkillOriginAnchor => transform;
+
             public override void Configure(float movementSpeed)
             {
             }
@@ -1013,6 +1280,10 @@ namespace DungeonTeam.Gameplay.DungeonRun.Tests.PlayMode
             }
 
             public override void PlayAttackFeedback()
+            {
+            }
+
+            public override void PlayCastFeedback()
             {
             }
 
@@ -1116,7 +1387,7 @@ namespace DungeonTeam.Gameplay.DungeonRun.Tests.PlayMode
 
             public Vector2 PointerPosition { get; set; }
 
-            public bool BasicAttackWasPressed => false;
+            public SkillSlot? RequestedSkillSlot { get; set; }
 
             public bool IsDisposed { get; private set; }
 
@@ -1125,6 +1396,32 @@ namespace DungeonTeam.Gameplay.DungeonRun.Tests.PlayMode
             public void Enable()
             {
                 IsEnabled = true;
+            }
+
+            public bool TryConsumeTargetSelection(out Vector2 screenPosition)
+            {
+                if (!TargetSelectionWasPressed)
+                {
+                    screenPosition = default;
+                    return false;
+                }
+
+                screenPosition = PointerPosition;
+                TargetSelectionWasPressed = false;
+                return true;
+            }
+
+            public bool TryConsumeSkillRequest(out SkillSlot slot)
+            {
+                if (!RequestedSkillSlot.HasValue)
+                {
+                    slot = default;
+                    return false;
+                }
+
+                slot = RequestedSkillSlot.Value;
+                RequestedSkillSlot = null;
+                return true;
             }
 
             public void Dispose()

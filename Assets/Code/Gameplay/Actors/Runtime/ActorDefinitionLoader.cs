@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using DungeonTeam.Gameplay.Actors.Runtime.Presentation.Gameplay.Actor.Base;
-using LightDI.Runtime;
 using ResourceLoader;
 using UnityEngine;
 
@@ -15,8 +14,8 @@ namespace DungeonTeam.Gameplay.Actors.Runtime
         private readonly IResourceLoader _resourceLoader;
 
         public ActorDefinitionLoader(
-            [Inject] ActorConfigCatalog catalog,
-            [Inject] IResourceLoader resourceLoader)
+            ActorConfigCatalog catalog,
+            IResourceLoader resourceLoader)
         {
             _catalog = catalog ?? throw new ArgumentNullException(nameof(catalog));
             _resourceLoader = resourceLoader ??

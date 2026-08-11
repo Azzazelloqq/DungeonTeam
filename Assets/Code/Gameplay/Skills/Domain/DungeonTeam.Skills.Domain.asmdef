@@ -1,0 +1,6 @@
+{
+  "name": "DungeonTeam.Skills.Domain",
+  "rootNamespace": "DungeonTeam.Gameplay.Skills.Domain",
+  "autoReferenced": false,
+  "noEngineReferences": true
+}

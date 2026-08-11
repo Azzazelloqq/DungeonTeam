@@ -1,6 +1,7 @@
 using System;
 using DungeonTeam.Gameplay.ContextActions.Runtime;
 using DungeonTeam.Gameplay.ContextActions.Runtime.Base;
+using DungeonTeam.UI.CombatHud.Base;
 using UnityEngine;
 
 namespace DungeonTeam.Gameplay.DungeonRun.Runtime
@@ -10,6 +11,9 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
     {
         [SerializeField]
         private ContextActionsViewBase _contextActionsPrefab;
+
+        [SerializeField]
+        private CombatHudViewBase _combatHudPrefab;
 
         [SerializeField, Min(0.1f)]
         private float _rewardPickupDistance = 2f;
@@ -46,14 +50,20 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
         {
         }
 
-        public DungeonRunBindings(ContextActionsViewBase contextActionsPrefab)
+        public DungeonRunBindings(
+            ContextActionsViewBase contextActionsPrefab,
+            CombatHudViewBase combatHudPrefab)
         {
             _contextActionsPrefab = contextActionsPrefab != null
                 ? contextActionsPrefab
                 : throw new ArgumentNullException(nameof(contextActionsPrefab));
+            _combatHudPrefab = combatHudPrefab != null
+                ? combatHudPrefab
+                : throw new ArgumentNullException(nameof(combatHudPrefab));
         }
 
         internal ContextActionsViewBase ContextActionsPrefab => _contextActionsPrefab;
+        internal CombatHudViewBase CombatHudPrefab => _combatHudPrefab;
         internal float RewardPickupDistance => _rewardPickupDistance;
         internal float ChestOpenDistance => _chestOpenDistance;
         internal float ExitDistance => _exitDistance;
@@ -82,6 +92,12 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
             {
                 throw new InvalidOperationException(
                     "Dungeon Run requires a Context Actions prefab binding.");
+            }
+
+            if (_combatHudPrefab == null)
+            {
+                throw new InvalidOperationException(
+                    "Dungeon Run requires a Combat HUD prefab binding.");
             }
 
             if (_rewardPickupDistance <= 0f)

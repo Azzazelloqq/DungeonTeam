@@ -173,6 +173,7 @@ MonoBehaviour:
   _worldCamera: {fileID: 1065636713}
   _dungeonRunBindings:
     _contextActionsPrefab: {fileID: 710002, guid: 7ac8d16d69aa43e99d1afc43ab8cf0e8, type: 3}
+    _combatHudPrefab: {fileID: 720002, guid: fefdc9972ccf47568f4417ca25e54920, type: 3}
     _rewardPickupDistance: 2
     _chestOpenDistance: 2
     _exitDistance: 2
@@ -198,9 +199,11 @@ MonoBehaviour:
       serializedVersion: 2
       m_Bits: 4294967295
     _companionTargetLossDistance: 12
+    _companionHealHealthRatio: 0.6
   _heroControlSettings:
     _targetSelectionRadius: 90
     _eyeHeight: 1
+    _autoTargetRange: 12
     _obstacleMask:
       serializedVersion: 2
       m_Bits: 4294967295

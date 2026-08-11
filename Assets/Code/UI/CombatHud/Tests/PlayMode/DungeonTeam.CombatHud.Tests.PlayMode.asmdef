@@ -1,0 +1,12 @@
+{
+  "name": "DungeonTeam.CombatHud.Tests.PlayMode",
+  "rootNamespace": "DungeonTeam.UI.CombatHud.Tests.PlayMode",
+  "references": [
+    "DungeonTeam.CombatHud",
+    "UnityEngine.UI"
+  ],
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ],
+  "autoReferenced": false
+}
