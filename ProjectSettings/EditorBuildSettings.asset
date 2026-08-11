@@ -6,8 +6,8 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/Scenes/SquadCombatStage0.unity
-    guid: 50f41271c51ac364eac505f96042defc
+    path: Assets/Scenes/Init.unity
+    guid: 9b15c418bdf675642bded2156254e1be
   m_configObjects:
     com.unity.addressableassets: {fileID: 11400000, guid: 61fa9fdb3ddb0ec45b6522a2cb92d9e9, type: 2}
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
