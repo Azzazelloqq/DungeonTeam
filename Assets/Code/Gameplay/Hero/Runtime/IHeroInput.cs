@@ -7,8 +7,6 @@ namespace DungeonTeam.Gameplay.Hero.Runtime
     {
         Vector2 Movement { get; }
 
-        bool TryConsumeTargetSelection(out Vector2 screenPosition);
-
         bool TryConsumeSkillRequest(out SkillSlot slot);
     }
 }

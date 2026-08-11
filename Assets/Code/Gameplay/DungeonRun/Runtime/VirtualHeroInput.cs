@@ -55,12 +55,6 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
             _pendingSkillSlot = slot;
         }
 
-        public bool TryConsumeTargetSelection(out Vector2 screenPosition)
-        {
-            screenPosition = Vector2.zero;
-            return false;
-        }
-
         public bool TryConsumeSkillRequest(out SkillSlot slot)
         {
             if (!_isEnabled || !_pendingSkillSlot.HasValue)

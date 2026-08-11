@@ -23,7 +23,6 @@ namespace DungeonTeam.Gameplay.Team.Runtime
         private readonly IReadOnlyList<ActorInstance> _enemies;
         private readonly Camera _camera;
         private readonly ITickHandler _tickHandler;
-        private readonly ITeamCameraInput _cameraInput;
         private readonly TeamControlSettings _settings;
         private readonly List<CompanionController> _companions;
         private readonly CompanionHealthSnapshot[] _healthSnapshots;
@@ -49,7 +48,6 @@ namespace DungeonTeam.Gameplay.Team.Runtime
             IReadOnlyList<ActorInstance> enemies,
             Camera camera,
             ITickHandler tickHandler,
-            ITeamCameraInput cameraInput,
             TeamControlSettings settings)
         {
             _leader = leader ?? throw new ArgumentNullException(nameof(leader));
@@ -81,7 +79,6 @@ namespace DungeonTeam.Gameplay.Team.Runtime
                 ? camera
                 : throw new ArgumentNullException(nameof(camera));
             _tickHandler = tickHandler ?? throw new ArgumentNullException(nameof(tickHandler));
-            _cameraInput = cameraInput ?? throw new ArgumentNullException(nameof(cameraInput));
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
             _settings.Validate();
 
@@ -223,7 +220,6 @@ namespace DungeonTeam.Gameplay.Team.Runtime
 
         private void OnFrameLateUpdate(float deltaTime)
         {
-            _cameraYaw += _cameraInput.CameraYawDelta * _settings.MouseYawSensitivity;
             PositionCamera(immediate: false, deltaTime);
         }
 

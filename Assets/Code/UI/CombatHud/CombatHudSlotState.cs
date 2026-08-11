@@ -16,7 +16,8 @@ namespace DungeonTeam.UI.CombatHud
             bool isSelected,
             bool isPending,
             SkillUsePhase? activePhase,
-            bool isActorBusy)
+            bool isActorBusy,
+            CombatHudSlotFeedback feedback)
         {
             if (!IsDefined(slot))
                 throw new ArgumentOutOfRangeException(nameof(slot));
@@ -32,6 +33,8 @@ namespace DungeonTeam.UI.CombatHud
             {
                 throw new ArgumentOutOfRangeException(nameof(activePhase));
             }
+            if (!Enum.IsDefined(typeof(CombatHudSlotFeedback), feedback))
+                throw new ArgumentOutOfRangeException(nameof(feedback));
 
             Slot = slot;
             Title = title;
@@ -43,6 +46,7 @@ namespace DungeonTeam.UI.CombatHud
             IsPending = isPending;
             ActivePhase = activePhase;
             IsActorBusy = isActorBusy;
+            Feedback = feedback;
         }
 
         public SkillSlot Slot { get; }
@@ -57,6 +61,8 @@ namespace DungeonTeam.UI.CombatHud
         public SkillUsePhase? ActivePhase { get; }
         public bool IsActive => ActivePhase.HasValue;
         public bool IsActorBusy { get; }
+        public CombatHudSlotFeedback Feedback { get; }
+        public bool CanActivate => Feedback == CombatHudSlotFeedback.Ready;
 
         public bool Equals(CombatHudSlotState other)
         {
@@ -69,7 +75,8 @@ namespace DungeonTeam.UI.CombatHud
                    IsSelected == other.IsSelected &&
                    IsPending == other.IsPending &&
                    ActivePhase == other.ActivePhase &&
-                   IsActorBusy == other.IsActorBusy;
+                   IsActorBusy == other.IsActorBusy &&
+                   Feedback == other.Feedback;
         }
 
         public override bool Equals(object obj)
@@ -87,7 +94,7 @@ namespace DungeonTeam.UI.CombatHud
                 CooldownRemaining,
                 IsReady,
                 IsSelected,
-                HashCode.Combine(IsPending, ActivePhase, IsActorBusy));
+                HashCode.Combine(IsPending, ActivePhase, IsActorBusy, Feedback));
         }
 
         private static bool IsPositiveFinite(float value)

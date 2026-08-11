@@ -27,9 +27,6 @@ namespace DungeonTeam.Gameplay.Team.Runtime
         [SerializeField, Min(0.1f)]
         private float _cameraFollowSharpness = 10f;
 
-        [SerializeField, Min(0.001f)]
-        private float _mouseYawSensitivity = 0.15f;
-
         [SerializeField, Min(0.1f)]
         private float _commandRange = 10f;
 
@@ -55,7 +52,6 @@ namespace DungeonTeam.Gameplay.Team.Runtime
         internal float CameraInitialYaw => _cameraInitialYaw;
         internal float CameraTargetHeight => _cameraTargetHeight;
         internal float CameraFollowSharpness => _cameraFollowSharpness;
-        internal float MouseYawSensitivity => _mouseYawSensitivity;
         internal float CommandRange => _commandRange;
         internal float CommandViewAngle => _commandViewAngle;
         internal float CommandEyeHeight => _commandEyeHeight;
@@ -73,8 +69,7 @@ namespace DungeonTeam.Gameplay.Team.Runtime
             }
 
             if (_cameraDistance <= 0f ||
-                _cameraFollowSharpness <= 0f ||
-                _mouseYawSensitivity <= 0f)
+                _cameraFollowSharpness <= 0f)
             {
                 throw new InvalidOperationException(
                     "Team Control camera settings require positive values.");

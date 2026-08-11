@@ -85,6 +85,20 @@ namespace DungeonTeam.Gameplay.DungeonRun.Tests
         }
 
         [Test]
+        public void MobileInput_ProvidesNoPhysicalHeroCommands()
+        {
+            var input = new MobileDungeonRunInput();
+
+            input.Enable();
+
+            Assert.That(input.Movement, Is.EqualTo(Vector2.zero));
+            Assert.That(input.TryConsumeSkillRequest(out _), Is.False);
+
+            input.Dispose();
+            Assert.Throws<ObjectDisposedException>(() => input.Enable());
+        }
+
+        [Test]
         public void Movement_WithVirtualValue_OverridesPhysicalValue()
         {
             var physical = new FakeHeroInput { Movement = Vector2.left };
@@ -120,51 +134,15 @@ namespace DungeonTeam.Gameplay.DungeonRun.Tests
             Assert.That(input.TryConsumeSkillRequest(out _), Is.False);
         }
 
-        [Test]
-        public void TargetSelection_UsesOnlyPhysicalSource()
-        {
-            var expectedPosition = new Vector2(120f, 240f);
-            var physical = new FakeHeroInput();
-            physical.QueueTarget(expectedPosition);
-            var virtualInput = new FakeHeroInput();
-            virtualInput.QueueTarget(new Vector2(400f, 500f));
-            var input = new CompositeHeroInput(physical, virtualInput);
-
-            var consumed = input.TryConsumeTargetSelection(out var screenPosition);
-
-            Assert.That(consumed, Is.True);
-            Assert.That(screenPosition, Is.EqualTo(expectedPosition));
-            Assert.That(virtualInput.TryConsumeTargetSelection(out _), Is.True);
-        }
-
         private sealed class FakeHeroInput : IHeroInput
         {
-            private Vector2? _pendingTarget;
             private SkillSlot? _pendingSkill;
 
             public Vector2 Movement { get; set; }
 
-            public void QueueTarget(Vector2 screenPosition)
-            {
-                _pendingTarget = screenPosition;
-            }
-
             public void QueueSkill(SkillSlot slot)
             {
                 _pendingSkill = slot;
-            }
-
-            public bool TryConsumeTargetSelection(out Vector2 screenPosition)
-            {
-                if (!_pendingTarget.HasValue)
-                {
-                    screenPosition = Vector2.zero;
-                    return false;
-                }
-
-                screenPosition = _pendingTarget.Value;
-                _pendingTarget = null;
-                return true;
             }
 
             public bool TryConsumeSkillRequest(out SkillSlot slot)

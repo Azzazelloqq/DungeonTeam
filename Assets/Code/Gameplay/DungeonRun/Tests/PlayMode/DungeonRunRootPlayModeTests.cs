@@ -183,12 +183,6 @@ namespace DungeonTeam.Gameplay.DungeonRun.Tests.PlayMode
                 var companionHealth = root.Companions[0].CurrentHealth;
                 var firstEnemyPosition = root.Enemies[0].Position;
 
-                input.PointerPosition = worldCamera.WorldToScreenPoint(
-                    root.Enemies[1].Position + Vector3.up);
-                input.TargetSelectionWasPressed = true;
-                yield return null;
-                input.TargetSelectionWasPressed = false;
-
                 Assert.That(FindButton(contextActions, "ATTACK"), Is.Null);
                 Assert.That(primarySkillButton.interactable, Is.True);
                 Assert.That(activeSkillButton.interactable, Is.True);
@@ -331,10 +325,6 @@ namespace DungeonTeam.Gameplay.DungeonRun.Tests.PlayMode
                 Assert.That(activeSkillButton.interactable, Is.True,
                     "Active1 must become ready again after its configured cooldown.");
 
-                input.PointerPosition = new Vector2(-1000f, -1000f);
-                input.TargetSelectionWasPressed = true;
-                yield return null;
-                input.TargetSelectionWasPressed = false;
                 Assert.That(FindButton(contextActions, "ATTACK"), Is.Null);
                 Assert.That(primarySkillButton.interactable, Is.True);
                 Assert.That(activeSkillButton.interactable, Is.True);
@@ -1381,12 +1371,6 @@ namespace DungeonTeam.Gameplay.DungeonRun.Tests.PlayMode
         {
             public Vector2 Movement => Vector2.zero;
 
-            public float CameraYawDelta => 0f;
-
-            public bool TargetSelectionWasPressed { get; set; }
-
-            public Vector2 PointerPosition { get; set; }
-
             public SkillSlot? RequestedSkillSlot { get; set; }
 
             public bool IsDisposed { get; private set; }
@@ -1396,19 +1380,6 @@ namespace DungeonTeam.Gameplay.DungeonRun.Tests.PlayMode
             public void Enable()
             {
                 IsEnabled = true;
-            }
-
-            public bool TryConsumeTargetSelection(out Vector2 screenPosition)
-            {
-                if (!TargetSelectionWasPressed)
-                {
-                    screenPosition = default;
-                    return false;
-                }
-
-                screenPosition = PointerPosition;
-                TargetSelectionWasPressed = false;
-                return true;
             }
 
             public bool TryConsumeSkillRequest(out SkillSlot slot)

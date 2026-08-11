@@ -247,7 +247,6 @@ namespace DungeonTeam.Gameplay.Team.Tests.PlayMode
                     enemies,
                     cameraObject.AddComponent<Camera>(),
                     tickHandler,
-                    new TestCameraInput(),
                     new TeamControlSettings());
                 team.Initialize();
                 execution.Initialize();
@@ -407,11 +406,6 @@ namespace DungeonTeam.Gameplay.Team.Tests.PlayMode
                     UnityEngine.Object.Destroy(instance);
                 }
             }
-        }
-
-        private sealed class TestCameraInput : ITeamCameraInput
-        {
-            public float CameraYawDelta => 0f;
         }
 
         public sealed class TestActorView : ActorViewBase

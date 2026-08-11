@@ -239,7 +239,6 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
                 _enemies,
                 _worldCamera,
                 _tickHandler,
-                _input,
                 _teamControlSettings);
             _teamController.Initialize();
 

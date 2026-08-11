@@ -31,6 +31,8 @@ namespace DungeonTeam.UI.CombatHud
         [SerializeField] private Color _selectedColor = new(0.38f, 0.92f, 1f, 1f);
         [SerializeField] private Color _pendingColor = new(0.32f, 0.72f, 1f, 1f);
         [SerializeField] private Color _activeColor = new(1f, 0.62f, 0.24f, 1f);
+        [SerializeField] private Color _busyColor = new(0.72f, 0.5f, 1f, 1f);
+        [SerializeField] private Color _noTargetColor = new(0.82f, 0.38f, 0.34f, 1f);
         [SerializeField] private Color _disabledColor = new(0.26f, 0.32f, 0.4f, 0.72f);
         [SerializeField] private Color _cooldownColor = new(0.015f, 0.025f, 0.045f, 0.82f);
         [SerializeField] private Color _textColor = Color.white;
@@ -269,6 +271,8 @@ namespace DungeonTeam.UI.CombatHud
                 _selectedColor,
                 _pendingColor,
                 _activeColor,
+                _busyColor,
+                _noTargetColor,
                 _disabledColor);
             entry.SetControlsEnabled(_controlsEnabled);
             return entry;
@@ -467,6 +471,8 @@ namespace DungeonTeam.UI.CombatHud
             private readonly Color _selectedColor;
             private readonly Color _pendingColor;
             private readonly Color _activeColor;
+            private readonly Color _busyColor;
+            private readonly Color _noTargetColor;
             private readonly Color _disabledColor;
 
             private CombatHudSlotState _state;
@@ -483,6 +489,8 @@ namespace DungeonTeam.UI.CombatHud
                 Color selectedColor,
                 Color pendingColor,
                 Color activeColor,
+                Color busyColor,
+                Color noTargetColor,
                 Color disabledColor)
             {
                 Button = button;
@@ -494,6 +502,8 @@ namespace DungeonTeam.UI.CombatHud
                 _selectedColor = selectedColor;
                 _pendingColor = pendingColor;
                 _activeColor = activeColor;
+                _busyColor = busyColor;
+                _noTargetColor = noTargetColor;
                 _disabledColor = disabledColor;
             }
 
@@ -515,43 +525,75 @@ namespace DungeonTeam.UI.CombatHud
 
             private void ApplyVisualState()
             {
-                Button.interactable = _controlsEnabled && _state.IsReady;
-                _background.color = !_controlsEnabled
-                    ? _disabledColor
-                    : _state.ActivePhase == SkillUsePhase.Preparing
-                        ? _pendingColor
-                        : _state.ActivePhase == SkillUsePhase.Recovering
-                            ? _activeColor
-                            : _state.IsPending
-                                ? _pendingColor
-                                : _state.IsSelected
-                                    ? _selectedColor
-                                    : _state.IsReady
-                                        ? _readyColor
-                                        : _disabledColor;
+                Button.interactable = _controlsEnabled && _state.CanActivate;
+                _background.color = ResolveBackgroundColor();
 
                 _icon.texture = _state.Icon;
                 _icon.gameObject.SetActive(_state.Icon != null);
 
-                if (_state.ActivePhase.HasValue)
+                switch (_state.Feedback)
                 {
-                    _status.gameObject.SetActive(true);
-                    _status.SetText(
-                        _state.ActivePhase == SkillUsePhase.Preparing
-                            ? "CAST"
-                            : "RECOVERY");
-                    _cooldownOverlay.gameObject.SetActive(false);
-                    return;
+                    case CombatHudSlotFeedback.Casting:
+                        ShowStatus("CAST");
+                        return;
+                    case CombatHudSlotFeedback.Recovery:
+                        ShowStatus("RECOVERY");
+                        return;
+                    case CombatHudSlotFeedback.PendingApproach:
+                        ShowStatus("APPROACH");
+                        return;
+                    case CombatHudSlotFeedback.Busy:
+                        ShowStatus("BUSY");
+                        return;
+                    case CombatHudSlotFeedback.NoTargetOrInvalidTarget:
+                        ShowStatus("NO TARGET");
+                        return;
+                    case CombatHudSlotFeedback.Cooldown:
+                        ShowCooldown();
+                        return;
+                    default:
+                        HideStatus();
+                        return;
                 }
+            }
 
-                var hasCooldown = _state.CooldownRemaining > 0f;
-                _status.gameObject.SetActive(hasCooldown);
-                _cooldownOverlay.gameObject.SetActive(hasCooldown);
-                if (!hasCooldown)
-                    return;
+            private Color ResolveBackgroundColor()
+            {
+                return !_controlsEnabled
+                    ? _disabledColor
+                    : _state.Feedback switch
+                    {
+                        CombatHudSlotFeedback.Ready => _state.IsSelected
+                            ? _selectedColor
+                            : _readyColor,
+                        CombatHudSlotFeedback.PendingApproach or CombatHudSlotFeedback.Casting =>
+                            _pendingColor,
+                        CombatHudSlotFeedback.Recovery => _activeColor,
+                        CombatHudSlotFeedback.Busy => _busyColor,
+                        CombatHudSlotFeedback.NoTargetOrInvalidTarget => _noTargetColor,
+                        _ => _disabledColor
+                    };
+            }
 
+            private void ShowCooldown()
+            {
+                _status.gameObject.SetActive(true);
                 _status.SetText("{0:0.0}", _state.CooldownRemaining);
+                _cooldownOverlay.gameObject.SetActive(true);
                 _cooldownOverlay.fillAmount = Mathf.Clamp01(_state.CooldownProgress);
+            }
+
+            private void ShowStatus(string value)
+            {
+                _status.gameObject.SetActive(true);
+                _status.SetText(value);
+                _cooldownOverlay.gameObject.SetActive(false);
+            }
+
+            private void HideStatus()
+            {
+                _status.gameObject.SetActive(false);
+                _cooldownOverlay.gameObject.SetActive(false);
             }
         }
     }

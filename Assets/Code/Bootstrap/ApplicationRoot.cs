@@ -243,7 +243,11 @@ namespace Code.ApplicationRoot
 					_canvasContext.GetParent(UIElementGroup.OverlayElement),
 					_worldCamera,
 					_tickHandler,
-					new DesktopDungeonRunInput(),
+#if UNITY_EDITOR
+					new EditorDungeonRunInput(),
+#else
+					new MobileDungeonRunInput(),
+#endif
 					_rewardCatalog,
 					_teamControlSettings,
 					_heroControlSettings,

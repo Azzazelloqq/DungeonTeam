@@ -855,12 +855,6 @@ namespace DungeonTeam.Gameplay.Hero.Runtime.Tests.PlayMode
             public Vector2 Movement { get; set; }
             public SkillSlot? RequestedSkillSlot { get; set; }
 
-            public bool TryConsumeTargetSelection(out Vector2 pointerPosition)
-            {
-                pointerPosition = default;
-                return false;
-            }
-
             public bool TryConsumeSkillRequest(out SkillSlot slot)
             {
                 if (!RequestedSkillSlot.HasValue)

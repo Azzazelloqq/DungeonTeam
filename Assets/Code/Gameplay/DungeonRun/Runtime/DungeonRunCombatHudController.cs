@@ -137,17 +137,29 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
             UnityEngine.Texture2D icon,
             bool isEnabled)
         {
+            var canRequestSkill = isEnabled && heroController.CanRequestSkill(slot.Slot);
+            var isPending = isEnabled && heroController.PendingSlot == slot.Slot;
+            var activePhase = isEnabled && slot.IsActive ? slot.ActivePhase : null;
+            var isActorBusy = isEnabled && slot.IsActorBusy;
+
             return new CombatHudSlotState(
                 slot.Slot,
                 title,
                 icon,
                 slot.CooldownDuration,
                 slot.CooldownRemaining,
-                isEnabled && heroController.CanRequestSkill(slot.Slot),
+                canRequestSkill,
                 heroController.SelectedSlot == slot.Slot,
-                isEnabled && heroController.PendingSlot == slot.Slot,
-                isEnabled && slot.IsActive ? slot.ActivePhase : null,
-                isEnabled && slot.IsActorBusy);
+                isPending,
+                activePhase,
+                isActorBusy,
+                CombatHudSlotFeedbackResolver.Resolve(
+                    isEnabled,
+                    canRequestSkill,
+                    isPending,
+                    activePhase,
+                    slot.CooldownRemaining,
+                    isActorBusy));
         }
 
         private static string CreateTitle(CombatSkillSlotState slot)

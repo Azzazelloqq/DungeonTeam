@@ -3,7 +3,11 @@
   "rootNamespace": "DungeonTeam.UI.CombatHud.Tests.PlayMode",
   "references": [
     "DungeonTeam.CombatHud",
-    "UnityEngine.UI"
+    "DungeonTeam.Skills.Domain",
+    "MVVM.Core",
+    "Disposable",
+    "UnityEngine.UI",
+    "Unity.TextMeshPro"
   ],
   "optionalUnityReferences": [
     "TestAssemblies"

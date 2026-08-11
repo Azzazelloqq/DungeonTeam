@@ -27,7 +27,8 @@ namespace DungeonTeam.UI.CombatHud.Tests
                 isSelected: true,
                 isPending: true,
                 activePhase: SkillUsePhase.Preparing,
-                isActorBusy: false));
+                isActorBusy: false,
+                feedback: CombatHudSlotFeedback.Casting));
 
             Assert.That(model.Slots[0].Value.CooldownRemaining, Is.Zero);
             Assert.That(model.Slots[1].Value.CooldownRemaining, Is.EqualTo(2f));
@@ -95,6 +96,32 @@ namespace DungeonTeam.UI.CombatHud.Tests
             }));
         }
 
+        [Test]
+        public void FeedbackResolver_ReportsDistinctRuntimeFeedback()
+        {
+            Assert.That(Resolve(isPending: true), Is.EqualTo(CombatHudSlotFeedback.PendingApproach));
+            Assert.That(Resolve(isActorBusy: true), Is.EqualTo(CombatHudSlotFeedback.Busy));
+            Assert.That(
+                Resolve(canRequestSkill: false),
+                Is.EqualTo(CombatHudSlotFeedback.NoTargetOrInvalidTarget));
+            Assert.That(Resolve(cooldownRemaining: 2f), Is.EqualTo(CombatHudSlotFeedback.Cooldown));
+            Assert.That(
+                Resolve(activePhase: SkillUsePhase.Preparing),
+                Is.EqualTo(CombatHudSlotFeedback.Casting));
+            Assert.That(
+                Resolve(activePhase: SkillUsePhase.Recovering),
+                Is.EqualTo(CombatHudSlotFeedback.Recovery));
+        }
+
+        [Test]
+        public void FeedbackResolver_RecognizesOutOfRangeAutoTargetAsReadyBeforeApproachBegins()
+        {
+            Assert.That(Resolve(canRequestSkill: true), Is.EqualTo(CombatHudSlotFeedback.Ready));
+            Assert.That(
+                Resolve(canRequestSkill: true, isPending: true),
+                Is.EqualTo(CombatHudSlotFeedback.PendingApproach));
+        }
+
         private static CombatHudSlotState State(SkillSlot slot, string title)
         {
             return new CombatHudSlotState(
@@ -107,7 +134,24 @@ namespace DungeonTeam.UI.CombatHud.Tests
                 isSelected: false,
                 isPending: false,
                 activePhase: null,
-                isActorBusy: false);
+                isActorBusy: false,
+                feedback: CombatHudSlotFeedback.Ready);
+        }
+
+        private static CombatHudSlotFeedback Resolve(
+            bool canRequestSkill = true,
+            bool isPending = false,
+            SkillUsePhase? activePhase = null,
+            float cooldownRemaining = 0f,
+            bool isActorBusy = false)
+        {
+            return CombatHudSlotFeedbackResolver.Resolve(
+                true,
+                canRequestSkill,
+                isPending,
+                activePhase,
+                cooldownRemaining,
+                isActorBusy);
         }
     }
 }

@@ -160,11 +160,6 @@ namespace DungeonTeam.Gameplay.Hero.Runtime
                 return;
             }
 
-            if (_input.TryConsumeTargetSelection(out var pointerPosition))
-            {
-                SelectTargetAt(pointerPosition);
-            }
-
             var hasRequestedSkill = _input.TryConsumeSkillRequest(out var requestedSlot);
 
             var movement = _input.Movement;
@@ -329,60 +324,6 @@ namespace DungeonTeam.Gameplay.Hero.Runtime
             {
                 SetTarget(null);
             }
-        }
-
-        private void SelectTargetAt(Vector2 screenPosition)
-        {
-            ActorInstance nearest = null;
-            var nearestDistanceSqr = _settings.TargetSelectionRadius *
-                                     _settings.TargetSelectionRadius;
-            SelectNearest(_enemies, screenPosition, ref nearest, ref nearestDistanceSqr);
-            SelectNearest(_allies, screenPosition, ref nearest, ref nearestDistanceSqr);
-
-            SetTarget(nearest);
-        }
-
-        private void SelectNearest(
-            IReadOnlyList<ActorInstance> candidates,
-            Vector2 screenPosition,
-            ref ActorInstance nearest,
-            ref float nearestDistanceSqr)
-        {
-            for (var index = 0; index < candidates.Count; index++)
-            {
-                var candidate = candidates[index];
-                if (candidate == null || !candidate.IsAlive)
-                {
-                    continue;
-                }
-
-                var targetPoint = candidate.Position + Vector3.up * _settings.EyeHeight;
-                var candidateScreenPosition = _camera.WorldToScreenPoint(targetPoint);
-                if (candidateScreenPosition.z <= 0f)
-                {
-                    continue;
-                }
-
-                if (Physics.Linecast(
-                        _camera.transform.position,
-                        targetPoint,
-                        _settings.ObstacleMask,
-                        QueryTriggerInteraction.Ignore))
-                {
-                    continue;
-                }
-
-                var difference = (Vector2)candidateScreenPosition - screenPosition;
-                var distanceSqr = difference.sqrMagnitude;
-                if (distanceSqr > nearestDistanceSqr)
-                {
-                    continue;
-                }
-
-                nearest = candidate;
-                nearestDistanceSqr = distanceSqr;
-            }
-
         }
 
         private bool HasClearLine(ActorInstance target)
