@@ -2,7 +2,7 @@
 
 **Статус:** READY FOR IMPLEMENTATION
 
-**Версия:** 0.2
+**Версия:** 0.3
 
 **Дата:** 13 августа 2026
 
@@ -48,14 +48,7 @@ GameBootstrapper
 
 ## 3. Layers and assemblies
 
-```text
-Assets/Game/Features/DungeonExpedition/
-  Domain/         Game.Gameplay.DungeonExpedition.Domain
-  Application/    Game.Gameplay.DungeonExpedition.Application
-  Runtime/        Game.Gameplay.DungeonExpedition.Runtime
-  Infrastructure/ Game.Gameplay.DungeonExpedition.Infrastructure
-  Tests/
-```
+Текущий playable собран из существующих модулей под `Assets/Code/Gameplay`: `DungeonRun` координирует попытку, `Team` владеет companion decision flow, а `Actors`, `Combat`, `Skills`, `EnemyAI`, `Chests` и `Rewards` сохраняют свои отдельные ответственности. Production content находится под `Assets/Content`. Отдельный монолитный `DungeonExpedition` module ради объединения этих ответственностей не создаётся.
 
 Allowed direction:
 
@@ -151,16 +144,7 @@ The corridor camera follows a smoothed route tangent and leader look target. A s
 
 ## 7. Content structure
 
-```text
-Assets/Game/Content/DungeonExpedition/
-  Levels/CrystalPassage/{Models,Materials,Textures,Prefabs,Lighting}
-  Characters/Heroes/{Leader,Companions}/...
-  Characters/Enemies/{Goblin,Minotaur,Skeleton}/...
-  Interactables/Chests/...
-  Shared/{Materials,Textures,VFX}
-  UI/{Sprites,Fonts,Prefabs}
-  Definitions/
-```
+Production content использует существующие project-owned roots под `Assets/Content`: `Dungeon`, `Gameplay/Actors`, `Gameplay/Skills`, `Gameplay/Chests`, `Gameplay/Rewards`, `Configuration` и `UI`.
 
 Imported assets are migrated through Unity Editor tooling. Reusable project-owned prefabs are rebuilt against migrated models/materials. An Editor validation test calls `AssetDatabase.GetDependencies` for production scenes, prefabs and definitions and fails on any path under `Assets/ImportedAssets`.
 
@@ -183,7 +167,7 @@ No new runtime Addressables code is introduced until generated keys exist.
 4. `DE3`: encounter, deterministic companion action selector, actor VFX slots and authored tactical anchors.
 5. `DE4`: chest focus/opening, HUD/summary and result/replay.
 6. `DE5`: application-flow cutover; old monolithic launch removed after replacement is green.
-7. `DE6`: compile/EditMode/PlayMode/dependency audit/manual corridor smoke/Android/profiler.
+7. `DE6`: compile/EditMode/PlayMode/dependency audit/manual Editor/PC corridor smoke. Android build и device profiler отложены и не являются gate текущего slice.
 
 Each milestone must keep a single runtime launch path and explicit ownership. No compatibility flag or permanent dual implementation is allowed.
 
@@ -195,5 +179,5 @@ Each milestone must keep a single runtime launch path and explicit ownership. No
 - PlayMode: scene/prefab wiring, manual leader `Primary`, one-shot `FOLLOW`, companion autonomy, two camera turns, formation recovery, chest once-only, encounter/result/replay.
 - Editor dependency test: zero `ImportedAssets` paths from all production roots.
 - Manual Unity smoke: framing before/during/after turns, focus transitions, no console errors.
-- Android: landscape build, visible manual `Primary`, target/`Active1`/`FOLLOW` touch input and focus recovery.
-- Profiler: 30 FPS target on selected device; report CPU/frame, GC/frame, batches and triangles separately.
+- Editor/PC smoke: visible manual `Primary`, target/`Active1`/`FOLLOW`, три различимых спутника, полный encounter и replay без blocking console errors.
+- Profiler запускается только при доказанном performance regression или перед возвращением к device validation; текущий slice не получает Android/device gate.

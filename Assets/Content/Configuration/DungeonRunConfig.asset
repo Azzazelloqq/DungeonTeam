@@ -23,8 +23,6 @@ MonoBehaviour:
   - loadout.druid.healer
   - loadout.rogue
   - loadout.wizard
-  - loadout.skeleton.mage
-  - loadout.skeleton.warrior
   _minimumTeamSize: 2
   _maximumTeamSize: 4
   _defaultLeader:
@@ -35,3 +33,9 @@ MonoBehaviour:
   - _actorId: actor.druid
     _level: 1
     _loadoutId: loadout.druid.healer
+  - _actorId: actor.rogue
+    _level: 1
+    _loadoutId: loadout.rogue
+  - _actorId: actor.wizard
+    _level: 1
+    _loadoutId: loadout.wizard

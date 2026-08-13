@@ -35,10 +35,10 @@ MonoBehaviour:
     _displayName: ROGUE
     _levels:
     - _level: 1
-      _maximumHealth: 80
+      _maximumHealth: 120
       _movementSpeed: 4
     - _level: 2
-      _maximumHealth: 96
+      _maximumHealth: 144
       _movementSpeed: 4
   - _actorId: actor.wizard
     _displayName: WIZARD

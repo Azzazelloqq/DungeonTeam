@@ -2,7 +2,7 @@
 
 **Статус:** нормативный scope текущей реализации
 
-**Версия:** 0.2
+**Версия:** 0.3
 
 **Дата:** 13 августа 2026
 
@@ -10,7 +10,7 @@
 
 ## 1. Цель
 
-Собрать один законченный playable-забег по authored пещерному коридору. Игрок ведёт лидера, три автономных спутника держат строй и автоматически применяют role-driven навыки, камера кинематографично сопровождает группу, а маршрут содержит один сундук и один составной encounter.
+Собрать один законченный playable-забег по authored пещерному коридору. Игрок ведёт лидера, три автономных спутника держат строй и автоматически применяют loadout-driven навыки, камера кинематографично сопровождает группу, а маршрут содержит один сундук и один составной encounter.
 
 Slice должен доказать не только боевую читаемость, но и качество перехода `движение по данжу → активность → бой → продолжение маршрута → финиш`.
 
@@ -27,7 +27,7 @@ Slice должен доказать не только боевую читаем�
 ## 3. In scope
 
 - один линейный authored cave-corridor с прямыми участками и минимум двумя поворотами;
-- один лидер и три автономных спутника с различимыми proxy-функциями; рабочие labels `protector`, `damage/caster`, `support/controller` не являются жёсткими классами или окончательной taxonomy;
+- один лидер и три автономных спутника с различимыми proxy-функциями; рабочие labels `close pressure/durability`, `ranged damage`, `support/healer` не являются жёсткими классами или окончательной taxonomy;
 - три функционально разных enemy archetype: pressure melee, area threat, disruptor/ranged;
 - следование отряда, восстановление строя и authored tactical anchors;
 - corridor camera с look-ahead, turn blends и activity focus;
@@ -37,7 +37,7 @@ Slice должен доказать не только боевую читаем�
 - target priority и отдельный одноразовый жёсткий `FOLLOW`; `Dodge` и будущие тактические команды не входят в текущий scope;
 - HUD для health/cooldowns/target/`Primary`/`Active1`/`FOLLOW`/interaction и terminal summary;
 - project-owned prefabs, models, materials, textures, VFX slots и definitions;
-- Android landscape как основной build path;
+- Editor/PC playable как текущий путь проверки slice; Android build и device profiling отложены и не являются gate текущего slice;
 - automated validation Unity dependencies: production content не ссылается на `Assets/ImportedAssets`.
 
 ## 4. Content mapping
@@ -45,15 +45,15 @@ Slice должен доказать не только боевую читаем�
 | Рабочая proxy-функция | Visual source |
 | --- | --- |
 | Leader | Polygon Fantasy Characters — King |
-| Protector | Polygon Fantasy Characters — Rogue |
-| Damage/caster | Polygon Fantasy Characters — Wizard |
-| Support/controller | Polygon Fantasy Characters — Druid |
+| Close pressure / durability proxy | Polygon Fantasy Characters — Rogue |
+| Ranged damage | Polygon Fantasy Characters — Wizard |
+| Support / healer proxy | Polygon Fantasy Characters — Druid |
 | Pressure melee | Goblin |
 | Area threat | Minotaur |
 | Disruptor/ranged | Skeleton |
 | Level/chest | POLYSTYLE Medieval Dungeons |
 
-Импортированные пакеты являются только источником. Любой используемый asset и вся его необходимая dependency closure должны находиться в `Assets/Game/Content/DungeonExpedition`. Production scene, prefab, material, definition и controller не могут иметь зависимость на `Assets/ImportedAssets`.
+Импортированные пакеты являются только источником. Любой используемый asset и вся его необходимая dependency closure должны находиться в project-owned `Assets/Content`. Production scene, prefab, material, definition и controller не могут иметь зависимость на `Assets/ImportedAssets`.
 
 ## 5. Animation proxy policy
 
@@ -103,4 +103,4 @@ Slice считается готовым, когда:
 - в encounter присутствуют три enemy archetype с корректными моделями;
 - победа открывает путь к выходу, поражение и replay работают;
 - production dependency audit возвращает ноль путей из `Assets/ImportedAssets`;
-- EditMode/PlayMode проверки зелёные, Android build создаётся, corridor smoke и profiler пройдены отдельно.
+- EditMode/PlayMode проверки зелёные, а corridor smoke пройден в Editor/PC без blocking console errors; Android build и device profiler не входят в текущий acceptance.

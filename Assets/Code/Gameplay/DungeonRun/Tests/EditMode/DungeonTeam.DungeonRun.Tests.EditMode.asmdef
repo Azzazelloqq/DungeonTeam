@@ -2,10 +2,14 @@
   "name": "DungeonTeam.DungeonRun.Tests.EditMode",
   "rootNamespace": "DungeonTeam.Gameplay.DungeonRun.Tests",
   "references": [
+    "Config",
+    "DungeonTeam.Actors.Runtime",
+    "DungeonTeam.Configuration",
     "DungeonTeam.DungeonRun.Application",
     "DungeonTeam.DungeonRun.Runtime",
     "DungeonTeam.Hero.Runtime",
     "DungeonTeam.Skills.Domain",
+    "DungeonTeam.Skills.Runtime",
     "DungeonTeam.Rewards.Runtime"
   ],
   "includePlatforms": [
