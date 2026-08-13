@@ -16,7 +16,7 @@ MonoBehaviour:
   - {_phase: 0, _delay: 0, _cue: 1}
   _vfxCues:
   - {_phase: 0, _delay: 0, _lifetime: 0.45, _anchor: 0, _followAnchor: 1,
-    _scaleMultiplier: 1, _rotationOffsetEuler: {x: 0, y: 0, z: 0},
+    _scaleMultiplier: 0.4, _rotationOffsetEuler: {x: 0, y: 0, z: 0},
     _prefab: {fileID: 168292, guid: 85d2badb1ad44b11a75aa0b67e35e93d, type: 3}}
   - {_phase: 2, _delay: 0, _lifetime: 0.55, _anchor: 2, _followAnchor: 0,
     _scaleMultiplier: 1, _rotationOffsetEuler: {x: 0, y: 0, z: 0},
