@@ -20,25 +20,16 @@
 
 ## Как читать документацию
 
-`Docs/AI` не читается автоматически. До изменения кода прочитай только документы, соответствующие задаче:
+`AGENTS.md` содержит только общие правила. Единый обязательный маршрутизатор подробной документации — `Docs/AI/index.md`.
 
-| Задача | Обязательные документы |
-| --- | --- |
-| Новая feature, границы модулей, asmdef | `Docs/AI/architecture.md`, `Docs/AI/module-rules.md` |
-| Root, DI scope, async, subscriptions, disposal | `Docs/AI/architecture.md`, `Docs/AI/lifecycle.md`, `Docs/AI/libraries/lightdi.md`, `Docs/AI/libraries/roots-and-disposal.md` |
-| Gameplay | `Docs/AI/libraries/presentation.md`, `Docs/AI/recipes/new-gameplay-object.md` |
-| UI | `Docs/AI/libraries/presentation.md`, `Docs/AI/recipes/new-ui-screen.md` |
-| UIService, UI-группы, Show/Hide/Close, очереди окон | `Docs/AI/libraries/ui-service.md`, `Docs/AI/lifecycle.md`, `Docs/AI/libraries/addressables.md` |
-| Списки, вложенные страницы, child presenter/viewmodel | `Docs/AI/libraries/presentation.md`, `Docs/AI/recipes/nested-presentation.md`, `Docs/AI/lifecycle.md` |
-| Addressables, prefab, сцены | `Docs/AI/libraries/addressables.md`, `Docs/AI/architecture.md` |
-| Feedback, звук, музыка, вибрации | `Docs/AI/libraries/feedback.md`, `Docs/AI/lifecycle.md`, `Docs/AI/libraries/addressables.md` |
-| DOTween, визуальные переходы, UI fade, декоративный feedback | `Docs/AI/libraries/dotween.md`, `Docs/AI/lifecycle.md` |
-| Config | `Docs/AI/libraries/config.md` |
-| Сохранения | `Docs/AI/libraries/persistence.md` |
-| Tick, logger, utility extensions | `Docs/AI/libraries/runtime-services.md`, `Docs/AI/lifecycle.md` |
-| Автотесты, TDD, testability | `Docs/AI/testing.md`, а при lifecycle — также `Docs/AI/lifecycle.md` |
+До анализа, плана или изменения проекта:
 
-Если задача покрывает несколько строк, прочитай объединение документов. Не загружай всю документацию без необходимости.
+1. Открой `Docs/AI/index.md`.
+2. Выбери строку затронутого модуля и все подходящие строки аспектов задачи.
+3. Полностью прочитай объединение указанных обязательных документов; условные документы читай только при совпадении их trigger.
+4. Если маршрут отсутствует, документ не найден или источники расходятся, сообщи о пробеле или дрейфе и не придумывай правило самостоятельно.
+
+Не загружай всю документацию без необходимости. При добавлении нового модуля, subsystem или обязательного документа обнови маршрутизатор в той же задаче.
 
 При работе с кастомной библиотекой сверяй используемый API с текущим исходником в `Library/PackageCache`. Если он расходится с документацией, источником правды является исходник; сообщи о дрейфе документации.
 

@@ -9,6 +9,7 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
     {
         private const float SpawnSampleDistance = 3f;
 
+        private readonly NavMeshPath _path = new();
         private GameObject _root;
         private NavMeshSurface _surface;
 
@@ -51,6 +52,22 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
             }
 
             return hit.position;
+        }
+
+        internal bool HasCompletePath(Vector3 sourcePosition, Vector3 targetPosition)
+        {
+            if (_surface == null || _surface.navMeshData == null)
+            {
+                throw new InvalidOperationException(
+                    "Dungeon Run navigation is not built.");
+            }
+
+            return NavMesh.CalculatePath(
+                       sourcePosition,
+                       targetPosition,
+                       NavMesh.AllAreas,
+                       _path) &&
+                   _path.status == NavMeshPathStatus.PathComplete;
         }
 
         public void Dispose()

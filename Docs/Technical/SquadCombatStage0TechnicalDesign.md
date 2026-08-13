@@ -2,7 +2,7 @@
 
 ## Статус, версия и иерархия
 
-**Статус:** **READY для реализации по milestone-gates M0 → M9**. READY разрешает отдельной implementation-задаче начать только M0; переход к следующему milestone разрешён лишь после validation и review текущего. Этот документ не является утверждением Stage 1+.
+**Статус:** **ARCHIVED / SUPERSEDED** — исторический Stage 0 design; реализация по этому плану не разрешена
 
 **Версия:** 1.0
 
@@ -11,6 +11,8 @@
 **Владелец технического решения:** engineering
 
 **Продуктовый владелец tuning/content/control decisions:** product/game design
+
+> **Важно:** design сохранён как историческая фиксация прежнего proposal. Auto basic attack, Dodge, Rally/Context A/B, три жёсткие role-policy и описанный baseline не являются текущим планом. Действующий playable design — `Docs/Technical/DungeonExpeditionVerticalSliceTechnicalDesign.md`, его product source — `Docs/Product/DungeonExpeditionVerticalSliceGDD.md`. Тело ниже намеренно оставлено без ретроспективного переписывания.
 
 Иерархия источников:
 

@@ -25,6 +25,7 @@ namespace DungeonTeam.Gameplay.Hero.Runtime
         private readonly HeroTargetSelectionBrain _targetSelectionBrain;
         private readonly ActorCombatController _combat;
         private readonly SkillSlot? _autoTargetSlot;
+        private readonly Func<Vector3, Vector3, bool> _hasCompletePath;
 
         private ActorInstance _target;
         private SkillSlot _selectedSlot;
@@ -34,6 +35,8 @@ namespace DungeonTeam.Gameplay.Hero.Runtime
         private Vector3 _lastDestination;
         private bool _hasDestination;
         private bool _isManualMoving;
+        private bool _isCurrentTargetReachable;
+        private float _targetScanElapsed;
         private bool _isInitialized;
         private bool _isDisposed;
 
@@ -45,7 +48,8 @@ namespace DungeonTeam.Gameplay.Hero.Runtime
             ITickHandler tickHandler,
             IHeroInput input,
             HeroControlSettings settings,
-            ActorCombatController combat)
+            ActorCombatController combat,
+            Func<Vector3, Vector3, bool> hasCompletePath)
         {
             _hero = hero ?? throw new ArgumentNullException(nameof(hero));
             _allies = allies ?? throw new ArgumentNullException(nameof(allies));
@@ -55,6 +59,8 @@ namespace DungeonTeam.Gameplay.Hero.Runtime
             _input = input ?? throw new ArgumentNullException(nameof(input));
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
             _combat = combat ?? throw new ArgumentNullException(nameof(combat));
+            _hasCompletePath = hasCompletePath ?? throw new ArgumentNullException(
+                nameof(hasCompletePath));
             if (!ReferenceEquals(_combat.Actor, _hero))
             {
                 throw new ArgumentException(
@@ -63,7 +69,8 @@ namespace DungeonTeam.Gameplay.Hero.Runtime
             }
             _settings.Validate();
             _targetSelectionBrain = new HeroTargetSelectionBrain(
-                _settings.ManualTargetLossDistance);
+                _settings.ManualTargetLossDistance,
+                _settings.ManualTargetUnreachableGraceDuration);
 
             _selectedSlot = _combat.HasSlot(SkillSlot.Primary)
                 ? SkillSlot.Primary
@@ -89,6 +96,7 @@ namespace DungeonTeam.Gameplay.Hero.Runtime
                 throw new InvalidOperationException("Hero Controller is already initialized.");
             }
 
+            RefreshTargetSelection(deltaTime: 0f, forceScan: true);
             _tickHandler.SubscribeOnFrameUpdate(OnFrameUpdate);
             _isInitialized = true;
         }
@@ -96,7 +104,12 @@ namespace DungeonTeam.Gameplay.Hero.Runtime
         public bool TrySetTarget(ActorInstance target)
         {
             if (target != null &&
-                (!target.IsAlive || (!IsEnemy(target) && !IsAlly(target))))
+                (!target.IsAlive ||
+                 (!IsEnemy(target) && !IsAlly(target)) ||
+                 PlanarSqrDistance(_hero.Position, target.Position) >
+                 _settings.ManualTargetLossDistance *
+                 _settings.ManualTargetLossDistance ||
+                 !HasCompletePath(target)))
             {
                 return false;
             }
@@ -131,6 +144,8 @@ namespace DungeonTeam.Gameplay.Hero.Runtime
             _selectedSlot = slot;
             if (!_combat.IsReady(slot))
                 return false;
+
+            AcquireAutoTargetForRequest(slot);
 
             if (!TryResolveSkillTarget(slot, out var target, out var targetRelation))
                 return false;
@@ -184,7 +199,7 @@ namespace DungeonTeam.Gameplay.Hero.Runtime
                 SelectTargetAt(pointerPosition);
             }
 
-            RefreshTargetSelection();
+            RefreshTargetSelection(deltaTime);
             var hasRequestedSkill = _input.TryConsumeSkillRequest(out var requestedSlot);
 
             var movement = _input.Movement;
@@ -354,6 +369,7 @@ namespace DungeonTeam.Gameplay.Hero.Runtime
         private void SelectTargetAt(Vector2 screenPosition)
         {
             ActorInstance nearest = null;
+            var nearestIndex = -1;
             var nearestDistanceSqr = _settings.TargetSelectionRadius *
                                      _settings.TargetSelectionRadius;
             for (var index = 0; index < _enemies.Count; index++)
@@ -370,24 +386,32 @@ namespace DungeonTeam.Gameplay.Hero.Runtime
 
                 var targetPoint = candidate.Position + Vector3.up * _settings.EyeHeight;
                 var candidateScreenPosition = _camera.WorldToScreenPoint(targetPoint);
-                if (candidateScreenPosition.z <= 0f ||
-                    Physics.Linecast(
-                        _camera.transform.position,
-                        targetPoint,
-                        _settings.ObstacleMask,
-                        QueryTriggerInteraction.Ignore))
+                if (candidateScreenPosition.z <= 0f)
                 {
                     continue;
                 }
 
                 var difference = (Vector2)candidateScreenPosition - screenPosition;
                 var distanceSqr = difference.sqrMagnitude;
-                if (distanceSqr > nearestDistanceSqr)
+                if (distanceSqr > nearestDistanceSqr ||
+                    (distanceSqr == nearestDistanceSqr &&
+                     !ShouldPreferCandidate(candidate, index, nearest, nearestIndex)))
+                {
+                    continue;
+                }
+
+                if (Physics.Linecast(
+                        _camera.transform.position,
+                        targetPoint,
+                        _settings.ObstacleMask,
+                        QueryTriggerInteraction.Ignore) ||
+                    !HasCompletePath(candidate))
                 {
                     continue;
                 }
 
                 nearest = candidate;
+                nearestIndex = index;
                 nearestDistanceSqr = distanceSqr;
             }
 
@@ -407,29 +431,57 @@ namespace DungeonTeam.Gameplay.Hero.Runtime
             TrySetTarget(nearest);
         }
 
-        private void RefreshTargetSelection()
+        private void RefreshTargetSelection(float deltaTime, bool forceScan = false)
         {
-            if (_pendingSlot.HasValue || _combat.IsBusy)
+            _targetScanElapsed += deltaTime;
+            var shouldScan = forceScan ||
+                             _targetScanElapsed >= _settings.TargetScanInterval;
+            if (shouldScan)
+            {
+                _targetScanElapsed = 0f;
+            }
+
+            if (_combat.IsBusy)
             {
                 return;
             }
 
             if (_targetSelectionBrain.Mode == HeroTargetSelectionMode.Manual)
             {
-                var hasValidTarget = _target != null &&
-                                     _target.IsAlive &&
-                                     (IsEnemy(_target) || IsAlly(_target));
-                var targetDistance = hasValidTarget
+                var hasTarget = _target != null &&
+                                (IsEnemy(_target) || IsAlly(_target));
+                var isTargetAlive = hasTarget && _target.IsAlive;
+                var targetDistance = isTargetAlive
                     ? PlanarDistance(_hero.Position, _target.Position)
                     : 0f;
-                if (_targetSelectionBrain.Evaluate(hasValidTarget, targetDistance) ==
+                if (shouldScan && isTargetAlive)
+                    _isCurrentTargetReachable = HasCompletePath(_target);
+
+                if (_targetSelectionBrain.Evaluate(
+                        hasTarget,
+                        isTargetAlive,
+                        _isCurrentTargetReachable,
+                        targetDistance,
+                        deltaTime) ==
                     HeroTargetSelectionMode.Manual)
                 {
                     return;
                 }
 
                 SetTarget(null);
+                shouldScan = true;
             }
+            else if (_target != null && !_target.IsAlive)
+            {
+                SetTarget(null);
+                shouldScan = true;
+            }
+
+            if (_pendingSlot.HasValue && ReferenceEquals(_target, _pendingTarget))
+                return;
+
+            if (!shouldScan)
+                return;
 
             SetTarget(_autoTargetSlot.HasValue
                 ? FindAutoTarget(_autoTargetSlot.Value)
@@ -440,6 +492,7 @@ namespace DungeonTeam.Gameplay.Hero.Runtime
         {
             _targetSelectionBrain.UseAutomatic();
             SetTarget(null);
+            _targetScanElapsed = _settings.TargetScanInterval;
         }
 
         private bool HasClearLine(ActorInstance target)
@@ -485,16 +538,9 @@ namespace DungeonTeam.Gameplay.Hero.Runtime
             switch (targetRule)
             {
                 case SkillTargetRule.EnemyActor:
-                    if (_target == null)
-                    {
-                        target = FindAutoTarget(slot);
-                    }
-                    else
-                    {
-                        target = IsEnemy(_target) && _target.IsAlive
-                            ? _target
-                            : null;
-                    }
+                    target = _target != null && IsEnemy(_target) && _target.IsAlive
+                        ? _target
+                        : null;
 
                     targetRelation = SkillTargetRelation.Enemy;
                     break;
@@ -515,6 +561,7 @@ namespace DungeonTeam.Gameplay.Hero.Runtime
         private ActorInstance FindAutoTarget(SkillSlot slot)
         {
             ActorInstance nearest = null;
+            var nearestIndex = -1;
             var nearestDistanceSqr = _settings.AutoTargetRange *
                                      _settings.AutoTargetRange;
             for (var index = 0; index < _enemies.Count; index++)
@@ -522,18 +569,23 @@ namespace DungeonTeam.Gameplay.Hero.Runtime
                 var candidate = _enemies[index];
                 if (candidate == null ||
                     !candidate.IsAlive ||
-                    !_combat.CanTarget(slot, candidate, SkillTargetRelation.Enemy) ||
-                    !HasClearLine(candidate))
+                    !_combat.CanTarget(slot, candidate, SkillTargetRelation.Enemy))
                 {
                     continue;
                 }
 
                 var distanceSqr = PlanarSqrDistance(_hero.Position, candidate.Position);
                 if (distanceSqr > nearestDistanceSqr ||
-                    (nearest != null && distanceSqr >= nearestDistanceSqr))
+                    (distanceSqr == nearestDistanceSqr &&
+                     !ShouldPreferCandidate(candidate, index, nearest, nearestIndex)) ||
+                    !HasClearLine(candidate) ||
+                    !HasCompletePath(candidate))
+                {
                     continue;
+                }
 
                 nearest = candidate;
+                nearestIndex = index;
                 nearestDistanceSqr = distanceSqr;
             }
 
@@ -561,8 +613,44 @@ namespace DungeonTeam.Gameplay.Hero.Runtime
                 return;
             }
 
-            CancelActiveSkillAction();
+            if (ReferenceEquals(_target, _pendingTarget))
+            {
+                CancelActiveSkillAction();
+            }
+
             _target = target;
+            _isCurrentTargetReachable = target != null;
+        }
+
+        private void AcquireAutoTargetForRequest(SkillSlot slot)
+        {
+            if (_targetSelectionBrain.Mode != HeroTargetSelectionMode.Automatic ||
+                _combat.GetSlotState(slot).Skill.TargetRule != SkillTargetRule.EnemyActor)
+            {
+                return;
+            }
+
+            SetTarget(FindAutoTarget(slot));
+            _targetScanElapsed = 0f;
+        }
+
+        private bool HasCompletePath(ActorInstance target)
+        {
+            return _hasCompletePath(_hero.Position, target.Position);
+        }
+
+        private static bool ShouldPreferCandidate(
+            ActorInstance candidate,
+            int candidateIndex,
+            ActorInstance current,
+            int currentIndex)
+        {
+            if (current == null)
+                return true;
+
+            var idComparison = string.CompareOrdinal(candidate.ActorId, current.ActorId);
+            return idComparison < 0 ||
+                   (idComparison == 0 && candidateIndex < currentIndex);
         }
 
         private void CancelActiveSkillAction()

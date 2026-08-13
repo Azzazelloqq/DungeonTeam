@@ -8,13 +8,6 @@ using UnityEngine;
 
 namespace DungeonTeam.Gameplay.Team.Runtime
 {
-    internal enum TeamCommandMode
-    {
-        Autonomous,
-        Attack,
-        Follow
-    }
-
     public sealed class TeamController : IDisposable
     {
         private const float MovementThreshold = 0.0001f;
@@ -31,7 +24,7 @@ namespace DungeonTeam.Gameplay.Team.Runtime
         private ActorInstance _availableAttackTarget;
         private ActorInstance _orderedAttackTarget;
         private ActorInstance _retaliationTarget;
-        private TeamCommandMode _commandMode;
+        private CompanionCommandMode _commandMode;
         private float _cameraYaw;
         private bool _lastCanOrderAttack;
         private bool _lastCanOrderFollow;
@@ -102,13 +95,13 @@ namespace DungeonTeam.Gameplay.Team.Runtime
 
         public bool CanOrderAttack =>
             HasLivingCompanion() &&
-            _commandMode != TeamCommandMode.Attack &&
+            _commandMode != CompanionCommandMode.Attack &&
             _availableAttackTarget != null;
 
         public bool CanOrderFollow =>
             HasLivingCompanion() &&
-            _commandMode != TeamCommandMode.Follow &&
-            (_commandMode == TeamCommandMode.Attack ||
+            _commandMode != CompanionCommandMode.Follow &&
+            (_commandMode == CompanionCommandMode.Attack ||
              _retaliationTarget != null ||
              HasCompanionPreCommitAction());
 
@@ -175,7 +168,7 @@ namespace DungeonTeam.Gameplay.Team.Runtime
                 return false;
             }
 
-            _commandMode = TeamCommandMode.Attack;
+            _commandMode = CompanionCommandMode.Attack;
             _orderedAttackTarget = _availableAttackTarget;
             _retaliationTarget = null;
             _availableAttackTarget = null;
@@ -186,7 +179,7 @@ namespace DungeonTeam.Gameplay.Team.Runtime
 
         public void OrderFollow()
         {
-            _commandMode = TeamCommandMode.Follow;
+            _commandMode = CompanionCommandMode.Follow;
             _orderedAttackTarget = null;
             _retaliationTarget = null;
             CancelCompanionPreCommitActions();
@@ -198,13 +191,13 @@ namespace DungeonTeam.Gameplay.Team.Runtime
         {
             UpdateCommandTargets();
             RefreshAvailableAttackTarget();
-            var healTarget = _commandMode == TeamCommandMode.Autonomous
+            var healTarget = _commandMode == CompanionCommandMode.Autonomous
                 ? SelectHealTarget()
                 : null;
-            var attackTarget = _commandMode == TeamCommandMode.Attack
+            var attackTarget = _commandMode == CompanionCommandMode.Attack
                 ? _orderedAttackTarget
                 : _retaliationTarget;
-            var isRecallComplete = _commandMode == TeamCommandMode.Follow;
+            var isRecallComplete = _commandMode == CompanionCommandMode.Follow;
             for (var index = 0; index < _companions.Count; index++)
             {
                 isRecallComplete &= _companions[index].Tick(
@@ -215,9 +208,9 @@ namespace DungeonTeam.Gameplay.Team.Runtime
                     _commandMode);
             }
 
-            if (_commandMode == TeamCommandMode.Follow && isRecallComplete)
+            if (_commandMode == CompanionCommandMode.Follow && isRecallComplete)
             {
-                _commandMode = TeamCommandMode.Autonomous;
+                _commandMode = CompanionCommandMode.Autonomous;
                 RefreshAvailableAttackTarget();
             }
 
@@ -236,9 +229,9 @@ namespace DungeonTeam.Gameplay.Team.Runtime
                  !CanAnyCompanionContinueCombat(_orderedAttackTarget)))
             {
                 _orderedAttackTarget = null;
-                if (_commandMode == TeamCommandMode.Attack)
+                if (_commandMode == CompanionCommandMode.Attack)
                 {
-                    _commandMode = TeamCommandMode.Autonomous;
+                    _commandMode = CompanionCommandMode.Autonomous;
                 }
             }
 
@@ -269,7 +262,7 @@ namespace DungeonTeam.Gameplay.Team.Runtime
 
         private void RefreshAvailableAttackTarget()
         {
-            if (_commandMode == TeamCommandMode.Attack || !HasLivingCompanion())
+            if (_commandMode == CompanionCommandMode.Attack || !HasLivingCompanion())
             {
                 _availableAttackTarget = null;
                 return;
@@ -362,7 +355,7 @@ namespace DungeonTeam.Gameplay.Team.Runtime
 
         private void OnTeamMemberAttacked(ActorInstance attacker)
         {
-            if (_commandMode != TeamCommandMode.Autonomous ||
+            if (_commandMode != CompanionCommandMode.Autonomous ||
                 !HasLivingCompanion() ||
                 attacker == null ||
                 !attacker.IsAlive ||

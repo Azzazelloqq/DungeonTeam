@@ -132,6 +132,7 @@ namespace DungeonTeam.UI.CombatHud.Tests.PlayMode
                 var marker = (RectTransform)harness.View.transform.Find(
                     "SafeArea/TargetMarker");
                 var topSegment = marker.Find("Top").GetComponent<Image>();
+                var directionIndicator = marker.Find("DirectionIndicator");
                 var screenCenter = new Vector2(Screen.width * 0.5f, Screen.height * 0.5f);
 
                 Assert.That(marker.gameObject.activeSelf, Is.False);
@@ -151,7 +152,19 @@ namespace DungeonTeam.UI.CombatHud.Tests.PlayMode
                 harness.Model.UpdateTarget(new CombatHudTargetState(
                     new Vector3(-1f, screenCenter.y, 1f),
                     CombatHudTargetSelection.Manual));
-                Assert.That(marker.gameObject.activeSelf, Is.False);
+                Assert.That(marker.gameObject.activeSelf, Is.True);
+                Assert.That(directionIndicator.gameObject.activeSelf, Is.True);
+                Assert.That(
+                    marker.anchoredPosition.x,
+                    Is.EqualTo(marker.parent.GetComponent<RectTransform>().rect.xMin +
+                               marker.rect.width * 0.5f).Within(0.01f));
+
+                harness.Model.UpdateTarget(new CombatHudTargetState(
+                    new Vector3(Screen.width + 10f, screenCenter.y, -1f),
+                    CombatHudTargetSelection.Manual));
+                Assert.That(marker.gameObject.activeSelf, Is.True);
+                Assert.That(directionIndicator.gameObject.activeSelf, Is.True);
+                Assert.That(marker.anchoredPosition.x, Is.LessThan(0f));
 
                 harness.Model.UpdateTarget(CombatHudTargetState.Hidden);
                 Assert.That(marker.gameObject.activeSelf, Is.False);

@@ -205,6 +205,8 @@ MonoBehaviour:
     _eyeHeight: 1
     _autoTargetRange: 8
     _manualTargetLossDistance: 10
+    _targetScanInterval: 0.1
+    _manualTargetUnreachableGraceDuration: 0.3
     _obstacleMask:
       serializedVersion: 2
       m_Bits: 4294967295

@@ -112,13 +112,60 @@ namespace DungeonTeam.UI.CombatHud.Tests
         }
 
         [Test]
-        public void TargetState_BehindCamera_IsHidden()
+        public void TargetState_BehindCamera_RemainsAvailableForEdgeLayout()
         {
             var target = new CombatHudTargetState(
                 new Vector3(640f, 360f, -1f),
                 CombatHudTargetSelection.Manual);
 
-            Assert.That(target.IsVisible, Is.False);
+            Assert.That(target.HasTarget, Is.True);
+            Assert.That(target.IsInFront, Is.False);
+        }
+
+        [Test]
+        public void TargetMarkerLayout_OffscreenRight_ClampsInsideSafeArea()
+        {
+            var layout = CombatHudTargetMarkerLayout.Resolve(
+                new Rect(-100f, -50f, 200f, 100f),
+                new Vector2(160f, 0f),
+                isInFront: true,
+                markerHalfSize: 10f);
+
+            Assert.That(layout.IsVisible, Is.True);
+            Assert.That(layout.IsOffscreen, Is.True);
+            Assert.That(layout.Position, Is.EqualTo(new Vector2(90f, 0f)));
+            Assert.That(layout.Direction, Is.EqualTo(Vector2.right));
+        }
+
+        [Test]
+        public void TargetMarkerLayout_BehindCamera_FlipsDirectionBeforeClamping()
+        {
+            var layout = CombatHudTargetMarkerLayout.Resolve(
+                new Rect(-100f, -50f, 200f, 100f),
+                new Vector2(20f, 0f),
+                isInFront: false,
+                markerHalfSize: 10f);
+
+            Assert.That(layout.IsVisible, Is.True);
+            Assert.That(layout.IsOffscreen, Is.True);
+            Assert.That(layout.Position, Is.EqualTo(new Vector2(-90f, 0f)));
+            Assert.That(layout.Direction, Is.EqualTo(Vector2.left));
+        }
+
+        [Test]
+        public void TargetMarkerLayout_Onscreen_PreservesProjectedPosition()
+        {
+            var expectedPosition = new Vector2(25f, -12f);
+
+            var layout = CombatHudTargetMarkerLayout.Resolve(
+                new Rect(-100f, -50f, 200f, 100f),
+                expectedPosition,
+                isInFront: true,
+                markerHalfSize: 10f);
+
+            Assert.That(layout.IsVisible, Is.True);
+            Assert.That(layout.IsOffscreen, Is.False);
+            Assert.That(layout.Position, Is.EqualTo(expectedPosition));
         }
 
         [Test]

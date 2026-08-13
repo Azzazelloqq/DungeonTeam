@@ -45,9 +45,11 @@ namespace DungeonTeam.UI.CombatHud
 
         private readonly List<ButtonEntry> _buttons = new();
         private readonly List<Image> _targetMarkerSegments = new(4);
+        private readonly List<Image> _targetDirectionSegments = new(2);
         private RectTransform _safeArea;
         private RectTransform _contextActionsHost;
         private RectTransform _targetMarker;
+        private RectTransform _targetDirectionIndicator;
         private Canvas _canvas;
         private VirtualJoystickControl _joystickControl;
         private RawImage _joystickBase;
@@ -104,9 +106,11 @@ namespace DungeonTeam.UI.CombatHud
 
             _buttons.Clear();
             _targetMarkerSegments.Clear();
+            _targetDirectionSegments.Clear();
             _safeArea = null;
             _contextActionsHost = null;
             _targetMarker = null;
+            _targetDirectionIndicator = null;
             _targetState = CombatHudTargetState.Hidden;
             DestroyCooldownSprite();
         }
@@ -233,6 +237,7 @@ namespace DungeonTeam.UI.CombatHud
                 "Right",
                 new Vector2(1f, 0.5f),
                 new Vector2(_targetMarkerThickness, _targetMarkerSize));
+            CreateTargetDirectionIndicator();
             markerObject.SetActive(false);
         }
 
@@ -261,17 +266,58 @@ namespace DungeonTeam.UI.CombatHud
             _targetMarkerSegments.Add(segment);
         }
 
+        private void CreateTargetDirectionIndicator()
+        {
+            var indicatorObject = new GameObject(
+                "DirectionIndicator",
+                typeof(RectTransform));
+            indicatorObject.layer = gameObject.layer;
+            _targetDirectionIndicator = (RectTransform)indicatorObject.transform;
+            _targetDirectionIndicator.SetParent(_targetMarker, false);
+            _targetDirectionIndicator.anchorMin = new Vector2(0.5f, 0.5f);
+            _targetDirectionIndicator.anchorMax = new Vector2(0.5f, 0.5f);
+            _targetDirectionIndicator.pivot = new Vector2(0.5f, 0.5f);
+            _targetDirectionIndicator.sizeDelta = Vector2.one * _targetMarkerSize;
+
+            CreateTargetDirectionSegment("Left", -1f);
+            CreateTargetDirectionSegment("Right", 1f);
+            indicatorObject.SetActive(false);
+        }
+
+        private void CreateTargetDirectionSegment(string name, float side)
+        {
+            var segmentObject = new GameObject(
+                name,
+                typeof(RectTransform),
+                typeof(CanvasRenderer),
+                typeof(Image));
+            segmentObject.layer = gameObject.layer;
+            var segmentRect = (RectTransform)segmentObject.transform;
+            segmentRect.SetParent(_targetDirectionIndicator, false);
+            segmentRect.anchorMin = new Vector2(0.5f, 0.5f);
+            segmentRect.anchorMax = new Vector2(0.5f, 0.5f);
+            segmentRect.pivot = new Vector2(0.5f, 0.5f);
+            segmentRect.sizeDelta = new Vector2(
+                _targetMarkerSize * 0.3f,
+                _targetMarkerThickness);
+            segmentRect.anchoredPosition = new Vector2(
+                side * _targetMarkerSize * 0.1f,
+                _targetMarkerSize * 0.08f);
+            segmentRect.localRotation = Quaternion.Euler(0f, 0f, side * 45f);
+
+            var segment = segmentObject.GetComponent<Image>();
+            segment.color = _automaticTargetColor;
+            segment.raycastTarget = false;
+            _targetDirectionSegments.Add(segment);
+        }
+
         private void ApplyTarget(CombatHudTargetState state)
         {
             _targetState = state;
             if (_targetMarker == null)
                 return;
 
-            if (!state.IsVisible ||
-                state.ScreenPosition.x < 0f ||
-                state.ScreenPosition.y < 0f ||
-                state.ScreenPosition.x >= Screen.width ||
-                state.ScreenPosition.y >= Screen.height)
+            if (!state.HasTarget)
             {
                 _targetMarker.gameObject.SetActive(false);
                 return;
@@ -291,12 +337,34 @@ namespace DungeonTeam.UI.CombatHud
                 return;
             }
 
-            _targetMarker.anchoredPosition = localPosition;
+            var layout = CombatHudTargetMarkerLayout.Resolve(
+                _safeArea.rect,
+                localPosition,
+                state.IsInFront,
+                _targetMarkerSize * 0.5f);
+            if (!layout.IsVisible)
+            {
+                _targetMarker.gameObject.SetActive(false);
+                return;
+            }
+
+            _targetMarker.anchoredPosition = layout.Position;
+            _targetDirectionIndicator.gameObject.SetActive(layout.IsOffscreen);
+            if (layout.IsOffscreen)
+            {
+                _targetDirectionIndicator.localRotation = Quaternion.Euler(
+                    0f,
+                    0f,
+                    Vector2.SignedAngle(Vector2.up, layout.Direction));
+            }
+
             var color = state.Selection == CombatHudTargetSelection.Manual
                 ? _manualTargetColor
                 : _automaticTargetColor;
             for (var index = 0; index < _targetMarkerSegments.Count; index++)
                 _targetMarkerSegments[index].color = color;
+            for (var index = 0; index < _targetDirectionSegments.Count; index++)
+                _targetDirectionSegments[index].color = color;
 
             _targetMarker.gameObject.SetActive(true);
         }

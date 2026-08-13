@@ -2,13 +2,15 @@
 
 **Статус:** READY FOR IMPLEMENTATION
 
-**Дата:** 1 августа 2026
+**Версия:** 0.2
+
+**Дата:** 13 августа 2026
 
 **Product source:** `Docs/Product/DungeonExpeditionVerticalSliceGDD.md`
 
 ## 1. Responsibility and boundaries
 
-`DungeonExpedition` владеет одной попыткой: linear route progression, party intent, chest state, encounter phase, auto-cast decisions, camera presentation state, result и telemetry boundary.
+`DungeonExpedition` владеет одной попыткой: linear route progression, ручные intents лидера, автономные решения спутников, chest state, encounter phase, camera presentation state, result и telemetry boundary.
 
 Feature не владеет application navigation, imported package storage, inventory/economy, procgen и generic gameplay frameworks.
 
@@ -73,22 +75,24 @@ The first slice uses closed concrete concepts:
 - `DungeonRunPhase`: `Entering`, `Exploring`, `ChestFocus`, `Encounter`, `Continuing`, `Completed`, `Failed`;
 - ordered `RouteCheckpoint` progression;
 - `ChestState`: `Locked`, `Available`, `Opening`, `Opened`;
-- `ActorRole`, `CombatActionDefinition`, cooldown state and deterministic `AutoCastPolicy`;
-- `DungeonIntent`: movement, dodge, target, command, leader ability, open chest;
+- actor identity/loadout, `CombatActionDefinition`, cooldown state и минимальный deterministic selector действий спутника; role labels остаются описанием вклада, а не Domain-классом или отдельной policy;
+- `DungeonIntent`: movement, target, manual `Primary`, `Active1`, one-shot hard `FOLLOW`, open chest;
 - immutable events for phase, actor action, damage, chest and result.
 
-Auto-cast priority:
+Companion decision priority:
 
 ```text
 valid actor
-→ emergency role response
-→ active squad command
-→ ready role skill with valid target
-→ ready basic attack
+→ current committed action
+→ active one-shot FOLLOW recall
+→ current concrete emergency action, если она доступна
+→ ready valid action из текущего loadout
 → formation recovery
 ```
 
-The policy returns an action decision; animation, VFX, audio and NavMesh remain Runtime reactions.
+Это небольшой pure ordered selector над текущими concrete candidates. Behavior Tree, utility-AI graph, универсальная role/capability platform и extension points для будущих тактических команд не создаются. Точная taxonomy ролей и контракт будущих tactical commands остаются открытыми. Selector возвращает action decision; animation, VFX, audio и NavMesh остаются Runtime reactions.
+
+`FOLLOW` существует отдельно от selector-а тактических намерений: он отменяет только отменяемое pre-commit действие, очищает временную attack/retaliation цель, возвращает спутника к formation offset лидера и после завершения отдаёт управление обычной автономности. Это не persistent mode и не `Rally`/`Regroup`.
 
 ## 5. Presentation families
 
@@ -131,17 +135,17 @@ DungeonCorridorStageView
 ├─ CameraShots
 │  └─ shot anchors: camera offset, look-ahead, activation/blend range
 ├─ PartyFormation
-│  └─ role offsets
+│  └─ per-companion offsets
 ├─ Encounter
 │  ├─ trigger/exit
 │  ├─ enemy spawn anchors
-│  └─ role-specific tactical anchors
+│  └─ authored tactical anchors
 ├─ Chest
 │  └─ interaction/focus anchors
 └─ Navigation
 ```
 
-All collections are serialized and validated for nulls, duplicate roles and ordering. Runtime uses direct references; no `Find`, tag lookup or string IDs.
+All collections are serialized and validated for nulls, duplicate actor bindings and ordering. Runtime uses direct references; no `Find`, tag lookup or string IDs.
 
 The corridor camera follows a smoothed route tangent and leader look target. A shot anchor contributes position/look weights within its blend range. Activity focus is a time-bounded presentation request owned by the camera presenter; it never changes Domain state by itself.
 
@@ -150,7 +154,7 @@ The corridor camera follows a smoothed route tangent and leader look target. A s
 ```text
 Assets/Game/Content/DungeonExpedition/
   Levels/CrystalPassage/{Models,Materials,Textures,Prefabs,Lighting}
-  Characters/Heroes/{Leader,Protector,DamageCaster,Support}/...
+  Characters/Heroes/{Leader,Companions}/...
   Characters/Enemies/{Goblin,Minotaur,Skeleton}/...
   Interactables/Chests/...
   Shared/{Materials,Textures,VFX}
@@ -176,7 +180,7 @@ No new runtime Addressables code is introduced until generated keys exist.
 1. `DE0`: normative docs, Domain/Application asmdefs and behavior tests.
 2. `DE1`: authored corridor bindings, route progression, party follow and camera turn blend.
 3. `DE2`: project-owned party/enemy/chest content with zero imported dependencies.
-4. `DE3`: encounter, deterministic auto-cast, actor VFX slots and role tactical anchors.
+4. `DE3`: encounter, deterministic companion action selector, actor VFX slots and authored tactical anchors.
 5. `DE4`: chest focus/opening, HUD/summary and result/replay.
 6. `DE5`: application-flow cutover; old monolithic launch removed after replacement is green.
 7. `DE6`: compile/EditMode/PlayMode/dependency audit/manual corridor smoke/Android/profiler.
@@ -185,12 +189,11 @@ Each milestone must keep a single runtime launch path and explicit ownership. No
 
 ## 10. Validation
 
-- EditMode Domain: route order, chest transitions, auto-cast priority/cooldown/range, outcome.
+- EditMode Domain: route order, chest transitions, companion selector priority/cooldown/range, outcome.
 - EditMode Application: intents/events, session completion, cancellation/disposal.
 - EditMode Runtime: presenter family lifecycle and authoring validation.
-- PlayMode: scene/prefab wiring, two camera turns, formation recovery, chest once-only, encounter/result/replay.
+- PlayMode: scene/prefab wiring, manual leader `Primary`, one-shot `FOLLOW`, companion autonomy, two camera turns, formation recovery, chest once-only, encounter/result/replay.
 - Editor dependency test: zero `ImportedAssets` paths from all production roots.
 - Manual Unity smoke: framing before/during/after turns, focus transitions, no console errors.
-- Android: landscape build and device input/focus recovery.
+- Android: landscape build, visible manual `Primary`, target/`Active1`/`FOLLOW` touch input and focus recovery.
 - Profiler: 30 FPS target on selected device; report CPU/frame, GC/frame, batches and triangles separately.
-

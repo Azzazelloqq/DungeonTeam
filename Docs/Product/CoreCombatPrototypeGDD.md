@@ -1,6 +1,6 @@
 # DungeonTeam — Stage 0 Core Combat Prototype GDD
 
-**Статус:** рабочий нормативный GDD-модуль для реализации и проверки Stage 0
+**Статус:** **ARCHIVED / SUPERSEDED** — исторический Stage 0 proposal, не текущий контракт реализации
 
 **Версия:** 0.1
 
@@ -19,6 +19,8 @@
 - [Product Validation Plan](./ProductValidationPlan.md) — порядок тестов, gates и рабочие пороги;
 - [Market & References](./MarketAndReferences.md) — аудитория и вопросы к референсам;
 - [Publisher Vertical Slice Brief](./PublisherVerticalSliceBrief.md) — требования Stage 2, не scope этого прототипа.
+
+> **Важно:** документ сохранён как историческая фиксация прежнего Stage 0 proposal. Его auto basic attack, Dodge и Rally/Context A/B не являются текущими требованиями. Действующий контракт определяют [Product Direction](./ProductDirection.md), [Experience Direction](./ExperienceDirection.md), [Product Validation Plan](./ProductValidationPlan.md) и [Dungeon Expedition Vertical Slice GDD](./DungeonExpeditionVerticalSliceGDD.md). Тело ниже намеренно не переписывается задним числом.
 
 ---
 

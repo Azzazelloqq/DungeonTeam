@@ -228,7 +228,8 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
                 _tickHandler,
                 _heroInput,
                 _heroControlSettings,
-                _leaderCombatController);
+                _leaderCombatController,
+                _navigation.HasCompletePath);
             _heroController.Initialize();
 
             _teamController = new TeamController(

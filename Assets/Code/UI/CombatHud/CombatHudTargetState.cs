@@ -25,7 +25,8 @@ namespace DungeonTeam.UI.CombatHud
 
             ScreenPosition = new Vector2(screenPosition.x, screenPosition.y);
             Selection = selection;
-            IsVisible = screenPosition.z > 0f;
+            HasTarget = true;
+            IsInFront = screenPosition.z > 0f;
         }
 
         public static CombatHudTargetState Hidden => default;
@@ -34,13 +35,16 @@ namespace DungeonTeam.UI.CombatHud
 
         public CombatHudTargetSelection Selection { get; }
 
-        public bool IsVisible { get; }
+        public bool HasTarget { get; }
+
+        public bool IsInFront { get; }
 
         public bool Equals(CombatHudTargetState other)
         {
             return ScreenPosition.Equals(other.ScreenPosition) &&
                    Selection == other.Selection &&
-                   IsVisible == other.IsVisible;
+                   HasTarget == other.HasTarget &&
+                   IsInFront == other.IsInFront;
         }
 
         public override bool Equals(object obj)
@@ -50,7 +54,11 @@ namespace DungeonTeam.UI.CombatHud
 
         public override int GetHashCode()
         {
-            return HashCode.Combine(ScreenPosition, (int)Selection, IsVisible);
+            return HashCode.Combine(
+                ScreenPosition,
+                (int)Selection,
+                HasTarget,
+                IsInFront);
         }
 
         public static bool operator ==(

@@ -55,47 +55,53 @@ namespace DungeonTeam.Gameplay.Team.Runtime
             ActorInstance leader,
             ActorInstance healTarget,
             ActorInstance attackTarget,
-            TeamCommandMode commandMode)
+            CompanionCommandMode commandMode)
         {
             if (_isDisposed)
             {
-                return commandMode == TeamCommandMode.Follow;
+                return commandMode == CompanionCommandMode.Follow;
             }
 
             _combat.Tick(deltaTime);
-            if (!_actor.IsAlive)
+            var decision = CompanionDecisionSelector.Select(new CompanionDecisionContext(
+                _actor.IsAlive,
+                _combat.IsBusy,
+                commandMode,
+                healTarget != null && healTarget.IsAlive,
+                attackTarget != null && attackTarget.IsAlive));
+            if (decision.Kind == CompanionDecisionKind.Heal &&
+                !TryUseHealSkill(healTarget))
             {
-                Stop();
-                return commandMode == TeamCommandMode.Follow;
+                decision = CompanionDecisionSelector.Select(new CompanionDecisionContext(
+                    isActorActive: true,
+                    isActionInProgress: false,
+                    commandMode: commandMode,
+                    hasHealTarget: false,
+                    hasAttackTarget: attackTarget != null && attackTarget.IsAlive));
             }
 
-            if (_combat.IsBusy)
+            switch (decision.Kind)
             {
-                Stop();
-                return false;
-            }
-
-            switch (commandMode)
-            {
-                case TeamCommandMode.Follow:
-                    return UpdateFollow(leader);
-                case TeamCommandMode.Attack:
+                case CompanionDecisionKind.Hold:
+                    Stop();
+                    return commandMode == CompanionCommandMode.Follow &&
+                           decision.Reason == CompanionDecisionReason.ActorInactive;
+                case CompanionDecisionKind.FollowFormation:
+                {
+                    var isAtFormation = UpdateFollow(leader);
+                    return commandMode == CompanionCommandMode.Follow && isAtFormation;
+                }
+                case CompanionDecisionKind.Heal:
+                    return false;
+                case CompanionDecisionKind.Attack:
                     if (!TryUseAttackSkill(attackTarget))
                     {
                         Stop();
                     }
 
                     return false;
-                case TeamCommandMode.Autonomous:
-                    if (TryUseHealSkill(healTarget) || TryUseAttackSkill(attackTarget))
-                    {
-                        return false;
-                    }
-
-                    UpdateFollow(leader);
-                    return false;
                 default:
-                    throw new ArgumentOutOfRangeException(nameof(commandMode));
+                    throw new ArgumentOutOfRangeException(nameof(decision));
             }
         }
 

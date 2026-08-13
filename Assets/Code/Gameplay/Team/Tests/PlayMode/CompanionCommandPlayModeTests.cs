@@ -117,6 +117,8 @@ namespace DungeonTeam.Gameplay.Team.Tests.PlayMode
                     Vector3.Distance(world.Companion.Position, Vector3.zero),
                     Is.LessThan(distanceBeforeRecall),
                     "Follow must recall the companion toward its formation position.");
+                Assert.That(world.Leader.CurrentHealth, Is.EqualTo(40),
+                    "Follow must not select autonomous healing while recall is active.");
 
                 yield return new WaitForSeconds(0.7f);
 

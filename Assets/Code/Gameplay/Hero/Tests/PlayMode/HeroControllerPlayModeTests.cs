@@ -172,12 +172,12 @@ namespace DungeonTeam.Gameplay.Hero.Runtime.Tests.PlayMode
         }
 
         [UnityTest]
-        public IEnumerator EnemySkill_WithoutSelectedTarget_AcquiresNearestEnemy()
+        public IEnumerator EnemySkill_WithAutomaticTarget_UsesNearestEnemy()
         {
             var world = new TestWorld();
             try
             {
-                Assert.That(world.Controller.Target, Is.Null);
+                Assert.That(world.Controller.Target, Is.SameAs(world.Enemy));
                 Assert.That(
                     world.Controller.TryRequestSkill(SkillSlot.Primary),
                     Is.True);
@@ -207,6 +207,152 @@ namespace DungeonTeam.Gameplay.Hero.Runtime.Tests.PlayMode
 
                 Assert.That(world.Controller.IsTargetManuallySelected, Is.False);
                 Assert.That(world.Controller.Target, Is.SameAs(world.Enemy));
+            }
+            finally
+            {
+                world.Dispose();
+            }
+
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator Initialize_AcquiresAutomaticTargetImmediately()
+        {
+            var world = new TestWorld(useManualTicks: true);
+            try
+            {
+                Assert.That(world.Controller.Target, Is.SameAs(world.Enemy));
+                Assert.That(world.Controller.IsTargetManuallySelected, Is.False);
+            }
+            finally
+            {
+                world.Dispose();
+            }
+
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator AutomaticTargeting_UnreachableNearestEnemy_SelectsReachableEnemy()
+        {
+            var world = new TestWorld(
+                useManualTicks: true,
+                hasCompletePath: (_, destination) => destination.x > 6f);
+            try
+            {
+                Assert.That(world.Controller.Target, Is.SameAs(world.FarEnemy));
+            }
+            finally
+            {
+                world.Dispose();
+            }
+
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator AutomaticTargeting_EqualDistance_UsesStableActorIdTieBreak()
+        {
+            var world = new TestWorld(useManualTicks: true);
+            try
+            {
+                world.Enemy.SkillOriginAnchor.position = Vector3.right * 5f;
+                world.FarEnemy.SkillOriginAnchor.position = Vector3.right * 5f;
+
+                world.Tick(0.11f);
+
+                Assert.That(world.Controller.Target, Is.SameAs(world.FarEnemy));
+            }
+            finally
+            {
+                world.Dispose();
+            }
+
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator AutomaticTargeting_BeforeScanInterval_DoesNotRepeatPathQueries()
+        {
+            var pathQueryCount = 0;
+            var world = new TestWorld(
+                useManualTicks: true,
+                hasCompletePath: (_, _) =>
+                {
+                    pathQueryCount++;
+                    return true;
+                });
+            try
+            {
+                var countAfterInitialization = pathQueryCount;
+
+                world.Tick(0.04f);
+                world.Tick(0.04f);
+
+                Assert.That(pathQueryCount, Is.EqualTo(countAfterInitialization));
+
+                world.Tick(0.03f);
+
+                Assert.That(pathQueryCount, Is.GreaterThan(countAfterInitialization));
+            }
+            finally
+            {
+                world.Dispose();
+            }
+
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator CanRequestSkill_WithNoCachedTarget_DoesNotScanNavigation()
+        {
+            var pathQueryCount = 0;
+            var world = new TestWorld(
+                useManualTicks: true,
+                hasCompletePath: (_, _) =>
+                {
+                    pathQueryCount++;
+                    return false;
+                });
+            try
+            {
+                var countAfterInitialization = pathQueryCount;
+
+                Assert.That(world.Controller.CanRequestSkill(SkillSlot.Primary), Is.False);
+                Assert.That(world.Controller.CanRequestSkill(SkillSlot.Active1), Is.False);
+
+                Assert.That(pathQueryCount, Is.EqualTo(countAfterInitialization));
+            }
+            finally
+            {
+                world.Dispose();
+            }
+
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator ManualTarget_UnreachableThroughGrace_CancelsPendingApproach()
+        {
+            var isReachable = true;
+            var world = new TestWorld(
+                useManualTicks: true,
+                hasCompletePath: (_, _) => isReachable);
+            try
+            {
+                Assert.That(world.Controller.TrySetTarget(world.FarEnemy), Is.True);
+                Assert.That(world.Controller.TryRequestSkill(SkillSlot.Primary), Is.True);
+                isReachable = false;
+
+                world.Tick(0.15f);
+                Assert.That(world.Controller.PendingSlot, Is.EqualTo(SkillSlot.Primary));
+
+                world.Tick(0.16f);
+
+                Assert.That(world.Controller.PendingSlot, Is.Null);
+                Assert.That(world.Controller.Target, Is.Null);
+                Assert.That(world.FarEnemy.CurrentHealth, Is.EqualTo(60));
             }
             finally
             {
@@ -484,10 +630,11 @@ namespace DungeonTeam.Gameplay.Hero.Runtime.Tests.PlayMode
             var world = new TestWorld();
             try
             {
+                var targetBeforeQuery = world.Controller.Target;
                 Assert.That(
                     world.Controller.CanRequestSkill(SkillSlot.Primary),
                     Is.True);
-                Assert.That(world.Controller.Target, Is.Null);
+                Assert.That(world.Controller.Target, Is.SameAs(targetBeforeQuery));
             }
             finally
             {
@@ -785,7 +932,7 @@ namespace DungeonTeam.Gameplay.Hero.Runtime.Tests.PlayMode
 
                 yield return null;
 
-                Assert.That(world.Controller.Target, Is.Null);
+                Assert.That(world.Controller.Target, Is.SameAs(world.FarEnemy));
                 Assert.That(world.Hero.CurrentHealth, Is.EqualTo(75));
             }
             finally
@@ -812,7 +959,8 @@ namespace DungeonTeam.Gameplay.Hero.Runtime.Tests.PlayMode
                 bool useHealSkill = false,
                 float projectileCommitDelay = 0.35f,
                 float healCommitDelay = 0f,
-                bool useManualTicks = false)
+                bool useManualTicks = false,
+                System.Func<Vector3, Vector3, bool> hasCompletePath = null)
             {
                 if (useProjectileSkill && useHealSkill)
                     throw new System.ArgumentException("Test skill modes are mutually exclusive.");
@@ -930,7 +1078,8 @@ namespace DungeonTeam.Gameplay.Hero.Runtime.Tests.PlayMode
                     _tickHandler,
                     Input,
                     new HeroControlSettings(),
-                    _combat);
+                    _combat,
+                    hasCompletePath ?? ((_, _) => true));
                 Controller.Initialize();
                 _skillExecution.Initialize();
             }
