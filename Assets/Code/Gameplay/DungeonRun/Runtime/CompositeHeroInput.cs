@@ -37,5 +37,10 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
             _physicalInput.TryConsumeSkillRequest(out _);
             return true;
         }
+
+        public bool TryConsumeTargetSelection(out Vector2 screenPosition)
+        {
+            return _physicalInput.TryConsumeTargetSelection(out screenPosition);
+        }
     }
 }

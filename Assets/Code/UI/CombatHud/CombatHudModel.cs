@@ -14,6 +14,7 @@ namespace DungeonTeam.UI.CombatHud
         private readonly IReadOnlyReactiveProperty<CombatHudSlotState>[] _slots;
         private readonly Dictionary<SkillSlot, int> _indices;
         private readonly ReactiveProperty<bool> _controlsEnabled;
+        private readonly ReactiveProperty<CombatHudTargetState> _target;
 
         public CombatHudModel(IReadOnlyList<CombatHudSlotState> initialSlots)
         {
@@ -27,6 +28,8 @@ namespace DungeonTeam.UI.CombatHud
             _indices = new Dictionary<SkillSlot, int>(initialSlots.Count);
             _controlsEnabled = new ReactiveProperty<bool>(true);
             _controlsEnabled.AddTo(compositeDisposable);
+            _target = new ReactiveProperty<CombatHudTargetState>(CombatHudTargetState.Hidden);
+            _target.AddTo(compositeDisposable);
             for (var index = 0; index < initialSlots.Count; index++)
             {
                 var state = initialSlots[index];
@@ -49,6 +52,8 @@ namespace DungeonTeam.UI.CombatHud
 
         public override IReadOnlyReactiveProperty<bool> ControlsEnabled => _controlsEnabled;
 
+        public override IReadOnlyReactiveProperty<CombatHudTargetState> Target => _target;
+
         public override void UpdateSlot(CombatHudSlotState state)
         {
             if (!_indices.TryGetValue(state.Slot, out var index))
@@ -63,6 +68,11 @@ namespace DungeonTeam.UI.CombatHud
         public override void SetControlsEnabled(bool isEnabled)
         {
             _controlsEnabled.SetValue(isEnabled);
+        }
+
+        public override void UpdateTarget(CombatHudTargetState state)
+        {
+            _target.SetValue(state);
         }
 
         protected override void OnInitialize()

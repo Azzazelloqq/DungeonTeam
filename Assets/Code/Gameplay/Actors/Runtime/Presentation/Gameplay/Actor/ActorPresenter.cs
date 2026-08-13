@@ -73,6 +73,14 @@ namespace DungeonTeam.Gameplay.Actors.Runtime.Presentation.Gameplay.Actor
             }
         }
 
+        public override void CancelActionFeedback()
+        {
+            if (model.IsAlive)
+            {
+                view.CancelActionFeedback();
+            }
+        }
+
         public override ActorDamageResult ApplyDamage(int amount)
         {
             var result = model.ApplyDamage(amount);

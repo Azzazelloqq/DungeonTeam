@@ -18,6 +18,9 @@ namespace Code.UI.MainMenu
         [SerializeField]
         private CanvasGroup _canvasGroup = null;
 
+        [SerializeField, Min(0.01f)]
+        private float _visibilityTransitionDuration = 0.2f;
+
         [SerializeField]
         private GameObject _background = null;
 
@@ -83,18 +86,41 @@ namespace Code.UI.MainMenu
             SetVisible(false);
         }
 
-        public override UniTask ShowAsync(CancellationToken token)
+        public override async UniTask ShowAsync(CancellationToken token)
         {
-            token.ThrowIfCancellationRequested();
-            SetVisible(true);
-            return UniTask.CompletedTask;
+            SetInputEnabled(false);
+            try
+            {
+                await CanvasGroupTween.FadeAsync(
+                    _canvasGroup,
+                    1f,
+                    _visibilityTransitionDuration,
+                    token);
+                SetInputEnabled(true);
+            }
+            catch
+            {
+                SetVisible(false);
+                throw;
+            }
         }
 
-        public override UniTask HideAsync(CancellationToken token)
+        public override async UniTask HideAsync(CancellationToken token)
         {
-            token.ThrowIfCancellationRequested();
-            SetVisible(false);
-            return UniTask.CompletedTask;
+            SetInputEnabled(false);
+            try
+            {
+                await CanvasGroupTween.FadeAsync(
+                    _canvasGroup,
+                    0f,
+                    _visibilityTransitionDuration,
+                    token);
+            }
+            catch
+            {
+                SetVisible(true);
+                throw;
+            }
         }
 
         protected override void OnInitialize()
@@ -165,9 +191,15 @@ namespace Code.UI.MainMenu
 
         private void SetVisible(bool isVisible)
         {
+            CanvasGroupTween.Kill(_canvasGroup);
             _canvasGroup.alpha = isVisible ? 1f : 0f;
-            _canvasGroup.interactable = isVisible;
-            _canvasGroup.blocksRaycasts = isVisible;
+            SetInputEnabled(isVisible);
+        }
+
+        private void SetInputEnabled(bool isEnabled)
+        {
+            _canvasGroup.interactable = isEnabled;
+            _canvasGroup.blocksRaycasts = isEnabled;
         }
 
         private void SetPreviewVisible(bool isVisible)

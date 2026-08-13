@@ -6,5 +6,6 @@ namespace DungeonTeam.Gameplay.Skills.Runtime.Presentation.Gameplay.SkillProject
     public abstract class SkillProjectileViewBase : ViewMonoBehaviour<SkillProjectilePresenterBase>
     {
         public abstract Vector3 Position { get; set; }
+        public abstract Quaternion Rotation { get; set; }
     }
 }

@@ -88,11 +88,12 @@ namespace DungeonTeam.Gameplay.Team.Tests.PlayMode
         }
 
         [UnityTest]
-        public IEnumerator Follow_DuringAutonomousHealPreCommit_CancelsWithoutHealingOrCooldown()
+        public IEnumerator Follow_DuringAutonomousHealPreCommit_RecallsThenResumesAutonomousHealing()
         {
             var world = TestWorld.Create(includeEnemy: false);
             try
             {
+                world.Companion.SetMoveDirection(Vector3.forward * 5f);
                 world.Leader.ApplyDamage(60);
 
                 yield return null;
@@ -107,10 +108,20 @@ namespace DungeonTeam.Gameplay.Team.Tests.PlayMode
                 Assert.That(world.Combat.IsReady(SkillSlot.Active1), Is.True,
                     "A pre-commit cancellation must not consume cooldown.");
 
-                yield return new WaitForSeconds(0.6f);
+                var distanceBeforeRecall = Vector3.Distance(
+                    world.Companion.Position,
+                    Vector3.zero);
+                yield return null;
 
-                Assert.That(world.Leader.CurrentHealth, Is.EqualTo(40),
-                    "Cancelled autonomous heal must not reach its commit.");
+                Assert.That(
+                    Vector3.Distance(world.Companion.Position, Vector3.zero),
+                    Is.LessThan(distanceBeforeRecall),
+                    "Follow must recall the companion toward its formation position.");
+
+                yield return new WaitForSeconds(0.7f);
+
+                Assert.That(world.Leader.CurrentHealth, Is.EqualTo(65),
+                    "Autonomous healing must resume after the one-shot recall completes.");
             }
             finally
             {

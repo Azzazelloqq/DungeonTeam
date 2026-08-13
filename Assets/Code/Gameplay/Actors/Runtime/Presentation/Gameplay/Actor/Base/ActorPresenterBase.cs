@@ -41,6 +41,8 @@ namespace DungeonTeam.Gameplay.Actors.Runtime.Presentation.Gameplay.Actor.Base
 
         public abstract void PlayCastFeedback();
 
+        public abstract void CancelActionFeedback();
+
         public abstract ActorDamageResult ApplyDamage(int amount);
 
         public abstract ActorHealResult ApplyHeal(int amount);

@@ -251,8 +251,8 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
 
             CreateEnemyAiControllers();
             _skillExecution.Initialize();
-            CreateContextActions();
             CreateCombatHud();
+            CreateContextActions();
         }
 
         protected override void OnDispose()
@@ -262,8 +262,8 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
             DisposeSkillExecution();
             DisposeCombatControllers();
 
-            DisposeCombatHudPresentation();
             DisposeContextActionsPresentation();
+            DisposeCombatHudPresentation();
 
             ProgressChanged = null;
             Finished = null;
@@ -562,7 +562,7 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
         {
             _contextActionsView = UnityEngine.Object.Instantiate(
                 _bindings.ContextActionsPrefab,
-                _contextActionsParent,
+                _combatHudView.ContextActionsHost,
                 worldPositionStays: false);
             _contextActionsView.name = "ContextActions";
             _contextActionsView.gameObject.SetActive(true);
@@ -618,6 +618,7 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
             _combatHudController = new DungeonRunCombatHudController(
                 _heroController,
                 _leaderCombatController,
+                _worldCamera,
                 _tickHandler,
                 model);
             _combatHudController.Initialize();

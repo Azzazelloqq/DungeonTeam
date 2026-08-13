@@ -19,6 +19,8 @@ namespace DungeonTeam.UI.CombatHud.Base
 
         public abstract IReadOnlyReactiveProperty<bool> ControlsEnabled { get; }
 
+        public abstract IReadOnlyReactiveProperty<CombatHudTargetState> Target { get; }
+
         public abstract IRelayCommand<Vector2> SetMovementCommand { get; }
 
         public abstract IRelayCommand<SkillSlot> RequestSkillCommand { get; }

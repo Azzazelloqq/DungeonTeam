@@ -11,17 +11,20 @@ namespace DungeonTeam.Gameplay.Skills.Runtime.Presentation.Gameplay.SkillProject
     {
         private const float HitDistance = 0.15f;
         private readonly Action<Vector3> _onImpact;
+        private readonly Quaternion _authoredRotation;
 
         public SkillProjectilePresenter(
             SkillProjectileViewBase view,
             SkillProjectileModelBase model,
             ActorInstance source,
             ActorInstance target,
+            Quaternion authoredRotation,
             Action<Vector3> onImpact)
             : base(view, model)
         {
             Source = source ?? throw new ArgumentNullException(nameof(source));
             Target = target ?? throw new ArgumentNullException(nameof(target));
+            _authoredRotation = authoredRotation;
             _onImpact = onImpact ?? throw new ArgumentNullException(nameof(onImpact));
         }
 
@@ -45,6 +48,12 @@ namespace DungeonTeam.Gameplay.Skills.Runtime.Presentation.Gameplay.SkillProject
                 ? Target.HitVfxAnchor.position
                 : Target.Position + Vector3.up;
             var difference = targetPosition - view.Position;
+            if (difference.sqrMagnitude > Mathf.Epsilon)
+            {
+                view.Rotation = Quaternion.LookRotation(difference.normalized) *
+                                _authoredRotation;
+            }
+
             var travelDistance = model.Speed * deltaTime;
             if (difference.sqrMagnitude <=
                 (travelDistance + HitDistance) * (travelDistance + HitDistance))

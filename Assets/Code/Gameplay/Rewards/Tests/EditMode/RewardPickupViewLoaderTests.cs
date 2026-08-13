@@ -57,7 +57,7 @@ namespace DungeonTeam.Gameplay.Rewards.Tests
             var loader = new RewardPickupViewLoader(resourceLoader);
             try
             {
-                Assert.ThrowsAsync<OperationCanceledException>(async () =>
+                Assert.CatchAsync<OperationCanceledException>(async () =>
                     await loader.LoadAsync(new[] { "reward.gold" }, cancellation.Token));
 
                 Assert.That(resourceLoader.ReleaseCount, Is.EqualTo(1));

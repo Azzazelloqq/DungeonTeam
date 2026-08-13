@@ -5,6 +5,7 @@
     "DungeonTeam.Actors.Runtime",
     "DungeonTeam.Configuration",
     "DungeonTeam.Skills.Domain",
+    "DungeonTeam.Skills.Editor",
     "DungeonTeam.Skills.Runtime"
   ],
   "includePlatforms": [

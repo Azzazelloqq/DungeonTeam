@@ -92,6 +92,9 @@ namespace DungeonTeam.Gameplay.Skills.Runtime
         [SerializeField, Min(0.01f)] private float _lifetime = 0.25f;
         [SerializeField] private SkillVfxAnchor _anchor = SkillVfxAnchor.SourceOrigin;
         [SerializeField] private bool _followAnchor;
+        [SerializeField] private Vector3 _positionOffset;
+        [SerializeField, Min(0.01f)] private float _scaleMultiplier = 1f;
+        [SerializeField] private Vector3 _rotationOffsetEuler;
         [SerializeField] private GameObject _prefab;
 
         public SkillVfxCue(
@@ -101,12 +104,60 @@ namespace DungeonTeam.Gameplay.Skills.Runtime
             SkillVfxAnchor anchor,
             bool followAnchor,
             GameObject prefab)
+            : this(
+                phase,
+                delay,
+                lifetime,
+                anchor,
+                followAnchor,
+                Vector3.zero,
+                1f,
+                Vector3.zero,
+                prefab)
+        {
+        }
+
+        public SkillVfxCue(
+            SkillPresentationPhase phase,
+            float delay,
+            float lifetime,
+            SkillVfxAnchor anchor,
+            bool followAnchor,
+            float scaleMultiplier,
+            Vector3 rotationOffsetEuler,
+            GameObject prefab)
+            : this(
+                phase,
+                delay,
+                lifetime,
+                anchor,
+                followAnchor,
+                Vector3.zero,
+                scaleMultiplier,
+                rotationOffsetEuler,
+                prefab)
+        {
+        }
+
+        public SkillVfxCue(
+            SkillPresentationPhase phase,
+            float delay,
+            float lifetime,
+            SkillVfxAnchor anchor,
+            bool followAnchor,
+            Vector3 positionOffset,
+            float scaleMultiplier,
+            Vector3 rotationOffsetEuler,
+            GameObject prefab)
         {
             _phase = phase;
             _delay = delay;
             _lifetime = lifetime;
             _anchor = anchor;
             _followAnchor = followAnchor;
+            _positionOffset = positionOffset;
+            _scaleMultiplier = scaleMultiplier;
+            _rotationOffsetEuler = rotationOffsetEuler;
             _prefab = prefab;
             Validate("VFX cue");
         }
@@ -116,6 +167,9 @@ namespace DungeonTeam.Gameplay.Skills.Runtime
         public float Lifetime => _lifetime;
         public SkillVfxAnchor Anchor => _anchor;
         public bool FollowAnchor => _followAnchor;
+        public Vector3 PositionOffset => _positionOffset;
+        public float ScaleMultiplier => _scaleMultiplier;
+        public Vector3 RotationOffsetEuler => _rotationOffsetEuler;
         public GameObject Prefab => _prefab;
 
         internal void Validate(string label)
@@ -130,6 +184,22 @@ namespace DungeonTeam.Gameplay.Skills.Runtime
             if (!Enum.IsDefined(typeof(SkillVfxAnchor), _anchor))
             {
                 throw new ArgumentOutOfRangeException($"{label} anchor");
+            }
+
+            if (!IsFinite(_positionOffset))
+            {
+                throw new ArgumentOutOfRangeException($"{label} position offset");
+            }
+
+            if (float.IsNaN(_scaleMultiplier) || float.IsInfinity(_scaleMultiplier) ||
+                _scaleMultiplier <= 0f)
+            {
+                throw new ArgumentOutOfRangeException($"{label} scale multiplier");
+            }
+
+            if (!IsFinite(_rotationOffsetEuler))
+            {
+                throw new ArgumentOutOfRangeException($"{label} rotation offset");
             }
 
             if (_phase == SkillPresentationPhase.Impact &&
@@ -150,6 +220,13 @@ namespace DungeonTeam.Gameplay.Skills.Runtime
             {
                 throw new ArgumentException($"{label} requires a prefab.");
             }
+        }
+
+        private static bool IsFinite(Vector3 value)
+        {
+            return !float.IsNaN(value.x) && !float.IsInfinity(value.x) &&
+                   !float.IsNaN(value.y) && !float.IsInfinity(value.y) &&
+                   !float.IsNaN(value.z) && !float.IsInfinity(value.z);
         }
 
         internal void CollectValidationErrors(string label, ICollection<string> errors)

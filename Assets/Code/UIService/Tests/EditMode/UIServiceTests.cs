@@ -198,11 +198,11 @@ namespace Code.UIService.Tests
             UIElementGroup group,
             UIElementHideBehavior hideBehavior)
         {
-            var prefabObject = new GameObject(resourceId, typeof(RectTransform), typeof(TestUIElement));
+            var prefabObject = new GameObject(resourceId, typeof(RectTransform));
             prefabObject.SetActive(false);
             _objects.Add(prefabObject);
 
-            var element = prefabObject.GetComponent<TestUIElement>();
+            var element = prefabObject.AddComponent<TestUIElement>();
             element.Configure(new UIElementSettings(group, hideBehavior));
             _resourceLoader.Register(resourceId, prefabObject);
             return prefabObject;
@@ -308,6 +308,7 @@ namespace Code.UIService.Tests
         {
         }
 
+        [ExecuteAlways]
         private sealed class TestUIElement : MonoBehaviour, ITestUIElement
         {
             [SerializeField]

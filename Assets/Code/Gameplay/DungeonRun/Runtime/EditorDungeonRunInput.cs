@@ -9,6 +9,7 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
     public sealed class EditorDungeonRunInput : IDungeonRunInput
     {
         private readonly InputAction _movement;
+        private readonly PointerTargetSelectionInput _targetSelection;
         private bool _isDisposed;
 
         public EditorDungeonRunInput()
@@ -19,6 +20,9 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
                 .With("Down", "<Keyboard>/s")
                 .With("Left", "<Keyboard>/a")
                 .With("Right", "<Keyboard>/d");
+            _targetSelection = new PointerTargetSelectionInput(
+                includeMouse: true,
+                includeTouch: false);
         }
 
         public Vector2 Movement => _isDisposed
@@ -31,12 +35,18 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
             return false;
         }
 
+        public bool TryConsumeTargetSelection(out Vector2 screenPosition)
+        {
+            return _targetSelection.TryConsume(out screenPosition);
+        }
+
         public void Enable()
         {
             if (_isDisposed)
                 throw new ObjectDisposedException(nameof(EditorDungeonRunInput));
 
             _movement.Enable();
+            _targetSelection.Enable();
         }
 
         public void Dispose()
@@ -47,6 +57,7 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
             _isDisposed = true;
             _movement.Disable();
             _movement.Dispose();
+            _targetSelection.Dispose();
         }
     }
 }

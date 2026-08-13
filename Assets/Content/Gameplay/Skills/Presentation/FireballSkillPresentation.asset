@@ -22,16 +22,16 @@ MonoBehaviour:
     _lifetime: 0.35
     _anchor: 0
     _followAnchor: 1
+    _positionOffset: {x: 0, y: -1, z: 0}
+    _scaleMultiplier: 0.4
+    _rotationOffsetEuler: {x: 0, y: 0, z: 0}
     _prefab: {fileID: 173814, guid: e32bd7ea455f45a5a78439468c27cb2f, type: 3}
-  - _phase: 0
-    _delay: 0
-    _lifetime: 0.35
-    _anchor: 0
-    _followAnchor: 1
-    _prefab: {fileID: 166914, guid: 97d6299ad8d94d519db1d078aee4a05b, type: 3}
   - _phase: 2
     _delay: 0
     _lifetime: 0.25
     _anchor: 2
     _followAnchor: 0
-    _prefab: {fileID: 166914, guid: 97d6299ad8d94d519db1d078aee4a05b, type: 3}
+    _positionOffset: {x: 0, y: 0, z: 0}
+    _scaleMultiplier: 0.35
+    _rotationOffsetEuler: {x: 0, y: 0, z: 0}
+    _prefab: {fileID: 166914, guid: 6fa1c2d7e86b4ebaaf4776733f2b883c, type: 3}

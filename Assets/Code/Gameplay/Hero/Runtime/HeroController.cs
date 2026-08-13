@@ -22,7 +22,9 @@ namespace DungeonTeam.Gameplay.Hero.Runtime
         private readonly IHeroInput _input;
         private readonly HeroControlSettings _settings;
         private readonly HeroSkillActionBrain _skillActionBrain = new();
+        private readonly HeroTargetSelectionBrain _targetSelectionBrain;
         private readonly ActorCombatController _combat;
+        private readonly SkillSlot? _autoTargetSlot;
 
         private ActorInstance _target;
         private SkillSlot _selectedSlot;
@@ -60,13 +62,18 @@ namespace DungeonTeam.Gameplay.Hero.Runtime
                     nameof(combat));
             }
             _settings.Validate();
+            _targetSelectionBrain = new HeroTargetSelectionBrain(
+                _settings.ManualTargetLossDistance);
 
             _selectedSlot = _combat.HasSlot(SkillSlot.Primary)
                 ? SkillSlot.Primary
                 : _combat.Slots[0].Slot;
+            _autoTargetSlot = FindEnemyTargetSlot();
         }
 
         public ActorInstance Target => _target;
+        public bool IsTargetManuallySelected =>
+            _targetSelectionBrain.Mode == HeroTargetSelectionMode.Manual;
         public SkillSlot SelectedSlot => _selectedSlot;
         public SkillSlot? PendingSlot => _pendingSlot;
 
@@ -94,7 +101,16 @@ namespace DungeonTeam.Gameplay.Hero.Runtime
                 return false;
             }
 
-            SetTarget(target);
+            if (target == null)
+            {
+                UseAutomaticTargeting();
+            }
+            else
+            {
+                _targetSelectionBrain.SelectManual();
+                SetTarget(target);
+            }
+
             return true;
         }
 
@@ -148,6 +164,7 @@ namespace DungeonTeam.Gameplay.Hero.Runtime
 
             CancelActiveSkillAction();
             _target = null;
+            _targetSelectionBrain.UseAutomatic();
         }
 
         private void OnFrameUpdate(float deltaTime)
@@ -156,10 +173,18 @@ namespace DungeonTeam.Gameplay.Hero.Runtime
             {
                 CancelActiveSkillAction();
                 StopHero();
-                SetTarget(null);
+                _targetSelectionBrain.UseAutomatic();
+                _target = null;
                 return;
             }
 
+            var hasTargetSelection = _input.TryConsumeTargetSelection(out var pointerPosition);
+            if (hasTargetSelection && !_pendingSlot.HasValue && !_combat.IsBusy)
+            {
+                SelectTargetAt(pointerPosition);
+            }
+
+            RefreshTargetSelection();
             var hasRequestedSkill = _input.TryConsumeSkillRequest(out var requestedSlot);
 
             var movement = _input.Movement;
@@ -326,6 +351,97 @@ namespace DungeonTeam.Gameplay.Hero.Runtime
             }
         }
 
+        private void SelectTargetAt(Vector2 screenPosition)
+        {
+            ActorInstance nearest = null;
+            var nearestDistanceSqr = _settings.TargetSelectionRadius *
+                                     _settings.TargetSelectionRadius;
+            for (var index = 0; index < _enemies.Count; index++)
+            {
+                var candidate = _enemies[index];
+                if (candidate == null ||
+                    !candidate.IsAlive ||
+                    PlanarSqrDistance(_hero.Position, candidate.Position) >
+                    _settings.ManualTargetLossDistance *
+                    _settings.ManualTargetLossDistance)
+                {
+                    continue;
+                }
+
+                var targetPoint = candidate.Position + Vector3.up * _settings.EyeHeight;
+                var candidateScreenPosition = _camera.WorldToScreenPoint(targetPoint);
+                if (candidateScreenPosition.z <= 0f ||
+                    Physics.Linecast(
+                        _camera.transform.position,
+                        targetPoint,
+                        _settings.ObstacleMask,
+                        QueryTriggerInteraction.Ignore))
+                {
+                    continue;
+                }
+
+                var difference = (Vector2)candidateScreenPosition - screenPosition;
+                var distanceSqr = difference.sqrMagnitude;
+                if (distanceSqr > nearestDistanceSqr)
+                {
+                    continue;
+                }
+
+                nearest = candidate;
+                nearestDistanceSqr = distanceSqr;
+            }
+
+            if (nearest == null)
+            {
+                UseAutomaticTargeting();
+                return;
+            }
+
+            if (_targetSelectionBrain.Mode == HeroTargetSelectionMode.Manual &&
+                ReferenceEquals(_target, nearest))
+            {
+                UseAutomaticTargeting();
+                return;
+            }
+
+            TrySetTarget(nearest);
+        }
+
+        private void RefreshTargetSelection()
+        {
+            if (_pendingSlot.HasValue || _combat.IsBusy)
+            {
+                return;
+            }
+
+            if (_targetSelectionBrain.Mode == HeroTargetSelectionMode.Manual)
+            {
+                var hasValidTarget = _target != null &&
+                                     _target.IsAlive &&
+                                     (IsEnemy(_target) || IsAlly(_target));
+                var targetDistance = hasValidTarget
+                    ? PlanarDistance(_hero.Position, _target.Position)
+                    : 0f;
+                if (_targetSelectionBrain.Evaluate(hasValidTarget, targetDistance) ==
+                    HeroTargetSelectionMode.Manual)
+                {
+                    return;
+                }
+
+                SetTarget(null);
+            }
+
+            SetTarget(_autoTargetSlot.HasValue
+                ? FindAutoTarget(_autoTargetSlot.Value)
+                : null);
+        }
+
+        private void UseAutomaticTargeting()
+        {
+            _targetSelectionBrain.UseAutomatic();
+            SetTarget(null);
+        }
+
         private bool HasClearLine(ActorInstance target)
         {
             var eyeOffset = Vector3.up * _settings.EyeHeight;
@@ -422,6 +538,20 @@ namespace DungeonTeam.Gameplay.Hero.Runtime
             }
 
             return nearest;
+        }
+
+        private SkillSlot? FindEnemyTargetSlot()
+        {
+            for (var index = 0; index < _combat.Slots.Count; index++)
+            {
+                var slot = _combat.Slots[index];
+                if (slot.Skill.TargetRule == SkillTargetRule.EnemyActor)
+                {
+                    return slot.Slot;
+                }
+            }
+
+            return null;
         }
 
         private void SetTarget(ActorInstance target)

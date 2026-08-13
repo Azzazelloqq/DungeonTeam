@@ -100,6 +100,11 @@ namespace DungeonTeam.Gameplay.Actors.Runtime
             }
         }
 
+        public void CancelActionFeedback()
+        {
+            RequirePresenter().CancelActionFeedback();
+        }
+
         public ActorDamageResult ApplyDamage(int amount)
         {
             return ApplyDamage(amount, attacker: null);

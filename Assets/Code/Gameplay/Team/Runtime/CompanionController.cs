@@ -50,7 +50,7 @@ namespace DungeonTeam.Gameplay.Team.Runtime
         public bool CanCancelPreCommitAction =>
             !_isDisposed && _combat.CanCancelActiveUse;
 
-        public void Tick(
+        public bool Tick(
             float deltaTime,
             ActorInstance leader,
             ActorInstance healTarget,
@@ -59,42 +59,41 @@ namespace DungeonTeam.Gameplay.Team.Runtime
         {
             if (_isDisposed)
             {
-                return;
+                return commandMode == TeamCommandMode.Follow;
             }
 
             _combat.Tick(deltaTime);
             if (!_actor.IsAlive)
             {
                 Stop();
-                return;
+                return commandMode == TeamCommandMode.Follow;
             }
 
             if (_combat.IsBusy)
             {
                 Stop();
-                return;
+                return false;
             }
 
             switch (commandMode)
             {
                 case TeamCommandMode.Follow:
-                    UpdateFollow(leader);
-                    return;
+                    return UpdateFollow(leader);
                 case TeamCommandMode.Attack:
                     if (!TryUseAttackSkill(attackTarget))
                     {
                         Stop();
                     }
 
-                    return;
+                    return false;
                 case TeamCommandMode.Autonomous:
                     if (TryUseHealSkill(healTarget) || TryUseAttackSkill(attackTarget))
                     {
-                        return;
+                        return false;
                     }
 
                     UpdateFollow(leader);
-                    return;
+                    return false;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(commandMode));
             }
@@ -122,12 +121,12 @@ namespace DungeonTeam.Gameplay.Team.Runtime
             Stop();
         }
 
-        private void UpdateFollow(ActorInstance leader)
+        private bool UpdateFollow(ActorInstance leader)
         {
             if (!leader.IsAlive)
             {
                 Stop();
-                return;
+                return true;
             }
 
             var followPosition = GetFollowPosition(leader);
@@ -136,10 +135,11 @@ namespace DungeonTeam.Gameplay.Team.Runtime
             if (state == CompanionFollowState.Holding)
             {
                 Stop();
-                return;
+                return true;
             }
 
             MoveTo(followPosition);
+            return false;
         }
 
         private bool TryUseHealSkill(ActorInstance target)

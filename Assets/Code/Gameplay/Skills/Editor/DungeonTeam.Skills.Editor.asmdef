@@ -2,7 +2,11 @@
   "name": "DungeonTeam.Skills.Editor",
   "rootNamespace": "DungeonTeam.Gameplay.Skills.Editor",
   "references": [
-    "DungeonTeam.Skills.Runtime"
+    "DungeonTeam.Actors.Runtime",
+    "DungeonTeam.Configuration",
+    "DungeonTeam.Skills.Domain",
+    "DungeonTeam.Skills.Runtime",
+    "Unity.Addressables.Editor"
   ],
   "includePlatforms": [
     "Editor"

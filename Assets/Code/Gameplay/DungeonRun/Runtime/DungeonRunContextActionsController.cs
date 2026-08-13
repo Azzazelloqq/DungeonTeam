@@ -26,8 +26,7 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
         private readonly float _chestOpenDistanceSqr;
         private readonly float _exitDistanceSqr;
         private readonly Vector3 _exitPosition;
-        private readonly List<ContextAction> _availableActions = new(6);
-        private readonly ContextAction _orderAttackAction;
+        private readonly List<ContextAction> _availableActions = new(4);
         private readonly ContextAction _followAction;
         private readonly ContextAction _pickupAction;
         private readonly ContextAction _openAction;
@@ -87,7 +86,6 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
             _chestOpened = chestOpened ?? throw new ArgumentNullException(nameof(chestOpened));
             _exitRequested = exitRequested ?? throw new ArgumentNullException(nameof(exitRequested));
 
-            _orderAttackAction = new ContextAction("ORDER ATTACK", ExecuteOrderAttack);
             _followAction = new ContextAction("FOLLOW", _teamController.OrderFollow);
             _pickupAction = new ContextAction("PICK UP", ExecutePickup);
             _openAction = new ContextAction("OPEN", ExecuteOpen);
@@ -157,11 +155,6 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
                 return;
             }
 
-            if (_teamController.CanOrderAttack)
-            {
-                _availableActions.Add(_orderAttackAction);
-            }
-
             if (_teamController.CanOrderFollow)
             {
                 _availableActions.Add(_followAction);
@@ -183,11 +176,6 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
             }
 
             _model.SetActions(_availableActions);
-        }
-
-        private void ExecuteOrderAttack()
-        {
-            _teamController.TryOrderAttack();
         }
 
         private void ExecutePickup()

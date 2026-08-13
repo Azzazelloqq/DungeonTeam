@@ -25,6 +25,8 @@ namespace DungeonTeam.UI.CombatHud
         [SerializeField] private Vector2 _activeSkillOffset = new(-132f, 122f);
         [SerializeField, Range(0f, 0.45f)] private float _skillIconInset = 0.12f;
         [SerializeField, Min(1f)] private float _statusFontSize = 24f;
+        [SerializeField, Min(1f)] private float _targetMarkerSize = 96f;
+        [SerializeField, Min(1f)] private float _targetMarkerThickness = 7f;
 
         [Header("State colors")]
         [SerializeField] private Color _readyColor = new(0.48f, 0.76f, 1f, 1f);
@@ -38,15 +40,24 @@ namespace DungeonTeam.UI.CombatHud
         [SerializeField] private Color _textColor = Color.white;
         [SerializeField] private Color _joystickBaseColor = new(0.48f, 0.75f, 1f, 0.58f);
         [SerializeField] private Color _joystickKnobColor = new(0.72f, 0.9f, 1f, 0.94f);
+        [SerializeField] private Color _manualTargetColor = new(0.25f, 0.95f, 1f, 1f);
+        [SerializeField] private Color _automaticTargetColor = new(0.65f, 0.82f, 0.9f, 0.58f);
 
         private readonly List<ButtonEntry> _buttons = new();
+        private readonly List<Image> _targetMarkerSegments = new(4);
         private RectTransform _safeArea;
+        private RectTransform _contextActionsHost;
+        private RectTransform _targetMarker;
+        private Canvas _canvas;
         private VirtualJoystickControl _joystickControl;
         private RawImage _joystickBase;
         private RawImage _joystickKnob;
         private Sprite _cooldownSprite;
         private bool _controlsEnabled;
         private bool _isApplyingSafeArea;
+        private CombatHudTargetState _targetState;
+
+        public override RectTransform ContextActionsHost => _contextActionsHost;
 
         protected override void OnInitialize()
         {
@@ -65,6 +76,9 @@ namespace DungeonTeam.UI.CombatHud
             viewModel.ControlsEnabled
                 .Subscribe(ApplyControlsEnabled)
                 .AddTo(compositeDisposable);
+            viewModel.Target
+                .Subscribe(ApplyTarget)
+                .AddTo(compositeDisposable);
         }
 
         protected override ValueTask OnInitializeAsync(CancellationToken token)
@@ -80,6 +94,7 @@ namespace DungeonTeam.UI.CombatHud
             _joystickControl = null;
             _joystickBase = null;
             _joystickKnob = null;
+            _canvas = null;
 
             for (var index = 0; index < _buttons.Count; index++)
             {
@@ -88,7 +103,11 @@ namespace DungeonTeam.UI.CombatHud
             }
 
             _buttons.Clear();
+            _targetMarkerSegments.Clear();
             _safeArea = null;
+            _contextActionsHost = null;
+            _targetMarker = null;
+            _targetState = CombatHudTargetState.Hidden;
             DestroyCooldownSprite();
         }
 
@@ -110,6 +129,7 @@ namespace DungeonTeam.UI.CombatHud
             root.anchorMax = Vector2.one;
             root.offsetMin = Vector2.zero;
             root.offsetMax = Vector2.zero;
+            _canvas = root.GetComponentInParent<Canvas>();
 
             var safeAreaObject = new GameObject("SafeArea", typeof(RectTransform));
             safeAreaObject.layer = gameObject.layer;
@@ -119,6 +139,8 @@ namespace DungeonTeam.UI.CombatHud
             _safeArea.offsetMax = Vector2.zero;
             ApplySafeArea();
 
+            CreateContextActionsHost();
+            CreateTargetMarker();
             CreateCooldownSprite();
             CreateJoystick();
         }
@@ -169,6 +191,114 @@ namespace DungeonTeam.UI.CombatHud
 
             _safeArea.offsetMin = Vector2.zero;
             _safeArea.offsetMax = Vector2.zero;
+            ApplyTarget(_targetState);
+        }
+
+        private void CreateContextActionsHost()
+        {
+            var hostObject = new GameObject("ContextActionsHost", typeof(RectTransform));
+            hostObject.layer = gameObject.layer;
+            _contextActionsHost = (RectTransform)hostObject.transform;
+            _contextActionsHost.SetParent(_safeArea, false);
+            _contextActionsHost.anchorMin = Vector2.zero;
+            _contextActionsHost.anchorMax = Vector2.one;
+            _contextActionsHost.offsetMin = Vector2.zero;
+            _contextActionsHost.offsetMax = Vector2.zero;
+        }
+
+        private void CreateTargetMarker()
+        {
+            var markerObject = new GameObject("TargetMarker", typeof(RectTransform));
+            markerObject.layer = gameObject.layer;
+            _targetMarker = (RectTransform)markerObject.transform;
+            _targetMarker.SetParent(_safeArea, false);
+            _targetMarker.anchorMin = new Vector2(0.5f, 0.5f);
+            _targetMarker.anchorMax = new Vector2(0.5f, 0.5f);
+            _targetMarker.pivot = new Vector2(0.5f, 0.5f);
+            _targetMarker.sizeDelta = Vector2.one * _targetMarkerSize;
+
+            CreateTargetMarkerSegment(
+                "Top",
+                new Vector2(0.5f, 1f),
+                new Vector2(_targetMarkerSize, _targetMarkerThickness));
+            CreateTargetMarkerSegment(
+                "Bottom",
+                new Vector2(0.5f, 0f),
+                new Vector2(_targetMarkerSize, _targetMarkerThickness));
+            CreateTargetMarkerSegment(
+                "Left",
+                new Vector2(0f, 0.5f),
+                new Vector2(_targetMarkerThickness, _targetMarkerSize));
+            CreateTargetMarkerSegment(
+                "Right",
+                new Vector2(1f, 0.5f),
+                new Vector2(_targetMarkerThickness, _targetMarkerSize));
+            markerObject.SetActive(false);
+        }
+
+        private void CreateTargetMarkerSegment(
+            string name,
+            Vector2 anchor,
+            Vector2 size)
+        {
+            var segmentObject = new GameObject(
+                name,
+                typeof(RectTransform),
+                typeof(CanvasRenderer),
+                typeof(Image));
+            segmentObject.layer = gameObject.layer;
+            var segmentRect = (RectTransform)segmentObject.transform;
+            segmentRect.SetParent(_targetMarker, false);
+            segmentRect.anchorMin = anchor;
+            segmentRect.anchorMax = anchor;
+            segmentRect.pivot = anchor;
+            segmentRect.sizeDelta = size;
+            segmentRect.anchoredPosition = Vector2.zero;
+
+            var segment = segmentObject.GetComponent<Image>();
+            segment.color = _automaticTargetColor;
+            segment.raycastTarget = false;
+            _targetMarkerSegments.Add(segment);
+        }
+
+        private void ApplyTarget(CombatHudTargetState state)
+        {
+            _targetState = state;
+            if (_targetMarker == null)
+                return;
+
+            if (!state.IsVisible ||
+                state.ScreenPosition.x < 0f ||
+                state.ScreenPosition.y < 0f ||
+                state.ScreenPosition.x >= Screen.width ||
+                state.ScreenPosition.y >= Screen.height)
+            {
+                _targetMarker.gameObject.SetActive(false);
+                return;
+            }
+
+            var eventCamera = _canvas != null &&
+                              _canvas.renderMode != RenderMode.ScreenSpaceOverlay
+                ? _canvas.worldCamera
+                : null;
+            if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(
+                    _safeArea,
+                    state.ScreenPosition,
+                    eventCamera,
+                    out var localPosition))
+            {
+                _targetMarker.gameObject.SetActive(false);
+                return;
+            }
+
+            _targetMarker.anchoredPosition = localPosition;
+            var color = state.Selection == CombatHudTargetSelection.Manual
+                ? _manualTargetColor
+                : _automaticTargetColor;
+            for (var index = 0; index < _targetMarkerSegments.Count; index++)
+                _targetMarkerSegments[index].color = color;
+
+            _targetMarker.gameObject.SetActive(true);
         }
 
         private void CreateJoystick()

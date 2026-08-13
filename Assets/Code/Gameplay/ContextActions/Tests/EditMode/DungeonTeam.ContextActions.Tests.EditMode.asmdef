@@ -5,7 +5,8 @@
     "DungeonTeam.ContextActions.Runtime",
     "MVVM.Core",
     "MVVM.Reactive",
-    "Disposable"
+    "Disposable",
+    "UnityEngine.UI"
   ],
   "includePlatforms": [
     "Editor"

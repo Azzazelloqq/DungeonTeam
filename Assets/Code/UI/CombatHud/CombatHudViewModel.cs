@@ -35,6 +35,8 @@ namespace DungeonTeam.UI.CombatHud
         public override IReadOnlyReactiveProperty<bool> ControlsEnabled =>
             model.ControlsEnabled;
 
+        public override IReadOnlyReactiveProperty<CombatHudTargetState> Target => model.Target;
+
         public override IRelayCommand<Vector2> SetMovementCommand { get; }
 
         public override IRelayCommand<SkillSlot> RequestSkillCommand { get; }

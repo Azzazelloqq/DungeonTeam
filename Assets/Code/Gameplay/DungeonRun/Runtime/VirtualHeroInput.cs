@@ -68,6 +68,12 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
             return true;
         }
 
+        public bool TryConsumeTargetSelection(out Vector2 screenPosition)
+        {
+            screenPosition = Vector2.zero;
+            return false;
+        }
+
         private static bool IsFinite(float value)
         {
             return !float.IsNaN(value) && !float.IsInfinity(value);

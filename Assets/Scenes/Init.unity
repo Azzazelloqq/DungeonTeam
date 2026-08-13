@@ -203,7 +203,8 @@ MonoBehaviour:
   _heroControlSettings:
     _targetSelectionRadius: 90
     _eyeHeight: 1
-    _autoTargetRange: 12
+    _autoTargetRange: 8
+    _manualTargetLossDistance: 10
     _obstacleMask:
       serializedVersion: 2
       m_Bits: 4294967295

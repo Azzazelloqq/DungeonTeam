@@ -5,6 +5,7 @@ using DungeonTeam.Gameplay.Skills.Runtime;
 using DungeonTeam.UI.CombatHud;
 using DungeonTeam.UI.CombatHud.Base;
 using TickHandler;
+using UnityEngine;
 
 namespace DungeonTeam.Gameplay.DungeonRun.Runtime
 {
@@ -12,6 +13,7 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
     {
         private readonly HeroController _heroController;
         private readonly ActorCombatController _combatController;
+        private readonly Camera _worldCamera;
         private readonly ITickHandler _tickHandler;
         private readonly CombatHudModelBase _model;
         private readonly string[] _titles;
@@ -23,6 +25,7 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
         public DungeonRunCombatHudController(
             HeroController heroController,
             ActorCombatController combatController,
+            Camera worldCamera,
             ITickHandler tickHandler,
             CombatHudModelBase model)
         {
@@ -30,6 +33,9 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
                 nameof(heroController));
             _combatController = combatController ?? throw new ArgumentNullException(
                 nameof(combatController));
+            _worldCamera = worldCamera != null
+                ? worldCamera
+                : throw new ArgumentNullException(nameof(worldCamera));
             _tickHandler = tickHandler ?? throw new ArgumentNullException(nameof(tickHandler));
             _model = model ?? throw new ArgumentNullException(nameof(model));
             if (_combatController.Slots.Count != model.Slots.Count)
@@ -109,6 +115,7 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
 
             _tickHandler.UnsubscribeOnFrameUpdate(OnFrameUpdate);
             _model.SetControlsEnabled(false);
+            _model.UpdateTarget(CombatHudTargetState.Hidden);
             Refresh(isEnabled: false);
         }
 
@@ -119,6 +126,7 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
 
         private void Refresh(bool isEnabled)
         {
+            RefreshTarget(isEnabled);
             for (var index = 0; index < _combatController.Slots.Count; index++)
             {
                 _model.UpdateSlot(CreateState(
@@ -128,6 +136,26 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
                     _icons[index],
                     isEnabled));
             }
+        }
+
+        private void RefreshTarget(bool isEnabled)
+        {
+            var target = _heroController.Target;
+            if (!isEnabled || target == null || !target.IsAlive)
+            {
+                _model.UpdateTarget(CombatHudTargetState.Hidden);
+                return;
+            }
+
+            var overheadAnchor = target.OverheadAnchor;
+            var worldPosition = overheadAnchor != null
+                ? overheadAnchor.position
+                : target.Position + Vector3.up;
+            _model.UpdateTarget(new CombatHudTargetState(
+                _worldCamera.WorldToScreenPoint(worldPosition),
+                _heroController.IsTargetManuallySelected
+                    ? CombatHudTargetSelection.Manual
+                    : CombatHudTargetSelection.Automatic));
         }
 
         private static CombatHudSlotState CreateState(

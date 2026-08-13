@@ -13,8 +13,12 @@ namespace DungeonTeam.UI.CombatHud.Base
 
         public abstract IReadOnlyReactiveProperty<bool> ControlsEnabled { get; }
 
+        public abstract IReadOnlyReactiveProperty<CombatHudTargetState> Target { get; }
+
         public abstract void UpdateSlot(CombatHudSlotState state);
 
         public abstract void SetControlsEnabled(bool isEnabled);
+
+        public abstract void UpdateTarget(CombatHudTargetState state);
     }
 }

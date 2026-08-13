@@ -19,6 +19,10 @@ namespace DungeonTeam.Gameplay.Actors.Runtime.Presentation.Gameplay.Actor
         private static readonly int AttackHash = Animator.StringToHash(AttackParameter);
         private static readonly int CastHash = Animator.StringToHash(CastParameter);
         private static readonly int DeathHash = Animator.StringToHash(DeathParameter);
+        private static readonly int LocomotionStateHash =
+            Animator.StringToHash("Base Layer.Locomotion");
+
+        private const float ActionCancelBlendDuration = 0.12f;
 
         [SerializeField]
         private NavMeshAgent _agent;
@@ -141,12 +145,38 @@ namespace DungeonTeam.Gameplay.Actors.Runtime.Presentation.Gameplay.Actor
 
         public override void PlayAttackFeedback()
         {
-            _animator?.SetTrigger(AttackHash);
+            if (_animator == null)
+            {
+                return;
+            }
+
+            _animator.SetFloat(MoveSpeedHash, 0f);
+            _animator.SetTrigger(AttackHash);
         }
 
         public override void PlayCastFeedback()
         {
-            _animator?.SetTrigger(CastHash);
+            if (_animator == null)
+            {
+                return;
+            }
+
+            _animator.SetFloat(MoveSpeedHash, 0f);
+            _animator.SetTrigger(CastHash);
+        }
+
+        public override void CancelActionFeedback()
+        {
+            if (_animator == null || !_animator.isActiveAndEnabled)
+            {
+                return;
+            }
+
+            _animator.ResetTrigger(AttackHash);
+            _animator.ResetTrigger(CastHash);
+            _animator.CrossFadeInFixedTime(
+                LocomotionStateHash,
+                ActionCancelBlendDuration);
         }
 
         public override void PlayDamageFeedback(int amount, bool isFatal)

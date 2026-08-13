@@ -152,11 +152,17 @@ namespace DungeonTeam.Gameplay.DungeonRun.Tests.PlayMode
                 Assert.That(FindButton(contextActions, "EXIT"), Is.Null);
                 Assert.That(FindButton(contextActions, "OPEN"), Is.Null);
                 Assert.That(FindButton(contextActions, "ATTACK"), Is.Null);
-                Assert.That(FindButton(contextActions, "ORDER ATTACK"), Is.Not.Null);
+                Assert.That(FindButton(contextActions, "ORDER ATTACK"), Is.Null);
                 var primarySkillButton = FindButtonByName(combatHud, "Skill_Primary");
                 var activeSkillButton = FindButtonByName(combatHud, "Skill_Active1");
+                var contextActionsHost = combatHud.transform.Find(
+                    "SafeArea/ContextActionsHost");
+                var targetMarker = combatHud.transform.Find("SafeArea/TargetMarker");
                 Assert.That(primarySkillButton, Is.Not.Null);
                 Assert.That(activeSkillButton, Is.Not.Null);
+                Assert.That(contextActionsHost, Is.Not.Null);
+                Assert.That(contextActions.transform.parent, Is.EqualTo(contextActionsHost));
+                Assert.That(targetMarker, Is.Not.Null);
                 Assert.That(
                     combatHud.transform.Find("SafeArea/MovementJoystick"),
                     Is.Not.Null);
@@ -167,11 +173,24 @@ namespace DungeonTeam.Gameplay.DungeonRun.Tests.PlayMode
                 Assert.That(actorsRoot.transform.Find("Enemy_enemy.test.a"), Is.Not.Null);
                 Assert.That(actorsRoot.transform.Find("Enemy_enemy.test.b"), Is.Not.Null);
 
+                input.RequestedTargetSelection = worldCamera.WorldToScreenPoint(
+                    root.Enemies[1].Position + Vector3.up);
+                yield return null;
+
+                Assert.That(targetMarker.gameObject.activeSelf, Is.True);
+                Assert.That(
+                    targetMarker.Find("Top").GetComponent<Image>().color.a,
+                    Is.EqualTo(1f).Within(0.001f),
+                    "A pointer-selected target must use the manual target style.");
+
                 root.Leader.ApplyDamage(50);
                 yield return null;
                 yield return null;
                 Assert.That(root.Leader.CurrentHealth, Is.EqualTo(95),
                     "Healer companion must autonomously use its loadout heal slot.");
+
+                root.Companions[0].ApplyDamage(1, root.Enemies[0]);
+                yield return null;
 
                 var followButton = FindButton(contextActions, "FOLLOW");
                 Assert.That(followButton, Is.Not.Null);
@@ -184,10 +203,13 @@ namespace DungeonTeam.Gameplay.DungeonRun.Tests.PlayMode
                 var firstEnemyPosition = root.Enemies[0].Position;
 
                 Assert.That(FindButton(contextActions, "ATTACK"), Is.Null);
+                Assert.That(FindButton(contextActions, "ORDER ATTACK"), Is.Null);
+                Assert.That(FindButton(contextActions, "FOLLOW"), Is.Null,
+                    "Follow must be a one-shot recall rather than a persistent mode.");
+                Assert.That(targetMarker.gameObject.activeSelf, Is.True,
+                    "Team recall must not clear the hero's personal target.");
                 Assert.That(primarySkillButton.interactable, Is.True);
                 Assert.That(activeSkillButton.interactable, Is.True);
-                var attackButton = FindButton(contextActions, "ORDER ATTACK");
-                Assert.That(attackButton, Is.Not.Null);
 
                 root.Enemies[0].ApplyDamage(1, root.Enemies[1]);
                 yield return null;
@@ -196,21 +218,16 @@ namespace DungeonTeam.Gameplay.DungeonRun.Tests.PlayMode
                     "Enemy must ignore an attacker that is not a team member.");
                 Assert.That(root.Companions[0].CurrentHealth, Is.EqualTo(companionHealth));
 
-                var healthBeforeTeamAttack = root.Enemies[0].CurrentHealth;
-                root.Companions[0].ApplyDamage(50);
-                var woundedCompanionHealth = root.Companions[0].CurrentHealth;
-                attackButton.onClick.Invoke();
+                var healthBeforeRetaliation = root.Companions[0].CurrentHealth;
+                root.Enemies[0].ApplyDamage(1, root.Companions[0]);
                 yield return null;
                 yield return null;
 
                 Assert.That(root.Enemies[0].IsAlive, Is.True);
-                Assert.That(root.Enemies[0].CurrentHealth, Is.LessThan(healthBeforeTeamAttack));
                 Assert.That(root.Enemies[1].CurrentHealth, Is.EqualTo(secondEnemyHealth),
                     "Team command target must remain independent from HeroTarget.");
                 Assert.That(root.Companions[0].CurrentHealth,
-                    Is.LessThanOrEqualTo(woundedCompanionHealth),
-                    "Explicit attack command must outrank autonomous healing.");
-                Assert.That(root.Companions[0].CurrentHealth, Is.LessThan(companionHealth),
+                    Is.LessThan(healthBeforeRetaliation),
                     "Enemy attacked from outside its vision must retaliate against the attacker.");
                 var directionToCompanion = root.Companions[0].Position - root.Enemies[0].Position;
                 directionToCompanion.y = 0f;
@@ -1373,6 +1390,8 @@ namespace DungeonTeam.Gameplay.DungeonRun.Tests.PlayMode
 
             public SkillSlot? RequestedSkillSlot { get; set; }
 
+            public Vector2? RequestedTargetSelection { get; set; }
+
             public bool IsDisposed { get; private set; }
 
             public bool IsEnabled { get; private set; }
@@ -1392,6 +1411,19 @@ namespace DungeonTeam.Gameplay.DungeonRun.Tests.PlayMode
 
                 slot = RequestedSkillSlot.Value;
                 RequestedSkillSlot = null;
+                return true;
+            }
+
+            public bool TryConsumeTargetSelection(out Vector2 screenPosition)
+            {
+                if (!RequestedTargetSelection.HasValue)
+                {
+                    screenPosition = Vector2.zero;
+                    return false;
+                }
+
+                screenPosition = RequestedTargetSelection.Value;
+                RequestedTargetSelection = null;
                 return true;
             }
 

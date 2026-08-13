@@ -87,6 +87,41 @@ namespace DungeonTeam.UI.CombatHud.Tests
         }
 
         [Test]
+        public void UpdateTarget_PublishesSelectionThroughViewModelContract()
+        {
+            var model = new CombatHudModel(new[] { State(SkillSlot.Primary, "Primary") });
+            var viewModel = new CombatHudViewModel(model, _ => { }, _ => { });
+            viewModel.Initialize();
+            var target = new CombatHudTargetState(
+                new Vector3(640f, 360f, 4f),
+                CombatHudTargetSelection.Manual);
+
+            model.UpdateTarget(target);
+
+            Assert.That(viewModel.Target.Value, Is.EqualTo(target));
+            viewModel.Dispose();
+        }
+
+        [Test]
+        public void TargetState_WithNonFinitePosition_Throws()
+        {
+            Assert.Throws<System.ArgumentOutOfRangeException>(() =>
+                new CombatHudTargetState(
+                    new Vector3(float.NaN, 360f, 4f),
+                    CombatHudTargetSelection.Automatic));
+        }
+
+        [Test]
+        public void TargetState_BehindCamera_IsHidden()
+        {
+            var target = new CombatHudTargetState(
+                new Vector3(640f, 360f, -1f),
+                CombatHudTargetSelection.Manual);
+
+            Assert.That(target.IsVisible, Is.False);
+        }
+
+        [Test]
         public void Create_WithDuplicateSlot_Throws()
         {
             Assert.Throws<System.ArgumentException>(() => new CombatHudModel(new[]

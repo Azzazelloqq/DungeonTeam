@@ -196,6 +196,261 @@ namespace DungeonTeam.Gameplay.Hero.Runtime.Tests.PlayMode
         }
 
         [UnityTest]
+        public IEnumerator AutomaticTargeting_WhileIdle_SelectsNearestVisibleEnemy()
+        {
+            var world = new TestWorld(useManualTicks: true);
+            try
+            {
+                world.Enemy.SkillOriginAnchor.position = Vector3.right * 8f;
+                world.FarEnemy.SkillOriginAnchor.position = Vector3.right * 8.01f;
+                world.Tick(0.1f);
+
+                Assert.That(world.Controller.IsTargetManuallySelected, Is.False);
+                Assert.That(world.Controller.Target, Is.SameAs(world.Enemy));
+            }
+            finally
+            {
+                world.Dispose();
+            }
+
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator ManualTarget_WhileInsideLossDistance_IsNotReplacedByNearerEnemy()
+        {
+            var world = new TestWorld(useManualTicks: true);
+            try
+            {
+                Assert.That(world.Controller.TrySetTarget(world.FarEnemy), Is.True);
+                world.FarEnemy.SkillOriginAnchor.position = Vector3.right * 10f;
+
+                world.Tick(0.1f);
+
+                Assert.That(world.Controller.IsTargetManuallySelected, Is.True);
+                Assert.That(world.Controller.Target, Is.SameAs(world.FarEnemy));
+            }
+            finally
+            {
+                world.Dispose();
+            }
+
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator ManualTarget_BeyondLossDistance_ReturnsToNearestAutomaticTarget()
+        {
+            var world = new TestWorld(useManualTicks: true);
+            try
+            {
+                Assert.That(world.Controller.TrySetTarget(world.Enemy), Is.True);
+                world.Enemy.SkillOriginAnchor.position = Vector3.right * 10.01f;
+
+                world.Tick(0.1f);
+
+                Assert.That(world.Controller.IsTargetManuallySelected, Is.False);
+                Assert.That(world.Controller.Target, Is.SameAs(world.FarEnemy));
+            }
+            finally
+            {
+                world.Dispose();
+            }
+
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator PointerSelection_OnEnemy_UsesManualTargetPriority()
+        {
+            var world = new TestWorld(useManualTicks: true);
+            try
+            {
+                world.ConfigureCameraForTargetSelection();
+                world.Input.QueueTargetSelection(world.Camera.WorldToScreenPoint(
+                    world.FarEnemy.Position + Vector3.up));
+
+                world.Tick(0.1f);
+
+                Assert.That(world.Controller.IsTargetManuallySelected, Is.True);
+                Assert.That(world.Controller.Target, Is.SameAs(world.FarEnemy));
+            }
+            finally
+            {
+                world.Dispose();
+            }
+
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator PointerSelection_OnCurrentAutomaticTarget_SelectsItManually()
+        {
+            var world = new TestWorld(useManualTicks: true);
+            try
+            {
+                world.ConfigureCameraForTargetSelection();
+                world.Tick(0.1f);
+                Assert.That(world.Controller.Target, Is.SameAs(world.Enemy));
+                Assert.That(world.Controller.IsTargetManuallySelected, Is.False);
+
+                world.Input.QueueTargetSelection(world.Camera.WorldToScreenPoint(
+                    world.Enemy.Position + Vector3.up));
+                world.Tick(0.1f);
+
+                Assert.That(world.Controller.IsTargetManuallySelected, Is.True);
+                Assert.That(world.Controller.Target, Is.SameAs(world.Enemy));
+            }
+            finally
+            {
+                world.Dispose();
+            }
+
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator PointerSelection_OnCurrentManualTarget_ReturnsToNearestAutomaticTarget()
+        {
+            var world = new TestWorld(useManualTicks: true);
+            try
+            {
+                world.ConfigureCameraForTargetSelection();
+                var farEnemyScreenPosition = world.Camera.WorldToScreenPoint(
+                    world.FarEnemy.Position + Vector3.up);
+                world.Input.QueueTargetSelection(farEnemyScreenPosition);
+                world.Tick(0.1f);
+                Assert.That(world.Controller.IsTargetManuallySelected, Is.True);
+                Assert.That(world.Controller.Target, Is.SameAs(world.FarEnemy));
+
+                world.Input.QueueTargetSelection(farEnemyScreenPosition);
+                world.Tick(0.1f);
+
+                Assert.That(world.Controller.IsTargetManuallySelected, Is.False);
+                Assert.That(world.Controller.Target, Is.SameAs(world.Enemy));
+            }
+            finally
+            {
+                world.Dispose();
+            }
+
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator PointerSelection_OnCurrentManualTargetDuringPendingApproach_IsIgnored()
+        {
+            var world = new TestWorld(useManualTicks: true);
+            try
+            {
+                world.ConfigureCameraForTargetSelection();
+                var farEnemyScreenPosition = world.Camera.WorldToScreenPoint(
+                    world.FarEnemy.Position + Vector3.up);
+                world.Input.QueueTargetSelection(farEnemyScreenPosition);
+                world.Tick(0.1f);
+                Assert.That(world.Controller.IsTargetManuallySelected, Is.True);
+                Assert.That(world.Controller.Target, Is.SameAs(world.FarEnemy));
+                Assert.That(world.Controller.TryRequestSkill(SkillSlot.Primary), Is.True);
+                Assert.That(world.Controller.PendingSlot, Is.EqualTo(SkillSlot.Primary));
+
+                world.Input.QueueTargetSelection(farEnemyScreenPosition);
+                world.Tick(0.1f);
+
+                Assert.That(world.Controller.IsTargetManuallySelected, Is.True);
+                Assert.That(world.Controller.Target, Is.SameAs(world.FarEnemy));
+                Assert.That(world.Controller.PendingSlot, Is.EqualTo(SkillSlot.Primary));
+                Assert.That(world.ActiveExecutionCount, Is.Zero);
+            }
+            finally
+            {
+                world.Dispose();
+            }
+
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator PointerSelection_OnEmptySpace_ReturnsToAutomaticTargeting()
+        {
+            var world = new TestWorld(useManualTicks: true);
+            try
+            {
+                world.ConfigureCameraForTargetSelection();
+                Assert.That(world.Controller.TrySetTarget(world.FarEnemy), Is.True);
+                world.Input.QueueTargetSelection(Vector2.zero);
+
+                world.Tick(0.1f);
+
+                Assert.That(world.Controller.IsTargetManuallySelected, Is.False);
+                Assert.That(world.Controller.Target, Is.SameAs(world.Enemy));
+            }
+            finally
+            {
+                world.Dispose();
+            }
+
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator AutomaticTargeting_DuringActiveUse_DoesNotRetarget()
+        {
+            var world = new TestWorld(
+                useProjectileSkill: true,
+                useManualTicks: true);
+            try
+            {
+                world.Tick(0.1f);
+                Assert.That(world.Controller.Target, Is.SameAs(world.Enemy));
+                Assert.That(world.Controller.TryRequestSkill(SkillSlot.Primary), Is.True);
+                world.Tick(0.1f);
+                Assert.That(world.ActiveExecutionCount, Is.EqualTo(1));
+
+                world.FarEnemy.SkillOriginAnchor.position = Vector3.right;
+                world.Tick(0.1f);
+
+                Assert.That(world.Controller.Target, Is.SameAs(world.Enemy));
+            }
+            finally
+            {
+                world.Dispose();
+            }
+
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator ManualTargetAndPointer_DuringActiveUse_DoNotRetargetOrCancel()
+        {
+            var world = new TestWorld(
+                useProjectileSkill: true,
+                useManualTicks: true);
+            try
+            {
+                world.ConfigureCameraForTargetSelection();
+                Assert.That(world.Controller.TrySetTarget(world.Enemy), Is.True);
+                Assert.That(world.Controller.TryRequestSkill(SkillSlot.Primary), Is.True);
+                world.Tick(0.1f);
+                Assert.That(world.ActiveExecutionCount, Is.EqualTo(1));
+
+                world.Enemy.SkillOriginAnchor.position = Vector3.right * 20f;
+                world.Input.QueueTargetSelection(world.Camera.WorldToScreenPoint(
+                    world.FarEnemy.Position + Vector3.up));
+                world.Tick(0.1f);
+
+                Assert.That(world.ActiveExecutionCount, Is.EqualTo(1));
+                Assert.That(world.Controller.IsTargetManuallySelected, Is.True);
+                Assert.That(world.Controller.Target, Is.SameAs(world.Enemy));
+            }
+            finally
+            {
+                world.Dispose();
+            }
+
+            yield return null;
+        }
+
+        [UnityTest]
         public IEnumerator EnemySkill_WithExplicitTarget_DoesNotReplaceItWithNearerEnemy()
         {
             var world = new TestWorld();
@@ -334,7 +589,7 @@ namespace DungeonTeam.Gameplay.Hero.Runtime.Tests.PlayMode
                 yield return null;
                 yield return null;
 
-                Assert.That(world.Controller.Target, Is.Null);
+                Assert.That(world.Controller.Target, Is.SameAs(world.Enemy));
                 Assert.That(world.Controller.PendingSlot, Is.Null);
                 Assert.That(world.Enemy.CurrentHealth, Is.EqualTo(60));
                 Assert.That(world.FarEnemy.CurrentHealth, Is.EqualTo(60));
@@ -351,14 +606,15 @@ namespace DungeonTeam.Gameplay.Hero.Runtime.Tests.PlayMode
             var world = new TestWorld();
             try
             {
-                world.Enemy.SkillOriginAnchor.position = Vector3.right * 20f;
-                world.FarEnemy.SkillOriginAnchor.position = Vector3.right * 24f;
+                world.Enemy.SkillOriginAnchor.position = Vector3.right * 8.01f;
+                world.FarEnemy.SkillOriginAnchor.position = Vector3.right * 9f;
                 Assert.That(
                     world.Controller.TryRequestSkill(SkillSlot.Active1),
                     Is.False);
                 Assert.That(
                     world.Controller.SelectedSlot,
                     Is.EqualTo(SkillSlot.Active1));
+                Assert.That(world.Controller.Target, Is.Null);
                 Assert.That(world.Controller.PendingSlot, Is.Null);
             }
             finally
@@ -620,8 +876,8 @@ namespace DungeonTeam.Gameplay.Hero.Runtime.Tests.PlayMode
                         Quaternion.identity));
 
                 _cameraObject = new GameObject("HeroTestCamera");
-                var camera = _cameraObject.AddComponent<Camera>();
-                camera.transform.rotation = Quaternion.identity;
+                Camera = _cameraObject.AddComponent<Camera>();
+                Camera.transform.rotation = Quaternion.identity;
 
                 if (useManualTicks)
                 {
@@ -670,7 +926,7 @@ namespace DungeonTeam.Gameplay.Hero.Runtime.Tests.PlayMode
                     Hero,
                     new[] { Hero, Ally },
                     new[] { Enemy, FarEnemy },
-                    camera,
+                    Camera,
                     _tickHandler,
                     Input,
                     new HeroControlSettings(),
@@ -685,6 +941,7 @@ namespace DungeonTeam.Gameplay.Hero.Runtime.Tests.PlayMode
             public ActorInstance Ally { get; }
             public FakeHeroInput Input { get; }
             public HeroController Controller { get; }
+            public Camera Camera { get; }
             public int ActiveExecutionCount => _skillExecution.ActiveExecutionCount;
             public int ActiveProjectileCount => _skillExecution.ActiveProjectileCount;
 
@@ -694,6 +951,12 @@ namespace DungeonTeam.Gameplay.Hero.Runtime.Tests.PlayMode
                     throw new System.InvalidOperationException("Test world does not use manual ticks.");
 
                 _manualDispatcher.RaiseUpdate(deltaTime);
+            }
+
+            public void ConfigureCameraForTargetSelection()
+            {
+                Camera.transform.position = new Vector3(0f, 10f, -10f);
+                Camera.transform.LookAt(Vector3.right * 5f + Vector3.up);
             }
 
             public void Dispose()
@@ -854,6 +1117,25 @@ namespace DungeonTeam.Gameplay.Hero.Runtime.Tests.PlayMode
         {
             public Vector2 Movement { get; set; }
             public SkillSlot? RequestedSkillSlot { get; set; }
+            public Vector2? TargetSelection { get; set; }
+
+            public void QueueTargetSelection(Vector2 screenPosition)
+            {
+                TargetSelection = screenPosition;
+            }
+
+            public bool TryConsumeTargetSelection(out Vector2 screenPosition)
+            {
+                if (!TargetSelection.HasValue)
+                {
+                    screenPosition = Vector2.zero;
+                    return false;
+                }
+
+                screenPosition = TargetSelection.Value;
+                TargetSelection = null;
+                return true;
+            }
 
             public bool TryConsumeSkillRequest(out SkillSlot slot)
             {

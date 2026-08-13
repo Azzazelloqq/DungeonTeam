@@ -18,6 +18,7 @@ namespace DungeonTeam.Gameplay.DungeonRun.Tests
             input.RequestSkill(SkillSlot.Primary);
 
             Assert.That(input.Movement, Is.EqualTo(Vector2.zero));
+            Assert.That(input.TryConsumeTargetSelection(out _), Is.False);
             Assert.That(input.TryConsumeSkillRequest(out _), Is.False);
         }
 
@@ -34,6 +35,7 @@ namespace DungeonTeam.Gameplay.DungeonRun.Tests
             input.RequestSkill(SkillSlot.Active1);
 
             Assert.That(input.Movement, Is.EqualTo(Vector2.zero));
+            Assert.That(input.TryConsumeTargetSelection(out _), Is.False);
             Assert.That(input.TryConsumeSkillRequest(out _), Is.False);
         }
 
@@ -92,6 +94,7 @@ namespace DungeonTeam.Gameplay.DungeonRun.Tests
             input.Enable();
 
             Assert.That(input.Movement, Is.EqualTo(Vector2.zero));
+            Assert.That(input.TryConsumeTargetSelection(out _), Is.False);
             Assert.That(input.TryConsumeSkillRequest(out _), Is.False);
 
             input.Dispose();
@@ -134,15 +137,50 @@ namespace DungeonTeam.Gameplay.DungeonRun.Tests
             Assert.That(input.TryConsumeSkillRequest(out _), Is.False);
         }
 
+        [Test]
+        public void TargetSelection_UsesPhysicalInputOnly()
+        {
+            var expectedPosition = new Vector2(320f, 180f);
+            var physical = new FakeHeroInput();
+            physical.QueueTargetSelection(expectedPosition);
+            var virtualInput = new FakeHeroInput();
+            var input = new CompositeHeroInput(physical, virtualInput);
+
+            var consumed = input.TryConsumeTargetSelection(out var screenPosition);
+
+            Assert.That(consumed, Is.True);
+            Assert.That(screenPosition, Is.EqualTo(expectedPosition));
+            Assert.That(input.TryConsumeTargetSelection(out _), Is.False);
+        }
+
         private sealed class FakeHeroInput : IHeroInput
         {
             private SkillSlot? _pendingSkill;
+            private Vector2? _pendingTargetSelection;
 
             public Vector2 Movement { get; set; }
 
             public void QueueSkill(SkillSlot slot)
             {
                 _pendingSkill = slot;
+            }
+
+            public void QueueTargetSelection(Vector2 screenPosition)
+            {
+                _pendingTargetSelection = screenPosition;
+            }
+
+            public bool TryConsumeTargetSelection(out Vector2 screenPosition)
+            {
+                if (!_pendingTargetSelection.HasValue)
+                {
+                    screenPosition = Vector2.zero;
+                    return false;
+                }
+
+                screenPosition = _pendingTargetSelection.Value;
+                _pendingTargetSelection = null;
+                return true;
             }
 
             public bool TryConsumeSkillRequest(out SkillSlot slot)

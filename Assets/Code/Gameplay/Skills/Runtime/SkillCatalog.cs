@@ -25,6 +25,7 @@ namespace DungeonTeam.Gameplay.Skills.Runtime
     public sealed class SkillCatalog
     {
         private readonly Dictionary<string, SkillDefinition> _skills;
+        private readonly ReadOnlyCollection<SkillDefinition> _allSkills;
         private readonly Dictionary<string, CombatLoadoutDefinition> _loadouts;
         private readonly ReadOnlyCollection<CombatLoadoutDefinition> _allLoadouts;
 
@@ -51,6 +52,16 @@ namespace DungeonTeam.Gameplay.Skills.Runtime
             AddSkills(projectileDamageSkills, (config, index) => config.ToDomain(index));
             AddSkills(directHealSkills, (config, index) => config.ToDomain(index));
 
+            var allSkills = new SkillDefinition[_skills.Count];
+            _skills.Values.CopyTo(allSkills, 0);
+            Array.Sort(
+                allSkills,
+                (first, second) => string.Compare(
+                    first.DisplayName,
+                    second.DisplayName,
+                    StringComparison.Ordinal));
+            _allSkills = Array.AsReadOnly(allSkills);
+
             _loadouts = new Dictionary<string, CombatLoadoutDefinition>(
                 loadouts.Length,
                 StringComparer.Ordinal);
@@ -75,6 +86,8 @@ namespace DungeonTeam.Gameplay.Skills.Runtime
         }
 
         public IReadOnlyList<CombatLoadoutDefinition> Loadouts => _allLoadouts;
+
+        public IReadOnlyList<SkillDefinition> Skills => _allSkills;
 
         public SkillDefinition RequireSkill(string skillId)
         {

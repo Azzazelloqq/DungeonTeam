@@ -1,4 +1,5 @@
 using System;
+using DG.Tweening;
 using TMPro;
 using UnityEngine;
 
@@ -20,7 +21,7 @@ namespace DungeonTeam.Gameplay.Actors.Runtime.Presentation.Gameplay.Actor
 
         private Transform _cameraTransform;
         private Vector3 _damageTextStartPosition;
-        private float _numberElapsed;
+        private Sequence _damageNumberSequence;
         private bool _isNumberVisible;
         private bool _isConfigured;
 
@@ -32,7 +33,8 @@ namespace DungeonTeam.Gameplay.Actors.Runtime.Presentation.Gameplay.Actor
             _damageTextStartPosition = _damageText.transform.localPosition;
             _damageText.gameObject.SetActive(false);
             _isNumberVisible = false;
-            _numberElapsed = 0f;
+            _damageNumberSequence?.Kill();
+            _damageNumberSequence = null;
             _isConfigured = true;
             enabled = false;
         }
@@ -51,9 +53,31 @@ namespace DungeonTeam.Gameplay.Actors.Runtime.Presentation.Gameplay.Actor
             _damageText.gameObject.SetActive(true);
             var worldCamera = Camera.main;
             _cameraTransform = worldCamera != null ? worldCamera.transform : null;
-            _numberElapsed = 0f;
             _isNumberVisible = true;
             enabled = true;
+
+            _damageNumberSequence?.Kill();
+            var textTransform = _damageText.transform;
+            Sequence sequence = null;
+            sequence = DOTween.Sequence()
+                .SetTarget(_damageText)
+                .SetLink(gameObject, LinkBehaviour.KillOnDestroy)
+                .Append(textTransform.DOLocalMoveY(
+                    _damageTextStartPosition.y + _damageNumberRiseDistance,
+                    _damageNumberDuration)
+                    .SetEase(Ease.OutQuad))
+                .Join(DOTween.ToAlpha(
+                    () => _damageText.color,
+                    value => _damageText.color = value,
+                    0f,
+                    _damageNumberDuration))
+                .OnComplete(() => HideDamageNumber(sequence))
+                .OnKill(() =>
+                {
+                    if (_damageNumberSequence == sequence)
+                        _damageNumberSequence = null;
+                });
+            _damageNumberSequence = sequence;
         }
 
         private void Update()
@@ -64,23 +88,16 @@ namespace DungeonTeam.Gameplay.Actors.Runtime.Presentation.Gameplay.Actor
                 return;
             }
 
-            _numberElapsed += Time.deltaTime;
-            var progress = Mathf.Clamp01(_numberElapsed / _damageNumberDuration);
-            _damageText.transform.localPosition = _damageTextStartPosition +
-                                                  Vector3.up *
-                                                  (_damageNumberRiseDistance * progress);
             if (_cameraTransform != null)
             {
                 _damageText.transform.rotation = _cameraTransform.rotation;
             }
+        }
 
-            var textColor = _damageNumberColor;
-            textColor.a *= 1f - progress;
-            _damageText.color = textColor;
-            if (progress < 1f)
-            {
+        private void HideDamageNumber(Sequence sequence)
+        {
+            if (_damageNumberSequence != sequence)
                 return;
-            }
 
             _damageText.gameObject.SetActive(false);
             _isNumberVisible = false;

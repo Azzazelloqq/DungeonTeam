@@ -48,8 +48,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dc1c36bb85ea4ee48c9e99836a5f5290, type: 3}
   m_Name: 
   m_EditorClassIdentifier: DungeonTeam.ContextActions.Runtime::DungeonTeam.Gameplay.ContextActions.Runtime.ContextActionsView
-  _buttonSize: {x: 180, y: 54}
-  _spacing: 12
+  _buttonSize: {x: 180, y: 112}
+  _spacing: 16
   _fontSize: 24
+  _panelOffset: {x: 52, y: 340}
   _buttonColor: {r: 0.08, g: 0.16, b: 0.26, a: 0.95}
   _textColor: {r: 1, g: 1, b: 1, a: 1}

@@ -266,6 +266,11 @@ namespace DungeonTeam.Gameplay.Combat.Runtime
                 return false;
 
             var cancelled = _activeUse.TryCancel();
+            if (cancelled)
+            {
+                _actor.CancelActionFeedback();
+            }
+
             RefreshObservableState();
             return cancelled;
         }

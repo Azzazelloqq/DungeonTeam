@@ -51,7 +51,7 @@ namespace DungeonTeam.Gameplay.Skills.Runtime.Tests.PlayMode
         }
 
         [Test]
-        public void Fireball_Spawn_PreservesAuthoredProjectileRotation()
+        public void Fireball_Spawn_FacesTargetAndPreservesAuthoredProjectileRotation()
         {
             using var world = new TestWorld();
             var source = world.CreateActor<TestActorViewA>("actor.source", Vector3.zero);
@@ -59,9 +59,13 @@ namespace DungeonTeam.Gameplay.Skills.Runtime.Tests.PlayMode
 
             world.ExecuteFireball(source, target);
 
+            var direction = (target.HitVfxAnchor.position - source.SkillOriginAnchor.position)
+                .normalized;
+            var expectedRotation = Quaternion.LookRotation(direction) *
+                                   Quaternion.Euler(25f, 0f, 0f);
             Assert.That(
-                world.RequireProjectileRotation().eulerAngles.x,
-                Is.EqualTo(25f).Within(0.01f));
+                Quaternion.Angle(world.RequireProjectileRotation(), expectedRotation),
+                Is.LessThan(0.01f));
         }
 
         [Test]
@@ -130,6 +134,26 @@ namespace DungeonTeam.Gameplay.Skills.Runtime.Tests.PlayMode
         }
 
         [Test]
+        public void PresentationCue_Spawn_AppliesPositionScaleAndRotationOffsets()
+        {
+            using var world = new TestWorld();
+            var source = world.CreateActor<TestActorViewA>("actor.source", Vector3.zero);
+            var target = world.CreateActor<TestActorViewA>("actor.target", Vector3.right);
+
+            world.BeginFireball(source, target, new SkillUseTiming(0.4f, 0.2f));
+
+            Assert.That(
+                world.RequireStartVfxLocalPosition(),
+                Is.EqualTo(new Vector3(0.25f, 0.5f, -0.25f)));
+            Assert.That(world.RequireStartVfxScale(), Is.EqualTo(Vector3.one * 0.4f));
+            var expectedRotation = Quaternion.Euler(0f, 35f, 0f) *
+                                   Quaternion.Euler(0f, 15f, 0f);
+            Assert.That(
+                Quaternion.Angle(world.RequireStartVfxRotation(), expectedRotation),
+                Is.LessThan(0.01f));
+        }
+
+        [Test]
         public void Cancel_AfterProjectileCommit_DoesNotRollbackProjectile()
         {
             using var world = new TestWorld();
@@ -151,7 +175,7 @@ namespace DungeonTeam.Gameplay.Skills.Runtime.Tests.PlayMode
         }
 
         [Test]
-        public void DirectDamage_OnCommit_PlaysImpactAtActualTargetPosition()
+        public void DirectDamage_OnCommit_AppliesImpactPositionOffset()
         {
             using var world = new TestWorld();
             var source = world.CreateActor<TestActorViewA>("actor.source", Vector3.zero);
@@ -169,7 +193,9 @@ namespace DungeonTeam.Gameplay.Skills.Runtime.Tests.PlayMode
 
             Assert.That(target.CurrentHealth, Is.EqualTo(90));
             Assert.That(world.Execution.ActivePresentationVfxCount, Is.EqualTo(1));
-            Assert.That(world.RequireImpactVfxPosition(), Is.EqualTo(target.Position));
+            Assert.That(
+                world.RequireImpactVfxPosition(),
+                Is.EqualTo(target.Position + new Vector3(0f, 0.75f, 0.25f)));
             Assert.That(
                 world.RequireImpactVfxRotation().eulerAngles.y,
                 Is.EqualTo(35f).Within(0.01f));
@@ -364,7 +390,10 @@ namespace DungeonTeam.Gameplay.Skills.Runtime.Tests.PlayMode
                                     1f,
                                     SkillVfxAnchor.SourceOrigin,
                                     followAnchor: true,
-                                    _presentationPrefabObject),
+                                    positionOffset: new Vector3(0.25f, 0.5f, -0.25f),
+                                    scaleMultiplier: 0.4f,
+                                    rotationOffsetEuler: new Vector3(0f, 15f, 0f),
+                                    prefab: _presentationPrefabObject),
                                 new SkillVfxCue(
                                     SkillPresentationPhase.Impact,
                                     0f,
@@ -391,7 +420,10 @@ namespace DungeonTeam.Gameplay.Skills.Runtime.Tests.PlayMode
                                     0.2f,
                                     SkillVfxAnchor.ImpactPosition,
                                     followAnchor: false,
-                                    _presentationPrefabObject)
+                                    positionOffset: new Vector3(0f, 0.75f, 0.25f),
+                                    scaleMultiplier: 1f,
+                                    rotationOffsetEuler: Vector3.zero,
+                                    prefab: _presentationPrefabObject)
                             })),
                     new SkillPresentationViewEntry(
                         "skill.heal",
@@ -558,16 +590,49 @@ namespace DungeonTeam.Gameplay.Skills.Runtime.Tests.PlayMode
                 return RequireImpactVfx().rotation;
             }
 
+            public Vector3 RequireStartVfxScale()
+            {
+                return RequirePresentationVfx(SkillPresentationPhase.Start).localScale;
+            }
+
+            public Vector3 RequireStartVfxLocalPosition()
+            {
+                return RequirePresentationVfx(SkillPresentationPhase.Start).localPosition;
+            }
+
+            public Quaternion RequireStartVfxRotation()
+            {
+                return RequirePresentationVfx(SkillPresentationPhase.Start).rotation;
+            }
+
             private Transform RequireImpactVfx()
             {
-                for (var index = 0; index < _projectilesRoot.transform.childCount; index++)
+                return RequirePresentationVfx(SkillPresentationPhase.Impact);
+            }
+
+            private Transform RequirePresentationVfx(SkillPresentationPhase phase)
+            {
+                var prefix = $"SkillVfx_{phase}";
+                var effectsTransforms = _projectilesRoot.GetComponentsInChildren<Transform>(true);
+                for (var index = 0; index < effectsTransforms.Length; index++)
                 {
-                    var child = _projectilesRoot.transform.GetChild(index);
-                    if (child.name.StartsWith("SkillVfx_Impact", StringComparison.Ordinal))
-                        return child;
+                    if (effectsTransforms[index].name.StartsWith(prefix, StringComparison.Ordinal))
+                        return effectsTransforms[index];
                 }
 
-                throw new InvalidOperationException("Impact VFX instance was not found.");
+                for (var actorIndex = 0; actorIndex < _actors.Count; actorIndex++)
+                {
+                    var actorTransforms = _actors[actorIndex].SkillOriginAnchor
+                        .GetComponentsInChildren<Transform>(true);
+                    for (var index = 0; index < actorTransforms.Length; index++)
+                    {
+                        if (actorTransforms[index].name.StartsWith(prefix, StringComparison.Ordinal))
+                            return actorTransforms[index];
+                    }
+                }
+
+                throw new InvalidOperationException(
+                    $"{phase} VFX instance was not found.");
             }
 
             public void Tick(float deltaTime)

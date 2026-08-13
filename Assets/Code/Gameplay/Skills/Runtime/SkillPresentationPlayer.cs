@@ -174,20 +174,37 @@ namespace DungeonTeam.Gameplay.Skills.Runtime
                 }
 
                 instance = UnityEngine.Object.Instantiate(cue.Prefab, anchor, false);
-                instance.transform.localPosition = Vector3.zero;
+                instance.transform.localPosition = cue.PositionOffset;
+                instance.transform.localRotation = cue.Prefab.transform.localRotation *
+                                                   Quaternion.Euler(cue.RotationOffsetEuler);
             }
             else
             {
                 instance = UnityEngine.Object.Instantiate(
                     cue.Prefab,
-                    position,
-                    cue.Prefab.transform.rotation,
+                    ResolveSpawnPosition(cue, anchor, position),
+                    cue.Prefab.transform.rotation * Quaternion.Euler(cue.RotationOffsetEuler),
                     _effectsParent);
             }
+
+            instance.transform.localScale = Vector3.Scale(
+                instance.transform.localScale,
+                Vector3.one * cue.ScaleMultiplier);
 
             instance.name = $"SkillVfx_{cue.Phase}_{cue.Prefab.name}";
             instance.SetActive(true);
             _activeVfx.Add(new ActiveVfx(scheduled.GroupId, cue.Lifetime, instance));
+        }
+
+        private static Vector3 ResolveSpawnPosition(
+            SkillVfxCue cue,
+            Transform anchor,
+            Vector3 anchorPosition)
+        {
+            if (anchor == null || cue.Anchor == SkillVfxAnchor.ImpactPosition)
+                return anchorPosition + cue.PositionOffset;
+
+            return anchor.TransformPoint(cue.PositionOffset);
         }
 
         private static Transform ResolveAnchor(ScheduledVfx scheduled, out Vector3 position)

@@ -34,10 +34,18 @@ namespace DungeonTeam.Gameplay.Skills.Runtime
             try
             {
                 var prefab = views.RequireProjectile(skillId);
+                var authoredRotation = prefab.transform.localRotation;
+                var targetPosition = target.HitVfxAnchor != null
+                    ? target.HitVfxAnchor.position
+                    : target.Position + Vector3.up;
+                var direction = targetPosition - source.SkillOriginAnchor.position;
+                var spawnRotation = direction.sqrMagnitude > Mathf.Epsilon
+                    ? Quaternion.LookRotation(direction.normalized) * authoredRotation
+                    : source.SkillOriginAnchor.rotation * authoredRotation;
                 view = UnityEngine.Object.Instantiate(
                     prefab,
                     source.SkillOriginAnchor.position,
-                    source.SkillOriginAnchor.rotation * prefab.transform.localRotation,
+                    spawnRotation,
                     parent);
                 view.name = $"SkillProjectile_{skillId}";
                 var model = new SkillProjectileModel(level.Damage, level.ProjectileSpeed);
@@ -46,6 +54,7 @@ namespace DungeonTeam.Gameplay.Skills.Runtime
                     model,
                     source,
                     target,
+                    authoredRotation,
                     onImpact);
                 presenter.Initialize();
                 return new SkillProjectileInstance(presenter, view.gameObject);

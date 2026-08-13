@@ -13,6 +13,12 @@ namespace DungeonTeam.Gameplay.Skills.Runtime.Presentation.Gameplay.SkillProject
             set => transform.position = value;
         }
 
+        public override Quaternion Rotation
+        {
+            get => transform.rotation;
+            set => transform.rotation = value;
+        }
+
         protected override void OnInitialize() { }
         protected override ValueTask OnInitializeAsync(CancellationToken token) => default;
         protected override void OnDispose() { }

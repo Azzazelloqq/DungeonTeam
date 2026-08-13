@@ -51,7 +51,7 @@ namespace DungeonTeam.Gameplay.Chests.Tests
             var loader = new ChestViewLoader(resourceLoader);
             try
             {
-                Assert.ThrowsAsync<OperationCanceledException>(async () =>
+                Assert.CatchAsync<OperationCanceledException>(async () =>
                     await loader.LoadAsync(
                         new[] { "interest.chest.basic" },
                         cancellation.Token));

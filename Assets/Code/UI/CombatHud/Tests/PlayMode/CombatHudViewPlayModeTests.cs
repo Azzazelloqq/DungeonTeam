@@ -122,6 +122,68 @@ namespace DungeonTeam.UI.CombatHud.Tests.PlayMode
             }
         }
 
+        [UnityTest]
+        public IEnumerator TargetState_UpdatesMarkerStyleAndVisibility()
+        {
+            var harness = CreateHarness();
+            try
+            {
+                yield return null;
+                var marker = (RectTransform)harness.View.transform.Find(
+                    "SafeArea/TargetMarker");
+                var topSegment = marker.Find("Top").GetComponent<Image>();
+                var screenCenter = new Vector2(Screen.width * 0.5f, Screen.height * 0.5f);
+
+                Assert.That(marker.gameObject.activeSelf, Is.False);
+
+                harness.Model.UpdateTarget(new CombatHudTargetState(
+                    new Vector3(screenCenter.x, screenCenter.y, 1f),
+                    CombatHudTargetSelection.Manual));
+                Assert.That(marker.gameObject.activeSelf, Is.True);
+                var manualColor = topSegment.color;
+
+                harness.Model.UpdateTarget(new CombatHudTargetState(
+                    new Vector3(screenCenter.x, screenCenter.y, 1f),
+                    CombatHudTargetSelection.Automatic));
+                Assert.That(marker.gameObject.activeSelf, Is.True);
+                Assert.That(topSegment.color.a, Is.LessThan(manualColor.a));
+
+                harness.Model.UpdateTarget(new CombatHudTargetState(
+                    new Vector3(-1f, screenCenter.y, 1f),
+                    CombatHudTargetSelection.Manual));
+                Assert.That(marker.gameObject.activeSelf, Is.False);
+
+                harness.Model.UpdateTarget(CombatHudTargetState.Hidden);
+                Assert.That(marker.gameObject.activeSelf, Is.False);
+            }
+            finally
+            {
+                harness.Dispose();
+            }
+        }
+
+        [UnityTest]
+        public IEnumerator ContextActionsHost_IsPassiveAndStretchesAcrossSafeArea()
+        {
+            var harness = CreateHarness();
+            try
+            {
+                yield return null;
+                var host = harness.View.ContextActionsHost;
+
+                Assert.That(host, Is.Not.Null);
+                Assert.That(host.name, Is.EqualTo("ContextActionsHost"));
+                Assert.That(host.parent.name, Is.EqualTo("SafeArea"));
+                Assert.That(host.anchorMin, Is.EqualTo(Vector2.zero));
+                Assert.That(host.anchorMax, Is.EqualTo(Vector2.one));
+                Assert.That(host.GetComponents<Component>(), Has.Length.EqualTo(1));
+            }
+            finally
+            {
+                harness.Dispose();
+            }
+        }
+
         private static void AssertFeedback(
             CombatHudModel model,
             Button button,

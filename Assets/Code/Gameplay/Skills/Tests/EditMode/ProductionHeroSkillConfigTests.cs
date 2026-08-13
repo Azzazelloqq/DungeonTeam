@@ -1,6 +1,7 @@
 using DungeonTeam.Gameplay.Skills.Domain;
 using DungeonTeam.Gameplay.Skills.Runtime;
 using NUnit.Framework;
+using System.Linq;
 using UnityEditor;
 
 namespace DungeonTeam.Gameplay.Skills.Tests
@@ -28,6 +29,22 @@ namespace DungeonTeam.Gameplay.Skills.Tests
                     Is.Not.Null,
                     $"Skill presentation at '{path}' has an invalid script type.");
             }
+        }
+
+        [Test]
+        public void ProductionSkillCatalog_ExposesEverySkillSortedByDisplayName()
+        {
+            var config = AssetDatabase.LoadAssetAtPath<SkillConfigPage>(ConfigPath);
+
+            var skills = config.CreateCatalog().Skills;
+            var displayNames = skills.Select(skill => skill.DisplayName).ToArray();
+            var sortedDisplayNames = displayNames
+                .OrderBy(displayName => displayName, System.StringComparer.Ordinal)
+                .ToArray();
+
+            Assert.That(skills, Has.Count.EqualTo(10));
+            Assert.That(skills.Select(skill => skill.SkillId), Is.Unique);
+            Assert.That(displayNames, Is.EqualTo(sortedDisplayNames));
         }
 
         [TestCase("loadout.king", "skill.strike.king", "skill.smite.king")]

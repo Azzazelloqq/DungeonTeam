@@ -33,6 +33,10 @@ namespace DungeonTeam.Gameplay.Actors.Runtime.Presentation.Gameplay.Actor.Base
 
         public abstract void PlayCastFeedback();
 
+        public virtual void CancelActionFeedback()
+        {
+        }
+
         public abstract void PlayDamageFeedback(int amount, bool isFatal);
 
         public abstract void PlayDeathFeedback();

@@ -110,7 +110,6 @@ namespace DungeonTeam.Gameplay.Team.Runtime
             _commandMode != TeamCommandMode.Follow &&
             (_commandMode == TeamCommandMode.Attack ||
              _retaliationTarget != null ||
-             _availableAttackTarget != null ||
              HasCompanionPreCommitAction());
 
         public void Initialize()
@@ -205,14 +204,21 @@ namespace DungeonTeam.Gameplay.Team.Runtime
             var attackTarget = _commandMode == TeamCommandMode.Attack
                 ? _orderedAttackTarget
                 : _retaliationTarget;
+            var isRecallComplete = _commandMode == TeamCommandMode.Follow;
             for (var index = 0; index < _companions.Count; index++)
             {
-                _companions[index].Tick(
+                isRecallComplete &= _companions[index].Tick(
                     deltaTime,
                     _leader,
                     healTarget,
                     attackTarget,
                     _commandMode);
+            }
+
+            if (_commandMode == TeamCommandMode.Follow && isRecallComplete)
+            {
+                _commandMode = TeamCommandMode.Autonomous;
+                RefreshAvailableAttackTarget();
             }
 
             PublishCommandAvailabilityIfChanged();
