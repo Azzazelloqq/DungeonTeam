@@ -1,8 +1,6 @@
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Azzazelloqq.MVVM.ReactiveLibrary;
-using Code.UI.MainMenu.TeamMemberSelection.Base;
 using Code.UIService;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
@@ -49,9 +47,6 @@ namespace Code.UI.MainMenu
         private RectTransform _teamMembersParent = null;
 
         [SerializeField]
-        private MainMenuTeamMemberViewBase _teamMemberPrefab = null;
-
-        [SerializeField]
         private Text _teamSummary = null;
 
         [SerializeField]
@@ -75,7 +70,6 @@ namespace Code.UI.MainMenu
         [SerializeField]
         private Button _backButton = null;
 
-        private readonly List<MainMenuTeamMemberViewBase> _teamMemberViews = new();
         private bool _canPlay;
         private bool _isQuitConfirmationVisibleState;
 
@@ -126,29 +120,15 @@ namespace Code.UI.MainMenu
         protected override void OnInitialize()
         {
             _playButton.onClick.AddListener(OnPlayClicked);
-            _selectDungeonButton.onClick.AddListener(OnSelectDungeonClicked);
-            _decreaseSeedButton.onClick.AddListener(OnDecreaseSeedClicked);
-            _increaseSeedButton.onClick.AddListener(OnIncreaseSeedClicked);
             _backButton.onClick.AddListener(OnBackClicked);
             _quitButton.onClick.AddListener(OnQuitClicked);
             _confirmQuitButton.onClick.AddListener(OnConfirmQuitClicked);
             _cancelQuitButton.onClick.AddListener(OnCancelQuitClicked);
             viewModel.IsQuitConfirmationVisible.Subscribe(SetQuitConfirmationVisible).AddTo(compositeDisposable);
             viewModel.IsPreviewVisible.Subscribe(SetPreviewVisible).AddTo(compositeDisposable);
-            viewModel.SelectedDungeonLabel.Subscribe(SetSelectedDungeonLabel).AddTo(compositeDisposable);
-            viewModel.SeedLabel.Subscribe(SetSeedLabel).AddTo(compositeDisposable);
             viewModel.PreviewSummary.Subscribe(SetPreviewSummary).AddTo(compositeDisposable);
-            viewModel.TeamSummary.Subscribe(SetTeamSummary).AddTo(compositeDisposable);
             viewModel.CanPlay.Subscribe(SetCanPlay).AddTo(compositeDisposable);
-
-            for (var index = 0; index < viewModel.TeamMembers.Count; index++)
-            {
-                var memberView = Instantiate(_teamMemberPrefab, _teamMembersParent);
-                memberView.Initialize(
-                    viewModel.TeamMembers[index],
-                    disposeWithViewModel: false);
-                _teamMemberViews.Add(memberView);
-            }
+            HideTechnicalControls();
         }
 
         protected override ValueTask OnInitializeAsync(CancellationToken token)
@@ -159,21 +139,10 @@ namespace Code.UI.MainMenu
         protected override void OnDispose()
         {
             _playButton.onClick.RemoveListener(OnPlayClicked);
-            _selectDungeonButton.onClick.RemoveListener(OnSelectDungeonClicked);
-            _decreaseSeedButton.onClick.RemoveListener(OnDecreaseSeedClicked);
-            _increaseSeedButton.onClick.RemoveListener(OnIncreaseSeedClicked);
             _backButton.onClick.RemoveListener(OnBackClicked);
             _quitButton.onClick.RemoveListener(OnQuitClicked);
             _confirmQuitButton.onClick.RemoveListener(OnConfirmQuitClicked);
             _cancelQuitButton.onClick.RemoveListener(OnCancelQuitClicked);
-            for (var index = _teamMemberViews.Count - 1; index >= 0; index--)
-            {
-                var memberView = _teamMemberViews[index];
-                memberView.Dispose();
-                Destroy(memberView.gameObject);
-            }
-
-            _teamMemberViews.Clear();
         }
 
         protected override ValueTask OnDisposeAsync(CancellationToken token)
@@ -209,24 +178,9 @@ namespace Code.UI.MainMenu
             _previewPanel.SetActive(isVisible);
         }
 
-        private void SetSelectedDungeonLabel(string label)
-        {
-            _selectedDungeonLabel.text = label;
-        }
-
-        private void SetSeedLabel(string label)
-        {
-            _seedLabel.text = label;
-        }
-
         private void SetPreviewSummary(string summary)
         {
             _previewSummary.text = summary;
-        }
-
-        private void SetTeamSummary(string summary)
-        {
-            _teamSummary.text = summary;
         }
 
         private void SetCanPlay(bool canPlay)
@@ -243,21 +197,6 @@ namespace Code.UI.MainMenu
         private void OnPlayClicked()
         {
             viewModel.PlayCommand.Execute();
-        }
-
-        private void OnSelectDungeonClicked()
-        {
-            viewModel.SelectNextDungeonCommand.Execute();
-        }
-
-        private void OnDecreaseSeedClicked()
-        {
-            viewModel.DecreaseSeedCommand.Execute();
-        }
-
-        private void OnIncreaseSeedClicked()
-        {
-            viewModel.IncreaseSeedCommand.Execute();
         }
 
         private void OnBackClicked()
@@ -278,6 +217,25 @@ namespace Code.UI.MainMenu
         private void OnCancelQuitClicked()
         {
             viewModel.CancelQuitCommand.Execute();
+        }
+
+        private void HideTechnicalControls()
+        {
+            SetInactive(_selectDungeonButton);
+            SetInactive(_selectedDungeonLabel);
+            SetInactive(_decreaseSeedButton);
+            SetInactive(_increaseSeedButton);
+            SetInactive(_seedLabel);
+            SetInactive(_teamMembersParent);
+            SetInactive(_teamSummary);
+        }
+
+        private static void SetInactive(Component component)
+        {
+            if (component != null)
+            {
+                component.gameObject.SetActive(false);
+            }
         }
     }
 }

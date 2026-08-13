@@ -26,6 +26,7 @@ using DungeonTeam.Gameplay.Hero.Runtime;
 using DungeonTeam.Gameplay.Rewards.Runtime;
 using DungeonTeam.Gameplay.Team.Runtime;
 using DungeonTeam.Gameplay.Skills.Runtime;
+using DungeonTeam.DeveloperTools;
 using LightDI.Runtime;
 using ResourceLoader;
 using ResourceLoader.AddressableResourceLoader;
@@ -61,11 +62,14 @@ namespace Code.ApplicationRoot
 		private RewardCatalog _rewardCatalog;
 		private EnemyBehaviorCatalog _enemyBehaviorCatalog;
 		private DungeonRunTeamSetup _dungeonRunTeamSetup;
+		private DungeonRunLaunchPresetCatalog _launchPresetCatalog;
 		private ITickHandler _tickHandler;
 		private IFeedbackService _feedbackService;
 		private IMusicPlayer _musicPlayer;
 		private FeedbackBankLoader _feedbackBankLoader;
-		private DungeonRunRoot _dungeonRunRoot;
+		private DungeonRunHost _dungeonRunHost;
+		private DeveloperRunConsoleController _developerConsoleController;
+		private DeveloperRunConsoleView _developerConsoleView;
 		private bool _isDungeonTransitioning;
 
 		public ApplicationRoot(
@@ -114,6 +118,9 @@ namespace Code.ApplicationRoot
 			_dungeonRunTeamSetup = config
 				.GetConfigPage<DungeonRunConfigPage>()
 				.CreateTeamSetup(_actorCatalog, _skillCatalog);
+			_launchPresetCatalog = config
+				.GetConfigPage<DungeonRunLaunchConfigPage>()
+				.CreateCatalog();
 			_rewardPickupViewLoader = new RewardPickupViewLoader(resourceLoader);
 			_chestViewLoader = new ChestViewLoader(resourceLoader);
 			_rewardCatalog = config.GetConfigPage<RewardConfigPage>().CreateCatalog();
@@ -133,14 +140,21 @@ namespace Code.ApplicationRoot
 			_globalContainer.RegisterAsSingleton(_musicPlayer);
 			_feedbackBankLoader = new FeedbackBankLoader(resourceLoader, _feedbackService);
 			_globalContainer.RegisterAsSingleton(_feedbackBankLoader);
+			_dungeonRunHost = new DungeonRunHost(CreateDungeonRunRoot);
 
 			_mainMenuRoot = new MainMenuRoot(
 				_uiService,
-				_dungeonRunTeamSetup,
 				OnPlayRequested,
 				OnBackRequested,
 				Application.Quit);
 			await _mainMenuRoot.InitializeAsync(token);
+
+			if (DeveloperRunConsoleAvailability.IsEnabled(
+				    Application.isEditor,
+				    Debug.isDebugBuild))
+			{
+				CreateDeveloperConsole();
+			}
 
 			await HideLoadingScreenAsync(token);
 		}
@@ -148,6 +162,14 @@ namespace Code.ApplicationRoot
 		protected override void OnDispose()
 		{
 			DisposeDungeonRun();
+			if (_developerConsoleView != null)
+			{
+				UnityEngine.Object.Destroy(_developerConsoleView.gameObject);
+				_developerConsoleView = null;
+			}
+
+			_developerConsoleController = null;
+			_dungeonRunHost = null;
 			_dungeonFactory = null;
 			_actorDefinitionLoader = null;
 			_actorCatalog = null;
@@ -158,6 +180,7 @@ namespace Code.ApplicationRoot
 			_rewardCatalog = null;
 			_enemyBehaviorCatalog = null;
 			_dungeonRunTeamSetup = null;
+			_launchPresetCatalog = null;
 
 			_mainMenuRoot?.Dispose();
 			_mainMenuRoot = null;
@@ -210,58 +233,52 @@ namespace Code.ApplicationRoot
 			await _uiService.HideAsync(_loadingScreen, token);
 		}
 
-		private void OnPlayRequested(MainMenuPlayRequest request)
+		private void OnPlayRequested()
 		{
-			if (_isDungeonTransitioning || _dungeonRunRoot != null)
+			if (_isDungeonTransitioning || _dungeonRunHost.IsBusy)
 			{
 				return;
 			}
 
-			StartDungeonPreviewAsync(request, CancellationToken).Forget(Debug.LogException);
+			var request = _launchPresetCatalog.CreateRequest(
+				_launchPresetCatalog.DefaultPreset.PresetId,
+				seedOverride: null,
+				_dungeonRunTeamSetup.DefaultSelection);
+			StartDungeonPreviewAsync(request, replaceActive: false, CancellationToken)
+				.Forget(Debug.LogException);
 		}
 
 		private async UniTask StartDungeonPreviewAsync(
-			MainMenuPlayRequest request,
+			DungeonRunStartRequest request,
+			bool replaceActive,
 			CancellationToken token)
 		{
+			if (_isDungeonTransitioning || (!replaceActive && _dungeonRunHost.IsBusy))
+			{
+				return;
+			}
+
 			_isDungeonTransitioning = true;
 
 			try
 			{
+				if (replaceActive)
+				{
+					DisposeDungeonRun();
+				}
+
 				await ShowLoadingScreenAsync(token);
 
-				_dungeonRunRoot = new DungeonRunRoot(
-					_dungeonFactory,
-					CreateStartRequest(request),
-					_dungeonRunBindings,
-					_actorDefinitionLoader,
-					_actorCatalog,
-					_skillCatalog,
-					_skillViewLoader,
-					_rewardPickupViewLoader,
-					_chestViewLoader,
-					_canvasContext.GetParent(UIElementGroup.OverlayElement),
-					_worldCamera,
-					_tickHandler,
-#if UNITY_EDITOR
-					new EditorDungeonRunInput(),
-#else
-					new MobileDungeonRunInput(),
-#endif
-					_rewardCatalog,
-					_teamControlSettings,
-					_heroControlSettings,
-					_enemyBehaviorCatalog);
-				await _dungeonRunRoot.InitializeAsync(token);
-				_dungeonRunRoot.ProgressChanged += OnDungeonRunProgressChanged;
-				_dungeonRunRoot.Finished += OnDungeonRunFinished;
+				var run = await _dungeonRunHost.StartAsync(request, token);
+				run.ProgressChanged += OnDungeonRunProgressChanged;
+				run.Finished += OnDungeonRunFinished;
 
 				if (token.IsCancellationRequested)
 				{
 					token.ThrowIfCancellationRequested();
 				}
 
-				_mainMenuRoot.ShowDungeonPreview(CreatePreviewSummary(_dungeonRunRoot));
+				_mainMenuRoot.ShowDungeonPreview(CreatePreviewSummary(run));
 			}
 			catch (OperationCanceledException) when (token.IsCancellationRequested)
 			{
@@ -312,23 +329,12 @@ namespace Code.ApplicationRoot
 			       $"PLANNED OBJECTIVES: {runRoot.ContentPlan.ObjectiveSpawns.Count}";
 		}
 
-		private DungeonRunStartRequest CreateStartRequest(MainMenuPlayRequest request)
-		{
-			_dungeonRunTeamSetup.RequireValid(request.Team);
-			return new DungeonRunStartRequest(
-				new DungeonBuildRequest(
-					request.DungeonId,
-					"scenario.demo",
-					"normal",
-					request.Seed),
-				request.Team);
-		}
-
 		private void OnDungeonRunProgressChanged()
 		{
-			if (_dungeonRunRoot != null)
+			if (_dungeonRunHost.ActiveRun != null)
 			{
-				_mainMenuRoot.ShowDungeonPreview(CreatePreviewSummary(_dungeonRunRoot));
+				_mainMenuRoot.ShowDungeonPreview(
+					CreatePreviewSummary(_dungeonRunHost.ActiveRun));
 			}
 		}
 
@@ -361,15 +367,56 @@ namespace Code.ApplicationRoot
 
 		private void DisposeDungeonRun()
 		{
-			var dungeonRunRoot = _dungeonRunRoot;
-			_dungeonRunRoot = null;
+			var dungeonRunRoot = _dungeonRunHost?.ActiveRun;
 			if (dungeonRunRoot != null)
 			{
 				dungeonRunRoot.ProgressChanged -= OnDungeonRunProgressChanged;
 				dungeonRunRoot.Finished -= OnDungeonRunFinished;
 			}
 
-			dungeonRunRoot?.Dispose();
+			_dungeonRunHost?.Stop();
+		}
+
+		private DungeonRunRoot CreateDungeonRunRoot(DungeonRunStartRequest request)
+		{
+			_dungeonRunTeamSetup.RequireValid(request.Team);
+			return new DungeonRunRoot(
+				_dungeonFactory,
+				request,
+				_dungeonRunBindings,
+				_actorDefinitionLoader,
+				_actorCatalog,
+				_skillCatalog,
+				_skillViewLoader,
+				_rewardPickupViewLoader,
+				_chestViewLoader,
+				_canvasContext.GetParent(UIElementGroup.OverlayElement),
+				_worldCamera,
+				_tickHandler,
+#if UNITY_EDITOR
+				new EditorDungeonRunInput(),
+#else
+				new MobileDungeonRunInput(),
+#endif
+				_rewardCatalog,
+				_teamControlSettings,
+				_heroControlSettings,
+				_enemyBehaviorCatalog);
+		}
+
+		private void CreateDeveloperConsole()
+		{
+			_developerConsoleController = new DeveloperRunConsoleController(
+				_launchPresetCatalog,
+				_dungeonRunTeamSetup,
+				request => StartDungeonPreviewAsync(
+					request,
+					replaceActive: true,
+					CancellationToken).Forget(Debug.LogException),
+				OnBackRequested);
+			var consoleObject = new GameObject("DungeonRunDeveloperConsole");
+			_developerConsoleView = consoleObject.AddComponent<DeveloperRunConsoleView>();
+			_developerConsoleView.Initialize(_developerConsoleController);
 		}
 
 		private static IFeedbackService CreateFeedbackService(

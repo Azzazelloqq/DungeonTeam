@@ -3,7 +3,6 @@
   "rootNamespace": "Code.UI.MainMenu",
   "references": [
     "DungeonTeam.UIService",
-    "DungeonTeam.DungeonRun.Application",
     "MVVM.Core",
     "MVVM.Reactive",
     "Disposable",

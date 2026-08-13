@@ -21,6 +21,7 @@
     "DungeonTeam.DungeonRun.Application",
     "DungeonTeam.Dungeon.Runtime",
     "DungeonTeam.DungeonRun.Runtime",
+    "DungeonTeam.DeveloperTools.Runtime",
     "DungeonTeam.EnemyAI.Runtime",
     "DungeonTeam.Feedback.Runtime",
     "DungeonTeam.Hero.Runtime",

@@ -77,6 +77,64 @@ MonoBehaviour:
     - _enemyId: actor.skeleton.warrior
       _rewardProfileId: reward.enemy.grunt
     _completionRewardProfileId: reward.completion
+  - _scenarioId: scenario.empty
+    _baseThreatBudget: 0
+    _enemyCandidates: []
+    _interestPointRules: []
+    _enabledOptionalPlacementIds: []
+    _requiredObjectives:
+    - _objectiveId: objective.exit
+      _requiredSlotTag: objective.exit
+    _rewardProfiles:
+    - _profileId: reward.completion
+      _entries:
+      - _rewardId: reward.gold
+        _amount: 5
+    _enemyRewardRules: []
+    _completionRewardProfileId: reward.completion
+  - _scenarioId: scenario.ranged
+    _baseThreatBudget: 1
+    _enemyCandidates:
+    - _enemyId: actor.skeleton.mage
+      _behaviorId: behavior.enemy.ranged.basic
+      _loadoutId: loadout.skeleton.mage
+      _actorLevel: 1
+      _cost: 1
+      _weight: 1
+      _allowedSlotTags:
+      - enemy.common
+    _interestPointRules:
+    - _slotTag: interest.common
+      _minCount: 1
+      _maxCount: 1
+      _candidates:
+      - _interestPointId: interest.chest.basic
+        _weight: 1
+        _rewardProfileId: reward.common
+    _enabledOptionalPlacementIds:
+    - interest.optional.chest
+    _requiredObjectives:
+    - _objectiveId: objective.exit
+      _requiredSlotTag: objective.exit
+    _rewardProfiles:
+    - _profileId: reward.enemy.grunt
+      _entries:
+      - _rewardId: reward.gold
+        _amount: 1
+    - _profileId: reward.common
+      _entries:
+      - _rewardId: reward.gold
+        _amount: 3
+      - _rewardId: reward.crystal
+        _amount: 1
+    - _profileId: reward.completion
+      _entries:
+      - _rewardId: reward.gold
+        _amount: 5
+    _enemyRewardRules:
+    - _enemyId: actor.skeleton.mage
+      _rewardProfileId: reward.enemy.grunt
+    _completionRewardProfileId: reward.completion
   _difficulties:
   - _difficultyId: normal
     _threatBudgetMultiplier: 1

@@ -6,7 +6,6 @@ using Code.Addressables.Generated;
 using Code.UI.MainMenu;
 using Code.UIService;
 using Cysharp.Threading.Tasks;
-using DungeonTeam.Gameplay.DungeonRun.Application;
 using NUnit.Framework;
 using UnityEngine;
 using Object = UnityEngine.Object;
@@ -25,8 +24,7 @@ namespace Code.MainMenu.Tests
             var quitRequestCount = 0;
             using var root = new MainMenuRoot(
                 uiService,
-                CreateTeamSetup(),
-                _ => playRequestCount++,
+                () => playRequestCount++,
                 () => { },
                 () => quitRequestCount++);
 
@@ -61,8 +59,7 @@ namespace Code.MainMenu.Tests
             var uiService = new FakeUiService(view);
             var root = new MainMenuRoot(
                 uiService,
-                CreateTeamSetup(),
-                _ => { },
+                () => { },
                 () => { },
                 () => { });
 
@@ -134,32 +131,6 @@ namespace Code.MainMenu.Tests
             public void Dispose()
             {
             }
-        }
-
-        private static DungeonRunTeamSetup CreateTeamSetup()
-        {
-            return new DungeonRunTeamSetup(
-                new[]
-                {
-                    new DungeonRunTeamMemberOption(
-                        "actor.king",
-                        "KING",
-                        new[] { 1 },
-                        new[] { "loadout.king" }),
-                    new DungeonRunTeamMemberOption(
-                        "actor.druid",
-                        "DRUID",
-                        new[] { 1 },
-                        new[] { "loadout.druid" })
-                },
-                2,
-                2,
-                new DungeonRunTeamSelection(
-                    new DungeonRunActorSelection("actor.king", 1, "loadout.king"),
-                    new[]
-                    {
-                        new DungeonRunActorSelection("actor.druid", 1, "loadout.druid")
-                    }));
         }
 
         private sealed class FakeMainMenuView : MainMenuViewBase

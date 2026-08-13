@@ -1,4 +1,3 @@
-using DungeonTeam.Gameplay.DungeonRun.Application;
 using NUnit.Framework;
 
 namespace Code.UI.MainMenu.Tests
@@ -44,25 +43,17 @@ namespace Code.UI.MainMenu.Tests
         [Test]
         public void Play_InvokesPlayAction()
         {
-            MainMenuPlayRequest request = default;
+            var playCount = 0;
             using var viewModel = new MainMenuViewModel(
                 new MainMenuModel(),
-                CreateDungeonOptions(),
-                CreateTeamSetup(),
-                value => request = value,
+                () => playCount++,
                 () => { },
                 () => { });
 
             viewModel.Initialize();
-            viewModel.SelectNextDungeonCommand.Execute();
-            viewModel.IncreaseSeedCommand.Execute();
-
             viewModel.PlayCommand.Execute();
 
-            Assert.That(request.DungeonId, Is.EqualTo("dungeon.chunked"));
-            Assert.That(request.Seed, Is.EqualTo(43));
-            Assert.That(request.Team.LeaderActorId, Is.EqualTo("actor.king"));
-            Assert.That(request.Team.CompanionActorIds, Is.EqualTo(new[] { "actor.druid" }));
+            Assert.That(playCount, Is.EqualTo(1));
         }
 
         [Test]
@@ -71,9 +62,7 @@ namespace Code.UI.MainMenu.Tests
             var backCount = 0;
             using var viewModel = new MainMenuViewModel(
                 new MainMenuModel(),
-                CreateDungeonOptions(),
-                CreateTeamSetup(),
-                _ => { },
+                () => { },
                 () => backCount++,
                 () => { });
             viewModel.Initialize();
@@ -90,116 +79,52 @@ namespace Code.UI.MainMenu.Tests
         {
             var viewModel = new MainMenuViewModel(
                 new MainMenuModel(),
-                CreateDungeonOptions(),
-                CreateTeamSetup(),
-                _ => { },
+                () => { },
                 () => { },
                 onQuit);
             viewModel.Initialize();
             return viewModel;
         }
 
-        private static MainMenuDungeonOption[] CreateDungeonOptions()
-        {
-            return new[]
-            {
-                new MainMenuDungeonOption("AUTHORED", "dungeon.authored"),
-                new MainMenuDungeonOption("CHUNKED", "dungeon.chunked")
-            };
-        }
-
         [Test]
-        public void TeamSelection_ChangeLeaderAndAddCompanion_ProducesSelectedTeam()
-        {
-            MainMenuPlayRequest request = default;
-            using var viewModel = new MainMenuViewModel(
-                new MainMenuModel(),
-                CreateDungeonOptions(),
-                CreateTeamSetup(),
-                value => request = value,
-                () => { },
-                () => { });
-            viewModel.Initialize();
-
-            viewModel.TeamMembers[3].SelectLeaderCommand.Execute();
-            viewModel.TeamMembers[2].ToggleCompanionCommand.Execute();
-            viewModel.PlayCommand.Execute();
-
-            Assert.That(request.Team.LeaderActorId, Is.EqualTo("actor.wizard"));
-            Assert.That(
-                request.Team.CompanionActorIds,
-                Is.EqualTo(new[] { "actor.king", "actor.druid", "actor.rogue" }));
-        }
-
-        [Test]
-        public void TeamSelection_BelowMinimum_DisablesPlay()
+        public void ShowPreview_DisablesPlayUntilSelectionIsRestored()
         {
             var playCount = 0;
             using var viewModel = new MainMenuViewModel(
                 new MainMenuModel(),
-                CreateDungeonOptions(),
-                CreateTeamSetup(),
-                _ => playCount++,
+                () => playCount++,
                 () => { },
                 () => { });
             viewModel.Initialize();
 
-            viewModel.TeamMembers[1].ToggleCompanionCommand.Execute();
+            viewModel.ShowPreview("Run result");
+            viewModel.PlayCommand.Execute();
+            viewModel.ShowSelection();
             viewModel.PlayCommand.Execute();
 
-            Assert.That(viewModel.CanPlay.Value, Is.False);
-            Assert.That(playCount, Is.Zero);
+            Assert.That(playCount, Is.EqualTo(1));
+            Assert.That(viewModel.CanPlay.Value, Is.True);
         }
 
         [Test]
-        public void TeamSelection_IncreaseLevel_UsesConfiguredLevelInRequest()
+        public void QuitConfirmation_DisablesPlayUntilCancelled()
         {
-            MainMenuPlayRequest request = default;
+            var playCount = 0;
             using var viewModel = new MainMenuViewModel(
                 new MainMenuModel(),
-                CreateDungeonOptions(),
-                CreateTeamSetup(),
-                value => request = value,
+                () => playCount++,
                 () => { },
                 () => { });
             viewModel.Initialize();
 
-            viewModel.TeamMembers[0].IncreaseLevelCommand.Execute();
+            viewModel.RequestQuitCommand.Execute();
+            viewModel.PlayCommand.Execute();
+            viewModel.CancelQuitCommand.Execute();
             viewModel.PlayCommand.Execute();
 
-            Assert.That(request.Team.Leader.Level, Is.EqualTo(2));
-            Assert.That(viewModel.TeamMembers[0].LevelLabel.Value, Is.EqualTo("LVL 2"));
+            Assert.That(playCount, Is.EqualTo(1));
+            Assert.That(viewModel.CanPlay.Value, Is.True);
         }
 
-        private static DungeonRunTeamSetup CreateTeamSetup()
-        {
-            return new DungeonRunTeamSetup(
-                new[]
-                {
-                    Option("actor.king", "KING"),
-                    Option("actor.druid", "DRUID"),
-                    Option("actor.rogue", "ROGUE"),
-                    Option("actor.wizard", "WIZARD")
-                },
-                2,
-                4,
-                new DungeonRunTeamSelection(
-                    Selection("actor.king", "loadout.king"),
-                    new[] { Selection("actor.druid", "loadout.druid") }));
-        }
-
-        private static DungeonRunTeamMemberOption Option(string actorId, string displayName)
-        {
-            return new DungeonRunTeamMemberOption(
-                actorId,
-                displayName,
-                new[] { 1, 2 },
-                new[] { "loadout.king", "loadout.druid" });
-        }
-
-        private static DungeonRunActorSelection Selection(string actorId, string loadoutId)
-        {
-            return new DungeonRunActorSelection(actorId, 1, loadoutId);
-        }
     }
 }

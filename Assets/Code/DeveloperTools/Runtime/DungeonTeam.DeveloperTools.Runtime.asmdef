@@ -1,0 +1,9 @@
+{
+  "name": "DungeonTeam.DeveloperTools.Runtime",
+  "rootNamespace": "DungeonTeam.DeveloperTools",
+  "references": [
+    "DungeonTeam.DungeonRun.Application",
+    "Unity.InputSystem"
+  ],
+  "autoReferenced": false
+}

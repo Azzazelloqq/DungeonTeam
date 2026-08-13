@@ -1,0 +1,16 @@
+{
+  "name": "DungeonTeam.DeveloperTools.Tests.EditMode",
+  "rootNamespace": "DungeonTeam.DeveloperTools.Tests",
+  "references": [
+    "DungeonTeam.DeveloperTools.Runtime",
+    "DungeonTeam.Dungeon.Application",
+    "DungeonTeam.DungeonRun.Application"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ],
+  "autoReferenced": false
+}

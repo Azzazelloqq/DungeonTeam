@@ -1,0 +1,58 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 541f0f43d9f14b37be77cecd7421c6cb, type: 3}
+  m_Name: DungeonRunLaunchConfig
+  m_EditorClassIdentifier: DungeonTeam.DungeonRun.Runtime::DungeonTeam.Gameplay.DungeonRun.Runtime.DungeonRunLaunchConfigPage
+  _defaultPresetId: product.default
+  _presets:
+  - _presetId: product.default
+    _displayName: Product Default
+    _dungeonId: dungeon.demo.authored
+    _scenarioId: scenario.demo
+    _difficultyId: normal
+    _defaultSeed: 42
+  - _presetId: dev.authored
+    _displayName: Dev Authored
+    _dungeonId: dungeon.demo.authored
+    _scenarioId: scenario.demo
+    _difficultyId: normal
+    _defaultSeed: 42
+  - _presetId: dev.chunked
+    _displayName: Dev Chunked
+    _dungeonId: dungeon.demo.chunked
+    _scenarioId: scenario.demo
+    _difficultyId: normal
+    _defaultSeed: 42
+  - _presetId: dev.procedural
+    _displayName: Dev Procedural
+    _dungeonId: dungeon.demo.procedural
+    _scenarioId: scenario.demo
+    _difficultyId: normal
+    _defaultSeed: 42
+  - _presetId: dev.empty
+    _displayName: Dev Empty Authored
+    _dungeonId: dungeon.demo.authored
+    _scenarioId: scenario.empty
+    _difficultyId: normal
+    _defaultSeed: 42
+  - _presetId: dev.melee
+    _displayName: Dev Melee Authored
+    _dungeonId: dungeon.demo.authored
+    _scenarioId: scenario.demo
+    _difficultyId: normal
+    _defaultSeed: 42
+  - _presetId: dev.ranged
+    _displayName: Dev Ranged Authored
+    _dungeonId: dungeon.demo.authored
+    _scenarioId: scenario.ranged
+    _difficultyId: normal
+    _defaultSeed: 42

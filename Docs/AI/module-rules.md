@@ -1,9 +1,12 @@
 # Правила модуля feature
 
-Новая feature создаётся в `Assets/Game/Features/<FeatureName>`.
+Новая feature создаётся в существующем project-owned дереве `Assets/Code`: gameplay — в
+`Assets/Code/Gameplay/<FeatureName>`, UI — в `Assets/Code/UI/<FeatureName>`, application/dev
+tooling — в соответствующем верхнеуровневом модуле под `Assets/Code`. Не создавать
+параллельное дерево `Assets/Game`.
 
 ```text
-<FeatureName>/
+Assets/Code/<Area>/<FeatureName>/
   Domain/           # сущности, value objects, правила; без Unity
   Application/      # use cases, интерфейсы портов
   Infrastructure/   # реализации портов feature

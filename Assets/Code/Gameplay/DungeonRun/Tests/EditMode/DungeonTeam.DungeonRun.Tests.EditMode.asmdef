@@ -5,6 +5,7 @@
     "Config",
     "DungeonTeam.Actors.Runtime",
     "DungeonTeam.Configuration",
+    "DungeonTeam.Dungeon.Application",
     "DungeonTeam.DungeonRun.Application",
     "DungeonTeam.DungeonRun.Runtime",
     "DungeonTeam.Hero.Runtime",

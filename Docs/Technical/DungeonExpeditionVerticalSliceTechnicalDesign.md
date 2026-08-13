@@ -2,7 +2,7 @@
 
 **Статус:** READY FOR IMPLEMENTATION
 
-**Версия:** 0.3
+**Версия:** 0.4
 
 **Дата:** 13 августа 2026
 
@@ -49,6 +49,12 @@ GameBootstrapper
 ## 3. Layers and assemblies
 
 Текущий playable собран из существующих модулей под `Assets/Code/Gameplay`: `DungeonRun` координирует попытку, `Team` владеет companion decision flow, а `Actors`, `Combat`, `Skills`, `EnemyAI`, `Chests` и `Rewards` сохраняют свои отдельные ответственности. Production content находится под `Assets/Content`. Отдельный монолитный `DungeonExpedition` module ради объединения этих ответственностей не создаётся.
+
+Classic flow запускает только default product preset и не показывает seed, raw loadout IDs
+или технический выбор dungeon. В Editor и Development Build отдельная runtime developer
+console формирует тот же `DungeonRunStartRequest` из launch preset, seed и team selection.
+Оба flow используют один application-owned `DungeonRunHost` и один `DungeonRunRoot` path;
+release build не создаёт developer console.
 
 Allowed direction:
 
