@@ -81,13 +81,6 @@ namespace DungeonTeam.DeveloperTools
                 _controller.Stop();
             }
 
-            GUI.enabled = _controller.HasLastRun;
-            if (GUILayout.Button("Run Again"))
-            {
-                _controller.RunAgain();
-            }
-
-            GUI.enabled = true;
             if (GUILayout.Button("Reset"))
             {
                 _controller.Reset();

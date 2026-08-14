@@ -63,6 +63,11 @@ namespace DungeonTeam.Gameplay.Dungeon.Tests.EditMode
                 Assert.That(spatial.Encounter.EndCheckpointIndex, Is.EqualTo(5));
                 Assert.That(spatial.CompanionFormationOffsets, Has.Count.EqualTo(3));
                 Assert.That(spatial.TacticalAnchors, Has.Count.EqualTo(3));
+                Assert.That(data.Snapshot.VisibilityLayout.HasAuthoredVisibility, Is.True);
+                Assert.That(data.Snapshot.VisibilityLayout.ZoneCount, Is.EqualTo(2));
+                Assert.That(data.Snapshot.VisibilityLayout.Doors, Has.Count.EqualTo(1));
+                Assert.That(data.Snapshot.VisibilityLayout.Doors[0].RevealedZoneIndex,
+                    Is.EqualTo(1));
             }
             finally
             {

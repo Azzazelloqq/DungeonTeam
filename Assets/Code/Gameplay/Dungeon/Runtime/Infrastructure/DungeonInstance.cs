@@ -13,12 +13,14 @@ namespace DungeonTeam.Gameplay.Dungeon.Runtime.Infrastructure
         private GameObject[] _addressableInstances;
         private AsyncOperationHandle[] _assetHandles;
         private readonly bool _destroyMapRoot;
+        private readonly IDungeonVisibilityBinding _visibilityBinding;
         private bool _disposed;
 
         public DungeonInstance(
             GameObject mapRoot,
             DungeonMapSnapshot mapSnapshot,
-            DungeonContentPlan contentPlan)
+            DungeonContentPlan contentPlan,
+            IDungeonVisibilityBinding visibilityBinding = null)
         {
             _mapRoot = mapRoot;
             _addressableInstances = new[] { mapRoot };
@@ -26,6 +28,7 @@ namespace DungeonTeam.Gameplay.Dungeon.Runtime.Infrastructure
             _destroyMapRoot = false;
             MapSnapshot = mapSnapshot;
             ContentPlan = contentPlan;
+            _visibilityBinding = visibilityBinding;
         }
 
         public DungeonInstance(
@@ -58,6 +61,7 @@ namespace DungeonTeam.Gameplay.Dungeon.Runtime.Infrastructure
 
         public DungeonMapSnapshot MapSnapshot { get; }
         public DungeonContentPlan ContentPlan { get; }
+        public IDungeonVisibilityBinding VisibilityBinding => _visibilityBinding;
 
         public void Dispose()
         {

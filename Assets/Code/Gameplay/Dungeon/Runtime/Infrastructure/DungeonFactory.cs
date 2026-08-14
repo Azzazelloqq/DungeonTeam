@@ -77,7 +77,11 @@ namespace DungeonTeam.Gameplay.Dungeon.Runtime.Infrastructure
                     var instance = new DungeonInstance(
                         mapRoot,
                         mapData.Snapshot,
-                        contentPlan);
+                        contentPlan,
+                        mapData.Snapshot.VisibilityLayout.HasAuthoredVisibility
+                            ? new DungeonVisibilityBinding(
+                                mapRoot.GetComponent<DungeonMapAuthoring>().Visibility)
+                            : null);
 
                     ownershipTransferred = true;
                     return instance;

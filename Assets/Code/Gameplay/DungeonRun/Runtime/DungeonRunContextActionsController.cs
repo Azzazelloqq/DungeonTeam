@@ -19,21 +19,25 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
         private readonly IReadOnlyList<ChestInstance> _chests;
         private readonly ITickHandler _tickHandler;
         private readonly ContextActionsModel _model;
+        private readonly DungeonRunVisibilityController _visibilityController;
         private readonly Action<RewardGrant> _rewardCollected;
         private readonly Action<ChestInstance> _chestOpened;
+        private readonly Func<int, bool> _tryOpenDoor;
         private readonly Action _exitRequested;
         private readonly float _rewardPickupDistanceSqr;
         private readonly float _chestOpenDistanceSqr;
         private readonly float _exitDistanceSqr;
         private readonly Vector3 _exitPosition;
-        private readonly List<ContextAction> _availableActions = new(4);
+        private readonly List<ContextAction> _availableActions = new(5);
         private readonly ContextAction _followAction;
         private readonly ContextAction _pickupAction;
         private readonly ContextAction _openAction;
+        private readonly ContextAction _openDoorAction;
         private readonly ContextAction _exitAction;
 
         private RewardPickupInstance _availableRewardPickup;
         private ChestInstance _availableChest;
+        private int _availableDoorIndex = -1;
         private bool _isExitAvailable;
         private bool _isRunFinished;
         private bool _isInitialized;
@@ -53,7 +57,9 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
             float exitDistance,
             Action<RewardGrant> rewardCollected,
             Action<ChestInstance> chestOpened,
-            Action exitRequested)
+            Action exitRequested,
+            DungeonRunVisibilityController visibilityController = null,
+            Func<int, bool> tryOpenDoor = null)
         {
             _teamController = teamController ?? throw new ArgumentNullException(nameof(teamController));
             _leader = leader ?? throw new ArgumentNullException(nameof(leader));
@@ -85,10 +91,13 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
                 nameof(rewardCollected));
             _chestOpened = chestOpened ?? throw new ArgumentNullException(nameof(chestOpened));
             _exitRequested = exitRequested ?? throw new ArgumentNullException(nameof(exitRequested));
+            _visibilityController = visibilityController;
+            _tryOpenDoor = tryOpenDoor;
 
             _followAction = new ContextAction("FOLLOW", _teamController.OrderFollow);
             _pickupAction = new ContextAction("PICK UP", ExecutePickup);
             _openAction = new ContextAction("OPEN", ExecuteOpen);
+            _openDoorAction = new ContextAction("OPEN DOOR", ExecuteOpenDoor);
             _exitAction = new ContextAction("EXIT", ExecuteExit);
         }
 
@@ -110,6 +119,7 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
             _isInitialized = true;
             RefreshAvailableRewardPickup();
             RefreshAvailableChest();
+            RefreshAvailableDoor();
             RefreshAvailableExit();
             Refresh();
         }
@@ -143,6 +153,7 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
 
             _availableRewardPickup = null;
             _availableChest = null;
+            _availableDoorIndex = -1;
             _isExitAvailable = false;
         }
 
@@ -168,6 +179,11 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
             if (_availableChest != null)
             {
                 _availableActions.Add(_openAction);
+            }
+
+            if (_availableDoorIndex >= 0)
+            {
+                _availableActions.Add(_openDoorAction);
             }
 
             if (_isExitAvailable)
@@ -235,6 +251,21 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
             _exitRequested();
         }
 
+        private void ExecuteOpenDoor()
+        {
+            var doorIndex = _availableDoorIndex;
+            if (doorIndex < 0 || _tryOpenDoor == null || !_tryOpenDoor(doorIndex))
+            {
+                RefreshAvailableDoor();
+                Refresh();
+                return;
+            }
+
+            _availableDoorIndex = -1;
+            RefreshAvailableChest();
+            Refresh();
+        }
+
         private void OnFrameUpdate(float deltaTime)
         {
             if (_isRunFinished)
@@ -244,9 +275,11 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
 
             var rewardAvailabilityChanged = RefreshAvailableRewardPickup();
             var chestAvailabilityChanged = RefreshAvailableChest();
+            var doorAvailabilityChanged = RefreshAvailableDoor();
             var exitAvailabilityChanged = RefreshAvailableExit();
             if (rewardAvailabilityChanged ||
                 chestAvailabilityChanged ||
+                doorAvailabilityChanged ||
                 exitAvailabilityChanged)
             {
                 Refresh();
@@ -328,6 +361,38 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
             }
 
             _isExitAvailable = isAvailable;
+            return true;
+        }
+
+        private bool RefreshAvailableDoor()
+        {
+            var doorIndex = -1;
+            var nearestDistanceSqr = _chestOpenDistanceSqr;
+            if (_leader.IsAlive && _visibilityController != null)
+            {
+                for (var index = 0; index < _visibilityController.DoorCount; index++)
+                {
+                    if (!_visibilityController.IsDoorClosed(index))
+                    {
+                        continue;
+                    }
+
+                    var doorPosition = _visibilityController.GetDoorPosition(index);
+                    var distanceSqr = SqrDistanceToLeader(doorPosition);
+                    if (distanceSqr <= nearestDistanceSqr)
+                    {
+                        doorIndex = index;
+                        nearestDistanceSqr = distanceSqr;
+                    }
+                }
+            }
+
+            if (_availableDoorIndex == doorIndex)
+            {
+                return false;
+            }
+
+            _availableDoorIndex = doorIndex;
             return true;
         }
 

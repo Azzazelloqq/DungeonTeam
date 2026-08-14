@@ -26,6 +26,9 @@ namespace DungeonTeam.Gameplay.Dungeon.Runtime.Authoring
             var spatialLayout = DungeonSpatialAuthoringReader.Read(
                 mapRoot.transform,
                 mapAuthoring);
+            var visibilityLayout = DungeonVisibilityAuthoringReader.Read(
+                mapRoot.transform,
+                mapAuthoring.Visibility);
             var placements = DungeonPlacementReader.Read(mapRoot);
 
             return new AuthoredDungeonMapData(
@@ -34,7 +37,8 @@ namespace DungeonTeam.Gameplay.Dungeon.Runtime.Authoring
                     seed,
                     mapAuthoring.Entry.ToDungeonPose(),
                     mapAuthoring.Exit.ToDungeonPose(),
-                    spatialLayout),
+                    spatialLayout,
+                    visibilityLayout),
                 placements.EnemyPlacements,
                 placements.InterestPointPlacements,
                 placements.ObjectivePlacements);

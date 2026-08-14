@@ -77,6 +77,7 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
         private CombatHudViewBase _combatHudView;
         private DungeonRunProgress _progress;
         private DungeonRunRouteController _routeController;
+        private DungeonRunVisibilityController _visibilityController;
         private IDungeonInstance _dungeonInstance;
         private DungeonRunNavigation _navigation;
         private Vector3 _exitPosition;
@@ -84,9 +85,9 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
         private GameObject _skillProjectilesRoot;
         private GameObject _rewardsRoot;
         private GameObject _interestsRoot;
-        private bool _terminalShutdownScheduled;
         private bool _encounterActivated;
         private bool _enemyAiStartScheduled;
+        private bool _chestsCreated;
         private bool _isDisposed;
 
         public event Action ProgressChanged;
@@ -183,6 +184,9 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
                 _startRequest.Dungeon,
                 ownerToken);
             ownerToken.ThrowIfCancellationRequested();
+            _visibilityController = new DungeonRunVisibilityController(
+                MapSnapshot.VisibilityLayout,
+                _dungeonInstance.VisibilityBinding);
             ValidateRewardPlans();
             ValidateEnemyBehaviors();
             ValidateLoadouts();
@@ -227,7 +231,10 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
                 DungeonPoseConversion.ToPosition(MapSnapshot.ExitPose));
             _rewardsRoot = new GameObject("DungeonRunRewards");
             _interestsRoot = new GameObject("DungeonRunInterests");
-            CreateChests();
+            if (!_visibilityController.IsEnabled)
+            {
+                CreateChests();
+            }
             SubscribeToActorDeaths();
 
             _input.Enable();
@@ -370,6 +377,7 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
 
             _dungeonInstance?.Dispose();
             _dungeonInstance = null;
+            _visibilityController = null;
         }
 
         private void CreateHeroes()
@@ -623,16 +631,7 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
             switch (phase)
             {
                 case DungeonRunRoutePhase.Encounter:
-                    _teamController.SetTacticalAnchors(CreateTacticalAnchors());
-                    ActivateEncounter();
-                    if (ContentPlan.EnemySpawns.Count == 0)
-                    {
-                        _routeController.CompleteEncounter();
-                    }
-                    else
-                    {
-                        ScheduleEnemyAiStart();
-                    }
+                    EnterEncounter();
 
                     break;
                 case DungeonRunRoutePhase.Continuing:
@@ -645,6 +644,25 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
                     }
 
                     break;
+            }
+        }
+
+        private void EnterEncounter()
+        {
+            if (_visibilityController.IsEnabled && !_visibilityController.IsZoneRevealed(1))
+            {
+                return;
+            }
+
+            _teamController.SetTacticalAnchors(CreateTacticalAnchors());
+            ActivateEncounter();
+            if (ContentPlan.EnemySpawns.Count == 0)
+            {
+                _routeController.CompleteEncounter();
+            }
+            else
+            {
+                ScheduleEnemyAiStart();
             }
         }
 
@@ -690,6 +708,12 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
 
         private void CreateChests()
         {
+            if (_chestsCreated)
+            {
+                return;
+            }
+
+            _chestsCreated = true;
             for (var index = 0; index < ContentPlan.InterestPointSpawns.Count; index++)
             {
                 var spawn = ContentPlan.InterestPointSpawns[index];
@@ -741,8 +765,26 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
                 _bindings.ExitDistance,
                 OnRewardCollected,
                 OnChestOpened,
-                OnExitRequested);
+                OnExitRequested,
+                _visibilityController,
+                TryOpenDoor);
             _contextActionsController.Initialize();
+        }
+
+        private bool TryOpenDoor(int doorIndex)
+        {
+            if (!_visibilityController.TryOpenDoor(doorIndex))
+            {
+                return false;
+            }
+
+            CreateChests();
+            if (_routeController?.Phase == DungeonRunRoutePhase.Encounter)
+            {
+                EnterEncounter();
+            }
+
+            return true;
         }
 
         private void CreateCombatHud()
@@ -884,6 +926,9 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
             }
 
             _contextActionsController?.SetRunFinished();
+            DisposeActiveControllers();
+            DisposeSkillExecution();
+            DisposeCombatControllers();
             var result = new DungeonRunResult(
                 outcome,
                 MapSnapshot.DungeonId,
@@ -891,32 +936,7 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
                 _progress.KilledEnemies,
                 _progress.CreateCollectedRewardsSnapshot());
             Finished?.Invoke(result);
-            ScheduleTerminalShutdown();
             return true;
-        }
-
-        private void ScheduleTerminalShutdown()
-        {
-            if (_terminalShutdownScheduled)
-            {
-                return;
-            }
-
-            _terminalShutdownScheduled = true;
-            _tickHandler.SubscribeOnLateUpdateOnce(OnTerminalLateUpdate);
-        }
-
-        private void OnTerminalLateUpdate(float deltaTime)
-        {
-            _terminalShutdownScheduled = false;
-            if (_isDisposed)
-            {
-                return;
-            }
-
-            DisposeActiveControllers();
-            DisposeSkillExecution();
-            DisposeCombatControllers();
         }
 
         private void DisposeActiveControllers()

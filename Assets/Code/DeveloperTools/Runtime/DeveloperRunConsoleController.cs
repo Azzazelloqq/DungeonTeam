@@ -19,7 +19,6 @@ namespace DungeonTeam.DeveloperTools
         private readonly Action _stopRequested;
         private readonly Func<int> _seedGenerator;
         private readonly Dictionary<string, ActorDraft> _actorDrafts;
-        private DungeonRunStartRequest _lastRun;
         private int _seed;
 
         public DeveloperRunConsoleController(
@@ -72,8 +71,6 @@ namespace DungeonTeam.DeveloperTools
         }
 
         public string ErrorMessage { get; private set; }
-
-        public bool HasLastRun => _lastRun != null;
 
         public void SelectPreset(string presetId)
         {
@@ -170,22 +167,8 @@ namespace DungeonTeam.DeveloperTools
                 return false;
             }
 
-            _lastRun = request;
             ErrorMessage = string.Empty;
             _runRequested(request);
-            return true;
-        }
-
-        public bool RunAgain()
-        {
-            if (_lastRun == null)
-            {
-                ErrorMessage = "There is no previous developer run.";
-                return false;
-            }
-
-            ErrorMessage = string.Empty;
-            _runRequested(_lastRun);
             return true;
         }
 
@@ -208,7 +191,6 @@ namespace DungeonTeam.DeveloperTools
             ApplySelection(_teamSetup.DefaultSelection);
             SelectedPresetId = _presetCatalog.DefaultPreset.PresetId;
             _seed = _presetCatalog.DefaultPreset.DefaultSeed;
-            _lastRun = null;
             ErrorMessage = string.Empty;
         }
 

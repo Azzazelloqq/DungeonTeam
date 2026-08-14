@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using DungeonTeam.DeveloperTools;
 using DungeonTeam.Gameplay.DungeonRun.Application;
 using NUnit.Framework;
@@ -87,23 +86,6 @@ namespace DungeonTeam.DeveloperTools.Tests
         }
 
         [Test]
-        public void RunAgain_AfterSelectionChanges_ReemitsLastAcceptedRequest()
-        {
-            var emitted = new List<DungeonRunStartRequest>();
-            var controller = CreateController(emitted.Add);
-            controller.Seed = 25;
-            Assert.That(controller.Run(), Is.True);
-
-            controller.Seed = 99;
-            var accepted = controller.RunAgain();
-
-            Assert.That(accepted, Is.True);
-            Assert.That(emitted, Has.Count.EqualTo(2));
-            Assert.That(emitted[1], Is.SameAs(emitted[0]));
-            Assert.That(emitted[1].Dungeon.Seed, Is.EqualTo(25));
-        }
-
-        [Test]
         public void Stop_AlwaysEmitsStopRequest()
         {
             var stopped = false;
@@ -115,7 +97,7 @@ namespace DungeonTeam.DeveloperTools.Tests
         }
 
         [Test]
-        public void Reset_RestoresCatalogAndTeamDefaultsAndClearsLastRun()
+        public void Reset_RestoresCatalogAndTeamDefaults()
         {
             var controller = CreateController(_ => { });
             Assert.That(controller.Run(), Is.True);
@@ -133,7 +115,6 @@ namespace DungeonTeam.DeveloperTools.Tests
             Assert.That(controller.IsActorIncluded("actor.rogue"), Is.False);
             Assert.That(controller.GetActorLevel("actor.rogue"), Is.EqualTo(1));
             Assert.That(controller.GetActorLoadout("actor.rogue"), Is.EqualTo("loadout.rogue"));
-            Assert.That(controller.HasLastRun, Is.False);
             Assert.That(controller.ErrorMessage, Is.Empty);
         }
 

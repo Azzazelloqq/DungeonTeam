@@ -17,6 +17,7 @@ namespace Code.MainMenu
         private readonly Action _quitConfirmed;
 
         private MainMenuViewModel _viewModel;
+        private MainMenuViewBase _view;
 
         public MainMenuRoot(
             [Inject] IUiService uiService,
@@ -32,7 +33,7 @@ namespace Code.MainMenu
 
         protected override async UniTask OnInitializeAsync(CancellationToken token)
         {
-            var view = await _uiService.CreateAsync<MainMenuViewBase>(
+            _view = await _uiService.CreateAsync<MainMenuViewBase>(
                 AddressableIds.UI.WindowsMainMainMenuPrefab,
                 token: token);
 
@@ -42,14 +43,9 @@ namespace Code.MainMenu
                 _backRequested,
                 _quitConfirmed);
             _viewModel.Initialize();
-            view.Initialize(_viewModel, disposeWithViewModel: false);
+            _view.Initialize(_viewModel, disposeWithViewModel: false);
 
-            await _uiService.ShowAsync(view, token);
-        }
-
-        public void ShowDungeonPreview(string summary)
-        {
-            _viewModel.ShowPreview(summary);
+            await _uiService.ShowAsync(_view, token);
         }
 
         public void ShowSelection()
@@ -57,10 +53,28 @@ namespace Code.MainMenu
             _viewModel.ShowSelection();
         }
 
+        public async UniTask HideAsync(CancellationToken token)
+        {
+            await _uiService.HideAsync(_view, token);
+        }
+
+        public async UniTask ShowTerminalAsync(string summary, CancellationToken token)
+        {
+            _viewModel.ShowPreview(summary);
+            await _uiService.ShowAsync(_view, token);
+        }
+
+        public async UniTask ShowSelectionAsync(CancellationToken token)
+        {
+            _viewModel.ShowSelection();
+            await _uiService.ShowAsync(_view, token);
+        }
+
         protected override void OnDispose()
         {
             _viewModel?.Dispose();
             _viewModel = null;
+            _view = null;
         }
     }
 }

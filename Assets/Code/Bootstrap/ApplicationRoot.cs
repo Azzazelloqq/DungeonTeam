@@ -70,7 +70,8 @@ namespace Code.ApplicationRoot
 		private DungeonRunHost _dungeonRunHost;
 		private DeveloperRunConsoleController _developerConsoleController;
 		private DeveloperRunConsoleView _developerConsoleView;
-		private bool _isDungeonTransitioning;
+        private bool _isDungeonTransitioning;
+        private bool _hasPublishedTerminalResult;
 
 		public ApplicationRoot(
 			UICanvasContext canvasContext,
@@ -244,11 +245,11 @@ namespace Code.ApplicationRoot
 				_launchPresetCatalog.DefaultPreset.PresetId,
 				seedOverride: null,
 				_dungeonRunTeamSetup.DefaultSelection);
-			StartDungeonPreviewAsync(request, replaceActive: false, CancellationToken)
+            StartDungeonRunAsync(request, replaceActive: false, CancellationToken)
 				.Forget(Debug.LogException);
 		}
 
-		private async UniTask StartDungeonPreviewAsync(
+        private async UniTask StartDungeonRunAsync(
 			DungeonRunStartRequest request,
 			bool replaceActive,
 			CancellationToken token)
@@ -267,18 +268,18 @@ namespace Code.ApplicationRoot
 					DisposeDungeonRun();
 				}
 
-				await ShowLoadingScreenAsync(token);
+                await ShowLoadingScreenAsync(token);
+                await _mainMenuRoot.HideAsync(token);
 
-				var run = await _dungeonRunHost.StartAsync(request, token);
-				run.ProgressChanged += OnDungeonRunProgressChanged;
-				run.Finished += OnDungeonRunFinished;
+                var run = await _dungeonRunHost.StartAsync(request, token);
+                run.Finished += OnDungeonRunFinished;
 
 				if (token.IsCancellationRequested)
 				{
 					token.ThrowIfCancellationRequested();
 				}
 
-				_mainMenuRoot.ShowDungeonPreview(CreatePreviewSummary(run));
+                _hasPublishedTerminalResult = false;
 			}
 			catch (OperationCanceledException) when (token.IsCancellationRequested)
 			{
@@ -288,7 +289,7 @@ namespace Code.ApplicationRoot
 			{
 				DisposeDungeonRun();
 				Debug.LogException(exception);
-				_mainMenuRoot.ShowSelection();
+                await _mainMenuRoot.ShowSelectionAsync(token);
 			}
 			finally
 			{
@@ -306,42 +307,46 @@ namespace Code.ApplicationRoot
 			}
 		}
 
-		private void OnBackRequested()
-		{
-			if (_isDungeonTransitioning)
-			{
-				return;
-			}
+        private void OnBackRequested()
+        {
+            ReturnToMenuAsync(CancellationToken).Forget(Debug.LogException);
+        }
 
-			DisposeDungeonRun();
-			_mainMenuRoot.ShowSelection();
-		}
+        private void OnDungeonRunFinished(DungeonRunResult result)
+        {
+            if (_hasPublishedTerminalResult)
+            {
+                return;
+            }
 
-		private static string CreatePreviewSummary(DungeonRunRoot runRoot)
-		{
-			return $"{runRoot.MapSnapshot.DungeonId}\n" +
-			       $"SEED: {runRoot.MapSnapshot.Seed}\n" +
-			       $"ENEMIES: {runRoot.EnemyCount}\n" +
-			       $"KILLED: {runRoot.KilledEnemyCount}\n" +
-			       $"REWARDS: {runRoot.CollectedRewardCount}\n" +
-			       $"EXIT: {(runRoot.CanExit ? "READY" : "LOCKED")}\n" +
-			       $"PLANNED INTERESTS: {runRoot.ContentPlan.InterestPointSpawns.Count}\n" +
-			       $"PLANNED OBJECTIVES: {runRoot.ContentPlan.ObjectiveSpawns.Count}";
-		}
+            _hasPublishedTerminalResult = true;
+            ShowTerminalAsync(result, CancellationToken).Forget(Debug.LogException);
+        }
 
-		private void OnDungeonRunProgressChanged()
-		{
-			if (_dungeonRunHost.ActiveRun != null)
-			{
-				_mainMenuRoot.ShowDungeonPreview(
-					CreatePreviewSummary(_dungeonRunHost.ActiveRun));
-			}
-		}
+        private async UniTask ShowTerminalAsync(DungeonRunResult result, CancellationToken token)
+        {
+            await _mainMenuRoot.ShowTerminalAsync(CreateResultSummary(result), token);
+        }
 
-		private void OnDungeonRunFinished(DungeonRunResult result)
-		{
-			_mainMenuRoot.ShowDungeonPreview(CreateResultSummary(result));
-		}
+        private async UniTask ReturnToMenuAsync(CancellationToken token)
+        {
+            if (_isDungeonTransitioning)
+            {
+                return;
+            }
+
+            _isDungeonTransitioning = true;
+            try
+            {
+                DisposeDungeonRun();
+                _hasPublishedTerminalResult = false;
+                await _mainMenuRoot.ShowSelectionAsync(token);
+            }
+            finally
+            {
+                _isDungeonTransitioning = false;
+            }
+        }
 
 		private string CreateResultSummary(DungeonRunResult result)
 		{
@@ -370,8 +375,7 @@ namespace Code.ApplicationRoot
 			var dungeonRunRoot = _dungeonRunHost?.ActiveRun;
 			if (dungeonRunRoot != null)
 			{
-				dungeonRunRoot.ProgressChanged -= OnDungeonRunProgressChanged;
-				dungeonRunRoot.Finished -= OnDungeonRunFinished;
+                dungeonRunRoot.Finished -= OnDungeonRunFinished;
 			}
 
 			_dungeonRunHost?.Stop();
@@ -409,7 +413,7 @@ namespace Code.ApplicationRoot
 			_developerConsoleController = new DeveloperRunConsoleController(
 				_launchPresetCatalog,
 				_dungeonRunTeamSetup,
-				request => StartDungeonPreviewAsync(
+                request => StartDungeonRunAsync(
 					request,
 					replaceActive: true,
 					CancellationToken).Forget(Debug.LogException),

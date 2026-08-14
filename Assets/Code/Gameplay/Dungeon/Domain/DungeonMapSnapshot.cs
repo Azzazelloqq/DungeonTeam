@@ -14,7 +14,8 @@ namespace DungeonTeam.Gameplay.Dungeon.Domain
                 seed,
                 entryPose,
                 exitPose,
-                DungeonSpatialLayout.Empty)
+                DungeonSpatialLayout.Empty,
+                DungeonVisibilityLayout.Empty)
         {
         }
 
@@ -24,6 +25,23 @@ namespace DungeonTeam.Gameplay.Dungeon.Domain
             DungeonPose entryPose,
             DungeonPose exitPose,
             DungeonSpatialLayout spatialLayout)
+            : this(
+                dungeonId,
+                seed,
+                entryPose,
+                exitPose,
+                spatialLayout,
+                DungeonVisibilityLayout.Empty)
+        {
+        }
+
+        public DungeonMapSnapshot(
+            string dungeonId,
+            int seed,
+            DungeonPose entryPose,
+            DungeonPose exitPose,
+            DungeonSpatialLayout spatialLayout,
+            DungeonVisibilityLayout visibilityLayout)
         {
             if (string.IsNullOrWhiteSpace(dungeonId))
             {
@@ -36,6 +54,8 @@ namespace DungeonTeam.Gameplay.Dungeon.Domain
             ExitPose = exitPose;
             SpatialLayout = spatialLayout ??
                 throw new ArgumentNullException(nameof(spatialLayout));
+            VisibilityLayout = visibilityLayout ??
+                throw new ArgumentNullException(nameof(visibilityLayout));
         }
 
         public string DungeonId { get; }
@@ -43,5 +63,6 @@ namespace DungeonTeam.Gameplay.Dungeon.Domain
         public DungeonPose EntryPose { get; }
         public DungeonPose ExitPose { get; }
         public DungeonSpatialLayout SpatialLayout { get; }
+        public DungeonVisibilityLayout VisibilityLayout { get; }
     }
 }

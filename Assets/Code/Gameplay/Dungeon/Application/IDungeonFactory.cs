@@ -16,5 +16,12 @@ namespace DungeonTeam.Gameplay.Dungeon.Application
     {
         DungeonMapSnapshot MapSnapshot { get; }
         DungeonContentPlan ContentPlan { get; }
+        IDungeonVisibilityBinding VisibilityBinding { get; }
+    }
+
+    public interface IDungeonVisibilityBinding
+    {
+        void Initialize();
+        void RevealDoor(int doorIndex);
     }
 }

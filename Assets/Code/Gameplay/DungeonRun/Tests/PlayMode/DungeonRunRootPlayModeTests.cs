@@ -1279,6 +1279,8 @@ namespace DungeonTeam.Gameplay.DungeonRun.Tests.PlayMode
 
             public DungeonContentPlan ContentPlan { get; }
 
+            public IDungeonVisibilityBinding VisibilityBinding => null;
+
             public void Dispose()
             {
                 var mapRoot = _mapRoot;

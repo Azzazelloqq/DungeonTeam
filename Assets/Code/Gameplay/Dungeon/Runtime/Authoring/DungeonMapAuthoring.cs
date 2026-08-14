@@ -30,6 +30,9 @@ namespace DungeonTeam.Gameplay.Dungeon.Runtime.Authoring
         [SerializeField]
         private Transform[] _tacticalAnchors = Array.Empty<Transform>();
 
+        [SerializeField]
+        private DungeonVisibilityAuthoring _visibility;
+
         internal Transform Entry => _entry;
         internal Transform Exit => _exit;
         internal Transform[] RouteCheckpoints => _routeCheckpoints;
@@ -38,6 +41,7 @@ namespace DungeonTeam.Gameplay.Dungeon.Runtime.Authoring
         internal Transform EncounterEnd => _encounterEnd;
         internal Transform[] CompanionFormationAnchors => _companionFormationAnchors;
         internal Transform[] TacticalAnchors => _tacticalAnchors;
+        internal DungeonVisibilityAuthoring Visibility => _visibility;
         internal bool HasAnySpatialData =>
             (_routeCheckpoints != null && _routeCheckpoints.Length != 0) ||
             (_cameraShots != null && _cameraShots.Length != 0) ||
