@@ -9,6 +9,21 @@ namespace DungeonTeam.Gameplay.Dungeon.Domain
             int seed,
             DungeonPose entryPose,
             DungeonPose exitPose)
+            : this(
+                dungeonId,
+                seed,
+                entryPose,
+                exitPose,
+                DungeonSpatialLayout.Empty)
+        {
+        }
+
+        public DungeonMapSnapshot(
+            string dungeonId,
+            int seed,
+            DungeonPose entryPose,
+            DungeonPose exitPose,
+            DungeonSpatialLayout spatialLayout)
         {
             if (string.IsNullOrWhiteSpace(dungeonId))
             {
@@ -19,11 +34,14 @@ namespace DungeonTeam.Gameplay.Dungeon.Domain
             Seed = seed;
             EntryPose = entryPose;
             ExitPose = exitPose;
+            SpatialLayout = spatialLayout ??
+                throw new ArgumentNullException(nameof(spatialLayout));
         }
 
         public string DungeonId { get; }
         public int Seed { get; }
         public DungeonPose EntryPose { get; }
         public DungeonPose ExitPose { get; }
+        public DungeonSpatialLayout SpatialLayout { get; }
     }
 }

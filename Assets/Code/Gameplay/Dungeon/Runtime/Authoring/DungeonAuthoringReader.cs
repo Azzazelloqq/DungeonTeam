@@ -23,6 +23,9 @@ namespace DungeonTeam.Gameplay.Dungeon.Runtime.Authoring
             ValidateMarker(mapRoot.transform, mapAuthoring.Entry, "entry");
             ValidateMarker(mapRoot.transform, mapAuthoring.Exit, "exit");
 
+            var spatialLayout = DungeonSpatialAuthoringReader.Read(
+                mapRoot.transform,
+                mapAuthoring);
             var placements = DungeonPlacementReader.Read(mapRoot);
 
             return new AuthoredDungeonMapData(
@@ -30,7 +33,8 @@ namespace DungeonTeam.Gameplay.Dungeon.Runtime.Authoring
                     dungeonId,
                     seed,
                     mapAuthoring.Entry.ToDungeonPose(),
-                    mapAuthoring.Exit.ToDungeonPose()),
+                    mapAuthoring.Exit.ToDungeonPose(),
+                    spatialLayout),
                 placements.EnemyPlacements,
                 placements.InterestPointPlacements,
                 placements.ObjectivePlacements);

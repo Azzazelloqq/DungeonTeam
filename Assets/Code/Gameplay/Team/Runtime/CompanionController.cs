@@ -55,7 +55,8 @@ namespace DungeonTeam.Gameplay.Team.Runtime
             ActorInstance leader,
             ActorInstance healTarget,
             ActorInstance attackTarget,
-            CompanionCommandMode commandMode)
+            CompanionCommandMode commandMode,
+            Vector3? tacticalAnchor)
         {
             if (_isDisposed)
             {
@@ -88,7 +89,11 @@ namespace DungeonTeam.Gameplay.Team.Runtime
                            decision.Reason == CompanionDecisionReason.ActorInactive;
                 case CompanionDecisionKind.FollowFormation:
                 {
-                    var isAtFormation = UpdateFollow(leader);
+                    var isAtFormation = UpdateFollow(
+                        leader,
+                        commandMode == CompanionCommandMode.Follow
+                            ? null
+                            : tacticalAnchor);
                     return commandMode == CompanionCommandMode.Follow && isAtFormation;
                 }
                 case CompanionDecisionKind.Heal:
@@ -127,7 +132,7 @@ namespace DungeonTeam.Gameplay.Team.Runtime
             Stop();
         }
 
-        private bool UpdateFollow(ActorInstance leader)
+        private bool UpdateFollow(ActorInstance leader, Vector3? tacticalAnchor)
         {
             if (!leader.IsAlive)
             {
@@ -135,7 +140,7 @@ namespace DungeonTeam.Gameplay.Team.Runtime
                 return true;
             }
 
-            var followPosition = GetFollowPosition(leader);
+            var followPosition = tacticalAnchor ?? GetFollowPosition(leader);
             var state = _followBrain.Evaluate(
                 Vector3.Distance(_actor.Position, followPosition));
             if (state == CompanionFollowState.Holding)

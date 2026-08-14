@@ -8,8 +8,9 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
     {
         private readonly Dictionary<string, int> _collectedRewards =
             new(StringComparer.Ordinal);
+        private bool _routeCompleted;
 
-        public DungeonRunProgress(int enemyCount)
+        public DungeonRunProgress(int enemyCount, bool requiresRouteCompletion = false)
         {
             if (enemyCount < 0)
             {
@@ -17,6 +18,7 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
             }
 
             RemainingEnemies = enemyCount;
+            _routeCompleted = !requiresRouteCompletion;
         }
 
         public int KilledEnemies { get; private set; }
@@ -29,7 +31,18 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
 
         public bool IsFinished => Outcome.HasValue;
 
-        public bool CanExit => !IsFinished && RemainingEnemies == 0;
+        public bool CanExit => !IsFinished && RemainingEnemies == 0 && _routeCompleted;
+
+        public bool RecordRouteCompleted()
+        {
+            if (IsFinished || _routeCompleted)
+            {
+                return false;
+            }
+
+            _routeCompleted = true;
+            return true;
+        }
 
         public bool RecordEnemyKilled()
         {

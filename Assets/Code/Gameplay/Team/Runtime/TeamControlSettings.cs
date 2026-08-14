@@ -12,21 +12,6 @@ namespace DungeonTeam.Gameplay.Team.Runtime
         [SerializeField, Min(0f)]
         private float _stopFollowingDistance = 1.5f;
 
-        [SerializeField, Min(1f)]
-        private float _cameraDistance = 10f;
-
-        [SerializeField, Range(15f, 80f)]
-        private float _cameraPitch = 55f;
-
-        [SerializeField]
-        private float _cameraInitialYaw = 45f;
-
-        [SerializeField, Min(0f)]
-        private float _cameraTargetHeight = 1f;
-
-        [SerializeField, Min(0.1f)]
-        private float _cameraFollowSharpness = 10f;
-
         [SerializeField, Min(0.1f)]
         private float _commandRange = 10f;
 
@@ -47,11 +32,6 @@ namespace DungeonTeam.Gameplay.Team.Runtime
 
         internal float StartFollowingDistance => _startFollowingDistance;
         internal float StopFollowingDistance => _stopFollowingDistance;
-        internal float CameraDistance => _cameraDistance;
-        internal float CameraPitch => _cameraPitch;
-        internal float CameraInitialYaw => _cameraInitialYaw;
-        internal float CameraTargetHeight => _cameraTargetHeight;
-        internal float CameraFollowSharpness => _cameraFollowSharpness;
         internal float CommandRange => _commandRange;
         internal float CommandViewAngle => _commandViewAngle;
         internal float CommandEyeHeight => _commandEyeHeight;
@@ -66,19 +46,6 @@ namespace DungeonTeam.Gameplay.Team.Runtime
             {
                 throw new InvalidOperationException(
                     "Team Control requires start following distance to exceed stop distance.");
-            }
-
-            if (_cameraDistance <= 0f ||
-                _cameraFollowSharpness <= 0f)
-            {
-                throw new InvalidOperationException(
-                    "Team Control camera settings require positive values.");
-            }
-
-            if (_cameraPitch is < 15f or > 80f)
-            {
-                throw new InvalidOperationException(
-                    "Team Control camera pitch must be between 15 and 80 degrees.");
             }
 
             if (_commandRange <= 0f ||

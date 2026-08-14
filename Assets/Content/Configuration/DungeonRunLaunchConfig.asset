@@ -29,13 +29,13 @@ MonoBehaviour:
   - _presetId: dev.chunked
     _displayName: Dev Chunked
     _dungeonId: dungeon.demo.chunked
-    _scenarioId: scenario.demo
+    _scenarioId: scenario.mixed
     _difficultyId: normal
     _defaultSeed: 42
   - _presetId: dev.procedural
     _displayName: Dev Procedural
     _dungeonId: dungeon.demo.procedural
-    _scenarioId: scenario.demo
+    _scenarioId: scenario.mixed
     _difficultyId: normal
     _defaultSeed: 42
   - _presetId: dev.empty

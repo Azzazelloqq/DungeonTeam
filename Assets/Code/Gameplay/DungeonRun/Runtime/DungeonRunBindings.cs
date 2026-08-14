@@ -25,6 +25,12 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
         private float _exitDistance = 2f;
 
         [SerializeField, Min(0.1f)]
+        private float _routeCheckpointRadius = 1.5f;
+
+        [SerializeField]
+        private DungeonRunCameraSettings _cameraSettings = new();
+
+        [SerializeField, Min(0.1f)]
         private float _companionSpawnSpacing = 1.25f;
 
         [SerializeField, Min(0.1f)]
@@ -67,6 +73,8 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
         internal float RewardPickupDistance => _rewardPickupDistance;
         internal float ChestOpenDistance => _chestOpenDistance;
         internal float ExitDistance => _exitDistance;
+        internal float RouteCheckpointRadius => _routeCheckpointRadius;
+        internal DungeonRunCameraSettings CameraSettings => _cameraSettings;
         internal Vector3 GetCompanionSpawnOffset(int companionIndex)
         {
             if (companionIndex < 0)
@@ -117,6 +125,20 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
                 throw new InvalidOperationException(
                     "Dungeon Run exit distance must be positive.");
             }
+
+            if (_routeCheckpointRadius <= 0f)
+            {
+                throw new InvalidOperationException(
+                    "Dungeon Run route checkpoint radius must be positive.");
+            }
+
+            if (_cameraSettings == null)
+            {
+                throw new InvalidOperationException(
+                    "Dungeon Run requires camera settings.");
+            }
+
+            _cameraSettings.Validate();
 
             if (_companionSpawnSpacing <= 0f || _companionSpawnRowSpacing <= 0f)
             {

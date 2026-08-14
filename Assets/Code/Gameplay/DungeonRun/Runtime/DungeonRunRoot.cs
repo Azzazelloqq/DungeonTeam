@@ -10,6 +10,7 @@ using DungeonTeam.Gameplay.ContextActions.Runtime.Base;
 using DungeonTeam.Gameplay.Dungeon.Application;
 using DungeonTeam.Gameplay.Dungeon.Domain;
 using DungeonTeam.Gameplay.DungeonRun.Application;
+using DungeonTeam.Gameplay.DungeonRun.Runtime.Presentation.Gameplay.DungeonCamera;
 using DungeonTeam.Gameplay.EnemyAI.Runtime;
 using DungeonTeam.Gameplay.Hero.Runtime;
 using DungeonTeam.Gameplay.Rewards.Runtime;
@@ -50,6 +51,7 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
         private readonly List<ActorCombatController> _companionCombatControllers = new();
         private readonly List<ActorCombatController> _enemyCombatControllers = new();
         private readonly List<EnemyAiController> _enemyAiControllers = new();
+        private readonly Dictionary<ActorInstance, EnemySpawnPlan> _enemySpawnPlans = new();
         private readonly List<RewardPickupInstance> _rewardPickups = new();
         private readonly List<ChestInstance> _chests = new();
         private readonly List<IReadOnlyList<DungeonRewardGrantPlan>> _chestRewardPlans = new();
@@ -65,6 +67,7 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
         private HeroController _heroController;
         private ActorCombatController _leaderCombatController;
         private TeamController _teamController;
+        private DungeonCameraPresenter _cameraPresenter;
         private WallOcclusionController _wallOcclusionController;
         private DungeonRunContextActionsController _contextActionsController;
         private ContextActionsViewModel _contextActionsViewModel;
@@ -73,6 +76,7 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
         private CombatHudViewModel _combatHudViewModel;
         private CombatHudViewBase _combatHudView;
         private DungeonRunProgress _progress;
+        private DungeonRunRouteController _routeController;
         private IDungeonInstance _dungeonInstance;
         private DungeonRunNavigation _navigation;
         private Vector3 _exitPosition;
@@ -81,6 +85,8 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
         private GameObject _rewardsRoot;
         private GameObject _interestsRoot;
         private bool _terminalShutdownScheduled;
+        private bool _encounterActivated;
+        private bool _enemyAiStartScheduled;
         private bool _isDisposed;
 
         public event Action ProgressChanged;
@@ -150,7 +156,9 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
 
         public IReadOnlyList<ChestInstance> Chests => _chests;
 
-        public int EnemyCount => _enemies.Count;
+        public int EnemyCount => _dungeonInstance == null
+            ? 0
+            : ContentPlan.EnemySpawns.Count;
 
         public int RewardPickupCount => _rewardPickups.Count;
 
@@ -206,8 +214,15 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
                 _skillViews,
                 _tickHandler,
                 _skillProjectilesRoot.transform);
-            CreateActors();
-            _progress = new DungeonRunProgress(_enemies.Count);
+            CreateHeroes();
+            var hasAuthoredRoute = MapSnapshot.SpatialLayout.HasAuthoredData;
+            _progress = new DungeonRunProgress(
+                ContentPlan.EnemySpawns.Count,
+                requiresRouteCompletion: hasAuthoredRoute);
+            if (!hasAuthoredRoute)
+            {
+                ActivateEncounter();
+            }
             _exitPosition = _navigation.RequireSpawnPosition(
                 DungeonPoseConversion.ToPosition(MapSnapshot.ExitPose));
             _rewardsRoot = new GameObject("DungeonRunRewards");
@@ -238,10 +253,16 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
                 _companionCombatControllers,
                 _companionFormationOffsets,
                 _enemies,
-                _worldCamera,
                 _tickHandler,
                 _teamControlSettings);
             _teamController.Initialize();
+
+            _cameraPresenter = new DungeonCameraPresenter(
+                new DungeonCameraView(_worldCamera),
+                new DungeonCameraModel(_bindings.CameraSettings, MapSnapshot.SpatialLayout),
+                () => Leader.Position,
+                _tickHandler);
+            _cameraPresenter.Initialize();
 
             _wallOcclusionController = new WallOcclusionController(
                 _worldCamera,
@@ -250,8 +271,15 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
                 _bindings);
             _wallOcclusionController.Initialize();
 
-            CreateEnemyAiControllers();
             _skillExecution.Initialize();
+            if (hasAuthoredRoute)
+            {
+                CreateRouteController();
+            }
+            else
+            {
+                CreateEnemyAiControllers();
+            }
             CreateCombatHud();
             CreateContextActions();
         }
@@ -315,6 +343,9 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
             _companions.Clear();
             _companionFormationOffsets.Clear();
             _heroes.Clear();
+            _enemySpawnPlans.Clear();
+            _encounterActivated = false;
+            _enemyAiStartScheduled = false;
 
             if (_actorsRoot != null)
             {
@@ -341,7 +372,7 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
             _dungeonInstance = null;
         }
 
-        private void CreateActors()
+        private void CreateHeroes()
         {
             var actorFactory = new ActorFactory();
             var entryPose = MapSnapshot.EntryPose;
@@ -363,7 +394,7 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
                  index < _startRequest.Team.Companions.Count;
                  index++)
             {
-                var formationOffset = _bindings.GetCompanionSpawnOffset(index);
+                var formationOffset = GetCompanionFormationOffset(index);
                 var companion = CreateActor(
                     actorFactory,
                     $"Companion_{index + 1}",
@@ -378,27 +409,53 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
                 _companionFormationOffsets.Add(formationOffset);
                 _heroes.Add(companion);
             }
+        }
 
+        private Vector3 GetCompanionFormationOffset(int companionIndex)
+        {
+            var spatialLayout = MapSnapshot.SpatialLayout;
+            if (!spatialLayout.HasAuthoredData)
+            {
+                return _bindings.GetCompanionSpawnOffset(companionIndex);
+            }
+
+            if (companionIndex >= spatialLayout.CompanionFormationOffsets.Count)
+            {
+                throw new InvalidOperationException(
+                    "Authored dungeon requires one formation offset per companion.");
+            }
+
+            var offset = spatialLayout.CompanionFormationOffsets[companionIndex];
+            return new Vector3(offset.X, offset.Y, offset.Z);
+        }
+
+        private void ActivateEncounter()
+        {
+            if (_encounterActivated)
+            {
+                return;
+            }
+
+            _encounterActivated = true;
+            var actorFactory = new ActorFactory();
             for (var index = 0; index < ContentPlan.EnemySpawns.Count; index++)
             {
                 var enemySpawn = ContentPlan.EnemySpawns[index];
+                var selection = new DungeonRunActorSelection(
+                    enemySpawn.EnemyId,
+                    enemySpawn.ActorLevel,
+                    enemySpawn.LoadoutId);
                 var enemy = CreateActor(
                     actorFactory,
                     $"Enemy_{enemySpawn.PlacementId}",
                     _navigation.RequireSpawnPosition(
                         DungeonPoseConversion.ToPosition(enemySpawn.Pose)),
                     DungeonPoseConversion.ToRotation(enemySpawn.Pose),
-                    new DungeonRunActorSelection(
-                        enemySpawn.EnemyId,
-                        enemySpawn.ActorLevel,
-                        enemySpawn.LoadoutId));
+                    selection);
                 _enemies.Add(enemy);
-                _enemyCombatControllers.Add(CreateCombatController(
-                    enemy,
-                    new DungeonRunActorSelection(
-                        enemySpawn.EnemyId,
-                        enemySpawn.ActorLevel,
-                        enemySpawn.LoadoutId)));
+                _enemySpawnPlans.Add(enemy, enemySpawn);
+                _enemyCombatControllers.Add(CreateCombatController(enemy, selection));
+                enemy.Died += OnEnemyDied;
             }
         }
 
@@ -522,9 +579,9 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
 
         private void CreateEnemyAiControllers()
         {
-            for (var index = 0; index < _enemies.Count; index++)
+            for (var index = _enemyAiControllers.Count; index < _enemies.Count; index++)
             {
-                var behaviorId = ContentPlan.EnemySpawns[index].BehaviorId;
+                var behaviorId = _enemySpawnPlans[_enemies[index]].BehaviorId;
                 var controller = new EnemyAiController(
                     _enemies[index],
                     _heroes,
@@ -534,6 +591,101 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
                 _enemyAiControllers.Add(controller);
                 controller.Initialize();
             }
+        }
+
+        private void CreateRouteController()
+        {
+            var spatialLayout = MapSnapshot.SpatialLayout;
+            var checkpoints = new DungeonRunRoutePoint[
+                spatialLayout.RouteCheckpoints.Count];
+            for (var index = 0; index < checkpoints.Length; index++)
+            {
+                var pose = spatialLayout.RouteCheckpoints[index];
+                checkpoints[index] = new DungeonRunRoutePoint(
+                    pose.PositionX,
+                    pose.PositionZ);
+            }
+
+            var routeProgress = new DungeonRunRouteProgress(
+                checkpoints,
+                spatialLayout.Encounter.StartCheckpointIndex,
+                _bindings.RouteCheckpointRadius);
+            _routeController = new DungeonRunRouteController(
+                routeProgress,
+                () => Leader.Position,
+                _tickHandler);
+            _routeController.PhaseChanged += OnRoutePhaseChanged;
+            _routeController.Initialize();
+        }
+
+        private void OnRoutePhaseChanged(DungeonRunRoutePhase phase)
+        {
+            switch (phase)
+            {
+                case DungeonRunRoutePhase.Encounter:
+                    _teamController.SetTacticalAnchors(CreateTacticalAnchors());
+                    ActivateEncounter();
+                    if (ContentPlan.EnemySpawns.Count == 0)
+                    {
+                        _routeController.CompleteEncounter();
+                    }
+                    else
+                    {
+                        ScheduleEnemyAiStart();
+                    }
+
+                    break;
+                case DungeonRunRoutePhase.Continuing:
+                    _teamController.ClearTacticalAnchors();
+                    break;
+                case DungeonRunRoutePhase.Completed:
+                    if (_progress.RecordRouteCompleted())
+                    {
+                        ProgressChanged?.Invoke();
+                    }
+
+                    break;
+            }
+        }
+
+        private void ScheduleEnemyAiStart()
+        {
+            if (_enemyAiStartScheduled)
+            {
+                return;
+            }
+
+            _enemyAiStartScheduled = true;
+            _tickHandler.SubscribeOnLateUpdateOnce(OnEncounterLateUpdate);
+        }
+
+        private void OnEncounterLateUpdate(float deltaTime)
+        {
+            _enemyAiStartScheduled = false;
+            if (_isDisposed)
+            {
+                return;
+            }
+
+            CreateEnemyAiControllers();
+        }
+
+        private Vector3[] CreateTacticalAnchors()
+        {
+            var source = MapSnapshot.SpatialLayout.TacticalAnchors;
+            if (source.Count < _companions.Count)
+            {
+                throw new InvalidOperationException(
+                    "Authored dungeon requires one tactical anchor per companion.");
+            }
+
+            var result = new Vector3[_companions.Count];
+            for (var index = 0; index < result.Length; index++)
+            {
+                result[index] = DungeonPoseConversion.ToPosition(source[index]);
+            }
+
+            return result;
         }
 
         private void CreateChests()
@@ -628,10 +780,6 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
         private void SubscribeToActorDeaths()
         {
             Leader.Died += OnLeaderDied;
-            for (var index = 0; index < _enemies.Count; index++)
-            {
-                _enemies[index].Died += OnEnemyDied;
-            }
         }
 
         private void UnsubscribeFromActorDeaths()
@@ -654,13 +802,17 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
                 return;
             }
 
-            var enemyIndex = _enemies.IndexOf(enemy);
-            if (enemyIndex < 0)
+            if (!_enemySpawnPlans.TryGetValue(enemy, out var enemySpawn))
             {
                 throw new InvalidOperationException("Dead enemy does not belong to this run.");
             }
 
-            SpawnRewardPickups(enemy.Position, ContentPlan.EnemySpawns[enemyIndex].Rewards);
+            SpawnRewardPickups(enemy.Position, enemySpawn.Rewards);
+            if (_progress.RemainingEnemies == 0)
+            {
+                _routeController?.CompleteEncounter();
+            }
+
             ProgressChanged?.Invoke();
         }
 
@@ -769,8 +921,18 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
 
         private void DisposeActiveControllers()
         {
+            if (_routeController != null)
+            {
+                _routeController.PhaseChanged -= OnRoutePhaseChanged;
+                _routeController.Dispose();
+                _routeController = null;
+            }
+
             _wallOcclusionController?.Dispose();
             _wallOcclusionController = null;
+
+            _cameraPresenter?.Dispose();
+            _cameraPresenter = null;
 
             _combatHudController?.Dispose();
             _combatHudController = null;

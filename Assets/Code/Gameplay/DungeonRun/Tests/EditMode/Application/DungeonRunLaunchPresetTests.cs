@@ -90,10 +90,13 @@ namespace DungeonTeam.Gameplay.DungeonRun.Tests.Application
             Assert.That(catalog.Require("product.default").DungeonId, Is.EqualTo("dungeon.demo.authored"));
             Assert.That(catalog.Require("product.default").ScenarioId, Is.EqualTo("scenario.demo"));
             Assert.That(catalog.Require("dev.authored").DungeonId, Is.EqualTo("dungeon.demo.authored"));
+            Assert.That(catalog.Require("dev.authored").ScenarioId, Is.EqualTo("scenario.demo"));
             Assert.That(catalog.Require("dev.chunked").DungeonId, Is.EqualTo("dungeon.demo.chunked"));
+            Assert.That(catalog.Require("dev.chunked").ScenarioId, Is.EqualTo("scenario.mixed"));
             Assert.That(
                 catalog.Require("dev.procedural").DungeonId,
                 Is.EqualTo("dungeon.demo.procedural"));
+            Assert.That(catalog.Require("dev.procedural").ScenarioId, Is.EqualTo("scenario.mixed"));
             Assert.That(catalog.Require("dev.empty").ScenarioId, Is.EqualTo("scenario.empty"));
             AssertEnemyPreset(catalog, "dev.melee", "scenario.melee", 42);
             AssertEnemyPreset(catalog, "dev.ranged", "scenario.ranged", 42);

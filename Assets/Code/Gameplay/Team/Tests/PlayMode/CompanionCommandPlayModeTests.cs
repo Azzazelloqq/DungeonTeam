@@ -161,11 +161,50 @@ namespace DungeonTeam.Gameplay.Team.Tests.PlayMode
             yield return null;
         }
 
+        [UnityTest]
+        public IEnumerator TacticalAnchor_FollowRecallsThenAutonomyReturnsToAnchor()
+        {
+            var world = TestWorld.Create(includeEnemy: false);
+            try
+            {
+                var tacticalAnchor = new Vector3(5f, 0f, 0f);
+                world.Team.SetTacticalAnchors(new[] { tacticalAnchor });
+
+                yield return null;
+
+                Assert.That(
+                    Vector3.Distance(world.Companion.Position, tacticalAnchor),
+                    Is.LessThan(5f));
+
+                world.Team.OrderFollow();
+                yield return null;
+                var recalledPosition = world.Companion.Position;
+
+                Assert.That(
+                    Vector3.Distance(recalledPosition, Vector3.zero),
+                    Is.LessThan(4f),
+                    "FOLLOW must ignore the active tactical anchor.");
+
+                yield return null;
+                yield return null;
+
+                Assert.That(
+                    Vector3.Distance(world.Companion.Position, tacticalAnchor),
+                    Is.LessThan(Vector3.Distance(recalledPosition, tacticalAnchor)),
+                    "Autonomy must resume the authored anchor after recall completes.");
+            }
+            finally
+            {
+                world.Dispose();
+            }
+
+            yield return null;
+        }
+
         private sealed class TestWorld : IDisposable
         {
             private readonly GameObject _actorPrefabObject;
             private readonly GameObject _projectileRoot;
-            private readonly GameObject _cameraObject;
             private readonly GameObject _dispatcherObject;
             private readonly UnityTickHandler _tickHandler;
             private readonly SkillViewSet _views;
@@ -176,7 +215,6 @@ namespace DungeonTeam.Gameplay.Team.Tests.PlayMode
             private TestWorld(
                 GameObject actorPrefabObject,
                 GameObject projectileRoot,
-                GameObject cameraObject,
                 GameObject dispatcherObject,
                 UnityTickHandler tickHandler,
                 SkillViewSet views,
@@ -189,7 +227,6 @@ namespace DungeonTeam.Gameplay.Team.Tests.PlayMode
             {
                 _actorPrefabObject = actorPrefabObject;
                 _projectileRoot = projectileRoot;
-                _cameraObject = cameraObject;
                 _dispatcherObject = dispatcherObject;
                 _tickHandler = tickHandler;
                 _views = views;
@@ -215,7 +252,6 @@ namespace DungeonTeam.Gameplay.Team.Tests.PlayMode
                 actorPrefabObject.SetActive(false);
                 var actorPrefab = actorPrefabObject.AddComponent<TestActorView>();
                 var projectileRoot = new GameObject("CompanionCommandProjectiles");
-                var cameraObject = new GameObject("CompanionCommandCamera");
                 var dispatcherObject = new GameObject("CompanionCommandDispatcher");
                 var tickHandler = new UnityTickHandler(
                     dispatcherObject.AddComponent<UnityDispatcherBehaviour>());
@@ -258,7 +294,6 @@ namespace DungeonTeam.Gameplay.Team.Tests.PlayMode
                     new[] { combat },
                     new[] { new Vector3(2f, 0f, 0f) },
                     enemies,
-                    cameraObject.AddComponent<Camera>(),
                     tickHandler,
                     new TeamControlSettings());
                 team.Initialize();
@@ -267,7 +302,6 @@ namespace DungeonTeam.Gameplay.Team.Tests.PlayMode
                 return new TestWorld(
                     actorPrefabObject,
                     projectileRoot,
-                    cameraObject,
                     dispatcherObject,
                     tickHandler,
                     views,
@@ -297,7 +331,6 @@ namespace DungeonTeam.Gameplay.Team.Tests.PlayMode
                 _tickHandler.Dispose();
                 Destroy(_actorPrefabObject);
                 Destroy(_projectileRoot);
-                Destroy(_cameraObject);
                 Destroy(_dispatcherObject);
             }
 

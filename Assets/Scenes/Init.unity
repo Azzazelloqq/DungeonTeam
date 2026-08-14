@@ -177,6 +177,13 @@ MonoBehaviour:
     _rewardPickupDistance: 2
     _chestOpenDistance: 2
     _exitDistance: 2
+    _routeCheckpointRadius: 1.5
+    _cameraSettings:
+      _distance: 10
+      _pitch: 55
+      _fallbackYaw: 45
+      _targetHeight: 1
+      _followSharpness: 10
     _companionSpawnSpacing: 1.25
     _companionSpawnRowSpacing: 1.25
     _wallOcclusionRadius: 0.18
@@ -186,12 +193,6 @@ MonoBehaviour:
   _teamControlSettings:
     _startFollowingDistance: 3
     _stopFollowingDistance: 1.5
-    _cameraDistance: 10
-    _cameraPitch: 55
-    _cameraInitialYaw: 45
-    _cameraTargetHeight: 1
-    _cameraFollowSharpness: 10
-    _mouseYawSensitivity: 0.15
     _commandRange: 10
     _commandViewAngle: 180
     _commandEyeHeight: 1

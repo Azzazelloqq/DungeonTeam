@@ -6,12 +6,16 @@
     "DungeonTeam.Actors.Runtime",
     "DungeonTeam.Configuration",
     "DungeonTeam.Dungeon.Application",
+    "DungeonTeam.Dungeon.Domain",
     "DungeonTeam.DungeonRun.Application",
     "DungeonTeam.DungeonRun.Runtime",
     "DungeonTeam.Hero.Runtime",
     "DungeonTeam.Skills.Domain",
     "DungeonTeam.Skills.Runtime",
-    "DungeonTeam.Rewards.Runtime"
+    "DungeonTeam.Rewards.Runtime",
+    "Disposable",
+    "MVP",
+    "TickHandler"
   ],
   "includePlatforms": [
     "Editor"

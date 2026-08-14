@@ -627,6 +627,155 @@ namespace DungeonTeam.Gameplay.DungeonRun.Tests.PlayMode
         }
 
         [UnityTest]
+        public IEnumerator Initialize_WithLegacyMap_CreatesEnemiesImmediately()
+        {
+            var fixture = new CorridorRuntimeFixture(spatialLayout: null);
+            try
+            {
+                yield return fixture.Root.InitializeAsync(default).ToCoroutine();
+
+                Assert.That(fixture.Root.Enemies, Has.Count.EqualTo(2));
+            }
+            finally
+            {
+                fixture.Dispose();
+            }
+
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator Initialize_WithAuthoredRoute_WaitsForEncounterCheckpointBeforeCreatingEnemies()
+        {
+            var spatialLayout = CreateAuthoredSpatialLayout();
+            var fixture = new CorridorRuntimeFixture(spatialLayout);
+            try
+            {
+                yield return fixture.Root.InitializeAsync(default).ToCoroutine();
+                yield return null;
+
+                Assert.That(fixture.Root.Enemies, Is.Empty);
+
+                MoveLeaderTo(fixture.Root, spatialLayout.RouteCheckpoints[1]);
+                yield return null;
+
+                Assert.That(fixture.Root.Enemies, Is.Empty,
+                    "Exploration checkpoints must not materialize encounter actors.");
+            }
+            finally
+            {
+                fixture.Dispose();
+            }
+
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator ReachEncounterCheckpoint_WithAuthoredRoute_CreatesAllEnemiesExactlyOnce()
+        {
+            var spatialLayout = CreateAuthoredSpatialLayout();
+            var fixture = new CorridorRuntimeFixture(spatialLayout);
+            try
+            {
+                yield return fixture.Root.InitializeAsync(default).ToCoroutine();
+                yield return null;
+
+                Assert.That(fixture.Root.Enemies, Is.Empty);
+
+                MoveLeaderTo(fixture.Root, spatialLayout.RouteCheckpoints[1]);
+                yield return null;
+                MoveLeaderTo(fixture.Root, spatialLayout.RouteCheckpoints[2]);
+                yield return null;
+
+                Assert.That(fixture.Root.Enemies, Has.Count.EqualTo(2));
+                var firstEnemy = fixture.Root.Enemies[0];
+                var secondEnemy = fixture.Root.Enemies[1];
+
+                yield return null;
+                yield return null;
+
+                Assert.That(fixture.Root.Enemies, Has.Count.EqualTo(2));
+                Assert.That(fixture.Root.Enemies[0], Is.SameAs(firstEnemy));
+                Assert.That(fixture.Root.Enemies[1], Is.SameAs(secondEnemy));
+                Assert.That(GameObject.Find("DungeonRunActors").transform.childCount,
+                    Is.EqualTo(4),
+                    "Encounter activation must not duplicate the leader, companion, or enemies.");
+            }
+            finally
+            {
+                fixture.Dispose();
+            }
+
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator DefeatEncounter_WithAuthoredRoute_RequiresExitCheckpointBeforeExitUnlocks()
+        {
+            var spatialLayout = CreateAuthoredSpatialLayout();
+            var fixture = new CorridorRuntimeFixture(spatialLayout);
+            try
+            {
+                yield return fixture.Root.InitializeAsync(default).ToCoroutine();
+                yield return null;
+                MoveLeaderTo(fixture.Root, spatialLayout.RouteCheckpoints[1]);
+                yield return null;
+                MoveLeaderTo(fixture.Root, spatialLayout.RouteCheckpoints[2]);
+                yield return null;
+
+                for (var index = 0; index < fixture.Root.Enemies.Count; index++)
+                {
+                    var enemy = fixture.Root.Enemies[index];
+                    enemy.ApplyDamage(enemy.CurrentHealth);
+                }
+
+                yield return null;
+
+                Assert.That(fixture.Root.KilledEnemyCount, Is.EqualTo(2));
+                Assert.That(fixture.Root.CanExit, Is.False,
+                    "Clearing the encounter unlocks continuation, not the exit itself.");
+
+                MoveLeaderTo(fixture.Root, spatialLayout.RouteCheckpoints[3]);
+                yield return null;
+
+                Assert.That(fixture.Root.CanExit, Is.True,
+                    "Exit unlock requires both encounter victory and route completion.");
+            }
+            finally
+            {
+                fixture.Dispose();
+            }
+
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator Dispose_BeforeAuthoredEncounter_DoesNotCreateLateEnemies()
+        {
+            var fixture = new CorridorRuntimeFixture(CreateAuthoredSpatialLayout());
+            try
+            {
+                yield return fixture.Root.InitializeAsync(default).ToCoroutine();
+                yield return null;
+
+                Assert.That(fixture.Root.Enemies, Is.Empty);
+
+                fixture.Root.Dispose();
+                yield return null;
+                yield return null;
+
+                Assert.That(GameObject.Find("DungeonRunActors"), Is.Null,
+                    "Disposing before the trigger must destroy the run actor family.");
+            }
+            finally
+            {
+                fixture.Dispose();
+            }
+
+            yield return null;
+        }
+
+        [UnityTest]
         public IEnumerator LeaderDeath_WhileRunIsActive_FinishesAsDefeatedOnce()
         {
             var actorPrefabObject = new GameObject("DefeatActorTestPrefab");
@@ -759,6 +908,52 @@ namespace DungeonTeam.Gameplay.DungeonRun.Tests.PlayMode
             }
 
             return false;
+        }
+
+        private static DungeonSpatialLayout CreateAuthoredSpatialLayout()
+        {
+            var routeCheckpoints = new[]
+            {
+                CorridorPose(0f, 0f),
+                CorridorPose(2f, 0f),
+                CorridorPose(4f, 0f),
+                CorridorPose(6f, 0f)
+            };
+
+            return new DungeonSpatialLayout(
+                routeCheckpoints,
+                new[]
+                {
+                    new DungeonCameraShot(
+                        CorridorPose(2f, 0f),
+                        routeCheckpointIndex: 1,
+                        lookAheadDistance: 2f,
+                        activationRange: 3f,
+                        blendRange: 1f)
+                },
+                new DungeonEncounterSpan(
+                    routeCheckpoints[2],
+                    routeCheckpoints[3],
+                    startCheckpointIndex: 2,
+                    endCheckpointIndex: 3),
+                new[] { new DungeonVector3(-1f, 0f, -1f) },
+                new[] { CorridorPose(4f, 1f) });
+        }
+
+        private static DungeonPose CorridorPose(float x, float z)
+        {
+            return new DungeonPose(x, 0f, z, 0f, 0f, 0f, 1f);
+        }
+
+        private static void MoveLeaderTo(DungeonRunRoot root, DungeonPose pose)
+        {
+            var target = new Vector3(pose.PositionX, pose.PositionY, pose.PositionZ);
+            for (var step = 0;
+                 step < 32 && Vector3.Distance(root.Leader.Position, target) > 0.05f;
+                 step++)
+            {
+                root.Leader.SetMoveDirection(target - root.Leader.Position);
+            }
         }
 
         private static RewardCatalog CreateRewardCatalog()
@@ -996,12 +1191,20 @@ namespace DungeonTeam.Gameplay.DungeonRun.Tests.PlayMode
 
         private sealed class FakeDungeonFactory : IDungeonFactory
         {
+            private readonly DungeonSpatialLayout _spatialLayout;
+
+            public FakeDungeonFactory(DungeonSpatialLayout spatialLayout = null)
+            {
+                _spatialLayout = spatialLayout;
+            }
+
             public UniTask<IDungeonInstance> CreateAsync(
                 DungeonBuildRequest request,
                 CancellationToken ownerToken)
             {
                 ownerToken.ThrowIfCancellationRequested();
-                return UniTask.FromResult<IDungeonInstance>(new FakeDungeonInstance(request));
+                return UniTask.FromResult<IDungeonInstance>(
+                    new FakeDungeonInstance(request, _spatialLayout));
             }
         }
 
@@ -1009,18 +1212,33 @@ namespace DungeonTeam.Gameplay.DungeonRun.Tests.PlayMode
         {
             private GameObject _mapRoot;
 
-            public FakeDungeonInstance(DungeonBuildRequest request)
+            public FakeDungeonInstance(
+                DungeonBuildRequest request,
+                DungeonSpatialLayout spatialLayout)
             {
                 _mapRoot = GameObject.CreatePrimitive(PrimitiveType.Plane);
                 _mapRoot.name = "DungeonTestMap";
                 _mapRoot.transform.localScale = new Vector3(2f, 1f, 2f);
 
                 var entryPose = Pose(0f, 0f);
-                MapSnapshot = new DungeonMapSnapshot(
-                    request.DungeonId,
-                    request.Seed,
-                    entryPose,
-                    Pose(5f, 5f));
+                if (spatialLayout == null)
+                {
+                    MapSnapshot = new DungeonMapSnapshot(
+                        request.DungeonId,
+                        request.Seed,
+                        entryPose,
+                        Pose(5f, 5f));
+                }
+                else
+                {
+                    MapSnapshot = new DungeonMapSnapshot(
+                        request.DungeonId,
+                        request.Seed,
+                        entryPose,
+                        spatialLayout.RouteCheckpoints[
+                            spatialLayout.RouteCheckpoints.Count - 1],
+                        spatialLayout);
+                }
                 ContentPlan = new DungeonContentPlan(
                     new[]
                     {
@@ -1163,6 +1381,89 @@ namespace DungeonTeam.Gameplay.DungeonRun.Tests.PlayMode
             private static SkillIconViewEntry Icon(string skillId)
             {
                 return new SkillIconViewEntry(skillId, Texture2D.whiteTexture);
+            }
+        }
+
+        private sealed class CorridorRuntimeFixture : System.IDisposable
+        {
+            private readonly GameObject _actorPrefabObject;
+            private readonly GameObject _contextActionsPrefabObject;
+            private readonly GameObject _combatHudPrefabObject;
+            private readonly GameObject _rewardPickupPrefabObject;
+            private readonly GameObject _chestPrefabObject;
+            private readonly GameObject _contextActionsParentObject;
+            private readonly GameObject _cameraObject;
+            private readonly GameObject _dispatcherObject;
+            private readonly UnityTickHandler _tickHandler;
+
+            public CorridorRuntimeFixture(DungeonSpatialLayout spatialLayout)
+            {
+                _actorPrefabObject = new GameObject("CorridorActorTestPrefab");
+                _actorPrefabObject.SetActive(false);
+                var actorPrefab = _actorPrefabObject.AddComponent<TestActorView>();
+
+                _contextActionsPrefabObject = new GameObject(
+                    "CorridorContextActionsTestPrefab",
+                    typeof(RectTransform));
+                _contextActionsPrefabObject.SetActive(false);
+                var contextActionsPrefab =
+                    _contextActionsPrefabObject.AddComponent<ContextActionsView>();
+
+                _combatHudPrefabObject = new GameObject(
+                    "CorridorCombatHudTestPrefab",
+                    typeof(RectTransform));
+                _combatHudPrefabObject.SetActive(false);
+                var combatHudPrefab = _combatHudPrefabObject.AddComponent<CombatHudView>();
+
+                _rewardPickupPrefabObject = new GameObject("CorridorRewardPickupTestPrefab");
+                var rewardPickupPrefab =
+                    _rewardPickupPrefabObject.AddComponent<TestRewardPickupView>();
+
+                _chestPrefabObject = new GameObject("CorridorChestTestPrefab");
+                var chestPrefab = _chestPrefabObject.AddComponent<TestChestView>();
+
+                _contextActionsParentObject = new GameObject(
+                    "CorridorContextActionsTestParent",
+                    typeof(RectTransform));
+                _cameraObject = new GameObject("CorridorTestCamera");
+                _dispatcherObject = new GameObject("CorridorTestDispatcher");
+                _tickHandler = new UnityTickHandler(
+                    _dispatcherObject.AddComponent<UnityDispatcherBehaviour>());
+
+                Root = new DungeonRunRoot(
+                    new FakeDungeonFactory(spatialLayout),
+                    CreateStartRequest(seed: 23),
+                    new DungeonRunBindings(contextActionsPrefab, combatHudPrefab),
+                    new FakeActorDefinitionLoader(actorPrefab),
+                    CreateActorCatalog(),
+                    CreateSkillCatalog(),
+                    new FakeSkillViewLoader(),
+                    new FakeRewardPickupViewLoader(rewardPickupPrefab),
+                    new FakeChestViewLoader(chestPrefab),
+                    _contextActionsParentObject.GetComponent<RectTransform>(),
+                    _cameraObject.AddComponent<Camera>(),
+                    _tickHandler,
+                    new FakeDungeonRunInput(),
+                    CreateRewardCatalog(),
+                    new TeamControlSettings(),
+                    new HeroControlSettings(),
+                    CreateEnemyBehaviorCatalog());
+            }
+
+            public DungeonRunRoot Root { get; }
+
+            public void Dispose()
+            {
+                Root.Dispose();
+                _tickHandler.Dispose();
+                Object.Destroy(_actorPrefabObject);
+                Object.Destroy(_contextActionsPrefabObject);
+                Object.Destroy(_combatHudPrefabObject);
+                Object.Destroy(_rewardPickupPrefabObject);
+                Object.Destroy(_chestPrefabObject);
+                Object.Destroy(_contextActionsParentObject);
+                Object.Destroy(_cameraObject);
+                Object.Destroy(_dispatcherObject);
             }
         }
 

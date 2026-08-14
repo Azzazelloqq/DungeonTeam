@@ -14,7 +14,6 @@ namespace DungeonTeam.Gameplay.Team.Runtime
 
         private readonly ActorInstance _leader;
         private readonly IReadOnlyList<ActorInstance> _enemies;
-        private readonly Camera _camera;
         private readonly ITickHandler _tickHandler;
         private readonly TeamControlSettings _settings;
         private readonly List<CompanionController> _companions;
@@ -24,8 +23,8 @@ namespace DungeonTeam.Gameplay.Team.Runtime
         private ActorInstance _availableAttackTarget;
         private ActorInstance _orderedAttackTarget;
         private ActorInstance _retaliationTarget;
+        private Vector3[] _tacticalAnchors;
         private CompanionCommandMode _commandMode;
-        private float _cameraYaw;
         private bool _lastCanOrderAttack;
         private bool _lastCanOrderFollow;
         private bool _isInitialized;
@@ -39,7 +38,6 @@ namespace DungeonTeam.Gameplay.Team.Runtime
             IReadOnlyList<ActorCombatController> companionCombatControllers,
             IReadOnlyList<Vector3> formationOffsets,
             IReadOnlyList<ActorInstance> enemies,
-            Camera camera,
             ITickHandler tickHandler,
             TeamControlSettings settings)
         {
@@ -68,9 +66,6 @@ namespace DungeonTeam.Gameplay.Team.Runtime
             }
 
             _enemies = enemies ?? throw new ArgumentNullException(nameof(enemies));
-            _camera = camera != null
-                ? camera
-                : throw new ArgumentNullException(nameof(camera));
             _tickHandler = tickHandler ?? throw new ArgumentNullException(nameof(tickHandler));
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
             _settings.Validate();
@@ -90,7 +85,6 @@ namespace DungeonTeam.Gameplay.Team.Runtime
 
             _minimumCommandViewDot = Mathf.Cos(
                 _settings.CommandViewAngle * 0.5f * Mathf.Deg2Rad);
-            _cameraYaw = _settings.CameraInitialYaw;
         }
 
         public bool CanOrderAttack =>
@@ -125,9 +119,7 @@ namespace DungeonTeam.Gameplay.Team.Runtime
 
             RefreshAvailableAttackTarget();
             StoreCommandAvailability();
-            PositionCamera(immediate: true, deltaTime: 0f);
             _tickHandler.SubscribeOnFrameUpdate(OnFrameUpdate);
-            _tickHandler.SubscribeOnFrameLateUpdate(OnFrameLateUpdate);
             _isInitialized = true;
         }
 
@@ -149,13 +141,13 @@ namespace DungeonTeam.Gameplay.Team.Runtime
             _companions.Clear();
             if (_isInitialized)
             {
-                _tickHandler.UnsubscribeOnFrameLateUpdate(OnFrameLateUpdate);
                 _tickHandler.UnsubscribeOnFrameUpdate(OnFrameUpdate);
             }
 
             _availableAttackTarget = null;
             _orderedAttackTarget = null;
             _retaliationTarget = null;
+            _tacticalAnchors = null;
             CommandsChanged = null;
         }
 
@@ -205,7 +197,8 @@ namespace DungeonTeam.Gameplay.Team.Runtime
                     _leader,
                     healTarget,
                     attackTarget,
-                    _commandMode);
+                    _commandMode,
+                    _tacticalAnchors == null ? null : _tacticalAnchors[index]);
             }
 
             if (_commandMode == CompanionCommandMode.Follow && isRecallComplete)
@@ -217,9 +210,30 @@ namespace DungeonTeam.Gameplay.Team.Runtime
             PublishCommandAvailabilityIfChanged();
         }
 
-        private void OnFrameLateUpdate(float deltaTime)
+        public void SetTacticalAnchors(IReadOnlyList<Vector3> anchors)
         {
-            PositionCamera(immediate: false, deltaTime);
+            if (anchors == null)
+            {
+                throw new ArgumentNullException(nameof(anchors));
+            }
+
+            if (anchors.Count != _companions.Count)
+            {
+                throw new ArgumentException(
+                    "Each companion requires one tactical anchor.",
+                    nameof(anchors));
+            }
+
+            _tacticalAnchors = new Vector3[anchors.Count];
+            for (var index = 0; index < anchors.Count; index++)
+            {
+                _tacticalAnchors[index] = anchors[index];
+            }
+        }
+
+        public void ClearTacticalAnchors()
+        {
+            _tacticalAnchors = null;
         }
 
         private void UpdateCommandTargets()
@@ -461,27 +475,6 @@ namespace DungeonTeam.Gameplay.Team.Runtime
             _lastCanOrderAttack = canOrderAttack;
             _lastCanOrderFollow = canOrderFollow;
             CommandsChanged?.Invoke();
-        }
-
-        private void PositionCamera(bool immediate, float deltaTime)
-        {
-            var target = _leader.Position + Vector3.up * _settings.CameraTargetHeight;
-            var targetRotation = Quaternion.Euler(
-                _settings.CameraPitch,
-                _cameraYaw,
-                0f);
-            var targetPosition = target + targetRotation * Vector3.back * _settings.CameraDistance;
-
-            if (immediate)
-            {
-                _camera.transform.SetPositionAndRotation(targetPosition, targetRotation);
-                return;
-            }
-
-            var blend = 1f - Mathf.Exp(-_settings.CameraFollowSharpness * deltaTime);
-            _camera.transform.SetPositionAndRotation(
-                Vector3.Lerp(_camera.transform.position, targetPosition, blend),
-                Quaternion.Slerp(_camera.transform.rotation, targetRotation, blend));
         }
 
         private static float PlanarSqrDistance(Vector3 first, Vector3 second)

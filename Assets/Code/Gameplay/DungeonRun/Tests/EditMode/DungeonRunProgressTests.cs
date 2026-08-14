@@ -60,6 +60,21 @@ namespace DungeonTeam.Gameplay.DungeonRun.Tests
         }
 
         [Test]
+        public void CanExit_WhenRouteCompletionIsRequired_WaitsForRouteAndEnemies()
+        {
+            var progress = new DungeonRunProgress(
+                enemyCount: 1,
+                requiresRouteCompletion: true);
+
+            Assert.That(progress.CanExit, Is.False);
+            Assert.That(progress.RecordEnemyKilled(), Is.True);
+            Assert.That(progress.CanExit, Is.False);
+            Assert.That(progress.RecordRouteCompleted(), Is.True);
+            Assert.That(progress.CanExit, Is.True);
+            Assert.That(progress.RecordRouteCompleted(), Is.False);
+        }
+
+        [Test]
         public void TryFinish_CompletedBeforeObjectiveIsMet_IsRejected()
         {
             var progress = new DungeonRunProgress(enemyCount: 1);

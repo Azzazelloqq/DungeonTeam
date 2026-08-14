@@ -118,6 +118,45 @@ namespace DungeonTeam.Gameplay.Dungeon.Tests.EditMode
                 Is.EqualTo("loadout.skeleton.area"));
         }
 
+        [Test]
+        public void ProductionConfig_DemoScenario_UsesOnlyAuthoredCompoundPlacements()
+        {
+            var scenario = LoadScenario("scenario.demo");
+
+            Assert.That(scenario.ThreatBudget, Is.Zero);
+            Assert.That(scenario.EnemyCandidates, Is.Empty);
+            Assert.That(scenario.InterestPointRules, Is.Empty);
+            Assert.That(
+                scenario.EnabledOptionalPlacementIds,
+                Is.EquivalentTo(new[]
+                {
+                    "enemy.optional.melee",
+                    "enemy.optional.ranged",
+                    "enemy.optional.area",
+                    "interest.optional.chest"
+                }));
+            Assert.That(scenario.EnemyRewardRules, Has.Count.EqualTo(2));
+            AssertRewardRule(
+                scenario.EnemyRewardRules,
+                "actor.skeleton.warrior",
+                "reward.enemy.grunt");
+            AssertRewardRule(
+                scenario.EnemyRewardRules,
+                "actor.skeleton.mage",
+                "reward.enemy.grunt");
+        }
+
+        [Test]
+        public void ProductionConfig_EmptyScenario_HasNoOptionalOrRandomContent()
+        {
+            var scenario = LoadScenario("scenario.empty");
+
+            Assert.That(scenario.ThreatBudget, Is.Zero);
+            Assert.That(scenario.EnemyCandidates, Is.Empty);
+            Assert.That(scenario.InterestPointRules, Is.Empty);
+            Assert.That(scenario.EnabledOptionalPlacementIds, Is.Empty);
+        }
+
         private static DungeonScenario LoadScenario(string scenarioId)
         {
             var config = AssetDatabase.LoadAssetAtPath<DungeonConfigPage>(DungeonConfigPath);
@@ -151,6 +190,25 @@ namespace DungeonTeam.Gameplay.Dungeon.Tests.EditMode
                 fixedLoadoutId: null,
                 encounterGroupId: null,
                 Pose);
+        }
+
+        private static void AssertRewardRule(
+            System.Collections.Generic.IReadOnlyList<EnemyRewardRule> rules,
+            string enemyId,
+            string rewardProfileId)
+        {
+            for (var index = 0; index < rules.Count; index++)
+            {
+                if (rules[index].EnemyId != enemyId)
+                {
+                    continue;
+                }
+
+                Assert.That(rules[index].RewardProfileId, Is.EqualTo(rewardProfileId));
+                return;
+            }
+
+            Assert.Fail($"Missing reward rule for '{enemyId}'.");
         }
     }
 }
