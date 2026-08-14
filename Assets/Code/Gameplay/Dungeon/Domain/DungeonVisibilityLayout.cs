@@ -5,11 +5,11 @@ namespace DungeonTeam.Gameplay.Dungeon.Domain
 {
     public sealed class DungeonVisibilityLayout
     {
-        private readonly DungeonVisibilityDoor[] _doors;
+        private readonly IReadOnlyList<DungeonVisibilityDoor> _doors;
 
         private DungeonVisibilityLayout()
         {
-            _doors = Array.Empty<DungeonVisibilityDoor>();
+            _doors = Array.AsReadOnly(Array.Empty<DungeonVisibilityDoor>());
         }
 
         public DungeonVisibilityLayout(int zoneCount, IReadOnlyList<DungeonVisibilityDoor> doors)
@@ -25,7 +25,7 @@ namespace DungeonTeam.Gameplay.Dungeon.Domain
             }
 
             ZoneCount = zoneCount;
-            _doors = new DungeonVisibilityDoor[doors.Count];
+            var copiedDoors = new DungeonVisibilityDoor[doors.Count];
             for (var index = 0; index < doors.Count; index++)
             {
                 var door = doors[index];
@@ -36,13 +36,15 @@ namespace DungeonTeam.Gameplay.Dungeon.Domain
                         "A door must reveal a non-entry zone in this visibility layout.");
                 }
 
-                _doors[index] = door;
+                copiedDoors[index] = door;
             }
+
+            _doors = Array.AsReadOnly(copiedDoors);
         }
 
         public static DungeonVisibilityLayout Empty => new DungeonVisibilityLayout();
 
-        public bool HasAuthoredVisibility => _doors.Length != 0;
+        public bool HasAuthoredVisibility => _doors.Count != 0;
 
         public int ZoneCount { get; }
 
