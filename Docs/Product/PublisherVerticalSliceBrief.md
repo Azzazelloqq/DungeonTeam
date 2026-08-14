@@ -2,9 +2,9 @@
 
 **Статус:** scope brief; производство разрешается только после Stage 0/1 gates
 
-**Версия:** 0.3
+**Версия:** 0.4
 
-**Дата:** 13 августа 2026
+**Дата:** 14 августа 2026
 
 **Связанные документы:** [Product Direction](./ProductDirection.md), [Experience Direction](./ExperienceDirection.md), [Market & References](./MarketAndReferences.md), [Product Validation Plan](./ProductValidationPlan.md)
 
@@ -26,7 +26,7 @@ Slice не предназначен для первой проверки core и
 
 До начала полноценного slice должны быть выполнены условия:
 
-- подтверждён control model лидера и текущего влияния на группу; если выбрана отдельная тактическая команда, её контракт проходит собственный gate до включения в scope;
+- blind test подтверждает текущий control contract: движение, ручной `Primary`, выбор приоритетной цели и отдельный `FOLLOW`; тактические команды не являются entry condition;
 - спутники различаются и запоминаются в blind test;
 - полный expedition prototype выдерживает целевую длительность;
 - решение о риске понятно и не декоративно;
@@ -198,7 +198,7 @@ Target device, OS version, разрешение, thermal state и методик
 - build ID, install guide и список поддержанных устройств;
 - известные ограничения и reproduction notes;
 - результаты blind tests, включая негативные наблюдения;
-- сравнение control variants и причина выбора;
+- результаты проверки текущего control contract и причины его изменения, если тест потребовал итерации;
 - performance report;
 - оценка throughput и стоимости основных content units;
 - краткий risk register;

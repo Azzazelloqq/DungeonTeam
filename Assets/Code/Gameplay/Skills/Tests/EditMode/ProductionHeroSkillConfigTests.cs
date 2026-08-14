@@ -42,7 +42,7 @@ namespace DungeonTeam.Gameplay.Skills.Tests
                 .OrderBy(displayName => displayName, System.StringComparer.Ordinal)
                 .ToArray();
 
-            Assert.That(skills, Has.Count.EqualTo(10));
+            Assert.That(skills, Has.Count.EqualTo(11));
             Assert.That(skills.Select(skill => skill.SkillId), Is.Unique);
             Assert.That(displayNames, Is.EqualTo(sortedDisplayNames));
         }

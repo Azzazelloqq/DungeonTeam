@@ -2,9 +2,9 @@
 
 **Статус:** основной нормативный продуктовый документ
 
-**Версия:** 0.5
+**Версия:** 0.6
 
-**Дата:** 13 августа 2026
+**Дата:** 14 августа 2026
 
 ---
 
@@ -317,7 +317,7 @@ DungeonTeam развивается с коммерческим намерени�
 | Этап | Главный вопрос | Результат |
 | --- | --- | --- |
 | Stage A — market framing | Понимают ли предложение и существует ли реалистичное место на рынке? | Competitor cohort, positioning, business constraints |
-| Stage 0 — core validation | Интересно ли вести автономный отряд? | Выбранный control model или pivot |
+| Stage 0 — core validation | Интересно ли вести автономный отряд? | Подтверждённый текущий control contract или pivot |
 | Stage 1 — expedition prototype | Работает ли core в полном коротком забеге с риском? | Подтверждённый loop и production estimate |
 | Stage 2 — publisher slice | Может ли команда убедительно показать качество и масштабируемость? | Stable build и publisher package |
 | Stage 3 — commercial preproduction | Можно ли превратить подтверждённый цикл в производимый mobile F2P product? | Economy/content/live assumptions и production plan |

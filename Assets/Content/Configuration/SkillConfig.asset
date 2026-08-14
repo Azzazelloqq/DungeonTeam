@@ -77,6 +77,18 @@ MonoBehaviour:
       _cooldown: 1
       _commitDelay: 0
       _recoveryDuration: 0
+  _areaDamageSkills:
+  - _skillId: skill.blast.skeleton
+    _displayName: Skeleton Blast
+    _targetRule: 0
+    _levels:
+    - _level: 1
+      _damage: 15
+      _range: 1.3
+      _cooldown: 2.5
+      _radius: 1.3
+      _commitDelay: 0.35
+      _recoveryDuration: 0.3
   _projectileDamageSkills:
   - _skillId: skill.bolt.druid
     _displayName: Druid Bolt
@@ -241,6 +253,14 @@ MonoBehaviour:
     - _slot: 1
       _skillId: skill.fireball
       _skillLevel: 1
+  - _loadoutId: loadout.skeleton.area
+    _slots:
+    - _slot: 0
+      _skillId: skill.blast.skeleton
+      _skillLevel: 1
+    - _slot: 1
+      _skillId: skill.fireball
+      _skillLevel: 3
   - _loadoutId: loadout.skeleton.warrior
     _slots:
     - _slot: 0

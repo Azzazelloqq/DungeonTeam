@@ -76,5 +76,18 @@ namespace DungeonTeam.Gameplay.Skills.Tests
             Assert.That(completed.Completed, Is.True);
             Assert.That(timeline.Phase, Is.EqualTo(SkillUsePhase.Completed));
         }
+
+        [Test]
+        public void CreateAreaDamageLevel_WithoutPreCommitWindow_Throws()
+        {
+            Assert.Throws<ArgumentOutOfRangeException>(() =>
+                new AreaDamageSkillLevelDefinition(
+                    level: 1,
+                    damage: 10,
+                    range: 2f,
+                    cooldown: 1f,
+                    radius: 1f,
+                    useTiming: default));
+        }
     }
 }

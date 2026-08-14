@@ -15,6 +15,10 @@ namespace DungeonTeam.Gameplay.Skills.Runtime
             Array.Empty<DirectDamageSkillDefinitionConfig>();
 
         [SerializeField]
+        private AreaDamageSkillDefinitionConfig[] _areaDamageSkills =
+            Array.Empty<AreaDamageSkillDefinitionConfig>();
+
+        [SerializeField]
         private ProjectileDamageSkillDefinitionConfig[] _projectileDamageSkills =
             Array.Empty<ProjectileDamageSkillDefinitionConfig>();
 
@@ -30,9 +34,51 @@ namespace DungeonTeam.Gameplay.Skills.Runtime
         {
             return new SkillCatalog(
                 _directDamageSkills,
+                _areaDamageSkills,
                 _projectileDamageSkills,
                 _directHealSkills,
                 _loadouts);
+        }
+    }
+
+    [Serializable]
+    public sealed class AreaDamageSkillLevelConfig
+    {
+        [SerializeField, Min(1)] private int _level = 1;
+        [SerializeField, Min(1)] private int _damage = 1;
+        [SerializeField, Min(0.1f)] private float _range = 1f;
+        [SerializeField, Min(0.01f)] private float _cooldown = 1f;
+        [SerializeField, Min(0.1f)] private float _radius = 1f;
+        [SerializeField, Min(0.01f)] private float _commitDelay = 0.1f;
+        [SerializeField, Min(0f)] private float _recoveryDuration;
+
+        public AreaDamageSkillLevelConfig(
+            int level,
+            int damage,
+            float range,
+            float cooldown,
+            float radius,
+            float commitDelay,
+            float recoveryDuration = 0f)
+        {
+            _level = level;
+            _damage = damage;
+            _range = range;
+            _cooldown = cooldown;
+            _radius = radius;
+            _commitDelay = commitDelay;
+            _recoveryDuration = recoveryDuration;
+        }
+
+        internal AreaDamageSkillLevelDefinition ToDomain()
+        {
+            return new AreaDamageSkillLevelDefinition(
+                _level,
+                _damage,
+                _range,
+                _cooldown,
+                _radius,
+                new SkillUseTiming(_commitDelay, _recoveryDuration));
         }
     }
 
@@ -189,6 +235,51 @@ namespace DungeonTeam.Gameplay.Skills.Runtime
             }
 
             return new DirectDamageSkillDefinition(_skillId, _displayName, _targetRule, levels);
+        }
+    }
+
+    [Serializable]
+    public sealed class AreaDamageSkillDefinitionConfig
+    {
+        [SerializeField] private string _skillId;
+        [SerializeField] private string _displayName;
+        [SerializeField] private SkillTargetRule _targetRule = SkillTargetRule.EnemyActor;
+        [SerializeField] private AreaDamageSkillLevelConfig[] _levels =
+            Array.Empty<AreaDamageSkillLevelConfig>();
+
+        public AreaDamageSkillDefinitionConfig(
+            string skillId,
+            string displayName,
+            SkillTargetRule targetRule,
+            AreaDamageSkillLevelConfig[] levels)
+        {
+            _skillId = skillId;
+            _displayName = displayName;
+            _targetRule = targetRule;
+            _levels = levels;
+        }
+
+        internal AreaDamageSkillDefinition ToDomain(int index)
+        {
+            if (_levels == null)
+            {
+                throw new ArgumentException(
+                    $"Area damage skill at index {index} has no levels.");
+            }
+
+            var levels = new AreaDamageSkillLevelDefinition[_levels.Length];
+            for (var levelIndex = 0; levelIndex < levels.Length; levelIndex++)
+            {
+                levels[levelIndex] = (_levels[levelIndex] ?? throw new ArgumentException(
+                    $"Area damage skill at index {index} has a missing level at index " +
+                    $"{levelIndex}.")).ToDomain();
+            }
+
+            return new AreaDamageSkillDefinition(
+                _skillId,
+                _displayName,
+                _targetRule,
+                levels);
         }
     }
 

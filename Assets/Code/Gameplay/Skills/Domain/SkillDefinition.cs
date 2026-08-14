@@ -70,6 +70,31 @@ namespace DungeonTeam.Gameplay.Skills.Domain
         public int Damage { get; }
     }
 
+    public sealed class AreaDamageSkillLevelDefinition : SkillLevelDefinition
+    {
+        public AreaDamageSkillLevelDefinition(
+            int level,
+            int damage,
+            float range,
+            float cooldown,
+            float radius,
+            SkillUseTiming useTiming)
+            : base(level, range, cooldown, useTiming)
+        {
+            Damage = RequirePositive(damage, nameof(damage));
+            Radius = RequirePositiveFinite(radius, nameof(radius));
+            if (useTiming.CommitDelay <= 0f)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(useTiming),
+                    "Area damage requires a positive pre-commit telegraph window.");
+            }
+        }
+
+        public int Damage { get; }
+        public float Radius { get; }
+    }
+
     public sealed class ProjectileDamageSkillLevelDefinition : SkillLevelDefinition
     {
         public ProjectileDamageSkillLevelDefinition(
@@ -191,6 +216,41 @@ namespace DungeonTeam.Gameplay.Skills.Domain
 
         private static SkillLevelDefinition[] Copy(
             IReadOnlyList<DirectDamageSkillLevelDefinition> levels)
+        {
+            if (levels == null)
+            {
+                throw new ArgumentNullException(nameof(levels));
+            }
+
+            var result = new SkillLevelDefinition[levels.Count];
+            for (var index = 0; index < levels.Count; index++)
+            {
+                result[index] = levels[index];
+            }
+
+            return result;
+        }
+    }
+
+    public sealed class AreaDamageSkillDefinition : SkillDefinition
+    {
+        public AreaDamageSkillDefinition(
+            string skillId,
+            string displayName,
+            SkillTargetRule targetRule,
+            IReadOnlyList<AreaDamageSkillLevelDefinition> levels)
+            : base(skillId, displayName, targetRule, Copy(levels))
+        {
+            if (targetRule != SkillTargetRule.EnemyActor)
+            {
+                throw new ArgumentException(
+                    "Area damage skills require EnemyActor targeting.",
+                    nameof(targetRule));
+            }
+        }
+
+        private static SkillLevelDefinition[] Copy(
+            IReadOnlyList<AreaDamageSkillLevelDefinition> levels)
         {
             if (levels == null)
             {

@@ -175,6 +175,70 @@ namespace DungeonTeam.Gameplay.Skills.Runtime.Tests.PlayMode
         }
 
         [Test]
+        public void AreaDamage_BeforeCommit_ShowsFixedTelegraphAndDealsNoDamage()
+        {
+            using var world = new TestWorld();
+            var source = world.CreateActor<TestActorViewA>("actor.source", Vector3.zero);
+            var target = world.CreateActor<TestActorViewA>("actor.target", Vector3.right * 0.75f);
+            var nearby = world.CreateActor<TestActorViewA>("actor.nearby", Vector3.right * 0.5f);
+            var telegraphPosition = source.Position;
+
+            var handle = world.BeginAreaDamage(source, target, new[] { target, nearby });
+            world.Tick(0.39f);
+            target.TryMoveTo(Vector3.right * 5f);
+
+            Assert.That(handle.Phase, Is.EqualTo(SkillUsePhase.Preparing));
+            Assert.That(world.Execution.ActivePresentationVfxCount, Is.EqualTo(1));
+            Assert.That(world.RequireStartVfxPosition(), Is.EqualTo(telegraphPosition));
+            Assert.That(target.CurrentHealth, Is.EqualTo(100));
+            Assert.That(nearby.CurrentHealth, Is.EqualTo(100));
+        }
+
+        [Test]
+        public void AreaDamage_OnCommit_DamagesOnlyLivingOpponentsInsideTelegraphedArea()
+        {
+            using var world = new TestWorld();
+            var source = world.CreateActor<TestActorViewA>("actor.source", Vector3.zero);
+            var target = world.CreateActor<TestActorViewA>("actor.target", Vector3.right * 0.75f);
+            var nearby = world.CreateActor<TestActorViewA>("actor.nearby", Vector3.right * 0.5f);
+            var outside = world.CreateActor<TestActorViewA>("actor.outside", Vector3.right * 2f);
+            var deadInside = world.CreateActor<TestActorViewA>("actor.dead", Vector3.right * 0.25f);
+            deadInside.ApplyDamage(deadInside.CurrentHealth);
+
+            var handle = world.BeginAreaDamage(
+                source,
+                target,
+                new[] { source, target, nearby, outside, deadInside });
+            target.TryMoveTo(Vector3.right * 5f);
+            world.Tick(0.4f);
+
+            Assert.That(handle.HasCommitted, Is.True);
+            Assert.That(source.CurrentHealth, Is.EqualTo(100));
+            Assert.That(target.CurrentHealth, Is.EqualTo(100));
+            Assert.That(nearby.CurrentHealth, Is.EqualTo(88));
+            Assert.That(outside.CurrentHealth, Is.EqualTo(100));
+            Assert.That(deadInside.CurrentHealth, Is.Zero);
+        }
+
+        [Test]
+        public void AreaDamage_WhenTelegraphIsCancelled_NeverDealsDamage()
+        {
+            using var world = new TestWorld();
+            var source = world.CreateActor<TestActorViewA>("actor.source", Vector3.zero);
+            var target = world.CreateActor<TestActorViewA>("actor.target", Vector3.right * 0.75f);
+            var nearby = world.CreateActor<TestActorViewA>("actor.nearby", Vector3.right * 0.5f);
+            var handle = world.BeginAreaDamage(source, target, new[] { target, nearby });
+
+            Assert.That(handle.TryCancel(), Is.True);
+            world.Tick(1f);
+
+            Assert.That(handle.Phase, Is.EqualTo(SkillUsePhase.Cancelled));
+            Assert.That(world.Execution.ActivePresentationVfxCount, Is.Zero);
+            Assert.That(target.CurrentHealth, Is.EqualTo(100));
+            Assert.That(nearby.CurrentHealth, Is.EqualTo(100));
+        }
+
+        [Test]
         public void DirectDamage_OnCommit_AppliesImpactPositionOffset()
         {
             using var world = new TestWorld();
@@ -458,6 +522,33 @@ namespace DungeonTeam.Gameplay.Skills.Runtime.Tests.PlayMode
                                     SkillVfxAnchor.SourceOrigin,
                                     followAnchor: true,
                                     _presentationPrefabObject)
+                            })),
+                    new SkillPresentationViewEntry(
+                        "skill.area",
+                        new SkillPresentationSequence(
+                            new[]
+                            {
+                                new SkillActorAnimationCue(
+                                    SkillPresentationPhase.Start,
+                                    0f,
+                                    ActorSkillAnimationCue.Cast)
+                            },
+                            new[]
+                            {
+                                new SkillVfxCue(
+                                    SkillPresentationPhase.Start,
+                                    0f,
+                                    1f,
+                                    SkillVfxAnchor.SourceOrigin,
+                                    followAnchor: true,
+                                    _presentationPrefabObject),
+                                new SkillVfxCue(
+                                    SkillPresentationPhase.Impact,
+                                    0f,
+                                    0.2f,
+                                    SkillVfxAnchor.ImpactPosition,
+                                    followAnchor: false,
+                                    _presentationPrefabObject)
                             }))
                 });
                 _dispatcher = new TestDispatcher();
@@ -568,6 +659,29 @@ namespace DungeonTeam.Gameplay.Skills.Runtime.Tests.PlayMode
                 return Execution.Begin(source, target, skill, level);
             }
 
+            public SkillUseHandle BeginAreaDamage(
+                ActorInstance source,
+                ActorInstance target,
+                IReadOnlyList<ActorInstance> opponents)
+            {
+                var timing = new SkillUseTiming(
+                    commitDelay: 0.4f,
+                    recoveryDuration: 0.2f);
+                var level = new AreaDamageSkillLevelDefinition(
+                    level: 1,
+                    damage: 12,
+                    range: 6f,
+                    cooldown: 2f,
+                    radius: 1f,
+                    timing);
+                var skill = new AreaDamageSkillDefinition(
+                    "skill.area",
+                    "Area",
+                    SkillTargetRule.EnemyActor,
+                    new[] { level });
+                return Execution.BeginArea(source, target, opponents, skill, level);
+            }
+
             public Quaternion RequireProjectileRotation()
             {
                 for (var index = 0; index < _projectilesRoot.transform.childCount; index++)
@@ -598,6 +712,11 @@ namespace DungeonTeam.Gameplay.Skills.Runtime.Tests.PlayMode
             public Vector3 RequireStartVfxLocalPosition()
             {
                 return RequirePresentationVfx(SkillPresentationPhase.Start).localPosition;
+            }
+
+            public Vector3 RequireStartVfxPosition()
+            {
+                return RequirePresentationVfx(SkillPresentationPhase.Start).position;
             }
 
             public Quaternion RequireStartVfxRotation()

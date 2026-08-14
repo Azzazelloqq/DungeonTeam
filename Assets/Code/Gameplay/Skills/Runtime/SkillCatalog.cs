@@ -34,9 +34,26 @@ namespace DungeonTeam.Gameplay.Skills.Runtime
             ProjectileDamageSkillDefinitionConfig[] projectileDamageSkills,
             DirectHealSkillDefinitionConfig[] directHealSkills,
             CombatLoadoutDefinitionConfig[] loadouts)
+            : this(
+                directDamageSkills,
+                Array.Empty<AreaDamageSkillDefinitionConfig>(),
+                projectileDamageSkills,
+                directHealSkills,
+                loadouts)
+        {
+        }
+
+        public SkillCatalog(
+            DirectDamageSkillDefinitionConfig[] directDamageSkills,
+            AreaDamageSkillDefinitionConfig[] areaDamageSkills,
+            ProjectileDamageSkillDefinitionConfig[] projectileDamageSkills,
+            DirectHealSkillDefinitionConfig[] directHealSkills,
+            CombatLoadoutDefinitionConfig[] loadouts)
         {
             if (directDamageSkills == null)
                 throw new ArgumentNullException(nameof(directDamageSkills));
+            if (areaDamageSkills == null)
+                throw new ArgumentNullException(nameof(areaDamageSkills));
             if (projectileDamageSkills == null)
                 throw new ArgumentNullException(nameof(projectileDamageSkills));
             if (directHealSkills == null)
@@ -45,10 +62,12 @@ namespace DungeonTeam.Gameplay.Skills.Runtime
                 throw new ArgumentNullException(nameof(loadouts));
 
             _skills = new Dictionary<string, SkillDefinition>(
-                directDamageSkills.Length + projectileDamageSkills.Length +
+                directDamageSkills.Length + areaDamageSkills.Length +
+                projectileDamageSkills.Length +
                 directHealSkills.Length,
                 StringComparer.Ordinal);
             AddSkills(directDamageSkills, (config, index) => config.ToDomain(index));
+            AddSkills(areaDamageSkills, (config, index) => config.ToDomain(index));
             AddSkills(projectileDamageSkills, (config, index) => config.ToDomain(index));
             AddSkills(directHealSkills, (config, index) => config.ToDomain(index));
 

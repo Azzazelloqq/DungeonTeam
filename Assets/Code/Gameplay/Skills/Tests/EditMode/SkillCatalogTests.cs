@@ -18,6 +18,17 @@ namespace DungeonTeam.Gameplay.Skills.Tests
         }
 
         [Test]
+        public void Create_WithDuplicateSkillIdAcrossDirectAndArea_Throws()
+        {
+            Assert.Throws<ArgumentException>(() => new SkillCatalog(
+                new[] { Direct("skill.shared") },
+                new[] { Area("skill.shared") },
+                Array.Empty<ProjectileDamageSkillDefinitionConfig>(),
+                Array.Empty<DirectHealSkillDefinitionConfig>(),
+                Array.Empty<CombatLoadoutDefinitionConfig>()));
+        }
+
+        [Test]
         public void CreateSkill_WithMissingId_Throws()
         {
             Assert.Throws<ArgumentException>(() => new DirectDamageSkillDefinition(
@@ -83,6 +94,19 @@ namespace DungeonTeam.Gameplay.Skills.Tests
         {
             Assert.Throws<ArgumentOutOfRangeException>(() =>
                 new ProjectileDamageSkillLevelDefinition(1, 0, 4f, 1f, 8f));
+        }
+
+        [Test]
+        public void CreateAreaDamage_WithInvalidRadiusOrTargetRule_Throws()
+        {
+            var timing = new SkillUseTiming(0.2f, 0.1f);
+            Assert.Throws<ArgumentOutOfRangeException>(() =>
+                new AreaDamageSkillLevelDefinition(1, 10, 2f, 1f, 0f, timing));
+            Assert.Throws<ArgumentException>(() => new AreaDamageSkillDefinition(
+                "skill.area",
+                "Area",
+                SkillTargetRule.AllyOrSelfActor,
+                new[] { new AreaDamageSkillLevelDefinition(1, 10, 2f, 1f, 1f, timing) }));
         }
 
         [Test]
@@ -279,6 +303,15 @@ namespace DungeonTeam.Gameplay.Skills.Tests
                 "Fireball",
                 SkillTargetRule.EnemyActor,
                 new[] { new ProjectileDamageSkillLevelConfig(1, 10, 5f, 1f, 8f) });
+        }
+
+        private static AreaDamageSkillDefinitionConfig Area(string skillId)
+        {
+            return new AreaDamageSkillDefinitionConfig(
+                skillId,
+                "Area",
+                SkillTargetRule.EnemyActor,
+                new[] { new AreaDamageSkillLevelConfig(1, 10, 2f, 1f, 1f, 0.2f) });
         }
 
         private static CombatLoadoutDefinitionConfig Loadout(

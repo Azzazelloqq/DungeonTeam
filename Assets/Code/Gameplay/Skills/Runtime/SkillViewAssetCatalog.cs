@@ -76,6 +76,9 @@ namespace DungeonTeam.Gameplay.Skills.Runtime
                 "skill.strike.skeleton" => new SkillViewAssetDefinition(
                     AddressableIds.Skills.SkillsMeleePresentation,
                     AddressableIds.Skills.SkillsSkeletonStrikeIcon),
+                "skill.blast.skeleton" => new SkillViewAssetDefinition(
+                    AddressableIds.Skills.SkillsFireballPresentation,
+                    AddressableIds.Skills.SkillsFireballIcon),
                 "skill.fireball" => new SkillViewAssetDefinition(
                     AddressableIds.Skills.SkillsFireballPresentation,
                     AddressableIds.Skills.SkillsFireballIcon,

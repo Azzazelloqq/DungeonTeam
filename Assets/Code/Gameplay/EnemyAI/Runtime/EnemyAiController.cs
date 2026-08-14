@@ -284,11 +284,13 @@ namespace DungeonTeam.Gameplay.EnemyAI.Runtime
                 return;
             }
 
-            var result = _combat.TryUse(new SkillUseRequest(
-                SkillSlot.Primary,
-                _target,
-                SkillTargetRelation.Enemy,
-                HasClearLine(_target)));
+            var result = _combat.TryUse(
+                new SkillUseRequest(
+                    SkillSlot.Primary,
+                    _target,
+                    SkillTargetRelation.Enemy,
+                    HasClearLine(_target)),
+                _targets);
             if (result == SkillUseResult.Executed && !_target.IsAlive)
             {
                 _target = null;

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using DungeonTeam.Gameplay.Actors.Runtime;
 using DungeonTeam.Gameplay.Skills.Domain;
 
@@ -38,7 +39,8 @@ namespace DungeonTeam.Gameplay.Skills.Runtime
             SkillDefinition skill,
             SkillLevelDefinition level,
             SkillPresentationSequence sequence,
-            SkillPresentationPlayer presentation)
+            SkillPresentationPlayer presentation,
+            IReadOnlyList<ActorInstance> areaOpponents)
         {
             Source = source ?? throw new ArgumentNullException(nameof(source));
             Target = target ?? throw new ArgumentNullException(nameof(target));
@@ -47,6 +49,40 @@ namespace DungeonTeam.Gameplay.Skills.Runtime
             _sequence = sequence ?? throw new ArgumentNullException(nameof(sequence));
             _presentation = presentation ?? throw new ArgumentNullException(nameof(presentation));
             _timeline = new SkillUseTimeline(level.UseTiming);
+            if (skill is AreaDamageSkillDefinition)
+            {
+                if (areaOpponents == null || areaOpponents.Count == 0)
+                {
+                    throw new ArgumentException(
+                        "Area damage execution requires at least one opponent.",
+                        nameof(areaOpponents));
+                }
+
+                var copiedOpponents = new ActorInstance[areaOpponents.Count];
+                var containsTarget = false;
+                for (var index = 0; index < areaOpponents.Count; index++)
+                {
+                    var opponent = areaOpponents[index] ?? throw new ArgumentException(
+                        $"Area opponent at index {index} is missing.",
+                        nameof(areaOpponents));
+                    copiedOpponents[index] = opponent;
+                    containsTarget |= ReferenceEquals(opponent, target);
+                }
+
+                if (!containsTarget)
+                {
+                    throw new ArgumentException(
+                        "Area opponents must contain the selected target.",
+                        nameof(areaOpponents));
+                }
+
+                AreaOpponents = copiedOpponents;
+                AreaCenter = source.Position;
+            }
+            else
+            {
+                AreaOpponents = Array.Empty<ActorInstance>();
+            }
         }
 
         public ActorInstance Source { get; }
@@ -58,6 +94,8 @@ namespace DungeonTeam.Gameplay.Skills.Runtime
         public bool HasCommitted => _timeline.HasCommitted;
         public int PresentationGroupId => _presentationGroupId;
         public SkillPresentationSequence Sequence => _sequence;
+        public IReadOnlyList<ActorInstance> AreaOpponents { get; }
+        public UnityEngine.Vector3 AreaCenter { get; }
 
         public SkillUseAdvanceResult Start()
         {
@@ -73,7 +111,9 @@ namespace DungeonTeam.Gameplay.Skills.Runtime
         public SkillUseAdvanceResult Advance(float deltaTime)
         {
             RequireStarted();
-            if (!_timeline.HasCommitted && (!Source.IsAlive || !Target.IsAlive))
+            if (!_timeline.HasCommitted &&
+                (!Source.IsAlive ||
+                 Skill is not AreaDamageSkillDefinition && !Target.IsAlive))
             {
                 TryCancel();
                 return default;

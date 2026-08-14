@@ -45,14 +45,26 @@ MonoBehaviour:
     _difficultyId: normal
     _defaultSeed: 42
   - _presetId: dev.melee
-    _displayName: Dev Melee Authored
-    _dungeonId: dungeon.demo.authored
-    _scenarioId: scenario.demo
+    _displayName: Dev Melee Procedural
+    _dungeonId: dungeon.demo.procedural
+    _scenarioId: scenario.melee
     _difficultyId: normal
     _defaultSeed: 42
   - _presetId: dev.ranged
-    _displayName: Dev Ranged Authored
-    _dungeonId: dungeon.demo.authored
+    _displayName: Dev Ranged Procedural
+    _dungeonId: dungeon.demo.procedural
     _scenarioId: scenario.ranged
     _difficultyId: normal
     _defaultSeed: 42
+  - _presetId: dev.area
+    _displayName: Dev Area Procedural
+    _dungeonId: dungeon.demo.procedural
+    _scenarioId: scenario.area
+    _difficultyId: normal
+    _defaultSeed: 42
+  - _presetId: dev.mixed
+    _displayName: Dev Mixed Procedural
+    _dungeonId: dungeon.demo.procedural
+    _scenarioId: scenario.mixed
+    _difficultyId: normal
+    _defaultSeed: 5

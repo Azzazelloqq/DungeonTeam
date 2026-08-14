@@ -211,6 +211,13 @@ namespace DungeonTeam.Gameplay.Combat.Runtime
 
         public SkillUseResult TryUse(SkillUseRequest request)
         {
+            return TryUse(request, areaOpponents: null);
+        }
+
+        public SkillUseResult TryUse(
+            SkillUseRequest request,
+            IReadOnlyList<ActorInstance> areaOpponents)
+        {
             RequireNotDisposed();
             RefreshActiveUse();
             var runtimeSlot = RequireSlot(request.Slot);
@@ -247,11 +254,27 @@ namespace DungeonTeam.Gameplay.Combat.Runtime
             }
 
             _actor.TryFaceTowards(request.Target.Position);
-            _activeUse = _execution.Begin(
-                _actor,
-                request.Target,
-                runtimeSlot.Skill,
-                runtimeSlot.Level);
+            if (runtimeSlot.Skill is AreaDamageSkillDefinition areaSkill)
+            {
+                if (runtimeSlot.Level is not AreaDamageSkillLevelDefinition areaLevel)
+                    throw new InvalidOperationException(
+                        $"Area damage skill '{areaSkill.SkillId}' has an invalid level type.");
+
+                _activeUse = _execution.BeginArea(
+                    _actor,
+                    request.Target,
+                    areaOpponents,
+                    areaSkill,
+                    areaLevel);
+            }
+            else
+            {
+                _activeUse = _execution.Begin(
+                    _actor,
+                    request.Target,
+                    runtimeSlot.Skill,
+                    runtimeSlot.Level);
+            }
             _activeRuntimeSlot = runtimeSlot;
             _activeCooldownConsumed = false;
             RefreshObservableState();

@@ -68,6 +68,35 @@ namespace DungeonTeam.Gameplay.Skills.Runtime
             SkillDefinition skill,
             SkillLevelDefinition level)
         {
+            if (skill is AreaDamageSkillDefinition)
+            {
+                throw new InvalidOperationException(
+                    $"Area damage skill '{skill.SkillId}' requires area opponents.");
+            }
+
+            return BeginInternal(source, target, skill, level, areaOpponents: null);
+        }
+
+        public SkillUseHandle BeginArea(
+            ActorInstance source,
+            ActorInstance target,
+            IReadOnlyList<ActorInstance> opponents,
+            AreaDamageSkillDefinition skill,
+            AreaDamageSkillLevelDefinition level)
+        {
+            if (opponents == null)
+                throw new ArgumentNullException(nameof(opponents));
+
+            return BeginInternal(source, target, skill, level, opponents);
+        }
+
+        private SkillUseHandle BeginInternal(
+            ActorInstance source,
+            ActorInstance target,
+            SkillDefinition skill,
+            SkillLevelDefinition level,
+            IReadOnlyList<ActorInstance> areaOpponents)
+        {
             if (_isDisposed)
                 throw new ObjectDisposedException(nameof(SkillExecutionController));
             if (!_isInitialized)
@@ -79,13 +108,19 @@ namespace DungeonTeam.Gameplay.Skills.Runtime
 
             ValidateMechanic(skill, level);
             var sequence = _views.RequirePresentation(skill.SkillId);
+            if (level is AreaDamageSkillLevelDefinition areaLevel)
+            {
+                ValidateAreaTelegraph(skill, areaLevel, sequence);
+            }
+
             var execution = new SkillUseExecution(
                 source,
                 target,
                 skill,
                 level,
                 sequence,
-                _presentation);
+                _presentation,
+                areaOpponents);
             var handle = new SkillUseHandle(execution);
             _executions.Add(execution);
             try
@@ -189,6 +224,32 @@ namespace DungeonTeam.Gameplay.Skills.Runtime
                             ? hitAnchor.position
                             : execution.Target.Position + Vector3.up);
                     break;
+                case AreaDamageSkillDefinition:
+                    if (level is not AreaDamageSkillLevelDefinition areaLevel)
+                    {
+                        throw LevelTypeMismatch(skill, level);
+                    }
+
+                    var radiusSqr = areaLevel.Radius * areaLevel.Radius;
+                    var opponents = execution.AreaOpponents;
+                    for (var index = 0; index < opponents.Count; index++)
+                    {
+                        var opponent = opponents[index];
+                        if (opponent == null ||
+                            ReferenceEquals(opponent, execution.Source) ||
+                            !opponent.IsAlive ||
+                            PlanarSqrDistance(opponent.Position, execution.AreaCenter) > radiusSqr)
+                        {
+                            continue;
+                        }
+
+                        opponent.ApplyDamage(areaLevel.Damage, execution.Source);
+                    }
+
+                    execution.PlayPhase(
+                        SkillPresentationPhase.Impact,
+                        execution.AreaCenter);
+                    break;
                 case ProjectileDamageSkillDefinition:
                     if (level is not ProjectileDamageSkillLevelDefinition projectileLevel)
                     {
@@ -266,10 +327,12 @@ namespace DungeonTeam.Gameplay.Skills.Runtime
             switch (skill)
             {
                 case DirectDamageSkillDefinition when level is DirectDamageSkillLevelDefinition:
+                case AreaDamageSkillDefinition when level is AreaDamageSkillLevelDefinition:
                 case ProjectileDamageSkillDefinition when level is ProjectileDamageSkillLevelDefinition:
                 case DirectHealSkillDefinition when level is DirectHealSkillLevelDefinition:
                     return;
                 case DirectDamageSkillDefinition:
+                case AreaDamageSkillDefinition:
                 case ProjectileDamageSkillDefinition:
                 case DirectHealSkillDefinition:
                     throw LevelTypeMismatch(skill, level);
@@ -286,6 +349,36 @@ namespace DungeonTeam.Gameplay.Skills.Runtime
         {
             return new InvalidOperationException(
                 $"Skill '{skill.SkillId}' cannot use level type '{level.GetType().Name}'.");
+        }
+
+        private static void ValidateAreaTelegraph(
+            SkillDefinition skill,
+            AreaDamageSkillLevelDefinition level,
+            SkillPresentationSequence sequence)
+        {
+            for (var index = 0; index < sequence.VfxCues.Count; index++)
+            {
+                var cue = sequence.VfxCues[index];
+                if (cue.Phase == SkillPresentationPhase.Start &&
+                    cue.Delay == 0f &&
+                    cue.Lifetime >= level.UseTiming.CommitDelay &&
+                    cue.Anchor == SkillVfxAnchor.SourceOrigin &&
+                    cue.FollowAnchor)
+                {
+                    return;
+                }
+            }
+
+            throw new InvalidOperationException(
+                $"Area damage skill '{skill.SkillId}' requires an immediate source-centered " +
+                "telegraph that lasts through its pre-commit window.");
+        }
+
+        private static float PlanarSqrDistance(Vector3 first, Vector3 second)
+        {
+            var difference = first - second;
+            difference.y = 0f;
+            return difference.sqrMagnitude;
         }
     }
 }

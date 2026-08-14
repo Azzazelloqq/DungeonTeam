@@ -86,16 +86,19 @@ namespace DungeonTeam.Gameplay.DungeonRun.Tests.Application
             var catalog = config.CreateCatalog();
 
             Assert.That(catalog.DefaultPreset.PresetId, Is.EqualTo("product.default"));
-            Assert.That(catalog.Presets, Has.Count.EqualTo(7));
+            Assert.That(catalog.Presets, Has.Count.EqualTo(9));
             Assert.That(catalog.Require("product.default").DungeonId, Is.EqualTo("dungeon.demo.authored"));
+            Assert.That(catalog.Require("product.default").ScenarioId, Is.EqualTo("scenario.demo"));
             Assert.That(catalog.Require("dev.authored").DungeonId, Is.EqualTo("dungeon.demo.authored"));
             Assert.That(catalog.Require("dev.chunked").DungeonId, Is.EqualTo("dungeon.demo.chunked"));
             Assert.That(
                 catalog.Require("dev.procedural").DungeonId,
                 Is.EqualTo("dungeon.demo.procedural"));
             Assert.That(catalog.Require("dev.empty").ScenarioId, Is.EqualTo("scenario.empty"));
-            Assert.That(catalog.Require("dev.melee").ScenarioId, Is.EqualTo("scenario.demo"));
-            Assert.That(catalog.Require("dev.ranged").ScenarioId, Is.EqualTo("scenario.ranged"));
+            AssertEnemyPreset(catalog, "dev.melee", "scenario.melee", 42);
+            AssertEnemyPreset(catalog, "dev.ranged", "scenario.ranged", 42);
+            AssertEnemyPreset(catalog, "dev.area", "scenario.area", 42);
+            AssertEnemyPreset(catalog, "dev.mixed", "scenario.mixed", 5);
         }
 
         private static DungeonRunLaunchPreset Preset(
@@ -121,6 +124,19 @@ namespace DungeonTeam.Gameplay.DungeonRun.Tests.Application
                 {
                     new DungeonRunActorSelection("actor.druid", 1, "loadout.druid.healer")
                 });
+        }
+
+        private static void AssertEnemyPreset(
+            DungeonRunLaunchPresetCatalog catalog,
+            string presetId,
+            string scenarioId,
+            int defaultSeed)
+        {
+            var preset = catalog.Require(presetId);
+
+            Assert.That(preset.DungeonId, Is.EqualTo("dungeon.demo.procedural"));
+            Assert.That(preset.ScenarioId, Is.EqualTo(scenarioId));
+            Assert.That(preset.DefaultSeed, Is.EqualTo(defaultSeed));
         }
     }
 }

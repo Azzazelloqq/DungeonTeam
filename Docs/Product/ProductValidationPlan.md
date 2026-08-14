@@ -2,9 +2,9 @@
 
 **Статус:** рабочий нормативный документ
 
-**Версия:** 0.3
+**Версия:** 0.4
 
-**Дата:** 13 августа 2026
+**Дата:** 14 августа 2026
 
 **Связанные документы:** [Product Direction](./ProductDirection.md), [Experience Direction](./ExperienceDirection.md), [Market & References](./MarketAndReferences.md), [Publisher Vertical Slice Brief](./PublisherVerticalSliceBrief.md)
 
@@ -181,7 +181,7 @@ Retention считается только по фактическому возв
 
 **Цель:** доказать внешнему партнёру продукт, команду и способность довести качество, а не проверить идею впервые.
 
-**Entry conditions:** пройдены Stage 0 и Stage 1 gates; выбран control variant; заморожен slice scope; определены target device и визуальный budget.
+**Entry conditions:** пройдены Stage 0 и Stage 1 gates; текущий control contract подтверждён blind test; заморожен slice scope; определены target device и визуальный budget.
 
 Состав и требования находятся в `PublisherVerticalSliceBrief.md`.
 
@@ -225,7 +225,7 @@ Retention считается только по фактическому возв
 ## 5. Порядок продуктовых тестов
 
 1. **Internal usability:** устранить blocking bugs и очевидные проблемы ввода.
-2. **Comparative leadership test:** сравнить два control variants на одинаковом encounter.
+2. **Leadership contract test:** на одинаковом encounter проверить, что ручной `Primary`, выбор приоритетной цели и отдельный `FOLLOW` дают понятное влияние на бой и автономный отряд.
 3. **Blind core test:** проверить понимание без объяснения fantasy.
 4. **Full expedition test:** проверить темп, риск и завершение.
 5. **Instrumented full-loop test:** пройти хаб, контракт, экспедицию, debrief и зафиксировать предложение следующего похода.
@@ -321,7 +321,6 @@ Retention считается только по фактическому возв
 | `expedition_started` | contract, composition, supply, replay_index |
 | `encounter_started/completed` | encounter, composition, duration, outcome |
 | `follow_used` | reason/context, cancelled_precommit, recall_result, autonomous_resume |
-| `leadership_command_used` | command_variant, context, target, response; только после отдельного freeze тактической команды |
 | `leader_ability_used` | ability, context, hit/result |
 | `companion_key_action` | companion, role, action, trigger, result |
 | `damage_taken` | receiver, source, telegraph_seen proxy |

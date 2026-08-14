@@ -2,9 +2,9 @@
 
 **Статус:** рабочий нормативный документ
 
-**Версия:** 0.3
+**Версия:** 0.4
 
-**Дата:** 13 августа 2026
+**Дата:** 14 августа 2026
 
 **Связанные документы:** [Product Direction](./ProductDirection.md), [Market & References](./MarketAndReferences.md), [Product Validation Plan](./ProductValidationPlan.md), [Publisher Vertical Slice Brief](./PublisherVerticalSliceBrief.md)
 
@@ -395,7 +395,7 @@ Loot должен создавать выбор или заметное усил
 
 Первые минуты должны показать продукт в правильном порядке:
 
-1. движение и автоматическую атаку;
+1. движение и ручной видимый `Primary`;
 2. одно активное решение лидера;
 3. заметную самостоятельность спутника;
 4. `FOLLOW` как жёсткий отзыв группы;
