@@ -2,15 +2,15 @@
 
 **Статус:** READY FOR IMPLEMENTATION
 
-**Версия:** 0.4
+**Версия:** 0.5
 
-**Дата:** 13 августа 2026
+**Дата:** 14 августа 2026
 
 **Product source:** `Docs/Product/DungeonExpeditionVerticalSliceGDD.md`
 
 ## 1. Responsibility and boundaries
 
-`DungeonExpedition` владеет одной попыткой: linear route progression, ручные intents лидера, автономные решения спутников, chest state, encounter phase, camera presentation state, result и telemetry boundary.
+`DungeonExpedition` владеет одной попыткой: linear route progression, authored exploration visibility, ручные intents лидера, автономные решения спутников, chest/door state, encounter phase, camera presentation state, result и telemetry boundary.
 
 Feature не владеет application navigation, imported package storage, inventory/economy, procgen и generic gameplay frameworks.
 
@@ -74,9 +74,12 @@ The first slice uses closed concrete concepts:
 - `DungeonRunPhase`: `Entering`, `Exploring`, `ChestFocus`, `Encounter`, `Continuing`, `Completed`, `Failed`;
 - ordered `RouteCheckpoint` progression;
 - `ChestState`: `Locked`, `Available`, `Opening`, `Opened`;
+- минимальный `VisibilityState`: ordered authored zones и door-boundaries; entry-zone раскрыта сразу, остальные зоны раскрываются только явным route/door event и не скрываются повторно в пределах run;
 - actor identity/loadout, `CombatActionDefinition`, cooldown state и минимальный deterministic selector действий спутника; role labels остаются описанием вклада, а не Domain-классом или отдельной policy;
 - `DungeonIntent`: movement, target, manual `Primary`, `Active1`, one-shot hard `FOLLOW`, open chest;
 - immutable events for phase, actor action, damage, chest and result.
+
+Visibility — не stealth/perception и не универсальная fog-of-war. Скрытая зона не публикует свои actors, rewards, target/interaction markers и не активирует принадлежащий ей encounter. Domain хранит только идентификаторы/индексы раскрытых authored-зон и состояние boundary; Unity rendering остаётся Runtime presentation.
 
 Companion decision priority:
 
@@ -122,6 +125,10 @@ Presentation/UI/DungeonRunSummary/{Base, concrete Model/ViewModel/View}
 
 View binds to an already-created ViewModel. ViewModel never references View. World-space health bars and passive markers remain Actor View bindings, not separate ViewModels.
 
+Terminal summary принимает immutable snapshot результата и наград. Для текущего slice он публикует одну команду `ReturnToMenu`; `RunAgain` отсутствует. Application flow владеет навигацией: сначала останавливает и освобождает active run, затем показывает main menu. В будущем тот же terminal result contract может быть перенаправлен в hub без изменения DungeonRun ownership.
+
+Exploration visibility остаётся локальной частью существующего `DungeonRun` graph. Root владеет маленьким pure state/controller и Unity binding, который включает authored dark veil/zone roots. Новый глобальный service, DI scope, отдельный feature root или универсальный visibility framework не создаётся.
+
 ## 6. Level authoring
 
 One project-owned `DungeonCorridorStage.prefab` contains:
@@ -141,10 +148,15 @@ DungeonCorridorStageView
 │  └─ authored tactical anchors
 ├─ Chest
 │  └─ interaction/focus anchors
+├─ Visibility
+│  ├─ ordered zone roots/veil bindings
+│  └─ door boundaries с прямой ссылкой на раскрываемую зону
 └─ Navigation
 ```
 
 All collections are serialized and validated for nulls, duplicate actor bindings and ordering. Runtime uses direct references; no `Find`, tag lookup or string IDs.
+
+Visibility authoring валидирует entry-zone, уникальные zone bindings, принадлежность map hierarchy и прямые door→zone ссылки. Закрытая дверь удерживает связанную зону скрытой независимо от положения камеры. Открытие двери или согласованный route event раскрывает ровно связанную зону; повторное событие идемпотентно.
 
 The corridor camera follows a smoothed route tangent and leader look target. A shot anchor contributes position/look weights within its blend range. Activity focus is a time-bounded presentation request owned by the camera presenter; it never changes Domain state by itself.
 
@@ -169,21 +181,21 @@ No new runtime Addressables code is introduced until generated keys exist.
 
 1. `DE0`: normative docs, Domain/Application asmdefs and behavior tests.
 2. `DE1`: authored corridor bindings, route progression, party follow and camera turn blend.
-3. `DE2`: project-owned party/enemy/chest content with zero imported dependencies.
+3. `DE2`: functional project-owned proxy content and zero imported dependencies; разные enemy-модели и визуальное разнообразие отложены и не блокируют текущий slice.
 4. `DE3`: encounter, deterministic companion action selector, actor VFX slots and authored tactical anchors.
-5. `DE4`: chest focus/opening, HUD/summary and result/replay.
-6. `DE5`: application-flow cutover; old monolithic launch removed after replacement is green.
-7. `DE6`: compile/EditMode/PlayMode/dependency audit/manual Editor/PC corridor smoke. Android build и device profiler отложены и не являются gate текущего slice.
+5. `DE4`: chest/door interaction, authored exploration visibility, HUD/terminal summary и flow `Completed/Defeated → main menu`; без `Run Again`.
+6. `DE5`: audit единого application flow и удаление остатков старого monolithic launch/двойного пути; новый launch не строится заново, если classic/dev уже используют один host/root path.
+7. `DE6`: compile/EditMode/PlayMode/dependency audit/manual Editor/PC corridor smoke, включая visibility и оба terminal outcome. Android build и device profiler отложены и не являются gate текущего slice.
 
 Each milestone must keep a single runtime launch path and explicit ownership. No compatibility flag or permanent dual implementation is allowed.
 
 ## 10. Validation
 
-- EditMode Domain: route order, chest transitions, companion selector priority/cooldown/range, outcome.
+- EditMode Domain: route order, chest/door transitions, idempotent zone reveal, companion selector priority/cooldown/range, outcome.
 - EditMode Application: intents/events, session completion, cancellation/disposal.
 - EditMode Runtime: presenter family lifecycle and authoring validation.
-- PlayMode: scene/prefab wiring, manual leader `Primary`, one-shot `FOLLOW`, companion autonomy, two camera turns, formation recovery, chest once-only, encounter/result/replay.
+- PlayMode: scene/prefab wiring, manual leader `Primary`, one-shot `FOLLOW`, companion autonomy, two camera turns, formation recovery, chest/door once-only, hidden-zone isolation, encounter и `Completed/Defeated → summary → menu`.
 - Editor dependency test: zero `ImportedAssets` paths from all production roots.
-- Manual Unity smoke: framing before/during/after turns, focus transitions, no console errors.
-- Editor/PC smoke: visible manual `Primary`, target/`Active1`/`FOLLOW`, три различимых спутника, полный encounter и replay без blocking console errors.
+- Manual Unity smoke: framing before/during/after turns, скрытая зона до открытия двери, отсутствие target/interaction leakage, раскрытие связанной зоны и отсутствие console errors.
+- Editor/PC smoke: visible manual `Primary`, target/`Active1`/`FOLLOW`, три различимых спутника, полный encounter, оба terminal outcome и возврат в меню без blocking console errors.
 - Profiler запускается только при доказанном performance regression или перед возвращением к device validation; текущий slice не получает Android/device gate.
