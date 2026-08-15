@@ -60,6 +60,18 @@ namespace DungeonTeam.Gameplay.DungeonRun.Tests
         }
 
         [Test]
+        public void Snap_AtOverlappingShots_UsesBothAuthoredAnchors()
+        {
+            var model = new DungeonCameraModel(Settings(), CreateOverlappingShotLayout());
+
+            var pose = model.Snap(new Vector3(5f, 0f, 10f));
+
+            Assert.That(
+                Vector3.Distance(pose.Position, new Vector3(5f, 4f, 10f)),
+                Is.LessThan(0.001f));
+        }
+
+        [Test]
         public void Presenter_AfterDispose_StopsApplyingLateUpdateFrames()
         {
             var dispatcher = new ManualDispatcher();
@@ -119,6 +131,40 @@ namespace DungeonTeam.Gameplay.DungeonRun.Tests
                     Pose(10f, 0f, 10f),
                     startCheckpointIndex: 1,
                     endCheckpointIndex: 2),
+                new[] { new DungeonVector3(1f, 0f, -1f) },
+                new[] { Pose(5f, 0f, 10f) });
+        }
+
+        private static DungeonSpatialLayout CreateOverlappingShotLayout()
+        {
+            return new DungeonSpatialLayout(
+                new[]
+                {
+                    Pose(0f, 0f, 0f),
+                    Pose(0f, 0f, 10f),
+                    Pose(10f, 0f, 10f),
+                    Pose(10f, 0f, 20f)
+                },
+                new[]
+                {
+                    new DungeonCameraShot(
+                        Pose(-5f, 4f, 10f),
+                        routeCheckpointIndex: 1,
+                        lookAheadDistance: 3f,
+                        activationRange: 8f,
+                        blendRange: 3f),
+                    new DungeonCameraShot(
+                        Pose(15f, 4f, 10f),
+                        routeCheckpointIndex: 2,
+                        lookAheadDistance: 3f,
+                        activationRange: 8f,
+                        blendRange: 3f)
+                },
+                new DungeonEncounterSpan(
+                    Pose(0f, 0f, 10f),
+                    Pose(10f, 0f, 20f),
+                    startCheckpointIndex: 1,
+                    endCheckpointIndex: 3),
                 new[] { new DungeonVector3(1f, 0f, -1f) },
                 new[] { Pose(5f, 0f, 10f) });
         }

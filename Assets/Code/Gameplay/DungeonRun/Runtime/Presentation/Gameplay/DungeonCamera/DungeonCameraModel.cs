@@ -104,32 +104,64 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime.Presentation.Gameplay.DungeonC
 
             var segmentIndex = FindNearestSegment(leaderPosition);
             var routeDirection = GetSegmentDirection(segmentIndex);
-            var activeShotIndex = FindActiveShot(leaderPosition, out var shotWeight);
-            if (activeShotIndex >= 0)
+            var totalShotWeight = 0f;
+            var weightedAnchorPosition = Vector3.zero;
+            var weightedLookAheadDistance = 0f;
+            var weightedTurnDirection = Vector3.zero;
+            for (var index = 0; index < _cameraShots.Length; index++)
             {
-                routeDirection = BlendTurnDirection(
+                var shot = _cameraShots[index];
+                var shotWeight = CalculateShotWeight(
+                    PlanarDistance(
+                        leaderPosition,
+                        _routeCheckpoints[shot.RouteCheckpointIndex]),
+                    shot.ActivationRange,
+                    shot.BlendRange);
+                if (shotWeight <= 0f)
+                {
+                    continue;
+                }
+
+                totalShotWeight += shotWeight;
+                weightedAnchorPosition += shot.AnchorPosition * shotWeight;
+                weightedLookAheadDistance += shot.LookAheadDistance * shotWeight;
+                weightedTurnDirection += BlendTurnDirection(
                     routeDirection,
                     segmentIndex,
-                    _cameraShots[activeShotIndex],
-                    shotWeight);
+                    shot,
+                    shotWeight) * shotWeight;
+            }
+
+            if (totalShotWeight > 0f &&
+                weightedTurnDirection.sqrMagnitude > MinimumDirectionSqrMagnitude)
+            {
+                routeDirection = weightedTurnDirection.normalized;
             }
 
             var yaw = Mathf.Atan2(routeDirection.x, routeDirection.z) * Mathf.Rad2Deg;
             var followPose = CreateFollowPose(target, yaw);
-            if (activeShotIndex < 0 || shotWeight <= 0f)
+            if (totalShotWeight <= 0f)
             {
                 return followPose;
             }
 
-            var shot = _cameraShots[activeShotIndex];
-            var shotTarget = target + routeDirection * shot.LookAheadDistance;
-            var lookDirection = shotTarget - shot.AnchorPosition;
+            var combinedShotWeight = Mathf.Min(1f, totalShotWeight);
+            var averageAnchorPosition = weightedAnchorPosition / totalShotWeight;
+            var averageLookAheadDistance = weightedLookAheadDistance / totalShotWeight;
+            var shotTarget = target + routeDirection * averageLookAheadDistance;
+            var lookDirection = shotTarget - averageAnchorPosition;
             var shotRotation = lookDirection.sqrMagnitude > MinimumDirectionSqrMagnitude
                 ? Quaternion.LookRotation(lookDirection.normalized, Vector3.up)
                 : followPose.Rotation;
             return new DungeonCameraPose(
-                Vector3.Lerp(followPose.Position, shot.AnchorPosition, shotWeight),
-                Quaternion.Slerp(followPose.Rotation, shotRotation, shotWeight));
+                Vector3.Lerp(
+                    followPose.Position,
+                    averageAnchorPosition,
+                    combinedShotWeight),
+                Quaternion.Slerp(
+                    followPose.Rotation,
+                    shotRotation,
+                    combinedShotWeight));
         }
 
         private DungeonCameraPose CreateFollowPose(Vector3 target, float yaw)
@@ -157,29 +189,6 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime.Presentation.Gameplay.DungeonC
             }
 
             return nearestSegmentIndex;
-        }
-
-        private int FindActiveShot(Vector3 leaderPosition, out float weight)
-        {
-            var selectedIndex = -1;
-            weight = 0f;
-            for (var index = 0; index < _cameraShots.Length; index++)
-            {
-                var shot = _cameraShots[index];
-                var checkpoint = _routeCheckpoints[shot.RouteCheckpointIndex];
-                var distance = PlanarDistance(leaderPosition, checkpoint);
-                var candidateWeight = CalculateShotWeight(
-                    distance,
-                    shot.ActivationRange,
-                    shot.BlendRange);
-                if (candidateWeight > weight)
-                {
-                    weight = candidateWeight;
-                    selectedIndex = index;
-                }
-            }
-
-            return selectedIndex;
         }
 
         private Vector3 BlendTurnDirection(
