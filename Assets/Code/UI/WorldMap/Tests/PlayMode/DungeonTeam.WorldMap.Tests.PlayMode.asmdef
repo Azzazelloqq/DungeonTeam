@@ -1,0 +1,17 @@
+{
+  "name": "DungeonTeam.WorldMap.Tests.PlayMode",
+  "rootNamespace": "DungeonTeam.UI.WorldMap.Tests.PlayMode",
+  "references": [
+    "DungeonTeam.WorldMap",
+    "DungeonTeam.UIService",
+    "DungeonTeam.Addressables",
+    "ResourceLoader",
+    "UniTask",
+    "Root",
+    "UnityEngine.TestRunner"
+  ],
+  "autoReferenced": false,
+  "defineConstraints": [
+    "UNITY_INCLUDE_TESTS"
+  ]
+}

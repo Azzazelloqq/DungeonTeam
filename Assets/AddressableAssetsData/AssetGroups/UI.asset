@@ -25,8 +25,8 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 7a0e6ab46df060f498355395fab4ce2f
-    m_Address: Windows/Main/MainMenu.prefab
+  - m_GUID: 4cc1311a6db749a688d2cd632e22d21f
+    m_Address: Windows/WorldMap/WorldMap
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

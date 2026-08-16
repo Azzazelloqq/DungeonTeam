@@ -1,0 +1,15 @@
+{
+  "name": "DungeonTeam.AmbientNpc.Runtime",
+  "rootNamespace": "DungeonTeam.Gameplay.AmbientNpc.Runtime",
+  "references": [
+    "DungeonTeam.AmbientNpc.Application",
+    "DungeonTeam.Configuration",
+    "MVP",
+    "MVVM.Core",
+    "MVVM.Reactive",
+    "Disposable",
+    "Unity.TextMeshPro",
+    "Unity.UGUI"
+  ],
+  "autoReferenced": false
+}

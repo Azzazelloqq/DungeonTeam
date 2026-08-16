@@ -1,0 +1,24 @@
+{
+  "name": "DungeonTeam.GuildHall.Runtime",
+  "rootNamespace": "DungeonTeam.Gameplay.GuildHall.Runtime",
+  "references": [
+    "DungeonTeam.GuildHall.Application",
+    "DungeonTeam.AmbientNpc.Application",
+    "DungeonTeam.AmbientNpc.Runtime",
+    "DungeonTeam.Configuration",
+    "DungeonTeam.ContextActions.Runtime",
+    "DungeonTeam.Addressables",
+    "ResourceLoader",
+    "Root",
+    "TickHandler",
+    "MVP",
+    "MVVM.Core",
+    "MVVM.Reactive",
+    "Disposable",
+    "UniTask",
+    "Unity.InputSystem",
+    "Unity.TextMeshPro",
+    "Unity.UGUI"
+  ],
+  "autoReferenced": false
+}

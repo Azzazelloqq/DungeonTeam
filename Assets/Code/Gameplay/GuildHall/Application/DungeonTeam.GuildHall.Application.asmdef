@@ -1,0 +1,9 @@
+{
+  "name": "DungeonTeam.GuildHall.Application",
+  "rootNamespace": "DungeonTeam.Gameplay.GuildHall.Application",
+  "references": [
+    "DungeonTeam.AmbientNpc.Application"
+  ],
+  "autoReferenced": false,
+  "noEngineReferences": true
+}

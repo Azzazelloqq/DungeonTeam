@@ -1,0 +1,27 @@
+{
+  "name": "DungeonTeam.GuildHall.Tests.PlayMode",
+  "rootNamespace": "DungeonTeam.Gameplay.GuildHall.Tests.PlayMode",
+  "references": [
+    "DungeonTeam.GuildHall.Application",
+    "DungeonTeam.AmbientNpc.Application",
+    "DungeonTeam.AmbientNpc.Runtime",
+    "DungeonTeam.GuildHall.Runtime",
+    "DungeonTeam.ContextActions.Runtime",
+    "DungeonTeam.Addressables",
+    "ResourceLoader",
+    "TickHandler",
+    "Root",
+    "MVP",
+    "MVVM.Core",
+    "MVVM.Reactive",
+    "UniTask",
+    "Disposable",
+    "Unity.InputSystem",
+    "Unity.InputSystem.TestFramework",
+    "UnityEngine.TestRunner"
+  ],
+  "autoReferenced": false,
+  "defineConstraints": [
+    "UNITY_INCLUDE_TESTS"
+  ]
+}

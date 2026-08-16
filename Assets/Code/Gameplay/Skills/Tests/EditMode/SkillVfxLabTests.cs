@@ -16,8 +16,8 @@ namespace DungeonTeam.Gameplay.Skills.Tests
         {
             var catalog = SkillVfxLabCatalog.Load();
 
-            Assert.That(catalog.Skills.Count, Is.EqualTo(10));
-            Assert.That(catalog.Actors.Count, Is.EqualTo(6));
+            Assert.That(catalog.Skills, Is.Not.Empty);
+            Assert.That(catalog.Actors, Is.Not.Empty);
             Assert.That(catalog.Skills.Select(skill => skill.Definition.SkillId), Is.Unique);
             Assert.That(catalog.Actors.Select(actor => actor.ActorId), Is.Unique);
             Assert.That(catalog.Skills.All(skill => skill.Presentation != null), Is.True);

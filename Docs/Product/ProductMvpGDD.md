@@ -2,11 +2,11 @@
 
 **Статус:** рабочий candidate scope, согласованный для дальнейшего product planning; не является подтверждённым production scope или разрешением на реализацию
 
-**Версия:** 0.4
+**Версия:** 0.5
 
-**Дата:** 14 августа 2026
+**Дата:** 15 августа 2026
 
-**Иерархия:** производный документ от [Product Direction](./ProductDirection.md) и [Experience Direction](./ExperienceDirection.md). Порядок проверки определяет [Product Validation Plan](./ProductValidationPlan.md), а внешний presentation ceiling — [Publisher Vertical Slice Brief](./PublisherVerticalSliceBrief.md). Текущий scope реализации остаётся в [Dungeon Expedition Vertical Slice GDD](./DungeonExpeditionVerticalSliceGDD.md).
+**Иерархия:** производный документ от [Product Direction](./ProductDirection.md) и [Experience Direction](./ExperienceDirection.md). Порядок проверки определяет [Product Validation Plan](./ProductValidationPlan.md), а внешний presentation ceiling — [Publisher Vertical Slice Brief](./PublisherVerticalSliceBrief.md). Текущий combat scope остаётся в [Dungeon Expedition Vertical Slice GDD](./DungeonExpeditionVerticalSliceGDD.md), а согласованный foundation гильдии — в [Guild Hall GDD](./GuildHallGDD.md).
 
 ---
 
@@ -137,9 +137,10 @@ Product MVP не обходится без Stage 0 и Stage 1. Хаб, прог�
 
 ### 3.2. Формат — решение для MVP
 
-- Один связанный экран или компактная последовательность экранов.
-- Допустим атмосферный иллюстрированный фон или небольшая 3D-диорама.
-- Все функции доступны напрямую, без обязательной ходьбы между точками.
+- Одна компактная доступная для перемещения 3D-локация Guild Hall, вручную собранная как authored interior.
+- Текущий foundation допускает graybox из primitives; production art не является условием функционального slice.
+- Функции привязаны к понятным физическим точкам, но расстояния между ними малы и не создают длинного обязательного обхода.
+- Выход открывает отдельную компактную World Map с конфигурируемыми destinations.
 - Свободно исследуемый 3D-город не входит в Product MVP.
 - Традиционный title screen, если он нужен, не считается игровым хабом.
 
@@ -147,17 +148,17 @@ Product MVP не обходится без Stage 0 и Stage 1. Хаб, прог�
 
 | Зона | Ответственность | Выход игрока |
 | --- | --- | --- |
-| Debrief / общая комната | Показать итог, изменение профиля и короткую реакцию отряда | Понимание последствия и следующего шага |
-| Доска контрактов | Показать цель, ожидаемые угрозы, условия выхода и награду | Выбранный контракт |
+| Стойка регистрации / общая комната | Показать итог, изменение профиля и короткую реакцию отряда; позже обслуживать продажу и rank actions | Понимание последствия и следующего шага |
+| Доска объявлений | Показать цель, ожидаемые угрозы, условия выхода и награду | Выбранный контракт |
 | Стол отряда | Показать функции доступных героев и собрать валидную группу | Выбранный состав |
 | Подготовка | Дать одно решение с ценой возможности | Выбранный supply |
 | Тренировочная зона | Показать одно доступное улучшение и его эффект | Применённое улучшение либо сохранённый ресурс |
 
-Это presentation-зоны одной feature, а не отдельные roots, DI scopes или сервисы.
+Это функциональные точки одной Guild Hall feature, а не отдельные roots, DI scopes или сервисы. Текущий более узкий foundation из `GuildHallGDD.md` реализует доску, стойку, фоновых NPC, выход и World Map до появления Player Profile, экономики и остальных зон Product MVP.
 
 ### 3.4. UX-правила
 
-- Возврат начинается с debrief, но не заставляет обходить все зоны.
+- Возврат начинает доступный debrief у стойки, но не заставляет обходить все зоны.
 - Текущий состав и подготовка могут сохраняться как удобный default.
 - Контракт, состав и supply можно изменить до подтверждения старта.
 - Красные точки, ежедневные сборы, таймеры ожидания и обязательные обходы экранов запрещены.
@@ -448,8 +449,9 @@ Product MVP показывает одну близкую долгосрочну�
 
 | Область | Владеет | Не владеет |
 | --- | --- | --- |
-| Application flow | Переходами Hub ↔ Run, постоянным профилем, сборкой валидного run request, применением результата и persistence side effects | Debrief-представлением, правилами конкретного боя и Unity-представлением комнат |
-| Guild Hub | Отображением профиля и debrief, draft выбора контракта, состава и подготовки | Активным миром данжа, боем и прямой записью save |
+| Application flow | Переходами Guild Hall ↔ World Map ↔ Run, постоянным профилем, сборкой валидного run request, применением результата и persistence side effects | Debrief-представлением, правилами конкретного боя и Unity-представлением комнат |
+| Guild Hall | Walkable world presentation, NPC activity, отображение подготовленных profile/debrief snapshots, draft выбора контракта, состава и подготовки | Активным миром данжа, бизнес-правилами доступности, боем и прямой записью save |
+| World Map | Отображением подготовленных locations и возвратом выбранного `locationId` | Решением, какую feature запускать, и созданием dungeon request |
 | Dungeon Run | Одной попыткой: маршрут, run-local состояние, активности, carried rewards, extraction и terminal result | Глобальным профилем, хабом и применением постоянной прогрессии |
 | Player Profile | Чистым постоянным состоянием и правилами его изменения | Unity, View, Addressables и runtime-миром забега |
 | Infrastructure | SaveStore, загрузкой и Unity/platform adapters за узкими контрактами | Продуктовыми правилами риска и прогрессии |
@@ -457,7 +459,8 @@ Product MVP показывает одну близкую долгосрочну�
 ### 12.2. Семантические публичные контракты
 
 - **Hub input:** immutable snapshot профиля и optional уже применённый debrief result.
-- **Hub output:** выбранный contract id, валидный snapshot выбора состава и выбранный supply.
+- **Hub output:** выбранный contract id, валидный snapshot выбора состава и выбранный supply; выход из здания является запросом открыть World Map.
+- **World Map input/output:** immutable location snapshots in, выбранный stable `locationId` out; карта не создаёт run request.
 - **Application start use case:** разрешает выбранные id через актуальные definitions/config и создаёт технический run request; Hub не конструирует dungeon setup и difficulty.
 - **Run observable state:** phase, состояние команды, carried rewards, доступные действия и текущая цель.
 - **Run commands:** выбрать маршрут, выполнить interaction, использовать подготовку, продолжить, безопасно выйти или запросить подтверждаемый abandon.
@@ -471,9 +474,12 @@ Product MVP показывает одну близкую долгосрочну�
 Application owner
 ├─ Persistent profile model + persistence port
 └─ Exactly one active player-facing feature owner
-   ├─ Guild Hub presentation family
-   │  └─ Debrief, contracts, roster / preparation и upgrade presentation nodes
-   │     создаются только когда этого требует их реальный state и lifecycle
+   ├─ Guild Hall root
+   │  ├─ Guild Hall world MVP и authored NPC children
+   │  └─ Debrief, board, dialogue, roster / preparation и upgrade MVVM nodes,
+   │     создаваемые только когда этого требует их реальный state и lifecycle
+   ├─ World Map root
+   │  └─ Location presentation nodes keyed by stable location ID
    └─ Dungeon Run feature
       ├─ Run session state and rules
       ├─ Run world presentation
@@ -498,8 +504,8 @@ Application owner владеет lifecycle активной feature. Для MVP 
 - **Domain:** чистые правила состава, маршрута, риска, rewards и профиля; без Unity и persistence.
 - **Application:** сценарии старта, завершения, применения результата и улучшения; семантические ports.
 - **Infrastructure:** SaveStore, loading, Addressables и platform adapters.
-- **Gameplay Presentation:** мир экспедиции использует MVP.
-- **UI Presentation:** гильдия, debrief и HUD используют MVVM.
+- **Gameplay Presentation:** walkable мир гильдии и мир экспедиции используют MVP.
+- **UI Presentation:** доска, диалоги, World Map, debrief и HUD используют MVVM.
 - **Composition:** связывает конкретные реализации только на root boundary.
 
 Не создаются `HubService`, generic contract/event framework, отдельный root на каждую зону хаба или новый DI scope только ради будущего расширения.
@@ -516,9 +522,9 @@ Application owner владеет lifecycle активной feature. Для MVP 
 
 Минимальный сквозной срез Product MVP:
 
-1. Открыть компактный хаб с валидным профилем.
+1. Открыть компактный walkable Guild Hall с валидным профилем.
 2. Выбрать один контракт, один из двух функционально разных составов и один из двух supply.
-3. Запустить один authored маршрут.
+3. Выйти на World Map и запустить один authored маршрут через выбранный destination.
 4. Пройти два encounter, одну сходящуюся развилку и одну non-combat активность.
 5. Принять решение на одной точке добровольного возврата.
 6. Получить ровно один terminal result: `Completed`, `Returned`, `Defeated` или подтверждённый `Abandoned`.
@@ -534,9 +540,10 @@ Application owner владеет lifecycle активной feature. Для MVP 
 1. Завершить и проверить текущий corridor slice.
 2. Пройти Stage 0 core gate.
 3. Собрать дешёвый Stage 1 precursor с риском, возвратом и debrief без полноценного хаба.
-4. Добавить persistent profile и компактный hub wrapper.
-5. Добавить второй осмысленный contract/composition choice и проверить повторный поход.
-6. Только после положительных данных масштабировать presentation и content.
+4. Собрать non-persistent Guild Hall + World Map foundation из `GuildHallGDD.md`.
+5. Добавить persistent profile и подключить его snapshots/use cases к существующим границам хаба.
+6. Добавить второй осмысленный contract/composition choice и проверить повторный поход.
+7. Только после положительных данных масштабировать presentation и content.
 
 ---
 
@@ -569,7 +576,7 @@ Application owner владеет lifecycle активной feature. Для MVP 
 
 ### 14.3. Scope behavior
 
-- Хаб не требует обязательного обхода зон.
+- Хаб допускает короткое перемещение между функциональными точками, но не требует ритуального обхода всех зон.
 - Небоевая активность создаёт решение, а не задержку между encounter.
 - Подготовка не превращается в inventory management.
 - Прогрессия не компенсирует слабый core только ростом чисел.
@@ -596,7 +603,7 @@ Application owner владеет lifecycle активной feature. Для MVP 
 ## 15. Non-goals Product MVP
 
 - свободно исследуемый 3D-город или несколько хабов;
-- world map с несколькими регионами как обязательная система;
+- world map с несколькими регионами и самостоятельной metagame; компактная навигационная карта текущих destinations разрешена;
 - полный inventory, equipment, loot rarity и crafting;
 - магазин, обмен валют, gacha, stamina, battle pass и paid power;
 - несколько spendable-валют;
@@ -628,7 +635,6 @@ Application owner владеет lifecycle активной feature. Для MVP 
 - формула потери carried rewards при поражении и abandon;
 - конкретный эффект, цена и предел первого улучшения;
 - вид короткой цели: elite-contract, guild rank или другой эквивалент;
-- экранный, иллюстрированный или диорамный visual format хаба;
 - необходимость отдельного title screen;
 - является ли onboarding самостоятельным контрактом;
 - правила восстановления активной экспедиции после полного закрытия приложения;

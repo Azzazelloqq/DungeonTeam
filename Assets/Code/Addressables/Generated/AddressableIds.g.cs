@@ -25,6 +25,10 @@ namespace Code.Addressables.Generated
             public const string DungeonMapsAuthoredDungeonDemo = "Dungeon/Maps/AuthoredDungeonDemo";
             public const string DungeonTileSetsDemo = "Dungeon/TileSets/Demo";
         }
+        public static class GuildHall
+        {
+            public const string GuildHallGraybox = "GuildHall/Graybox";
+        }
         public static class Rewards
         {
             public const string RewardsCrystalRewardPickup = "Rewards/CrystalRewardPickup";
@@ -66,7 +70,7 @@ namespace Code.Addressables.Generated
             public const string MaterialsUIEffectsButton = "Materials/UIEffectsButton";
             public const string MaterialsUIEffectsPanel = "Materials/UIEffectsPanel";
             public const string WindowsMainLoadingScreen = "Windows/Main/LoadingScreen";
-            public const string WindowsMainMainMenuPrefab = "Windows/Main/MainMenu.prefab";
+            public const string WindowsWorldMapWorldMap = "Windows/WorldMap/WorldMap";
         }
     }
 }

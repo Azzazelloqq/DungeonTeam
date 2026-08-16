@@ -1,0 +1,7 @@
+{
+  "name": "DungeonTeam.AmbientNpc.Application",
+  "rootNamespace": "DungeonTeam.Gameplay.AmbientNpc.Application",
+  "references": [],
+  "autoReferenced": false,
+  "noEngineReferences": true
+}

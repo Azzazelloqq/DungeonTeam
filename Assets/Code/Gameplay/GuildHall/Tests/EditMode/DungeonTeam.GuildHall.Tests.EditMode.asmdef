@@ -1,0 +1,31 @@
+{
+  "name": "DungeonTeam.GuildHall.Tests.EditMode",
+  "rootNamespace": "DungeonTeam.Gameplay.GuildHall.Tests.EditMode",
+  "references": [
+    "DungeonTeam.GuildHall.Application",
+    "DungeonTeam.AmbientNpc.Application",
+    "DungeonTeam.AmbientNpc.Runtime",
+    "DungeonTeam.GuildHall.Runtime",
+    "DungeonTeam.WorldMap",
+    "DungeonTeam.Configuration",
+    "DungeonTeam.DungeonRun.Application",
+    "DungeonTeam.DungeonRun.Runtime",
+    "Config",
+    "MVVM.Core",
+    "MVVM.Reactive",
+    "Disposable",
+    "UnityEngine.TestRunner",
+    "UnityEditor.TestRunner"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "overrideReferences": true,
+  "precompiledReferences": [
+    "nunit.framework.dll"
+  ],
+  "autoReferenced": false,
+  "defineConstraints": [
+    "UNITY_INCLUDE_TESTS"
+  ]
+}

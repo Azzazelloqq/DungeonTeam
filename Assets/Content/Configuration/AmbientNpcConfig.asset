@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 45e9101e1dd133c498b520aadc000192, type: 3}
+  m_Name: AmbientNpcConfig
+  m_EditorClassIdentifier: DungeonTeam.AmbientNpc.Runtime::DungeonTeam.Gameplay.AmbientNpc.Runtime.Config.AmbientNpcConfigPage
+  _profiles:
+  - _ambientProfileId: ambient.stationary
+    _movementSpeed: 1.5
+    _turnSpeed: 360
+    _idleDurationMin: 1
+    _idleDurationMax: 2
+    _activityDurationMin: 1
+    _activityDurationMax: 2
+    _usesAuthoredRoute: 0
+  - _ambientProfileId: ambient.route
+    _movementSpeed: 1.6
+    _turnSpeed: 360
+    _idleDurationMin: 1
+    _idleDurationMax: 2
+    _activityDurationMin: 1
+    _activityDurationMax: 2
+    _usesAuthoredRoute: 1

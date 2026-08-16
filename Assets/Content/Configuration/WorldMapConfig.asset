@@ -1,0 +1,51 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 48a543a5a5661884abd1fd1d81b26858, type: 3}
+  m_Name: WorldMapConfig
+  m_EditorClassIdentifier: DungeonTeam.WorldMap::DungeonTeam.UI.WorldMap.WorldMapConfigPage
+  _locations:
+  - _locationId: location.guild-hall
+    _title:
+      _textId: location.guild-hall.title
+      _fallbackRu: "\u0413\u0438\u043B\u044C\u0434\u0438\u044F"
+    _description:
+      _textId: location.guild-hall.description
+      _fallbackRu: "\u0412\u0435\u0440\u043D\u0443\u0442\u044C\u0441\u044F \u0432 \u0437\u0430\u043B \u0433\u0438\u043B\u044C\u0434\u0438\u0438."
+    _isAvailable: 1
+    _disabledReason:
+      _textId:
+      _fallbackRu:
+    _destinationKind: 0
+    _destinationId:
+  - _locationId: location.dungeon
+    _title:
+      _textId: location.dungeon.title
+      _fallbackRu: "\u041F\u043E\u0434\u0437\u0435\u043C\u0435\u043B\u044C\u0435"
+    _description:
+      _textId: location.dungeon.description
+      _fallbackRu: "\u041D\u0430\u0447\u0430\u0442\u044C \u0432\u044B\u0431\u0440\u0430\u043D\u043D\u0443\u044E \u044D\u043A\u0441\u043F\u0435\u0434\u0438\u0446\u0438\u044E."
+    _isAvailable: 1
+    _disabledReason:
+      _textId:
+      _fallbackRu:
+    _destinationKind: 1
+    _destinationId: product.default
+  _texts:
+    _title:
+      _textId: world-map.title
+      _fallbackRu: "\u041A\u0430\u0440\u0442\u0430 \u043C\u0438\u0440\u0430"
+    _back:
+      _textId: world-map.back
+      _fallbackRu: "\u041D\u0430\u0437\u0430\u0434"
+    _empty:
+      _textId: world-map.empty
+      _fallbackRu: "\u041D\u0435\u0442 \u0434\u043E\u0441\u0442\u0443\u043F\u043D\u044B\u0445 \u043C\u0435\u0441\u0442."

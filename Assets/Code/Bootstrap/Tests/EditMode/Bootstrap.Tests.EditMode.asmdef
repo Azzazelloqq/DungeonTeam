@@ -1,0 +1,30 @@
+{
+  "name": "Bootstrap.Tests.EditMode",
+  "rootNamespace": "Code.ApplicationRoot.Tests.EditMode",
+  "references": [
+    "Bootstrap",
+    "DungeonTeam.WorldMap",
+    "DungeonTeam.GuildHall.Application",
+    "DungeonTeam.DungeonRun.Application",
+    "DungeonTeam.DungeonRun.Runtime",
+    "DungeonTeam.Rewards.Runtime",
+    "DungeonTeam.Dungeon.Application",
+    "DungeonTeam.Actors.Runtime",
+    "DungeonTeam.Skills.Runtime",
+    "DungeonTeam.Skills.Domain",
+    "DungeonTeam.PlayerProfile.Domain",
+    "UnityEngine.TestRunner",
+    "UnityEditor.TestRunner"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "overrideReferences": true,
+  "precompiledReferences": [
+    "nunit.framework.dll"
+  ],
+  "autoReferenced": false,
+  "defineConstraints": [
+    "UNITY_INCLUDE_TESTS"
+  ]
+}

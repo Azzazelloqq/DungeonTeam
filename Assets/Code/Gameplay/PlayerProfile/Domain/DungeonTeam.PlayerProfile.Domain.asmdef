@@ -1,0 +1,6 @@
+{
+  "name": "DungeonTeam.PlayerProfile.Domain",
+  "rootNamespace": "DungeonTeam.Gameplay.PlayerProfile.Domain",
+  "autoReferenced": false,
+  "noEngineReferences": true
+}

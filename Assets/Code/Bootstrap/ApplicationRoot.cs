@@ -1,11 +1,8 @@
 using System;
-using System.Text;
 using System.Threading;
 using Azzazelloqq.Config;
 using Code.Addressables.Generated;
 using Code.Configuration;
-using Code.MainMenu;
-using Code.UI.MainMenu;
 using Code.UI.LoadingScreen;
 using Code.UIService;
 using Cysharp.Threading.Tasks;
@@ -19,6 +16,12 @@ using DungeonTeam.Gameplay.Chests.Runtime;
 using DungeonTeam.Gameplay.Dungeon.Application;
 using DungeonTeam.Gameplay.DungeonRun.Application;
 using DungeonTeam.Gameplay.DungeonRun.Runtime;
+using DungeonTeam.Gameplay.GuildHall.Application;
+using DungeonTeam.Gameplay.GuildHall.Runtime.Config;
+using DungeonTeam.Gameplay.GuildHall.Runtime.Composition;
+using DungeonTeam.Gameplay.GuildHall.Runtime.Input;
+using DungeonTeam.Gameplay.AmbientNpc.Application;
+using DungeonTeam.Gameplay.AmbientNpc.Runtime.Config;
 using DungeonTeam.Gameplay.Dungeon.Runtime.Config;
 using DungeonTeam.Gameplay.Dungeon.Runtime.Infrastructure;
 using DungeonTeam.Gameplay.EnemyAI.Runtime;
@@ -26,6 +29,9 @@ using DungeonTeam.Gameplay.Hero.Runtime;
 using DungeonTeam.Gameplay.Rewards.Runtime;
 using DungeonTeam.Gameplay.Team.Runtime;
 using DungeonTeam.Gameplay.Skills.Runtime;
+using DungeonTeam.Gameplay.PlayerProfile.Application;
+using LocalSaveSystem;
+using DungeonTeam.UI.WorldMap;
 using DungeonTeam.DeveloperTools;
 using LightDI.Runtime;
 using ResourceLoader;
@@ -51,7 +57,7 @@ namespace Code.ApplicationRoot
 		private IUiService _uiService;
 		private LoadingScreenViewBase _loadingScreen;
 		private LoadingScreenViewModel _loadingScreenViewModel;
-		private MainMenuRoot _mainMenuRoot;
+		private IResourceLoader _resourceLoader;
 		private IDungeonFactory _dungeonFactory;
 		private IActorDefinitionLoader _actorDefinitionLoader;
 		private ActorConfigCatalog _actorCatalog;
@@ -62,16 +68,27 @@ namespace Code.ApplicationRoot
 		private RewardCatalog _rewardCatalog;
 		private EnemyBehaviorCatalog _enemyBehaviorCatalog;
 		private DungeonRunTeamSetup _dungeonRunTeamSetup;
+		private SaveStore _saveStore;
+		private PlayerProfileSession _playerProfileSession;
 		private DungeonRunLaunchPresetCatalog _launchPresetCatalog;
+		private GuildHallCatalog _guildHallCatalog;
+		private DialogueCatalog _dialogueCatalog;
+		private AmbientNpcProfileCatalog _ambientNpcProfileCatalog;
+		private ContractCatalog _contractCatalog;
+		private WorldMapCatalog _worldMapCatalog;
+		private GuildSessionState _guildSessionState;
+		private GuildHallRoot _guildHallRoot;
+		private WorldMapRoot _worldMapRoot;
+		private ApplicationTransitionGate _transitionGate;
 		private ITickHandler _tickHandler;
 		private IFeedbackService _feedbackService;
 		private IMusicPlayer _musicPlayer;
 		private FeedbackBankLoader _feedbackBankLoader;
 		private DungeonRunHost _dungeonRunHost;
+		private DungeonRunRoot _finishedRunSubscription;
+		private GuildRunSummaryBuilder _runSummaryBuilder;
 		private DeveloperRunConsoleController _developerConsoleController;
 		private DeveloperRunConsoleView _developerConsoleView;
-        private bool _isDungeonTransitioning;
-        private bool _hasPublishedTerminalResult;
 
 		public ApplicationRoot(
 			UICanvasContext canvasContext,
@@ -101,10 +118,10 @@ namespace Code.ApplicationRoot
 		{
 			_globalContainer = DiContainerFactory.CreateGlobalContainer();
 
-			IResourceLoader resourceLoader = new AddressableResourceLoader();
-			_uiService = new UIService.UIService(resourceLoader, _canvasContext);
+			_resourceLoader = new AddressableResourceLoader();
+			_uiService = new UIService.UIService(_resourceLoader, _canvasContext);
 			_globalContainer.RegisterAsSingleton(_uiService);
-			_globalContainer.RegisterAsSingleton(resourceLoader);
+			_globalContainer.RegisterAsSingleton(_resourceLoader);
 
 			await ShowLoadingScreenAsync(token);
 
@@ -114,16 +131,36 @@ namespace Code.ApplicationRoot
 			_dungeonFactory = new DungeonFactory(config.GetConfigPage<DungeonConfigPage>());
 			_actorCatalog = config.GetConfigPage<ActorConfigPage>().CreateCatalog();
 			_skillCatalog = config.GetConfigPage<SkillConfigPage>().CreateCatalog();
-			_skillViewLoader = new SkillViewLoader(_skillCatalog, resourceLoader);
-			_actorDefinitionLoader = new ActorDefinitionLoader(_actorCatalog, resourceLoader);
+			_skillViewLoader = new SkillViewLoader(_skillCatalog, _resourceLoader);
+			_actorDefinitionLoader = new ActorDefinitionLoader(_actorCatalog, _resourceLoader);
 			_dungeonRunTeamSetup = config
 				.GetConfigPage<DungeonRunConfigPage>()
 				.CreateTeamSetup(_actorCatalog, _skillCatalog);
+			_playerProfileSession = PlayerProfileComposition.Create(_dungeonRunTeamSetup, out _saveStore);
 			_launchPresetCatalog = config
 				.GetConfigPage<DungeonRunLaunchConfigPage>()
 				.CreateCatalog();
-			_rewardPickupViewLoader = new RewardPickupViewLoader(resourceLoader);
-			_chestViewLoader = new ChestViewLoader(resourceLoader);
+			_guildHallCatalog = config.GetConfigPage<GuildHallConfigPage>().CreateCatalog();
+			_dialogueCatalog = config.GetConfigPage<DialogueConfigPage>().CreateCatalog();
+			_ambientNpcProfileCatalog = config.GetConfigPage<AmbientNpcConfigPage>().CreateCatalog();
+			_contractCatalog = config.GetConfigPage<ContractConfigPage>().CreateCatalog();
+			_worldMapCatalog = config.GetConfigPage<WorldMapConfigPage>().CreateCatalog();
+			GuildContentValidator.Validate(
+				_guildHallCatalog,
+				_dialogueCatalog,
+				_ambientNpcProfileCatalog,
+				_contractCatalog,
+				_worldMapCatalog.ContractDestinationLocationIds);
+			for (var index = 0; index < _worldMapCatalog.Locations.Count; index++)
+			{
+				var location = _worldMapCatalog.Locations[index];
+				if (location.DestinationKind == WorldLocationDestinationKind.DungeonRun)
+				{
+					_launchPresetCatalog.Require(location.DestinationId);
+				}
+			}
+			_rewardPickupViewLoader = new RewardPickupViewLoader(_resourceLoader);
+			_chestViewLoader = new ChestViewLoader(_resourceLoader);
 			_rewardCatalog = config.GetConfigPage<RewardConfigPage>().CreateCatalog();
 			_enemyBehaviorCatalog = config
 				.GetConfigPage<EnemyBehaviorConfigPage>()
@@ -139,16 +176,20 @@ namespace Code.ApplicationRoot
 			_globalContainer.RegisterAsSingleton(_feedbackService);
 			_musicPlayer = new MusicPlayer();
 			_globalContainer.RegisterAsSingleton(_musicPlayer);
-			_feedbackBankLoader = new FeedbackBankLoader(resourceLoader, _feedbackService);
+			_feedbackBankLoader = new FeedbackBankLoader(_resourceLoader, _feedbackService);
 			_globalContainer.RegisterAsSingleton(_feedbackBankLoader);
 			_dungeonRunHost = new DungeonRunHost(CreateDungeonRunRoot);
+			_runSummaryBuilder = new GuildRunSummaryBuilder();
 
-			_mainMenuRoot = new MainMenuRoot(
-				_uiService,
-				OnPlayRequested,
-				OnBackRequested,
-				Application.Quit);
-			await _mainMenuRoot.InitializeAsync(token);
+			_guildSessionState = new GuildSessionState();
+			_transitionGate = new ApplicationTransitionGate(PlayerFlowState.Initializing);
+			await CreateGuildHallAsync(token);
+			if (!_transitionGate.TryBegin(PlayerFlowState.Initializing, out var startupLease))
+			{
+				throw new InvalidOperationException("Application startup transition was rejected.");
+			}
+
+			startupLease.Complete(PlayerFlowState.GuildHall);
 
 			if (DeveloperRunConsoleAvailability.IsEnabled(
 				    Application.isEditor,
@@ -162,6 +203,11 @@ namespace Code.ApplicationRoot
 
 		protected override void OnDispose()
 		{
+			_transitionGate?.Dispose();
+			_worldMapRoot?.Dispose();
+			_worldMapRoot = null;
+			_guildHallRoot?.Dispose();
+			_guildHallRoot = null;
 			DisposeDungeonRun();
 			if (_developerConsoleView != null)
 			{
@@ -171,6 +217,7 @@ namespace Code.ApplicationRoot
 
 			_developerConsoleController = null;
 			_dungeonRunHost = null;
+			_runSummaryBuilder = null;
 			_dungeonFactory = null;
 			_actorDefinitionLoader = null;
 			_actorCatalog = null;
@@ -181,10 +228,18 @@ namespace Code.ApplicationRoot
 			_rewardCatalog = null;
 			_enemyBehaviorCatalog = null;
 			_dungeonRunTeamSetup = null;
+			_playerProfileSession = null;
+			_saveStore?.Dispose();
+			_saveStore = null;
 			_launchPresetCatalog = null;
-
-			_mainMenuRoot?.Dispose();
-			_mainMenuRoot = null;
+			_guildHallCatalog = null;
+			_dialogueCatalog = null;
+			_ambientNpcProfileCatalog = null;
+			_contractCatalog = null;
+			_worldMapCatalog = null;
+			_guildSessionState = null;
+			_transitionGate = null;
+			_resourceLoader = null;
 
 			_loadingScreenViewModel?.Dispose();
 			_loadingScreenViewModel = null;
@@ -234,52 +289,174 @@ namespace Code.ApplicationRoot
 			await _uiService.HideAsync(_loadingScreen, token);
 		}
 
-		private void OnPlayRequested()
+		private async UniTask CreateGuildHallAsync(CancellationToken token)
 		{
-			if (_isDungeonTransitioning || _dungeonRunHost.IsBusy)
-			{
-				return;
-			}
-
-			var request = _launchPresetCatalog.CreateRequest(
-				_launchPresetCatalog.DefaultPreset.PresetId,
-				seedOverride: null,
-				_dungeonRunTeamSetup.DefaultSelection);
-            StartDungeonRunAsync(request, replaceActive: false, CancellationToken)
-				.Forget(Debug.LogException);
+			var hall = new GuildHallRoot(
+				new GuildHallWorldLoader(_resourceLoader),
+				WithProfile(GuildHallStartContextBuilder.Build(_guildHallCatalog, _contractCatalog, _guildSessionState)),
+				_guildHallCatalog, _ambientNpcProfileCatalog, _dialogueCatalog, _tickHandler,
+#if UNITY_EDITOR
+				new EditorGuildHallInput(),
+#else
+				new EditorGuildHallInput(),
+#endif
+				_ => { }, OnGuildHallWorldMapRequested, _guildSessionState.SelectContract);
+			await hall.InitializeAsync(token);
+			_guildHallRoot = hall;
 		}
 
-        private async UniTask StartDungeonRunAsync(
-			DungeonRunStartRequest request,
-			bool replaceActive,
-			CancellationToken token)
+		private GuildHallStartContext WithProfile(GuildHallStartContext context) => new(
+			context.Npcs, context.Offers, context.SelectedContractId, context.LastRunSummary,
+			GuildProfileSnapshotBuilder.Build(
+				_playerProfileSession.State,
+				_actorCatalog,
+				_skillCatalog,
+				_guildHallCatalog.ProfileText));
+
+		private void OnGuildHallWorldMapRequested() =>
+			TransitionToWorldMapAsync(CancellationToken).Forget(Debug.LogException);
+
+		private void OnWorldMapBackRequested() =>
+			TransitionToGuildHallAsync(CancellationToken).Forget(Debug.LogException);
+
+		private void OnWorldMapLocationSelected(string locationId) =>
+			TransitionFromWorldMapAsync(locationId, CancellationToken).Forget(Debug.LogException);
+
+		private async UniTask TransitionToWorldMapAsync(CancellationToken token)
 		{
-			if (_isDungeonTransitioning || (!replaceActive && _dungeonRunHost.IsBusy))
+			if (!_transitionGate.TryBegin(PlayerFlowState.GuildHall, out var lease))
 			{
 				return;
 			}
 
-			_isDungeonTransitioning = true;
-
+			var canHideLoading = false;
 			try
 			{
-				if (replaceActive)
+				_guildHallRoot.SetWorldInputBlocked(true);
+				await ShowLoadingScreenAsync(token);
+				var map = await CreateWorldMapAsync(token);
+				_guildHallRoot.Dispose();
+				_guildHallRoot = null;
+				_worldMapRoot = map;
+				await map.ShowAsync(token);
+				lease.Complete(PlayerFlowState.WorldMap);
+				canHideLoading = true;
+			}
+			catch (OperationCanceledException) when (token.IsCancellationRequested)
+			{
+				// Application shutdown owns final cleanup.
+			}
+			catch (Exception exception)
+			{
+				Debug.LogException(exception);
+				canHideLoading = await TryRestoreGuildHallAsync(token);
+				if (!canHideLoading)
 				{
-					DisposeDungeonRun();
+					lease.Complete(PlayerFlowState.Faulted);
 				}
-
-                await ShowLoadingScreenAsync(token);
-                await _mainMenuRoot.HideAsync(token);
-
-                var run = await _dungeonRunHost.StartAsync(request, token);
-                run.Finished += OnDungeonRunFinished;
-
-				if (token.IsCancellationRequested)
+			}
+			finally
+			{
+				lease.Dispose();
+				if (canHideLoading && !token.IsCancellationRequested)
 				{
-					token.ThrowIfCancellationRequested();
+					await HideLoadingSafelyAsync(token);
 				}
+			}
+		}
 
-                _hasPublishedTerminalResult = false;
+		private async UniTask TransitionToGuildHallAsync(CancellationToken token)
+		{
+			if (!_transitionGate.TryBegin(PlayerFlowState.WorldMap, out var lease))
+			{
+				return;
+			}
+
+			var canHideLoading = false;
+			try
+			{
+				await ShowLoadingScreenAsync(token);
+				await CloseWorldMapAsync(token);
+				await CreateGuildHallAsync(token);
+				lease.Complete(PlayerFlowState.GuildHall);
+				canHideLoading = true;
+			}
+			catch (OperationCanceledException) when (token.IsCancellationRequested)
+			{
+				// Application shutdown owns final cleanup.
+			}
+			catch (Exception exception)
+			{
+				Debug.LogException(exception);
+				canHideLoading = await TryRestoreWorldMapAsync(token);
+				if (!canHideLoading)
+				{
+					lease.Complete(PlayerFlowState.Faulted);
+				}
+			}
+			finally
+			{
+				lease.Dispose();
+				if (canHideLoading && !token.IsCancellationRequested)
+				{
+					await HideLoadingSafelyAsync(token);
+				}
+			}
+		}
+
+		private async UniTask TransitionFromWorldMapAsync(string locationId, CancellationToken token)
+		{
+			WorldMapDestination destination;
+			try
+			{
+				destination = new WorldMapDestinationResolver(
+					_worldMapCatalog,
+					_contractCatalog,
+					_guildSessionState,
+					_launchPresetCatalog,
+					_dungeonRunTeamSetup.DefaultSelection)
+					.Resolve(locationId);
+			}
+			catch (Exception exception)
+			{
+				Debug.LogException(exception);
+				_worldMapRoot?.RestoreInteraction();
+				return;
+			}
+
+			if (destination.IsUnavailable)
+			{
+				_worldMapRoot?.RestoreInteraction();
+				return;
+			}
+
+			if (destination.IsGuildHall)
+			{
+				await TransitionToGuildHallAsync(token);
+				return;
+			}
+
+			await TransitionToDungeonAsync(destination.Request, token);
+		}
+
+		private async UniTask TransitionToDungeonAsync(
+			DungeonRunStartRequest request,
+			CancellationToken token)
+		{
+			if (!_transitionGate.TryBegin(PlayerFlowState.WorldMap, out var lease))
+			{
+				return;
+			}
+
+			var canHideLoading = false;
+			try
+			{
+				await ShowLoadingScreenAsync(token);
+				await CloseWorldMapAsync(token);
+				await _dungeonRunHost.StartAsync(request, token);
+				SubscribeToDungeonRunFinished(_dungeonRunHost.ActiveRun);
+				lease.Complete(PlayerFlowState.DungeonRun);
+				canHideLoading = true;
 			}
 			catch (OperationCanceledException) when (token.IsCancellationRequested)
 			{
@@ -287,98 +464,320 @@ namespace Code.ApplicationRoot
 			}
 			catch (Exception exception)
 			{
-				DisposeDungeonRun();
 				Debug.LogException(exception);
-                await _mainMenuRoot.ShowSelectionAsync(token);
+				DisposeDungeonRun();
+				canHideLoading = await TryRestoreWorldMapAsync(token);
+				if (!canHideLoading)
+				{
+					lease.Complete(PlayerFlowState.Faulted);
+				}
 			}
 			finally
 			{
-				try
+				lease.Dispose();
+				if (canHideLoading && !token.IsCancellationRequested)
 				{
-					if (_loadingScreen != null && !token.IsCancellationRequested)
-					{
-						await HideLoadingScreenAsync(token);
-					}
-				}
-				finally
-				{
-					_isDungeonTransitioning = false;
+					await HideLoadingSafelyAsync(token);
 				}
 			}
 		}
 
-        private void OnBackRequested()
-        {
-            ReturnToMenuAsync(CancellationToken).Forget(Debug.LogException);
-        }
-
-        private void OnDungeonRunFinished(DungeonRunResult result)
-        {
-            if (_hasPublishedTerminalResult)
-            {
-                return;
-            }
-
-            _hasPublishedTerminalResult = true;
-            ShowTerminalAsync(result, CancellationToken).Forget(Debug.LogException);
-        }
-
-        private async UniTask ShowTerminalAsync(DungeonRunResult result, CancellationToken token)
-        {
-            await _mainMenuRoot.ShowTerminalAsync(CreateResultSummary(result), token);
-        }
-
-        private async UniTask ReturnToMenuAsync(CancellationToken token)
-        {
-            if (_isDungeonTransitioning)
-            {
-                return;
-            }
-
-            _isDungeonTransitioning = true;
-            try
-            {
-                DisposeDungeonRun();
-                _hasPublishedTerminalResult = false;
-                await _mainMenuRoot.ShowSelectionAsync(token);
-            }
-            finally
-            {
-                _isDungeonTransitioning = false;
-            }
-        }
-
-		private string CreateResultSummary(DungeonRunResult result)
+		private async UniTask StartDeveloperRunAsync(DungeonRunStartRequest request, CancellationToken token)
 		{
-			var summary = new StringBuilder()
-				.Append(result.Outcome.ToString().ToUpperInvariant()).Append('\n')
-				.Append(result.DungeonId).Append('\n')
-				.Append("SEED: ").Append(result.Seed).Append('\n')
-				.Append("KILLED: ").Append(result.KilledEnemies).Append('\n')
-				.Append("REWARDS: ").Append(result.CollectedRewardCount);
-
-			for (var index = 0; index < result.CollectedRewards.Count; index++)
+			var previousState = _transitionGate.State;
+			if (!_transitionGate.TryBegin(previousState, out var lease))
 			{
-				var reward = result.CollectedRewards[index];
-				var definition = _rewardCatalog.Require(reward.RewardId);
-				summary.Append('\n')
-					.Append(definition.DisplayName)
-					.Append(": ")
-					.Append(reward.Amount);
+				return;
 			}
 
-			return summary.ToString();
+			var canHideLoading = false;
+			try
+			{
+				_guildHallRoot?.SetWorldInputBlocked(true);
+				await ShowLoadingScreenAsync(token);
+				await CloseWorldMapAsync(token);
+				_guildHallRoot?.Dispose();
+				_guildHallRoot = null;
+				DisposeDungeonRun();
+				await _dungeonRunHost.StartAsync(request, token);
+				SubscribeToDungeonRunFinished(_dungeonRunHost.ActiveRun);
+				lease.Complete(PlayerFlowState.DungeonRun);
+				canHideLoading = true;
+			}
+			catch (OperationCanceledException) when (token.IsCancellationRequested)
+			{
+				DisposeDungeonRun();
+			}
+			catch (Exception exception)
+			{
+				Debug.LogException(exception);
+				DisposeDungeonRun();
+				if (previousState == PlayerFlowState.WorldMap)
+				{
+					canHideLoading = await TryRestoreWorldMapAsync(token);
+				}
+				else
+				{
+					canHideLoading = await TryRestoreGuildHallAsync(token);
+					if (canHideLoading &&
+					    previousState is PlayerFlowState.DungeonRun or PlayerFlowState.Faulted)
+					{
+						lease.Complete(PlayerFlowState.GuildHall);
+					}
+				}
+				if (!canHideLoading)
+				{
+					lease.Complete(PlayerFlowState.Faulted);
+				}
+			}
+			finally
+			{
+				lease.Dispose();
+				if (canHideLoading && !token.IsCancellationRequested)
+				{
+					await HideLoadingSafelyAsync(token);
+				}
+			}
+		}
+
+		private async UniTask ReturnFromDeveloperRunAsync(CancellationToken token)
+		{
+			if (!_transitionGate.TryBegin(PlayerFlowState.DungeonRun, out var lease))
+			{
+				return;
+			}
+
+			var canHideLoading = false;
+			try
+			{
+				await ShowLoadingScreenAsync(token);
+				DisposeDungeonRun();
+				await CreateGuildHallAsync(token);
+				lease.Complete(PlayerFlowState.GuildHall);
+				canHideLoading = true;
+			}
+			catch (OperationCanceledException) when (token.IsCancellationRequested)
+			{
+				DisposeDungeonRun();
+			}
+			catch (Exception exception)
+			{
+				Debug.LogException(exception);
+				canHideLoading = await TryRestoreGuildHallAsync(token);
+				if (canHideLoading)
+				{
+					lease.Complete(PlayerFlowState.GuildHall);
+				}
+				else
+				{
+					lease.Complete(PlayerFlowState.Faulted);
+				}
+			}
+			finally
+			{
+				lease.Dispose();
+				if (canHideLoading && !token.IsCancellationRequested)
+				{
+					await HideLoadingSafelyAsync(token);
+				}
+			}
+		}
+
+		private async UniTask<WorldMapRoot> CreateWorldMapAsync(CancellationToken token)
+		{
+			var map = new WorldMapRoot(
+				_uiService,
+				_worldMapCatalog.CreateStartContext(),
+				OnWorldMapLocationSelected,
+				OnWorldMapBackRequested);
+			await map.InitializeAsync(token);
+			return map;
+		}
+
+		private async UniTask CloseWorldMapAsync(CancellationToken token)
+		{
+			var map = _worldMapRoot;
+			if (map == null)
+			{
+				return;
+			}
+
+			await map.CloseAsync(token);
+			_worldMapRoot = null;
+			map.Dispose();
+		}
+
+		private async UniTask<bool> TryRestoreWorldMapAsync(CancellationToken token)
+		{
+			if (token.IsCancellationRequested)
+			{
+				return false;
+			}
+
+			try
+			{
+				if (_guildHallRoot != null)
+				{
+					_guildHallRoot.Dispose();
+					_guildHallRoot = null;
+				}
+
+				if (_worldMapRoot == null)
+				{
+					_worldMapRoot = await CreateWorldMapAsync(token);
+				}
+
+				_worldMapRoot.RestoreInteraction();
+				await _worldMapRoot.ShowAsync(token);
+				return true;
+			}
+			catch (Exception recoveryException)
+			{
+				Debug.LogException(recoveryException);
+				return false;
+			}
+		}
+
+		private async UniTask<bool> TryRestoreGuildHallAsync(CancellationToken token)
+		{
+			if (token.IsCancellationRequested)
+			{
+				return false;
+			}
+
+			try
+			{
+				if (_worldMapRoot != null)
+				{
+					await CloseWorldMapAsync(token);
+				}
+
+				if (_guildHallRoot == null)
+				{
+					await CreateGuildHallAsync(token);
+				}
+
+				_guildHallRoot.SetWorldInputBlocked(false);
+				return true;
+			}
+			catch (Exception recoveryException)
+			{
+				Debug.LogException(recoveryException);
+				return false;
+			}
+		}
+
+		private async UniTask HideLoadingSafelyAsync(CancellationToken token)
+		{
+			try
+			{
+				await HideLoadingScreenAsync(token);
+			}
+			catch (OperationCanceledException) when (token.IsCancellationRequested)
+			{
+				// Application shutdown owns final cleanup.
+			}
+			catch (Exception exception)
+			{
+				Debug.LogException(exception);
+			}
 		}
 
 		private void DisposeDungeonRun()
 		{
-			var dungeonRunRoot = _dungeonRunHost?.ActiveRun;
-			if (dungeonRunRoot != null)
+			UnsubscribeFromDungeonRunFinished();
+			_dungeonRunHost?.Stop();
+		}
+
+		private void SubscribeToDungeonRunFinished(DungeonRunRoot run)
+		{
+			if (run == null)
 			{
-                dungeonRunRoot.Finished -= OnDungeonRunFinished;
+				throw new InvalidOperationException("Dungeon Run host has no active run to subscribe.");
 			}
 
-			_dungeonRunHost?.Stop();
+			UnsubscribeFromDungeonRunFinished();
+			_finishedRunSubscription = run;
+			run.Finished += OnDungeonRunFinished;
+		}
+
+		private void UnsubscribeFromDungeonRunFinished()
+		{
+			if (_finishedRunSubscription == null)
+			{
+				return;
+			}
+
+			_finishedRunSubscription.Finished -= OnDungeonRunFinished;
+			_finishedRunSubscription = null;
+		}
+
+		private void OnDungeonRunFinished(DungeonRunResult result)
+		{
+			ReturnFromFinishedDungeonRunAsync(result, CancellationToken)
+				.Forget(Debug.LogException);
+		}
+
+		private async UniTask ReturnFromFinishedDungeonRunAsync(
+			DungeonRunResult result,
+			CancellationToken token)
+		{
+			var finishedRun = _finishedRunSubscription;
+			if (finishedRun == null || !ReferenceEquals(_dungeonRunHost?.ActiveRun, finishedRun) ||
+				!_transitionGate.TryBegin(PlayerFlowState.DungeonRun, out var lease))
+			{
+				return;
+			}
+
+			var canHideLoading = false;
+			var isRunStopped = false;
+			try
+			{
+				var summary = _runSummaryBuilder.Build(
+					result,
+					_rewardCatalog,
+					_guildHallCatalog.RunSummaryText);
+				await ShowLoadingScreenAsync(token);
+				UnsubscribeFromDungeonRunFinished();
+				_dungeonRunHost.Stop();
+				isRunStopped = true;
+				_guildSessionState.SetLastRunSummary(summary);
+				await CreateGuildHallAsync(token);
+				lease.Complete(PlayerFlowState.GuildHall);
+				canHideLoading = true;
+			}
+			catch (OperationCanceledException) when (token.IsCancellationRequested)
+			{
+				// Application shutdown owns final cleanup.
+			}
+			catch (Exception exception)
+			{
+				Debug.LogException(exception);
+				if (!isRunStopped)
+				{
+					return;
+				}
+
+				_guildHallRoot?.Dispose();
+				_guildHallRoot = null;
+				canHideLoading = await TryRestoreGuildHallAsync(token);
+				if (canHideLoading)
+				{
+					lease.Complete(PlayerFlowState.GuildHall);
+				}
+				else
+				{
+					lease.Complete(PlayerFlowState.Faulted);
+				}
+			}
+			finally
+			{
+				lease.Dispose();
+				if (canHideLoading && !token.IsCancellationRequested)
+				{
+					await HideLoadingSafelyAsync(token);
+				}
+			}
 		}
 
 		private DungeonRunRoot CreateDungeonRunRoot(DungeonRunStartRequest request)
@@ -413,11 +812,8 @@ namespace Code.ApplicationRoot
 			_developerConsoleController = new DeveloperRunConsoleController(
 				_launchPresetCatalog,
 				_dungeonRunTeamSetup,
-                request => StartDungeonRunAsync(
-					request,
-					replaceActive: true,
-					CancellationToken).Forget(Debug.LogException),
-				OnBackRequested);
+				request => StartDeveloperRunAsync(request, CancellationToken).Forget(Debug.LogException),
+				() => ReturnFromDeveloperRunAsync(CancellationToken).Forget(Debug.LogException));
 			var consoleObject = new GameObject("DungeonRunDeveloperConsole");
 			_developerConsoleView = consoleObject.AddComponent<DeveloperRunConsoleView>();
 			_developerConsoleView.Initialize(_developerConsoleController);

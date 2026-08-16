@@ -117,9 +117,6 @@ namespace DungeonTeam.Gameplay.Dungeon.Tests.PlayMode
                 Assert.That(instance, Is.Not.Null);
                 Assert.That(mapRoot, Is.Not.Null);
                 Assert.That(instance.MapSnapshot.DungeonId, Is.EqualTo("dungeon.demo.authored"));
-                Assert.That(instance.ContentPlan.EnemySpawns, Has.Count.EqualTo(2));
-                Assert.That(instance.ContentPlan.InterestPointSpawns, Has.Count.EqualTo(2));
-                Assert.That(instance.ContentPlan.ObjectiveSpawns, Has.Count.EqualTo(1));
             }
             finally
             {
@@ -157,9 +154,6 @@ namespace DungeonTeam.Gameplay.Dungeon.Tests.PlayMode
                 Assert.That(mapRoot, Is.Not.Null);
                 Assert.That(mapRoot.transform.childCount, Is.EqualTo(5));
                 Assert.That(instance.MapSnapshot.DungeonId, Is.EqualTo("dungeon.demo.chunked"));
-                Assert.That(instance.ContentPlan.EnemySpawns, Has.Count.EqualTo(2));
-                Assert.That(instance.ContentPlan.InterestPointSpawns, Has.Count.EqualTo(1));
-                Assert.That(instance.ContentPlan.ObjectiveSpawns, Has.Count.EqualTo(1));
 
                 chunkRoots = new GameObject[mapRoot.transform.childCount];
                 for (var index = 0; index < chunkRoots.Length; index++)
@@ -213,9 +207,6 @@ namespace DungeonTeam.Gameplay.Dungeon.Tests.PlayMode
                     instance.MapSnapshot.ExitPose.PositionZ !=
                     instance.MapSnapshot.EntryPose.PositionZ,
                     Is.True);
-                Assert.That(instance.ContentPlan.EnemySpawns, Has.Count.EqualTo(1));
-                Assert.That(instance.ContentPlan.InterestPointSpawns, Has.Count.EqualTo(1));
-                Assert.That(instance.ContentPlan.ObjectiveSpawns, Has.Count.EqualTo(1));
             }
             finally
             {

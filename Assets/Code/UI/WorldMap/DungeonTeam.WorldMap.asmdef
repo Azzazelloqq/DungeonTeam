@@ -1,0 +1,13 @@
+{
+  "name": "DungeonTeam.WorldMap",
+  "rootNamespace": "DungeonTeam.UI.WorldMap",
+  "references": [
+    "DungeonTeam.Configuration",
+    "Root",
+    "UniTask",
+    "DungeonTeam.UIService",
+    "DungeonTeam.Addressables",
+    "Unity.ugui"
+  ],
+  "autoReferenced": false
+}
