@@ -41,10 +41,50 @@ namespace Code.ApplicationRoot
                 UseAtomicWrite = true,
                 SaveOnQuit = true
             });
-            return new PlayerProfileSession(new SaveStorePlayerProfileRepository(store), seed);
+            var session = new PlayerProfileSession(
+                new SaveStorePlayerProfileRepository(store),
+                seed);
+            teamSetup.RequireValid(MapToTeamSelection(session.State));
+            return session;
+        }
+
+        public static DungeonRunTeamSelection MapToTeamSelection(PlayerProfileState profile)
+        {
+            if (profile == null)
+            {
+                throw new ArgumentNullException(nameof(profile));
+            }
+
+            var leader = ToSelection(RequireHero(profile, profile.LeaderActorId));
+            var companions = new DungeonRunActorSelection[profile.CompanionActorIds.Count];
+            for (var index = 0; index < companions.Length; index++)
+            {
+                companions[index] = ToSelection(RequireHero(
+                    profile,
+                    profile.CompanionActorIds[index]));
+            }
+
+            return new DungeonRunTeamSelection(leader, companions);
         }
 
         private static HeroProfileState ToProfileHero(DungeonRunActorSelection actor) =>
             new(actor.ActorId, actor.Level, actor.LoadoutId);
+
+        private static DungeonRunActorSelection ToSelection(HeroProfileState hero) =>
+            new(hero.ActorId, hero.Level, hero.LoadoutId);
+
+        private static HeroProfileState RequireHero(PlayerProfileState profile, string actorId)
+        {
+            for (var index = 0; index < profile.Heroes.Count; index++)
+            {
+                if (string.Equals(profile.Heroes[index].ActorId, actorId, StringComparison.Ordinal))
+                {
+                    return profile.Heroes[index];
+                }
+            }
+
+            throw new InvalidOperationException($"Profile actor '{actorId}' is missing from roster.");
+        }
     }
+
 }

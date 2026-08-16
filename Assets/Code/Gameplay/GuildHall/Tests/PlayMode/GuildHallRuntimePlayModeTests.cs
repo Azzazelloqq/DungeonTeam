@@ -57,7 +57,8 @@ namespace DungeonTeam.Gameplay.GuildHall.Tests.PlayMode
                 tickHandler,
                 input,
                 _ => { },
-                () => { });
+                () => { },
+                _ => GuildProfileEditResult.Accept(CreateProfile()));
 
             yield return root.InitializeAsync(CancellationToken.None).ToCoroutine();
             root.Dispose();
@@ -89,7 +90,8 @@ namespace DungeonTeam.Gameplay.GuildHall.Tests.PlayMode
                 tickHandler,
                 input,
                 _ => { },
-                () => { });
+                () => { },
+                _ => GuildProfileEditResult.Accept(CreateProfile()));
 
             yield return root.InitializeAsync(CancellationToken.None).ToCoroutine();
             root.HandleInteraction(new GuildHallInteractionRequest(
@@ -512,8 +514,14 @@ namespace DungeonTeam.Gameplay.GuildHall.Tests.PlayMode
 
         private static GuildProfileSnapshot CreateProfile()
         {
-            var leader = new GuildHeroSnapshot("leader", "Leader", GuildHeroRole.Leader, 1, 10, 2f, Array.Empty<GuildHeroSkillSnapshot>());
-            var companion = new GuildHeroSnapshot("companion", "Companion", GuildHeroRole.Companion, 2, 12, 3f, Array.Empty<GuildHeroSkillSnapshot>());
+            var leader = new GuildHeroSnapshot(
+                "leader", "Leader", GuildHeroRole.Leader, 1, 10, 2f,
+                Array.Empty<GuildHeroSkillSnapshot>(), "leader.loadout",
+                new[] { new GuildHeroLoadoutSnapshot("leader.loadout", "Leader loadout") });
+            var companion = new GuildHeroSnapshot(
+                "companion", "Companion", GuildHeroRole.Companion, 2, 12, 3f,
+                Array.Empty<GuildHeroSkillSnapshot>(), "companion.loadout",
+                new[] { new GuildHeroLoadoutSnapshot("companion.loadout", "Companion loadout") });
             return new GuildProfileSnapshot(
                 5,
                 "-",
@@ -594,7 +602,15 @@ namespace DungeonTeam.Gameplay.GuildHall.Tests.PlayMode
             Text("profile.speed"),
             Text("profile.skill.primary"),
             Text("profile.skill.active"),
-            Text("profile.close"));
+            Text("profile.close"),
+            Text("profile.make-leader"),
+            Text("profile.add-companion"),
+            Text("profile.remove-companion"),
+            Text("profile.loadout"),
+            Text("profile.rejection.team-size"),
+            Text("profile.rejection.invalid-actor"),
+            Text("profile.rejection.invalid-loadout"),
+            Text("profile.rejection.persistence"));
 
         private static GuildTextSnapshot Text(string id) => new(id, id);
 

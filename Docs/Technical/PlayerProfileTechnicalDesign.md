@@ -1,8 +1,8 @@
 # DungeonTeam — Player Profile Technical Design
 
-**Статус:** PP-1 IMPLEMENTED; PP-2 DESIGNED/IN PROGRESS
+**Статус:** PP-1/PP-2 IMPLEMENTED; PP-3 REQUIRES ITEM/EQUIPMENT DESIGN
 
-**Версия:** 0.2
+**Версия:** 0.3
 
 **Дата:** 16 августа 2026
 
@@ -271,7 +271,6 @@ Manual full-flow smoke and build are reported separately and are not PP-1 automa
 
 ## 12. Non-goals and later decisions
 
-- PP-2: team/leader/loadout editing and run launch from saved selection;
 - PP-3: separately designed inventory/equipment with real items and stat application;
 - PP-4: durable terminal-result commit, Gold banking and selling;
 - PP-5: configured guild rank ladder, promotion and board availability;
@@ -366,3 +365,13 @@ The final run boundary still calls `DungeonRunTeamSetup.RequireValid`; Profile e
 - at least two different fixture compositions map to valid run selections without fixed production counts;
 - World Map launch uses the latest profile selection, not the configured default;
 - prefab bindings and dynamic action/loadout rows validate and dispose without duplicate listeners.
+
+### 13.7. Implemented and validated state
+
+- Profile Domain provides immutable leader, companion and loadout transformations; every candidate is validated through the current `DungeonRunTeamSetup` before commit.
+- The Bootstrap edit handler commits before publishing the refreshed Guild snapshot. Rejection and repository exceptions keep the previous session state and return configured presentation feedback.
+- The open Profile refreshes from the accepted snapshot while preserving selection by stable actor ID; normal World Map launch maps the latest session state.
+- Focused pure EditMode behavior regression passed: 27/27 tests across Profile Domain, application flow, Guild snapshot builder and Guild Profile ViewModel.
+- C# solution compile passed with 0 errors. Scoped `git diff --check` passed; the project-wide mechanical script reports only pre-existing whitespace in the unrelated modified TMP fallback asset.
+- Full Unity EditMode/PlayMode automation and runtime visual interaction were not run because the project was owned by the open Editor and Unity MCP was unavailable. The implementation reuses the existing validated dynamic roster-row bindings for action/loadout rows and does not add serialized prefab fields; this is not a runtime visual proof.
+- The documented SaveStore `ForceSave()` swallowed-I/O limitation remains unchanged and outside the PP-2 durability claim.

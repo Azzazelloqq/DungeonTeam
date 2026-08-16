@@ -4,6 +4,72 @@ using System.Collections.ObjectModel;
 
 namespace DungeonTeam.Gameplay.GuildHall.Application
 {
+    public enum GuildProfileEditKind
+    {
+        SetLeader = 0,
+        AddCompanion = 1,
+        RemoveCompanion = 2,
+        SetLoadout = 3
+    }
+
+    public sealed class GuildProfileEditRequest
+    {
+        public GuildProfileEditRequest(
+            GuildProfileEditKind kind,
+            string actorId,
+            string loadoutId = null)
+        {
+            if (!Enum.IsDefined(typeof(GuildProfileEditKind), kind))
+            {
+                throw new ArgumentOutOfRangeException(nameof(kind));
+            }
+
+            if (string.IsNullOrWhiteSpace(actorId))
+            {
+                throw new ArgumentException("Actor ID cannot be empty.", nameof(actorId));
+            }
+
+            if (kind == GuildProfileEditKind.SetLoadout !=
+                !string.IsNullOrWhiteSpace(loadoutId))
+            {
+                throw new ArgumentException(
+                    "Loadout ID is required only for a loadout change.",
+                    nameof(loadoutId));
+            }
+
+            Kind = kind;
+            ActorId = actorId;
+            LoadoutId = loadoutId;
+        }
+
+        public GuildProfileEditKind Kind { get; }
+        public string ActorId { get; }
+        public string LoadoutId { get; }
+    }
+
+    public sealed class GuildProfileEditResult
+    {
+        private GuildProfileEditResult(
+            bool accepted,
+            GuildProfileSnapshot profile,
+            GuildTextSnapshot rejection)
+        {
+            Accepted = accepted;
+            Profile = profile;
+            Rejection = rejection;
+        }
+
+        public bool Accepted { get; }
+        public GuildProfileSnapshot Profile { get; }
+        public GuildTextSnapshot Rejection { get; }
+
+        public static GuildProfileEditResult Accept(GuildProfileSnapshot profile) =>
+            new(true, profile ?? throw new ArgumentNullException(nameof(profile)), null);
+
+        public static GuildProfileEditResult Reject(GuildTextSnapshot rejection) =>
+            new(false, null, rejection ?? throw new ArgumentNullException(nameof(rejection)));
+    }
+
     public enum GuildHeroRole
     {
         Leader = 0,
@@ -28,7 +94,15 @@ namespace DungeonTeam.Gameplay.GuildHall.Application
             GuildTextSnapshot speedLabel,
             GuildTextSnapshot primarySkillLabel,
             GuildTextSnapshot activeSkillLabel,
-            GuildTextSnapshot close)
+            GuildTextSnapshot close,
+            GuildTextSnapshot makeLeader,
+            GuildTextSnapshot addCompanion,
+            GuildTextSnapshot removeCompanion,
+            GuildTextSnapshot loadoutLabel,
+            GuildTextSnapshot rejectedTeamSize,
+            GuildTextSnapshot rejectedInvalidActor,
+            GuildTextSnapshot rejectedInvalidLoadout,
+            GuildTextSnapshot rejectedPersistence)
         {
             Header = header ?? throw new ArgumentNullException(nameof(header));
             GoldLabel = goldLabel ?? throw new ArgumentNullException(nameof(goldLabel));
@@ -49,6 +123,14 @@ namespace DungeonTeam.Gameplay.GuildHall.Application
             ActiveSkillLabel = activeSkillLabel ??
                 throw new ArgumentNullException(nameof(activeSkillLabel));
             Close = close ?? throw new ArgumentNullException(nameof(close));
+            MakeLeader = makeLeader ?? throw new ArgumentNullException(nameof(makeLeader));
+            AddCompanion = addCompanion ?? throw new ArgumentNullException(nameof(addCompanion));
+            RemoveCompanion = removeCompanion ?? throw new ArgumentNullException(nameof(removeCompanion));
+            LoadoutLabel = loadoutLabel ?? throw new ArgumentNullException(nameof(loadoutLabel));
+            RejectedTeamSize = rejectedTeamSize ?? throw new ArgumentNullException(nameof(rejectedTeamSize));
+            RejectedInvalidActor = rejectedInvalidActor ?? throw new ArgumentNullException(nameof(rejectedInvalidActor));
+            RejectedInvalidLoadout = rejectedInvalidLoadout ?? throw new ArgumentNullException(nameof(rejectedInvalidLoadout));
+            RejectedPersistence = rejectedPersistence ?? throw new ArgumentNullException(nameof(rejectedPersistence));
         }
 
         public GuildTextSnapshot Header { get; }
@@ -66,6 +148,31 @@ namespace DungeonTeam.Gameplay.GuildHall.Application
         public GuildTextSnapshot PrimarySkillLabel { get; }
         public GuildTextSnapshot ActiveSkillLabel { get; }
         public GuildTextSnapshot Close { get; }
+        public GuildTextSnapshot MakeLeader { get; }
+        public GuildTextSnapshot AddCompanion { get; }
+        public GuildTextSnapshot RemoveCompanion { get; }
+        public GuildTextSnapshot LoadoutLabel { get; }
+        public GuildTextSnapshot RejectedTeamSize { get; }
+        public GuildTextSnapshot RejectedInvalidActor { get; }
+        public GuildTextSnapshot RejectedInvalidLoadout { get; }
+        public GuildTextSnapshot RejectedPersistence { get; }
+    }
+
+    public sealed class GuildHeroLoadoutSnapshot
+    {
+        public GuildHeroLoadoutSnapshot(string loadoutId, string displayText)
+        {
+            LoadoutId = Require(loadoutId, nameof(loadoutId));
+            DisplayText = Require(displayText, nameof(displayText));
+        }
+
+        public string LoadoutId { get; }
+        public string DisplayText { get; }
+
+        private static string Require(string value, string parameterName) =>
+            !string.IsNullOrWhiteSpace(value)
+                ? value
+                : throw new ArgumentException("Value cannot be empty.", parameterName);
     }
 
     public sealed class GuildHeroSkillSnapshot
@@ -92,6 +199,7 @@ namespace DungeonTeam.Gameplay.GuildHall.Application
     public sealed class GuildHeroSnapshot
     {
         private readonly ReadOnlyCollection<GuildHeroSkillSnapshot> _skills;
+        private readonly ReadOnlyCollection<GuildHeroLoadoutSnapshot> _allowedLoadouts;
 
         public GuildHeroSnapshot(
             string actorId,
@@ -100,7 +208,9 @@ namespace DungeonTeam.Gameplay.GuildHall.Application
             int level,
             int maximumHealth,
             float movementSpeed,
-            IReadOnlyList<GuildHeroSkillSnapshot> skills)
+            IReadOnlyList<GuildHeroSkillSnapshot> skills,
+            string loadoutId,
+            IReadOnlyList<GuildHeroLoadoutSnapshot> allowedLoadouts)
         {
             ActorId = Require(actorId, nameof(actorId));
             DisplayName = Require(displayName, nameof(displayName));
@@ -132,6 +242,8 @@ namespace DungeonTeam.Gameplay.GuildHall.Application
             }
 
             _skills = Array.AsReadOnly(copy);
+            LoadoutId = Require(loadoutId, nameof(loadoutId));
+            _allowedLoadouts = CopyLoadouts(allowedLoadouts, nameof(allowedLoadouts));
         }
 
         public string ActorId { get; }
@@ -141,6 +253,27 @@ namespace DungeonTeam.Gameplay.GuildHall.Application
         public int MaximumHealth { get; }
         public float MovementSpeed { get; }
         public IReadOnlyList<GuildHeroSkillSnapshot> Skills => _skills;
+        public string LoadoutId { get; }
+        public IReadOnlyList<GuildHeroLoadoutSnapshot> AllowedLoadouts => _allowedLoadouts;
+
+        private static ReadOnlyCollection<GuildHeroLoadoutSnapshot> CopyLoadouts(
+            IReadOnlyList<GuildHeroLoadoutSnapshot> source,
+            string parameterName)
+        {
+            if (source == null || source.Count == 0)
+            {
+                throw new ArgumentException("At least one loadout is required.", parameterName);
+            }
+
+            var copy = new GuildHeroLoadoutSnapshot[source.Count];
+            for (var index = 0; index < copy.Length; index++)
+            {
+                copy[index] = source[index] ?? throw new ArgumentException(
+                    $"Loadout at index {index} is missing.", parameterName);
+            }
+
+            return Array.AsReadOnly(copy);
+        }
 
         private static string Require(string value, string parameterName) =>
             !string.IsNullOrWhiteSpace(value)

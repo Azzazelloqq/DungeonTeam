@@ -12,6 +12,7 @@
     "DungeonTeam.Actors.Runtime",
     "DungeonTeam.Skills.Runtime",
     "DungeonTeam.Skills.Domain",
+    "DungeonTeam.PlayerProfile.Application",
     "DungeonTeam.PlayerProfile.Domain",
     "UnityEngine.TestRunner",
     "UnityEditor.TestRunner"

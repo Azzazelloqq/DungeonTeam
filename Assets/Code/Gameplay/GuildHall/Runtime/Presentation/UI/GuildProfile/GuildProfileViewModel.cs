@@ -11,22 +11,43 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Presentation.UI.GuildProfile
     public sealed class GuildProfileViewModel : GuildProfileViewModelBase
     {
         private readonly Action _closed;
+        private readonly Func<GuildProfileEditRequest, GuildProfileEditResult> _editRequested;
 
-        public GuildProfileViewModel(GuildProfileModelBase model, Action closed) : base(model)
+        public GuildProfileViewModel(
+            GuildProfileModelBase model,
+            Action closed,
+            Func<GuildProfileEditRequest, GuildProfileEditResult> editRequested) : base(model)
         {
             _closed = closed ?? throw new ArgumentNullException(nameof(closed));
+            _editRequested = editRequested ?? throw new ArgumentNullException(nameof(editRequested));
             SelectHeroCommand = new RelayCommand<string>(model.Select);
             CloseCommand = new RelayCommand<object>(_ => Close());
             SelectHeroCommand.AddTo(compositeDisposable);
             CloseCommand.AddTo(compositeDisposable);
+            SetLeaderCommand = new RelayCommand<object>(_ => Edit(GuildProfileEditKind.SetLeader));
+            AddCompanionCommand = new RelayCommand<object>(_ => Edit(GuildProfileEditKind.AddCompanion));
+            RemoveCompanionCommand = new RelayCommand<object>(_ => Edit(GuildProfileEditKind.RemoveCompanion));
+            SetLoadoutCommand = new RelayCommand<string>(loadoutId => Edit(
+                GuildProfileEditKind.SetLoadout,
+                loadoutId));
+            SetLeaderCommand.AddTo(compositeDisposable);
+            AddCompanionCommand.AddTo(compositeDisposable);
+            RemoveCompanionCommand.AddTo(compositeDisposable);
+            SetLoadoutCommand.AddTo(compositeDisposable);
         }
 
         public override GuildProfileSnapshot Profile => model.Profile;
+        public override IReadOnlyReactiveProperty<GuildProfileSnapshot> CurrentProfile => model.CurrentProfile;
         public override IReadOnlyReactiveProperty<bool> IsVisible => model.IsVisible;
         public override IReadOnlyReactiveProperty<GuildHeroSnapshot> SelectedHero =>
             model.SelectedHero;
+        public override IReadOnlyReactiveProperty<GuildTextSnapshot> Rejection => model.Rejection;
         public override IRelayCommand<string> SelectHeroCommand { get; }
         public override IRelayCommand<object> CloseCommand { get; }
+        public override IRelayCommand<object> SetLeaderCommand { get; }
+        public override IRelayCommand<object> AddCompanionCommand { get; }
+        public override IRelayCommand<object> RemoveCompanionCommand { get; }
+        public override IRelayCommand<string> SetLoadoutCommand { get; }
         public override void Open() => model.Show();
 
         public override void Close()
@@ -35,6 +56,12 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Presentation.UI.GuildProfile
             {
                 _closed();
             }
+        }
+
+        private void Edit(GuildProfileEditKind kind, string loadoutId = null)
+        {
+            var selected = model.SelectedHero.Value;
+            model.Apply(_editRequested(new GuildProfileEditRequest(kind, selected.ActorId, loadoutId)));
         }
 
         protected override void OnInitialize() { }

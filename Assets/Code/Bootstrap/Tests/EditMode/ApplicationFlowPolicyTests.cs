@@ -1,6 +1,8 @@
 using System;
 using DungeonTeam.Gameplay.DungeonRun.Application;
 using DungeonTeam.Gameplay.GuildHall.Application;
+using DungeonTeam.Gameplay.PlayerProfile.Application;
+using DungeonTeam.Gameplay.PlayerProfile.Domain;
 using DungeonTeam.UI.WorldMap;
 using NUnit.Framework;
 
@@ -105,6 +107,120 @@ namespace Code.ApplicationRoot.Tests.EditMode
             Assert.That(resolver.Resolve("location.disabled").IsUnavailable, Is.True);
         }
 
+        [Test]
+        public void ProfileTeamMapper_PreservesLatestLeaderAndCompanionOrderForDifferentCompositions()
+        {
+            var first = new PlayerProfileState(
+                0, null,
+                new[]
+                {
+                    new HeroProfileState("a", 1, "a.loadout"),
+                    new HeroProfileState("b", 2, "b.loadout")
+                },
+                "b",
+                new[] { "a" });
+            var second = new PlayerProfileState(
+                0, null,
+                new[]
+                {
+                    new HeroProfileState("a", 1, "a.loadout"),
+                    new HeroProfileState("b", 2, "b.loadout"),
+                    new HeroProfileState("c", 3, "c.loadout")
+                },
+                "c",
+                new[] { "b", "a" });
+
+            var firstSelection = PlayerProfileComposition.MapToTeamSelection(first);
+            var secondSelection = PlayerProfileComposition.MapToTeamSelection(second);
+
+            Assert.That(firstSelection.LeaderActorId, Is.EqualTo("b"));
+            Assert.That(firstSelection.CompanionActorIds, Is.EqualTo(new[] { "a" }));
+            Assert.That(secondSelection.LeaderActorId, Is.EqualTo("c"));
+            Assert.That(secondSelection.CompanionActorIds, Is.EqualTo(new[] { "b", "a" }));
+        }
+
+        [Test]
+        public void ProfileEditHandler_TeamSizeRejection_DoesNotSaveOrReplaceState()
+        {
+            var repository = new RecordingProfileRepository();
+            var session = CreateProfileSession(repository);
+            var initialSaveCount = repository.SaveCount;
+            var text = CreateProfileText();
+            var handler = CreateProfileEditHandler(session, text, _ => { });
+
+            var result = handler.Handle(new GuildProfileEditRequest(
+                GuildProfileEditKind.RemoveCompanion,
+                "b"));
+
+            Assert.That(result.Accepted, Is.False);
+            Assert.That(result.Rejection, Is.SameAs(text.RejectedTeamSize));
+            Assert.That(repository.SaveCount, Is.EqualTo(initialSaveCount));
+            Assert.That(session.State.CompanionActorIds, Is.EqualTo(new[] { "b" }));
+        }
+
+        [Test]
+        public void ProfileEditHandler_AcceptedChange_SavesOnceAndReturnsPreparedSnapshot()
+        {
+            var repository = new RecordingProfileRepository();
+            var session = CreateProfileSession(repository);
+            var initialSaveCount = repository.SaveCount;
+            var text = CreateProfileText();
+            var expectedSnapshot = CreateGuildProfileSnapshot(text);
+            var handler = CreateProfileEditHandler(session, text, _ => { }, expectedSnapshot);
+
+            var result = handler.Handle(new GuildProfileEditRequest(
+                GuildProfileEditKind.AddCompanion,
+                "c"));
+
+            Assert.That(result.Accepted, Is.True);
+            Assert.That(result.Profile, Is.SameAs(expectedSnapshot));
+            Assert.That(repository.SaveCount, Is.EqualTo(initialSaveCount + 1));
+            Assert.That(session.State.CompanionActorIds, Is.EqualTo(new[] { "b", "c" }));
+        }
+
+        [Test]
+        public void ProfileEditHandler_SaveThrows_ReportsPersistenceAndKeepsPreviousState()
+        {
+            var repository = new RecordingProfileRepository();
+            var session = CreateProfileSession(repository);
+            repository.ThrowOnSave = true;
+            var reportedFailures = 0;
+            var text = CreateProfileText();
+            var handler = CreateProfileEditHandler(
+                session,
+                text,
+                _ => reportedFailures++);
+
+            var result = handler.Handle(new GuildProfileEditRequest(
+                GuildProfileEditKind.AddCompanion,
+                "c"));
+
+            Assert.That(result.Accepted, Is.False);
+            Assert.That(result.Rejection, Is.SameAs(text.RejectedPersistence));
+            Assert.That(reportedFailures, Is.EqualTo(1));
+            Assert.That(session.State.CompanionActorIds, Is.EqualTo(new[] { "b" }));
+        }
+
+        [Test]
+        public void ProfileEditHandler_UnsupportedLoadout_RejectsWithoutSaving()
+        {
+            var repository = new RecordingProfileRepository();
+            var session = CreateProfileSession(repository);
+            var initialSaveCount = repository.SaveCount;
+            var text = CreateProfileText();
+            var handler = CreateProfileEditHandler(session, text, _ => { });
+
+            var result = handler.Handle(new GuildProfileEditRequest(
+                GuildProfileEditKind.SetLoadout,
+                "a",
+                "unsupported.loadout"));
+
+            Assert.That(result.Accepted, Is.False);
+            Assert.That(result.Rejection, Is.SameAs(text.RejectedInvalidLoadout));
+            Assert.That(repository.SaveCount, Is.EqualTo(initialSaveCount));
+            Assert.That(session.State.Heroes[0].LoadoutId, Is.EqualTo("a.loadout"));
+        }
+
         private static WorldMapDestinationResolver CreateResolver(
             WorldLocationSnapshot location,
             NoticeBoardOfferSnapshot offer,
@@ -161,5 +277,104 @@ namespace Code.ApplicationRoot.Tests.EditMode
 
         private static WorldMapTextSnapshot MapText(string id) => new(id, id);
         private static GuildTextSnapshot GuildText(string id) => new(id, id);
+
+        private static PlayerProfileSession CreateProfileSession(
+            RecordingProfileRepository repository) => new(
+            repository,
+            new PlayerProfileSeed(
+                new[]
+                {
+                    new HeroProfileState("a", 1, "a.loadout"),
+                    new HeroProfileState("b", 1, "b.loadout"),
+                    new HeroProfileState("c", 1, "c.loadout")
+                },
+                "a",
+                new[] { "b" }));
+
+        private static GuildProfileEditHandler CreateProfileEditHandler(
+            PlayerProfileSession session,
+            GuildProfileTextSnapshot text,
+            Action<Exception> reportFailure,
+            GuildProfileSnapshot snapshot = null)
+        {
+            var setup = new DungeonRunTeamSetup(
+                new[]
+                {
+                    Member("a", "a.loadout"),
+                    Member("b", "b.loadout"),
+                    Member("c", "c.loadout")
+                },
+                2,
+                3,
+                new DungeonRunTeamSelection(
+                    new DungeonRunActorSelection("a", 1, "a.loadout"),
+                    new[] { new DungeonRunActorSelection("b", 1, "b.loadout") }));
+            snapshot ??= CreateGuildProfileSnapshot(text);
+            return new GuildProfileEditHandler(
+                session,
+                setup,
+                text,
+                _ => snapshot,
+                reportFailure);
+        }
+
+        private static DungeonRunTeamMemberOption Member(string actorId, string loadoutId) =>
+            new(actorId, actorId, new[] { 1 }, new[] { loadoutId });
+
+        private static GuildProfileSnapshot CreateGuildProfileSnapshot(
+            GuildProfileTextSnapshot text)
+        {
+            var leader = new GuildHeroSnapshot(
+                "a",
+                "A",
+                GuildHeroRole.Leader,
+                1,
+                10,
+                2f,
+                Array.Empty<GuildHeroSkillSnapshot>(),
+                "a.loadout",
+                new[] { new GuildHeroLoadoutSnapshot("a.loadout", "A") });
+            return new GuildProfileSnapshot(
+                0,
+                "-",
+                leader,
+                Array.Empty<GuildHeroSnapshot>(),
+                new[] { leader },
+                text);
+        }
+
+        private static GuildProfileTextSnapshot CreateProfileText() => new(
+            ProfileText("header"), ProfileText("gold"), ProfileText("rank"),
+            ProfileText("unassigned"), ProfileText("leader"), ProfileText("leader-explanation"),
+            ProfileText("team"), ProfileText("roster"), ProfileText("available"),
+            ProfileText("level"), ProfileText("health"), ProfileText("speed"),
+            ProfileText("primary"), ProfileText("active"), ProfileText("close"),
+            ProfileText("make-leader"), ProfileText("add"), ProfileText("remove"),
+            ProfileText("loadout"), ProfileText("team-size"), ProfileText("invalid-actor"),
+            ProfileText("invalid-loadout"), ProfileText("persistence"));
+
+        private static GuildTextSnapshot ProfileText(string id) =>
+            new($"profile.{id}", id);
+
+        private sealed class RecordingProfileRepository : IPlayerProfileRepository
+        {
+            public int SaveCount { get; private set; }
+            public bool ThrowOnSave { get; set; }
+
+            public bool TryLoad(out PlayerProfileState state)
+            {
+                state = null;
+                return false;
+            }
+
+            public void Save(PlayerProfileState state)
+            {
+                SaveCount++;
+                if (ThrowOnSave)
+                {
+                    throw new InvalidOperationException("Save failed.");
+                }
+            }
+        }
     }
 }

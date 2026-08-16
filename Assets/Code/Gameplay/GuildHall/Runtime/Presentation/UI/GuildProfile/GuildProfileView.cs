@@ -39,6 +39,7 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Presentation.UI.GuildProfile
         private readonly List<UnityAction> _rosterActions = new();
         private readonly List<TMP_Text> _skillRows = new();
         private UnityAction _closeRequested;
+        private GuildTextSnapshot _rejection;
 
         public override void ValidateBindings()
         {
@@ -73,24 +74,18 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Presentation.UI.GuildProfile
         protected override void OnInitialize()
         {
             ValidateBindings();
-            var profile = viewModel.Profile;
-            var text = profile.Text;
-
-            _headerText.SetText(text.Header.DisplayText);
-            _goldText.SetText($"{text.GoldLabel.DisplayText}: {profile.Gold}");
-            _rankText.SetText($"{text.RankLabel.DisplayText}: {profile.RankDisplayText}");
-            _leaderLabelText.SetText(text.LeaderLabel.DisplayText);
-            _leaderExplanationText.SetText(text.LeaderExplanation.DisplayText);
-            _teamLabelText.SetText(text.TeamLabel.DisplayText);
-            _rosterLabelText.SetText(text.RosterLabel.DisplayText);
-            _leaderCardText.SetText(GetHeroTitle(profile.Leader));
-            _closeText.SetText(text.Close.DisplayText);
-
-            CreateTeamRows();
-            CreateRosterRows();
-            ShowDetails(viewModel.SelectedHero.Value);
-
-            viewModel.SelectedHero.Subscribe(ShowDetails).AddTo(compositeDisposable);
+            Refresh(viewModel.Profile);
+            viewModel.SelectedHero.Subscribe(hero =>
+            {
+                RebuildForSelectedHero(hero);
+                ShowDetails(hero);
+            }).AddTo(compositeDisposable);
+            viewModel.CurrentProfile.Subscribe(Refresh).AddTo(compositeDisposable);
+            viewModel.Rejection.Subscribe(rejection =>
+            {
+                _rejection = rejection;
+                ShowDetails(viewModel.SelectedHero.Value);
+            }).AddTo(compositeDisposable);
             viewModel.IsVisible.Subscribe(SetVisible).AddTo(compositeDisposable);
             _closeRequested = () => viewModel.CloseCommand.Execute(null);
             _closeButton.onClick.AddListener(_closeRequested);
@@ -106,16 +101,7 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Presentation.UI.GuildProfile
             }
 
             _closeRequested = null;
-            for (var index = _rosterRows.Count - 1; index >= 0; index--)
-            {
-                var row = _rosterRows[index];
-                if (row != null)
-                {
-                    row.onClick.RemoveListener(_rosterActions[index]);
-                    Destroy(row.gameObject);
-                }
-            }
-
+            DestroyRosterRows();
             DestroyRows(_teamRows);
             DestroyRows(_skillRows);
             _rosterRows.Clear();
@@ -156,6 +142,50 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Presentation.UI.GuildProfile
             }
         }
 
+        private void CreateEditRows(GuildHeroSnapshot hero)
+        {
+            var text = viewModel.Profile.Text;
+            if (hero.Role != GuildHeroRole.Leader)
+            {
+                CreateEditRow(text.MakeLeader.DisplayText, () =>
+                    viewModel.SetLeaderCommand.Execute(null), true);
+            }
+
+            if (hero.Role == GuildHeroRole.Available)
+            {
+                CreateEditRow(text.AddCompanion.DisplayText, () =>
+                    viewModel.AddCompanionCommand.Execute(null), true);
+            }
+            else if (hero.Role == GuildHeroRole.Companion)
+            {
+                CreateEditRow(text.RemoveCompanion.DisplayText, () =>
+                    viewModel.RemoveCompanionCommand.Execute(null), true);
+            }
+
+            for (var index = 0; index < hero.AllowedLoadouts.Count; index++)
+            {
+                var option = hero.AllowedLoadouts[index];
+                var loadoutId = option.LoadoutId;
+                CreateEditRow(option.DisplayText, () =>
+                    viewModel.SetLoadoutCommand.Execute(loadoutId),
+                    !string.Equals(loadoutId, hero.LoadoutId, StringComparison.Ordinal));
+            }
+        }
+
+        private void CreateEditRow(
+            string displayText,
+            UnityAction action,
+            bool isInteractable)
+        {
+            var row = Instantiate(_rosterRowTemplate, _rosterRowsContainer);
+            row.GetComponentInChildren<TMP_Text>(true).SetText(displayText);
+            row.onClick.AddListener(action);
+            row.interactable = isInteractable;
+            row.gameObject.SetActive(true);
+            _rosterRows.Add(row);
+            _rosterActions.Add(action);
+        }
+
         private void ShowDetails(GuildHeroSnapshot hero)
         {
             var text = viewModel.Profile.Text;
@@ -165,6 +195,11 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Presentation.UI.GuildProfile
                 $"{text.HealthLabel.DisplayText}: {hero.MaximumHealth}\n" +
                 $"{text.SpeedLabel.DisplayText}: " +
                 hero.MovementSpeed.ToString("0.##", CultureInfo.InvariantCulture));
+
+            if (_rejection != null)
+            {
+                _detailsText.SetText($"{_detailsText.text}\n{_rejection.DisplayText}");
+            }
 
             DestroyRows(_skillRows);
             for (var index = 0; index < hero.Skills.Count; index++)
@@ -177,6 +212,49 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Presentation.UI.GuildProfile
                 row.gameObject.SetActive(true);
                 _skillRows.Add(row);
             }
+        }
+
+        private void Refresh(GuildProfileSnapshot profile)
+        {
+            var text = profile.Text;
+            _headerText.SetText(text.Header.DisplayText);
+            _goldText.SetText($"{text.GoldLabel.DisplayText}: {profile.Gold}");
+            _rankText.SetText($"{text.RankLabel.DisplayText}: {profile.RankDisplayText}");
+            _leaderLabelText.SetText(text.LeaderLabel.DisplayText);
+            _leaderExplanationText.SetText(text.LeaderExplanation.DisplayText);
+            _teamLabelText.SetText(text.TeamLabel.DisplayText);
+            _rosterLabelText.SetText(text.RosterLabel.DisplayText);
+            _leaderCardText.SetText(GetHeroTitle(profile.Leader));
+            _closeText.SetText(text.Close.DisplayText);
+            DestroyRows(_teamRows);
+            DestroyRosterRows();
+            CreateTeamRows();
+            CreateRosterRows();
+            CreateEditRows(viewModel.SelectedHero.Value);
+            ShowDetails(viewModel.SelectedHero.Value);
+        }
+
+        private void DestroyRosterRows()
+        {
+            for (var index = _rosterRows.Count - 1; index >= 0; index--)
+            {
+                var row = _rosterRows[index];
+                if (row != null)
+                {
+                    row.onClick.RemoveListener(_rosterActions[index]);
+                    Destroy(row.gameObject);
+                }
+            }
+
+            _rosterRows.Clear();
+            _rosterActions.Clear();
+        }
+
+        private void RebuildForSelectedHero(GuildHeroSnapshot hero)
+        {
+            DestroyRosterRows();
+            CreateRosterRows();
+            CreateEditRows(hero);
         }
 
         private string GetRoleText(GuildHeroRole role)

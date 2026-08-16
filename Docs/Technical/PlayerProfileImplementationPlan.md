@@ -1,8 +1,8 @@
 # DungeonTeam — Player Profile Implementation Plan
 
-**Статус:** PP-0/PP-1 COMPLETE; PP-2 IN PROGRESS
+**Статус:** PP-0/PP-1/PP-2 COMPLETE; PP-3 REQUIRES PRODUCT/TECHNICAL DESIGN
 
-**Версия:** 0.2
+**Версия:** 0.3
 
 **Дата:** 16 августа 2026
 
@@ -22,7 +22,7 @@
 | --- | --- | --- |
 | PP-0 | Product/technical design, boundaries and order | Complete |
 | PP-1 | Read-only persistent profile vertical slice | Complete |
-| PP-2 | Editable leader/team/loadout and run integration | In progress |
+| PP-2 | Editable leader/team/loadout and run integration | Complete |
 | PP-3 | Inventory/equipment after separate item design | Requires product/design decision |
 | PP-4 | Result commit, Gold banking and selling | Planned after persistence reliability gate |
 | PP-5 | Guild ranks and board gating | Requires rank rules/content decision |
@@ -96,6 +96,14 @@
 - tests derive expectations from fixtures/configuration and never assert a fixed hero, team, loadout or skill count.
 
 PP-2 does not add recruitment, hero purchase, equipment or skill-tree progression.
+
+### Implemented and validated
+
+- Domain transformations, setup validation, save-before-publish session commit and the narrow Guild Hall edit contract are implemented.
+- Accepted edits refresh the open Profile and normal World Map launch uses the latest saved composition; rejection leaves state unchanged and exposes configured feedback.
+- Focused pure EditMode behavior regression passed: 27/27 tests. C# solution compile passed with 0 errors.
+- Scoped diff validation passed. Project-wide mechanical validation is clean for PP-2 files and reports only the unrelated pre-existing TMP fallback asset whitespace.
+- Full Unity EditMode/PlayMode automation and runtime visual interaction remain unverified in this stage because the open Editor owned the project and Unity MCP was unavailable.
 
 ## 5. PP-3 — inventory and equipment
 

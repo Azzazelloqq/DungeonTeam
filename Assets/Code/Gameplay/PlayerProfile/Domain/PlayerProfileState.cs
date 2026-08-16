@@ -98,5 +98,138 @@ namespace DungeonTeam.Gameplay.PlayerProfile.Domain
         public IReadOnlyList<HeroProfileState> Heroes => _heroes;
         public string LeaderActorId { get; }
         public IReadOnlyList<string> CompanionActorIds => _companionActorIds;
+
+        public PlayerProfileState ChangeLeader(string actorId)
+        {
+            RequireRosterActor(actorId, nameof(actorId));
+            if (string.Equals(actorId, LeaderActorId, StringComparison.Ordinal))
+            {
+                return this;
+            }
+
+            var companions = CopyCompanions();
+            var selectedCompanionIndex = IndexOf(companions, actorId);
+            if (selectedCompanionIndex >= 0)
+            {
+                companions[selectedCompanionIndex] = LeaderActorId;
+            }
+
+            return new PlayerProfileState(Gold, RankId, Heroes, actorId, companions);
+        }
+
+        public PlayerProfileState AddCompanion(string actorId)
+        {
+            RequireRosterActor(actorId, nameof(actorId));
+            if (string.Equals(actorId, LeaderActorId, StringComparison.Ordinal) ||
+                IndexOf(CompanionActorIds, actorId) >= 0)
+            {
+                throw new ArgumentException("Actor is already in the active team.", nameof(actorId));
+            }
+
+            var companions = new string[CompanionActorIds.Count + 1];
+            for (var index = 0; index < CompanionActorIds.Count; index++)
+            {
+                companions[index] = CompanionActorIds[index];
+            }
+
+            companions[^1] = actorId;
+            return new PlayerProfileState(Gold, RankId, Heroes, LeaderActorId, companions);
+        }
+
+        public PlayerProfileState RemoveCompanion(string actorId)
+        {
+            var removeIndex = IndexOf(CompanionActorIds, actorId);
+            if (removeIndex < 0)
+            {
+                throw new ArgumentException("Actor is not a companion.", nameof(actorId));
+            }
+
+            var companions = new string[CompanionActorIds.Count - 1];
+            for (int sourceIndex = 0, targetIndex = 0;
+                 sourceIndex < CompanionActorIds.Count;
+                 sourceIndex++)
+            {
+                if (sourceIndex != removeIndex)
+                {
+                    companions[targetIndex++] = CompanionActorIds[sourceIndex];
+                }
+            }
+
+            return new PlayerProfileState(Gold, RankId, Heroes, LeaderActorId, companions);
+        }
+
+        public PlayerProfileState ChangeLoadout(string actorId, string loadoutId)
+        {
+            if (string.IsNullOrWhiteSpace(loadoutId))
+            {
+                throw new ArgumentException("Loadout ID cannot be empty.", nameof(loadoutId));
+            }
+
+            var heroIndex = IndexOfHero(actorId);
+            if (heroIndex < 0)
+            {
+                throw new ArgumentException("Actor must belong to roster.", nameof(actorId));
+            }
+
+            if (string.Equals(Heroes[heroIndex].LoadoutId, loadoutId, StringComparison.Ordinal))
+            {
+                return this;
+            }
+
+            var heroes = new HeroProfileState[Heroes.Count];
+            for (var index = 0; index < heroes.Length; index++)
+            {
+                heroes[index] = index == heroIndex
+                    ? new HeroProfileState(actorId, Heroes[index].Level, loadoutId)
+                    : Heroes[index];
+            }
+
+            return new PlayerProfileState(Gold, RankId, heroes, LeaderActorId, CompanionActorIds);
+        }
+
+        private void RequireRosterActor(string actorId, string parameterName)
+        {
+            if (IndexOfHero(actorId) < 0)
+            {
+                throw new ArgumentException("Actor must belong to roster.", parameterName);
+            }
+        }
+
+        private int IndexOfHero(string actorId)
+        {
+            for (var index = 0; index < Heroes.Count; index++)
+            {
+                if (string.Equals(Heroes[index].ActorId, actorId, StringComparison.Ordinal))
+                {
+                    return index;
+                }
+            }
+
+            return -1;
+        }
+
+        private string[] CopyCompanions()
+        {
+            var companions = new string[CompanionActorIds.Count];
+            for (var index = 0; index < companions.Length; index++)
+            {
+                companions[index] = CompanionActorIds[index];
+            }
+
+            return companions;
+        }
+
+        private static int IndexOf(IReadOnlyList<string> actorIds, string actorId)
+        {
+            for (var index = 0; index < actorIds.Count; index++)
+            {
+                if (string.Equals(actorIds[index], actorId, StringComparison.Ordinal))
+                {
+                    return index;
+                }
+            }
+
+            return -1;
+        }
     }
 }

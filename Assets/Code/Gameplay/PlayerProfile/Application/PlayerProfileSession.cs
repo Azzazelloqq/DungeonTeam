@@ -26,6 +26,8 @@ namespace DungeonTeam.Gameplay.PlayerProfile.Application
 
     public sealed class PlayerProfileSession
     {
+        private readonly IPlayerProfileRepository _repository;
+
         public PlayerProfileSession(IPlayerProfileRepository repository, PlayerProfileSeed seed)
         {
             if (repository == null)
@@ -38,6 +40,7 @@ namespace DungeonTeam.Gameplay.PlayerProfile.Application
                 throw new ArgumentNullException(nameof(seed));
             }
 
+            _repository = repository;
             if (!repository.TryLoad(out var state))
             {
                 state = seed.State;
@@ -47,6 +50,22 @@ namespace DungeonTeam.Gameplay.PlayerProfile.Application
             State = state ?? throw new InvalidOperationException("Loaded player profile is missing.");
         }
 
-        public PlayerProfileState State { get; }
+        public PlayerProfileState State { get; private set; }
+
+        public void Commit(PlayerProfileState candidate)
+        {
+            if (candidate == null)
+            {
+                throw new ArgumentNullException(nameof(candidate));
+            }
+
+            if (ReferenceEquals(candidate, State))
+            {
+                return;
+            }
+
+            _repository.Save(candidate);
+            State = candidate;
+        }
     }
 }

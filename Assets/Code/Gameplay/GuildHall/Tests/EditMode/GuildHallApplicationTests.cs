@@ -165,7 +165,15 @@ namespace DungeonTeam.Gameplay.GuildHall.Tests.EditMode
             Text("profile.speed"),
             Text("profile.skill.primary"),
             Text("profile.skill.active"),
-            Text("profile.close"));
+            Text("profile.close"),
+            Text("profile.make-leader"),
+            Text("profile.add-companion"),
+            Text("profile.remove-companion"),
+            Text("profile.loadout"),
+            Text("profile.rejection.team-size"),
+            Text("profile.rejection.invalid-actor"),
+            Text("profile.rejection.invalid-loadout"),
+            Text("profile.rejection.persistence"));
 
         private static GuildTextSnapshot Text(string id) => new(id, id);
     }

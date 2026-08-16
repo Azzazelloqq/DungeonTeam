@@ -32,6 +32,7 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Composition
         private readonly Action<GuildHallInteractionRequest> _interactionRequested;
         private readonly Action _worldMapRequested;
         private readonly Action<string> _contractSelected;
+        private readonly Func<GuildProfileEditRequest, GuildProfileEditResult> _profileEditRequested;
 
         private IGuildHallInput _pendingInput;
         private GuildHallWorldLease _worldLease;
@@ -64,7 +65,8 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Composition
             ITickHandler tickHandler,
             IGuildHallInput input,
             Action<GuildHallInteractionRequest> interactionRequested,
-            Action worldMapRequested)
+            Action worldMapRequested,
+            Func<GuildProfileEditRequest, GuildProfileEditResult> profileEditRequested = null)
             : this(
                 worldLoader,
                 startContext,
@@ -75,7 +77,8 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Composition
                 input,
                 interactionRequested,
                 worldMapRequested,
-                null)
+                null,
+                profileEditRequested)
         {
         }
 
@@ -89,7 +92,8 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Composition
             IGuildHallInput input,
             Action<GuildHallInteractionRequest> interactionRequested,
             Action worldMapRequested,
-            Action<string> contractSelected = null)
+            Action<string> contractSelected = null,
+            Func<GuildProfileEditRequest, GuildProfileEditResult> profileEditRequested = null)
         {
             _worldLoader = worldLoader ?? throw new ArgumentNullException(nameof(worldLoader));
             _startContext = startContext ?? throw new ArgumentNullException(nameof(startContext));
@@ -103,6 +107,7 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Composition
             _worldMapRequested = worldMapRequested ?? throw new ArgumentNullException(
                 nameof(worldMapRequested));
             _contractSelected = contractSelected ?? (_ => { });
+            _profileEditRequested = profileEditRequested;
         }
 
         internal NoticeBoardViewBase NoticeBoardView => _noticeBoardView;
@@ -158,7 +163,9 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Composition
                     _guildProfileModel = new GuildProfileModel(_startContext.Profile);
                     _guildProfileViewModel = new GuildProfileViewModel(
                         _guildProfileModel,
-                        CloseGuildProfile);
+                        CloseGuildProfile,
+                        _profileEditRequested ?? throw new InvalidOperationException(
+                            "Guild Profile editing callback is required when a profile is present."));
                     _guildProfileViewModel.Initialize();
                     _guildProfileView.Initialize(
                         _guildProfileViewModel,

@@ -30,6 +30,7 @@ using DungeonTeam.Gameplay.Rewards.Runtime;
 using DungeonTeam.Gameplay.Team.Runtime;
 using DungeonTeam.Gameplay.Skills.Runtime;
 using DungeonTeam.Gameplay.PlayerProfile.Application;
+using DungeonTeam.Gameplay.PlayerProfile.Domain;
 using LocalSaveSystem;
 using DungeonTeam.UI.WorldMap;
 using DungeonTeam.DeveloperTools;
@@ -70,6 +71,7 @@ namespace Code.ApplicationRoot
 		private DungeonRunTeamSetup _dungeonRunTeamSetup;
 		private SaveStore _saveStore;
 		private PlayerProfileSession _playerProfileSession;
+		private GuildProfileEditHandler _guildProfileEditHandler;
 		private DungeonRunLaunchPresetCatalog _launchPresetCatalog;
 		private GuildHallCatalog _guildHallCatalog;
 		private DialogueCatalog _dialogueCatalog;
@@ -141,6 +143,12 @@ namespace Code.ApplicationRoot
 				.GetConfigPage<DungeonRunLaunchConfigPage>()
 				.CreateCatalog();
 			_guildHallCatalog = config.GetConfigPage<GuildHallConfigPage>().CreateCatalog();
+			_guildProfileEditHandler = new GuildProfileEditHandler(
+				_playerProfileSession,
+				_dungeonRunTeamSetup,
+				_guildHallCatalog.ProfileText,
+				BuildGuildProfileSnapshot,
+				Debug.LogException);
 			_dialogueCatalog = config.GetConfigPage<DialogueConfigPage>().CreateCatalog();
 			_ambientNpcProfileCatalog = config.GetConfigPage<AmbientNpcConfigPage>().CreateCatalog();
 			_contractCatalog = config.GetConfigPage<ContractConfigPage>().CreateCatalog();
@@ -229,6 +237,7 @@ namespace Code.ApplicationRoot
 			_enemyBehaviorCatalog = null;
 			_dungeonRunTeamSetup = null;
 			_playerProfileSession = null;
+			_guildProfileEditHandler = null;
 			_saveStore?.Dispose();
 			_saveStore = null;
 			_launchPresetCatalog = null;
@@ -300,18 +309,24 @@ namespace Code.ApplicationRoot
 #else
 				new EditorGuildHallInput(),
 #endif
-				_ => { }, OnGuildHallWorldMapRequested, _guildSessionState.SelectContract);
+				_ => { }, OnGuildHallWorldMapRequested, _guildSessionState.SelectContract,
+				_guildProfileEditHandler.Handle);
 			await hall.InitializeAsync(token);
 			_guildHallRoot = hall;
 		}
 
 		private GuildHallStartContext WithProfile(GuildHallStartContext context) => new(
 			context.Npcs, context.Offers, context.SelectedContractId, context.LastRunSummary,
+			BuildGuildProfileSnapshot(_playerProfileSession.State));
+
+		private GuildProfileSnapshot BuildGuildProfileSnapshot(
+			PlayerProfileState profile) =>
 			GuildProfileSnapshotBuilder.Build(
-				_playerProfileSession.State,
+				profile,
 				_actorCatalog,
 				_skillCatalog,
-				_guildHallCatalog.ProfileText));
+				_dungeonRunTeamSetup,
+				_guildHallCatalog.ProfileText);
 
 		private void OnGuildHallWorldMapRequested() =>
 			TransitionToWorldMapAsync(CancellationToken).Forget(Debug.LogException);
@@ -414,7 +429,7 @@ namespace Code.ApplicationRoot
 					_contractCatalog,
 					_guildSessionState,
 					_launchPresetCatalog,
-					_dungeonRunTeamSetup.DefaultSelection)
+					PlayerProfileComposition.MapToTeamSelection(_playerProfileSession.State))
 					.Resolve(locationId);
 			}
 			catch (Exception exception)

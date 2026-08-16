@@ -3,6 +3,7 @@ using Code.ApplicationRoot;
 using DungeonTeam.Gameplay.Actors.Runtime;
 using DungeonTeam.Gameplay.GuildHall.Application;
 using DungeonTeam.Gameplay.PlayerProfile.Domain;
+using DungeonTeam.Gameplay.DungeonRun.Application;
 using DungeonTeam.Gameplay.Skills.Domain;
 using DungeonTeam.Gameplay.Skills.Runtime;
 using NUnit.Framework;
@@ -53,12 +54,26 @@ namespace Code.ApplicationRoot.Tests.EditMode
                 profile,
                 actors,
                 skills,
+                new DungeonRunTeamSetup(
+                    new[]
+                    {
+                        new DungeonRunTeamMemberOption(
+                            "hero", "Hero", new[] { 2 }, new[] { "main" })
+                    },
+                    1,
+                    1,
+                    new DungeonRunTeamSelection(
+                        new DungeonRunActorSelection("hero", 2, "main"),
+                        Array.Empty<DungeonRunActorSelection>())),
                 CreateProfileText());
 
             Assert.That(result.Roster, Has.Count.EqualTo(profile.Heroes.Count));
             Assert.That(result.Leader.MaximumHealth, Is.EqualTo(42));
             Assert.That(result.Leader.Skills[0].DisplayName, Is.EqualTo("Hit"));
             Assert.That(result.Leader.Skills[0].SlotDisplayText, Is.EqualTo("Primary"));
+            Assert.That(result.Leader.AllowedLoadouts, Has.Count.EqualTo(1));
+            Assert.That(result.Leader.AllowedLoadouts[0].LoadoutId, Is.EqualTo("main"));
+            Assert.That(result.Leader.AllowedLoadouts[0].DisplayText, Is.EqualTo("Loadout: Hit"));
         }
 
         private static GuildProfileTextSnapshot CreateProfileText() => new(
@@ -76,7 +91,15 @@ namespace Code.ApplicationRoot.Tests.EditMode
             Text("profile.speed", "Speed"),
             Text("profile.skill.primary", "Primary"),
             Text("profile.skill.active", "Active"),
-            Text("profile.close", "Close"));
+            Text("profile.close", "Close"),
+            Text("profile.make-leader", "Make leader"),
+            Text("profile.add-companion", "Add"),
+            Text("profile.remove-companion", "Remove"),
+            Text("profile.loadout", "Loadout"),
+            Text("profile.rejection.team-size", "Team size"),
+            Text("profile.rejection.invalid-actor", "Invalid actor"),
+            Text("profile.rejection.invalid-loadout", "Invalid loadout"),
+            Text("profile.rejection.persistence", "Save failed"));
 
         private static GuildTextSnapshot Text(string id, string value) => new(id, value);
     }

@@ -4,6 +4,16 @@ using System.Collections.ObjectModel;
 
 namespace DungeonTeam.Gameplay.DungeonRun.Application
 {
+    public enum DungeonRunTeamValidationFailure
+    {
+        None = 0,
+        SelectionMissing = 1,
+        TeamSizeOutOfRange = 2,
+        ActorUnavailable = 3,
+        LevelUnavailable = 4,
+        LoadoutUnavailable = 5
+    }
+
     public readonly struct DungeonRunTeamMemberOption
     {
         private readonly ReadOnlyCollection<int> _availableLevels;
@@ -187,55 +197,72 @@ namespace DungeonTeam.Gameplay.DungeonRun.Application
 
         public bool IsValid(DungeonRunTeamSelection selection)
         {
-            return GetValidationError(selection) == null;
+            return GetValidationError(selection, out _) == null;
+        }
+
+        public bool TryValidate(
+            DungeonRunTeamSelection selection,
+            out DungeonRunTeamValidationFailure failure)
+        {
+            return GetValidationError(selection, out failure) == null;
         }
 
         public void RequireValid(DungeonRunTeamSelection selection)
         {
-            var error = GetValidationError(selection);
+            var error = GetValidationError(selection, out _);
             if (error != null)
             {
                 throw new ArgumentException(error, nameof(selection));
             }
         }
 
-        private string GetValidationError(DungeonRunTeamSelection selection)
+        private string GetValidationError(
+            DungeonRunTeamSelection selection,
+            out DungeonRunTeamValidationFailure failure)
         {
             if (selection == null)
             {
+                failure = DungeonRunTeamValidationFailure.SelectionMissing;
                 return "Team selection is required.";
             }
 
             if (selection.MemberCount < MinimumTeamSize ||
                 selection.MemberCount > MaximumTeamSize)
             {
+                failure = DungeonRunTeamValidationFailure.TeamSizeOutOfRange;
                 return $"Team size {selection.MemberCount} is outside the configured range " +
                        $"{MinimumTeamSize}..{MaximumTeamSize}.";
             }
 
-            if (!IsAllowed(selection.Leader, out var leaderError))
+            if (!IsAllowed(selection.Leader, out var leaderError, out failure))
             {
                 return leaderError;
             }
 
             for (var index = 0; index < selection.Companions.Count; index++)
             {
-                if (!IsAllowed(selection.Companions[index], out var companionError))
+                if (!IsAllowed(
+                        selection.Companions[index],
+                        out var companionError,
+                        out failure))
                 {
                     return companionError;
                 }
             }
 
+            failure = DungeonRunTeamValidationFailure.None;
             return null;
         }
 
         private bool IsAllowed(
             DungeonRunActorSelection selection,
-            out string error)
+            out string error,
+            out DungeonRunTeamValidationFailure failure)
         {
             if (!_membersByActorId.TryGetValue(selection.ActorId, out var member))
             {
                 error = $"Actor ID '{selection.ActorId}' is not available for this run.";
+                failure = DungeonRunTeamValidationFailure.ActorUnavailable;
                 return false;
             }
 
@@ -243,6 +270,7 @@ namespace DungeonTeam.Gameplay.DungeonRun.Application
             {
                 error = $"Actor ID '{selection.ActorId}' level {selection.Level} is not " +
                         "available for this run.";
+                failure = DungeonRunTeamValidationFailure.LevelUnavailable;
                 return false;
             }
 
@@ -250,10 +278,12 @@ namespace DungeonTeam.Gameplay.DungeonRun.Application
             {
                 error = $"Loadout ID '{selection.LoadoutId}' is not available for actor " +
                         $"'{selection.ActorId}' in this run.";
+                failure = DungeonRunTeamValidationFailure.LoadoutUnavailable;
                 return false;
             }
 
             error = null;
+            failure = DungeonRunTeamValidationFailure.None;
             return true;
         }
     }

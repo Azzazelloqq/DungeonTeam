@@ -225,6 +225,14 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Config
         [SerializeField] private GuildTextDefinitionConfig _primarySkillLabel = new();
         [SerializeField] private GuildTextDefinitionConfig _activeSkillLabel = new();
         [SerializeField] private GuildTextDefinitionConfig _close = new();
+        [SerializeField] private GuildTextDefinitionConfig _makeLeader = new();
+        [SerializeField] private GuildTextDefinitionConfig _addCompanion = new();
+        [SerializeField] private GuildTextDefinitionConfig _removeCompanion = new();
+        [SerializeField] private GuildTextDefinitionConfig _loadoutLabel = new();
+        [SerializeField] private GuildTextDefinitionConfig _rejectedTeamSize = new();
+        [SerializeField] private GuildTextDefinitionConfig _rejectedInvalidActor = new();
+        [SerializeField] private GuildTextDefinitionConfig _rejectedInvalidLoadout = new();
+        [SerializeField] private GuildTextDefinitionConfig _rejectedPersistence = new();
 
         internal GuildProfileTextSnapshot ToSnapshot()
         {
@@ -243,7 +251,15 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Config
                 Require(_speedLabel, "speed label"),
                 Require(_primarySkillLabel, "primary skill label"),
                 Require(_activeSkillLabel, "active skill label"),
-                Require(_close, "close label"));
+                Require(_close, "close label"),
+                Require(_makeLeader, "make leader label"),
+                Require(_addCompanion, "add companion label"),
+                Require(_removeCompanion, "remove companion label"),
+                Require(_loadoutLabel, "loadout label"),
+                Require(_rejectedTeamSize, "team size rejection"),
+                Require(_rejectedInvalidActor, "invalid actor rejection"),
+                Require(_rejectedInvalidLoadout, "invalid loadout rejection"),
+                Require(_rejectedPersistence, "persistence rejection"));
         }
 
         private static GuildTextSnapshot Require(
