@@ -1,8 +1,8 @@
 # DungeonTeam — Player Profile Implementation Plan
 
-**Статус:** PP-0/PP-1 COMPLETE; PP-2 NEXT
+**Статус:** PP-0/PP-1 COMPLETE; PP-2 IN PROGRESS
 
-**Версия:** 0.1
+**Версия:** 0.2
 
 **Дата:** 16 августа 2026
 
@@ -22,7 +22,7 @@
 | --- | --- | --- |
 | PP-0 | Product/technical design, boundaries and order | Complete |
 | PP-1 | Read-only persistent profile vertical slice | Complete |
-| PP-2 | Editable leader/team/loadout and run integration | Next |
+| PP-2 | Editable leader/team/loadout and run integration | In progress |
 | PP-3 | Inventory/equipment after separate item design | Requires product/design decision |
 | PP-4 | Result commit, Gold banking and selling | Planned after persistence reliability gate |
 | PP-5 | Guild ranks and board gating | Requires rank rules/content decision |
@@ -63,12 +63,37 @@
 
 **Goal:** the saved profile becomes the user-owned source of the next team selection.
 
-1. Agree exact selection interaction within the existing Profile screen.
-2. Add profile operations to choose leader, add/remove ordered companions and choose an allowed loadout.
-3. Validate membership/uniqueness in Profile Domain and current run constraints through `DungeonRunTeamSetup` at application boundary.
-4. Save only after a valid operation; show an explicit reason for rejected/incomplete selection.
-5. Build `DungeonRunTeamSelection` from the latest profile snapshot in `WorldMapDestinationResolver` instead of `.DefaultSelection`.
-6. Test variable roster/team sizes and at least two fixture compositions without asserting production count.
+### Agreed interaction
+
+- Keep editing inside the current Reception Profile screen.
+- Roster selection drives details and current action buttons.
+- `Сделать главным` is available for a selected non-leader and preserves team size.
+- `Добавить в команду` / `Убрать из команды` reflect the selected hero's current role.
+- Allowed loadouts render as a variable list; selecting the current loadout is a no-op.
+- Valid actions persist immediately. Invalid actions leave the previous state intact and show a configured reason.
+
+### Work
+
+1. TDD immutable Profile Domain transformations: change leader, add/remove ordered companion and replace hero loadout.
+2. Make `PlayerProfileSession` commit an already validated candidate by saving before replacing its current state.
+3. Add a pure profile-to-`DungeonRunTeamSelection` mapper and an explicit validation result on the current `DungeonRunTeamSetup` boundary.
+4. Add the narrow Guild Hall edit request/result contract and loadout/action presentation snapshots.
+5. Implement the Bootstrap bridge that builds a candidate, validates it against the current setup, commits it and rebuilds the Guild snapshot.
+6. Extend Profile MVVM with reactive snapshot replacement, stable selected actor ID, action commands and visible rejection state.
+7. Extend Guild Hall config/prefab with localization-ready action/error text and dynamic loadout/action bindings.
+8. Pass the edit callback through `GuildHallRoot`; do not expose repository, session or catalogs to Guild Hall.
+9. Resolve World Map dungeon requests from the latest persisted profile selection instead of `.DefaultSelection`.
+10. Add behavior tests for variable sizes, both leader-change paths, size-limit rejection, loadout rejection, save count/failure and two valid fixture compositions.
+11. Validate C# compile, focused EditMode tests, production prefab bindings, relevant PlayMode flow and mechanical Unity assets.
+
+### Done when
+
+- the open Profile immediately reflects accepted edits and shows explicit configured feedback for rejection;
+- rejected edits perform zero saves and accepted edits perform one save;
+- reopening the hall uses the committed state;
+- a normal World Map launch carries the latest profile leader, ordered companions, levels and loadouts;
+- no Profile/Guild Hall/Dungeon Run reverse dependency or service locator was added;
+- tests derive expectations from fixtures/configuration and never assert a fixed hero, team, loadout or skill count.
 
 PP-2 does not add recruitment, hero purchase, equipment or skill-tree progression.
 

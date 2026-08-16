@@ -1,8 +1,8 @@
 # DungeonTeam — Player Profile Technical Design
 
-**Статус:** PP-1 IMPLEMENTED; PP-2 IS NEXT
+**Статус:** PP-1 IMPLEMENTED; PP-2 DESIGNED/IN PROGRESS
 
-**Версия:** 0.1
+**Версия:** 0.2
 
 **Дата:** 16 августа 2026
 
@@ -277,3 +277,92 @@ Manual full-flow smoke and build are reported separately and are not PP-1 automa
 - PP-5: configured guild rank ladder, promotion and board availability;
 - quests remain a separate feature and save key;
 - multiple profiles, cloud account sync and save-slot UI are not planned.
+
+## 13. PP-2 — composition editing contract
+
+### 13.1. UX decision
+
+PP-2 extends the existing Reception Profile screen; it does not add a separate team-builder screen.
+
+- selecting a roster hero still opens that hero's details;
+- a non-leader can be made leader with one explicit action;
+- a companion can be removed and an available roster hero can be added;
+- the selected hero exposes only loadouts allowed for that actor by the current `DungeonRunTeamSetup`;
+- every accepted action is applied immediately, persisted once and reflected in the open Profile screen;
+- there is no invalid or unsaved draft: an action that would violate current team limits or content compatibility is rejected without changing the session;
+- a rejected action shows a concrete localization-ready reason supplied in the Guild Profile text snapshot.
+
+Changing leader preserves team size. If the selected hero is a companion, the previous leader takes that companion's ordered slot. If the selected hero was available, the previous leader becomes available and the companion order is unchanged.
+
+### 13.2. Module boundary
+
+```text
+GuildProfileView command
+  -> GuildProfileViewModel / GuildProfileModel
+  -> GuildHallRoot callback: GuildProfileEditRequest -> GuildProfileEditResult
+  -> Bootstrap composition bridge
+     -> build candidate PlayerProfileState
+     -> build and validate DungeonRunTeamSelection through DungeonRunTeamSetup
+     -> PlayerProfileSession.Commit(candidate)
+     -> rebuild flat GuildProfileSnapshot
+  -> model replaces its snapshot and keeps selection by actorId
+```
+
+`GuildHall.Application` owns only the semantic edit request/result and flat presentation snapshots. It has no reference to PlayerProfile, DungeonRun, Actor or Skill assemblies. `PlayerProfile` owns immutable state changes and persistence, but does not reference Guild Hall or run configuration. Bootstrap remains the only cross-feature composition point.
+
+No new DI scope, event bus, generic command framework or profile UI assembly is introduced.
+
+### 13.3. Public data
+
+`GuildHeroSnapshot` additionally carries:
+
+- current stable `loadoutId`;
+- ordered `GuildHeroLoadoutSnapshot[]` allowed for that actor;
+- each loadout option contains a stable ID and prepared display text, not a runtime config object.
+
+`GuildProfileTextSnapshot` carries action labels, loadout label and rejection texts. The View contains no player-facing hard-coded fallback strings.
+
+The edit boundary is one current feature-specific contract:
+
+```text
+GuildProfileEditRequest
+├─ kind: SetLeader | AddCompanion | RemoveCompanion | SetLoadout
+├─ actorId
+└─ loadoutId: required only for SetLoadout
+
+GuildProfileEditResult
+├─ accepted
+├─ updated GuildProfileSnapshot when accepted
+└─ prepared error display text when rejected
+```
+
+### 13.4. PlayerProfile state operations
+
+Domain exposes immutable transformations for the current aggregate only:
+
+- change leader with the team-size/order behavior above;
+- add an existing roster hero as the last companion;
+- remove an existing companion;
+- replace one existing roster hero's loadout ID.
+
+These methods enforce profile membership and uniqueness. They do not decide team-size limits or whether a loadout exists in current content. The Bootstrap bridge validates every candidate through `DungeonRunTeamSetup` before calling `PlayerProfileSession.Commit`.
+
+`PlayerProfileSession.Commit` saves the candidate before replacing `State`. A thrown repository/mapping error leaves the previous state active. The known SaveStore `ForceSave()` inability to report swallowed I/O failure remains unchanged and explicitly outside the PP-2 claim.
+
+### 13.5. Run integration
+
+A pure Bootstrap mapper builds `DungeonRunTeamSelection` from the latest `PlayerProfileState` by stable actor IDs, levels and loadout IDs. `ApplicationRoot` supplies that selection when resolving a World Map dungeon destination. `WorldMapDestinationResolver` no longer receives `DungeonRunTeamSetup.DefaultSelection` for normal player flow.
+
+The final run boundary still calls `DungeonRunTeamSetup.RequireValid`; Profile editing does not weaken launch validation. Developer console presets remain independent developer tooling.
+
+### 13.6. PP-2 acceptance and tests
+
+- leader change preserves member count and deterministic companion order;
+- add/remove respects supplied minimum/maximum sizes, including variable fixtures;
+- loadout change accepts only an actor-supported loadout;
+- a rejected action neither saves nor replaces the session state and returns an explicit reason;
+- an accepted action saves exactly once and refreshes leader/team/roster/loadout presentation;
+- closing/reopening Reception and recreating Guild Hall use the latest session state;
+- at least two different fixture compositions map to valid run selections without fixed production counts;
+- World Map launch uses the latest profile selection, not the configured default;
+- prefab bindings and dynamic action/loadout rows validate and dispose without duplicate listeners.
