@@ -1,8 +1,8 @@
 # DungeonTeam — Guild Hall Technical Design
 
-**Статус:** IMPLEMENTED AND AUTOMATION-VALIDATED THROUGH GH-7; MANUAL FLOW SMOKE NOT RUN
+**Статус:** IMPLEMENTED AND AUTOMATION-VALIDATED THROUGH GH-7 + PP-6 regression; MANUAL FLOW SMOKE/BUILD NOT RUN
 
-**Версия:** 0.6
+**Версия:** 0.7
 
 **Дата:** 16 августа 2026
 
@@ -30,9 +30,9 @@ Guild Hall Runtime ↔ World Map UI → existing Dungeon Run Runtime
         └──────── session result ───────┘
 ```
 
-`ApplicationRoot` остаётся composition и flow boundary существующего приложения. Он владеет текущим активным root, собирает входные snapshots и обрабатывает semantic outputs. Guild Hall и World Map не вызывают друг друга и не создают `DungeonRunStartRequest`.
+`ApplicationRoot` остаётся composition и flow boundary существующего приложения. Он владеет текущим активным root, application-lifetime Player Profile/persistence, собирает входные snapshots и обрабатывает semantic outputs. Guild Hall и World Map не вызывают друг друга и не создают `DungeonRunStartRequest`.
 
-Технический дизайн сознательно не включает Player Profile, persistence, экономику, ранги, предметы и полноценные квесты. Он оставляет для них стабильные ID и однонаправленные data boundaries, но не создаёт speculative services/interfaces.
+Исторический GH-дизайн не переносит Player Profile/persistence/economy/rank/item ownership в Guild Hall. Текущий PP-срез подключает их только через подготовленные snapshots и Bootstrap callbacks; полноценные квесты остаются вне scope.
 
 ## 2. Проверенные ограничения текущего проекта
 
@@ -102,7 +102,8 @@ GuildHallStartContext
 ├─ IReadOnlyList<AmbientNpcSnapshot> Npcs
 ├─ IReadOnlyList<NoticeBoardOfferSnapshot> Offers
 ├─ string? SelectedContractId
-└─ GuildRunSummarySnapshot? LastRunSummary
+├─ GuildRunSummarySnapshot? LastRunSummary
+└─ GuildProfileSnapshot Profile
 ```
 
 Минимальные типы:
@@ -110,6 +111,7 @@ GuildHallStartContext
 - `AmbientNpcSnapshot`: location-neutral `npcId`, display-name text snapshot, `dialoguePoolId`, `ambientProfileId` из `AmbientNpc.Application`;
 - `NoticeBoardOfferSnapshot`: `contractId`, title, summary, `locationId`, `isAvailable`, optional disabled reason;
 - `GuildRunSummarySnapshot`: outcome, dungeon display text и подготовленные строки наград без Unity/config objects.
+- `GuildProfileSnapshot`: prepared Gold/rank, roster/team/loadout, equipment/resources and commands through a narrow edit callback; it contains no persistence/config objects.
 
 Snapshot создаётся после валидации catalogs. Runtime не перечитывает mutable config во время активного lifecycle.
 
@@ -142,10 +144,10 @@ World Map возвращает `LocationSelected(string locationId)` или `Bac
 `GuildSessionState` принадлежит application flow и не сохраняется на диск:
 
 - `SelectedContractId`;
-- optional `DungeonRunResult` либо уже подготовленный `GuildRunSummarySnapshot`;
+- optional уже подготовленный `GuildRunSummarySnapshot`;
 - guard текущего transition.
 
-Состояние не содержит root, View, config page или Addressables resource. При появлении профиля его persistent state будет отдельным владельцем; `GuildSessionState` не превращается в профиль.
+Состояние не содержит root, View, config page или Addressables resource. Persistent profile state/session остаётся отдельным application owner; `GuildSessionState` не превращается в профиль.
 
 ## 5. Config и catalogs
 
@@ -358,9 +360,9 @@ ApplicationRoot
 ### 9.1. Startup
 
 1. Bootstrap создаёт application services и catalogs.
-2. Application создаёт пустой `GuildSessionState`.
-3. Application строит `GuildHallStartContext`.
-4. Application создаёт и инициализирует `GuildHallRoot`.
+2. Bootstrap загружает/создаёт и валидирует application-lifetime Player Profile до показа Guild Hall.
+3. Application создаёт пустой `GuildSessionState` и строит rank-filtered offers/profile snapshot.
+4. Application создаёт и инициализирует `GuildHallRoot` из подготовленного `GuildHallStartContext`.
 5. Только после успешной инициализации скрывается loading screen и разрешается input.
 
 ### 9.2. Guild Hall → World Map
@@ -377,7 +379,7 @@ ApplicationRoot
 1. Получить `locationId`.
 2. Проверить, что location доступна в актуальном catalog.
 3. Для dungeon destination потребовать выбранный `contractId`.
-4. Application разрешает contract/destination в существующий `DungeonRunStartRequest` через текущий launch preset catalog.
+4. Application разрешает contract/destination в существующий `DungeonRunStartRequest` через текущий launch preset catalog и передаёт latest profile team selection.
 5. Полностью закрыть World Map.
 6. Запустить `DungeonRunHost` существующим lifecycle.
 
@@ -386,10 +388,10 @@ Contract definition хранит semantic destination/launch preset ID; UI не 
 ### 9.4. Dungeon Run → Guild Hall
 
 1. Принять ровно один terminal `DungeonRunResult`.
-2. Остановить и освободить Dungeon Run.
-3. Сохранить summary в `GuildSessionState` только в памяти.
-4. Построить новый `GuildHallStartContext`.
-5. Создать новую Guild Hall session.
+2. Bootstrap maps supported rewards to a profile terminal request and performs verified exactly-once settlement.
+3. При успешном settlement построить summary только из committed receipt, затем остановить и освободить Dungeon Run.
+4. Сохранить committed summary в `GuildSessionState` только для presentation текущей сессии.
+5. Построить новый `GuildHallStartContext` с актуальным profile snapshot и создать новую Guild Hall session.
 
 Application cancellation не превращается в игровой результат и не создаёт summary.
 
@@ -414,11 +416,11 @@ Guild Hall заменяет player-facing ответственность тек�
 
 ### 11.1. Player Profile и saves
 
-Позже Application строит те же Guild Hall/Board/Map snapshots из profile + definitions. SaveStore V2 хранит profile business state и stable IDs. Guild Hall runtime не получает SaveStore.
+Реализованный PP-срез строит Guild Hall/Board snapshots из profile + definitions в Bootstrap. SaveStore V2/V4 хранит profile business state и stable IDs; verified persistence и recovery принадлежат PlayerProfile/ApplicationRoot. Guild Hall runtime/UI получает только prepared snapshots и narrow edit callback, не SaveStore/session/catalog/config.
 
 ### 11.2. Rank
 
-Rank rules добавляются в отдельный Application/Domain owner. Он влияет на:
+Реализованный PP-5 rank owner влияет на:
 
 - фильтрацию/availability `NoticeBoardOfferSnapshot`;
 - конкретные reception commands;
@@ -428,7 +430,7 @@ Board и NPC presentation не меняют контракт.
 
 ### 11.3. Selling, items и money
 
-Когда появятся inventory/economy rules, стойка получает конкретный sell use case и immutable inventory/price snapshots. Она не читает Reward config напрямую и не меняет кошелёк из ViewModel.
+Реализованный PP-3/PP-4 путь передаёт в стойку concrete inventory/resource/price snapshots и narrow sell commands. Reward settlement выполняется Bootstrap до summary; Hall ViewModel не читает Reward config напрямую и не меняет кошелёк.
 
 ### 11.4. Quests
 
@@ -464,6 +466,8 @@ Quest definitions/state появляются отдельной feature толь
 - после нескольких переходов не остаются дублированные объекты или активные inputs.
 
 Build и внешний playtest не являются частью этого implementation slice.
+
+PP-6 current automation evidence in the open Unity Editor `6000.7.0a3`: full EditMode `429/429 passed`, PlayMode `102/102 passed`, and `Bootstrap.csproj` compile `0` warnings/`0` errors. Manual Hall/Profile → Map → Run → return/restart smoke and player build remain unrun. Repository-wide `validate-unity-change.ps1 -AllAssets` retains only pre-existing imported showcase unresolved GUID diagnostics and the preserved TMP fallback whitespace; the scoped PP diff check excluding TMP passed.
 
 ## 13. Definition of Ready для реализации
 

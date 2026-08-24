@@ -1,8 +1,8 @@
 # DungeonTeam — Player Profile Technical Design
 
-**Статус:** PP-1/PP-2 IMPLEMENTED; PP-3 DESIGNED, NOT IMPLEMENTED
+**Статус:** PP-1/PP-2/PP-3/PP-4/PP-5 IMPLEMENTED; PP-6 regression closure audited
 
-**Версия:** 0.5
+**Версия:** 0.6
 
 **Дата:** 24 августа 2026
 
@@ -21,8 +21,7 @@
 - Guild Hall world/UI lifecycle;
 - Actor/Skill config и Unity presentation;
 - Dungeon Run state и reward collection;
-- предметами и equipment до PP-3;
-- rank definitions/promotions до PP-5;
+- static item/rank definitions и Unity config assets;
 - quest definitions/state.
 
 Минимальный Application contract PP-1:
@@ -53,7 +52,7 @@ Assets/Code/Gameplay/PlayerProfile/
 | --- | --- | --- |
 | `DungeonTeam.PlayerProfile.Domain` | profile aggregate/value state and invariants | BCL only; `noEngineReferences: true` |
 | `DungeonTeam.PlayerProfile.Application` | seed/snapshot, load/save orchestration and persistence port | `PlayerProfile.Domain`; `noEngineReferences: true` |
-| `DungeonTeam.PlayerProfile.Infrastructure` | SaveStore V2 DTO/key mapping | `PlayerProfile.Application`, `PlayerProfile.Domain`, `LocalSaveSystem` |
+| `DungeonTeam.PlayerProfile.Infrastructure` | SaveStore V4 DTO/key mapping and V1→V4 migration | `PlayerProfile.Application`, `PlayerProfile.Domain`, `LocalSaveSystem` |
 
 Profile UI не создаёт четвёртую assembly. Единственный текущий consumer — Guild Hall; его local MVVM family живёт в `GuildHall.Runtime` и получает flat `GuildProfileSnapshot` из `GuildHall.Application`. Это не связывает Guild Hall с profile implementation и не создаёт UI module ради одного consumer.
 
@@ -96,7 +95,7 @@ Invariants:
 
 Domain does not know whether an actor/level/loadout exists in current content. Application initialization validates the loaded snapshot against the seed/current definitions prepared by composition. Unknown or incompatible IDs are an explicit load error in PP-1; silent replacement with defaults is forbidden.
 
-PP-1 does not reserve inventory/equipment fields. PP-3 changes the profile record to V2 and supplies a migration.
+The implemented PP-3/PP-4/PP-5 record includes inventory/equipment state, terminal settlement state and rank ID through the existing profile aggregate and V1→V4 migration chain. Static item/rank definitions remain outside the profile and are supplied by composition.
 
 ## 4. First-profile seed and content resolution
 
@@ -130,7 +129,7 @@ The repository does not own/dispose the injected store. No feature root, ViewMod
 ### 5.2. Stable record
 
 - key: `player.profile`;
-- value: `[SaveVersion(1)]` DTO with explicit `[SaveFieldId]` identifiers;
+- value: `[SaveVersion(4)]` DTO with explicit `[SaveFieldId]` identifiers (the historical CLR type remains `PlayerProfileSaveV1`);
 - tagged format and atomic write remain enabled;
 - arrays/simple DTO values are used instead of Unity serialization types;
 - first creation is persisted immediately;
@@ -140,7 +139,7 @@ DTO and Domain state are separate. Infrastructure maps both directions and valid
 
 ### 5.3. Proven package limitation
 
-Installed `LocalSaveSystem` is `2.0.1`. Its `SaveStore.ForceSave()` catches I/O exceptions and only logs them, so the caller cannot currently distinguish a successful durable write from a failed one. PP-1 may use this API for initial persistence and must report the limitation; PP-4 cannot claim atomic/idempotent reward commit until the package exposes a failure result/exception or an approved verified adapter closes that gap.
+Installed `LocalSaveSystem` is `2.0.1`. Its `SaveStore.ForceSave()` catches I/O exceptions and only logs them, so it does not provide an fsync/durable-write guarantee. The implemented `PlayerProfilePersistence` closes the application-level verification gap by writing the full V4 record, reading it through a fresh equivalent reader and retaining the previous session state on mismatch/read failure. This proves fresh-reader observation, not a stronger hardware durability guarantee.
 
 This is not solved with a second custom save format or legacy `UnityBinaryLocalSaveSystem`.
 
@@ -152,16 +151,20 @@ Bootstrap builds `GuildProfileSnapshot` from `PlayerProfileSnapshot`, `ActorConf
 GuildProfileSnapshot
 ├─ goldText/value
 ├─ rank display text
+├─ prepared rank/promotion snapshot
 ├─ leader: GuildHeroSnapshot
 ├─ companions: GuildHeroSnapshot[]
-└─ roster: GuildHeroSnapshot[]
+├─ roster: GuildHeroSnapshot[]
+└─ prepared resource rows
 
 GuildHeroSnapshot
 ├─ actorId / display name
 ├─ role: Leader | Companion | Available
 ├─ level
 ├─ maximumHealth / movementSpeed
-└─ skills: GuildHeroSkillSnapshot[]
+├─ skills: GuildHeroSkillSnapshot[]
+├─ allowed loadouts
+└─ prepared equipment/inventory rows
 ```
 
 Each skill snapshot is resolved from the saved `loadoutId` and contains stable slot identity, display name, skill level and the small set of values PP-1 actually renders. The ViewModel never branches on concrete `SkillDefinition` subtype; the builder prepares presentation text/value rows.
@@ -372,9 +375,16 @@ The final run boundary still calls `DungeonRunTeamSetup.RequireValid`; Profile e
 - The Bootstrap edit handler commits before publishing the refreshed Guild snapshot. Rejection and repository exceptions keep the previous session state and return configured presentation feedback.
 - The open Profile refreshes from the accepted snapshot while preserving selection by stable actor ID; normal World Map launch maps the latest session state.
 - Focused pure EditMode behavior regression passed: 27/27 tests across Profile Domain, application flow, Guild snapshot builder and Guild Profile ViewModel.
-- C# solution compile passed with 0 errors. Scoped `git diff --check` passed; the project-wide mechanical script reports only pre-existing whitespace in the unrelated modified TMP fallback asset.
-- Full Unity EditMode/PlayMode automation and runtime visual interaction were not run because the project was owned by the open Editor and Unity MCP was unavailable. The implementation reuses the existing validated dynamic roster-row bindings for action/loadout rows and does not add serialized prefab fields; this is not a runtime visual proof.
-- The documented SaveStore `ForceSave()` swallowed-I/O limitation remains unchanged and outside the PP-2 durability claim.
+- At the PP-2 milestone, C# solution compile passed with 0 errors and the scoped `git diff --check` passed; that milestone's project-wide mechanical run reported only the then-known unrelated TMP whitespace.
+- The PP-2 milestone's original Unity automation gap and SaveStore limitation remain historical bounded evidence; they are not upgraded retroactively by this closure.
+
+### 13.8. PP-6 current closure evidence
+
+- The open Unity Editor `6000.7.0a3` completed the full available EditMode suite: `429/429 passed`.
+- The existing PlayMode runner started normally and completed `102/102 passed`; this is automation evidence for bindings/lifecycle, not a manual full-flow smoke.
+- `dotnet build Bootstrap.csproj --no-restore` completed with `0` warnings and `0` errors.
+- Scoped `git diff --check` excluding the user-owned TMP fallback asset passed. Repository-wide `validate-unity-change.ps1 -AllAssets` remains non-green because it reports 35 unresolved GUID diagnostics in pre-existing imported showcase assets plus 8 diff-check diagnostics from the TMP fallback asset; no PP production asset was changed.
+- Manual Guild Profile → equip/sell/promote → Map → Run → return/restart flow, player build and external playtest remain unrun.
 
 ## 14. PP-3 — inventory, equipment and save contract
 
@@ -670,4 +680,4 @@ Compile all affected asmdefs plus focused PlayerProfile, GuildHall and Bootstrap
 
 #### F. Implementation status
 
-PP-5 is implemented with the documented ownership and no new root, DI scope or generic progression layer. Independent targeted Unity EditMode passed for the five rank/catalog/session/migration cases plus the rank-gated offer case (6/6); `Bootstrap.csproj` compiled with 0 errors and 0 warnings. A broad MCP test request timed out before it started and is not counted as evidence. The Unity mechanical validator reports only the pre-existing unrelated TMP fallback whitespace. Prefab/UI promotion and board-gating smoke remains manual and unrun.
+PP-5 is implemented with the documented ownership and no new root, DI scope or generic progression layer. Independent targeted Unity EditMode passed for the five rank/catalog/session/migration cases plus the rank-gated offer case (6/6); `Bootstrap.csproj` compiled with 0 errors and 0 warnings. The first broad MCP request at that milestone timed out before it started and is not counted as evidence; PP-6 subsequently completed the full Editor suites (`429/429` EditMode, `102/102` PlayMode). The PP-5 targeted mechanical validator reported only the pre-existing unrelated TMP fallback whitespace; the PP-6 repository-wide audit additionally records pre-existing imported showcase unresolved GUID diagnostics. Prefab/UI promotion and board-gating smoke remains manual and unrun.

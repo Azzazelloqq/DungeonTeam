@@ -1,8 +1,8 @@
 # DungeonTeam — Dungeon Return and Guild Summary Technical Design
 
-**Статус:** IMPLEMENTED AND AUTOMATION-VALIDATED (GH-7); manual flow smoke not run
+**Статус:** IMPLEMENTED AND AUTOMATION-VALIDATED (GH-7 + PP-4/PP-6); manual flow smoke/build not run
 
-**Версия:** 1.0
+**Версия:** 1.1
 
 **Дата:** 16 августа 2026
 
@@ -20,7 +20,8 @@ GH-7 завершает один production-цикл:
 
 ```text
 Dungeon Run terminal result
-→ application-owned session summary
+→ Bootstrap profile settlement
+→ application-owned committed summary
 → полный stop/dispose Dungeon Run
 → новая Guild Hall session
 → summary по взаимодействию со стойкой регистрации
@@ -28,7 +29,7 @@ Dungeon Run terminal result
 
 После автоматического доказательства нового пути физически удаляется уже отключённый в GH-6 `MainMenu`: runtime/UI assemblies, тесты, prefab assets, Addressable entry и generated ID. Второй production flow не сохраняется.
 
-GH-7 не применяет награды к банку, профилю или save. `RewardCatalog` используется только для подготовки отображаемых названий уже собранных `RewardGrant`.
+PP-4 adds the narrow Bootstrap reward mapper and verified exactly-once profile settlement before the summary is shown. `RewardCatalog` still owns display definitions; DungeonRun/Rewards do not know the profile or persistence.
 
 ## 2. Scope и non-goals
 
@@ -38,7 +39,8 @@ GH-7 не применяет награды к банку, профилю или
 - защита от повторной обработки terminal result;
 - преобразование результата в immutable `GuildRunSummarySnapshot` любого размера;
 - полный `DungeonRunHost.Stop()` до создания нового `GuildHallRoot`;
-- session-only хранение последнего summary в существующем `GuildSessionState`;
+- session-only хранение последнего committed summary в существующем `GuildSessionState`;
+- verified Gold/resource settlement through the application-owned Player Profile record before stopping the run;
 - локальное окно summary у interaction kind `Reception`;
 - явное состояние application flow после невосстановимой ошибки перехода;
 - физическое удаление доказанно неиспользуемого MainMenu и очистка Addressables/generated IDs;
@@ -46,7 +48,7 @@ GH-7 не применяет награды к банку, профилю или
 
 Не входят:
 
-- Player Profile, `SaveStore`, inventory, кошелёк, продажа, ранги и quests;
+- Player Profile/SaveStore ownership inside DungeonRun/Rewards; the Bootstrap bridge and PlayerProfile application are the only settlement owners;
 - начисление или повторная генерация наград;
 - изменение `DungeonRunResult`, боевых правил или reward collection;
 - новый navigation framework, event bus, DI scope или feature assembly;
@@ -60,9 +62,9 @@ GH-7 не применяет награды к банку, профилю или
 - `DungeonRunRoot.Finished` публикует immutable `DungeonRunResult` только после `DungeonRunProgress.TryFinish`; root очищает event при disposal.
 - `DungeonRunHost.Stop()` сначала убирает ссылку на active run, затем синхронно вызывает его `Dispose()`.
 - `DungeonRunResult.CollectedRewards` уже содержит агрегированные по `rewardId` grants и не требует fixed count.
-- `GuildRunSummarySnapshot` и `GuildSessionState.LastRunSummary` существуют, но terminal flow их пока не заполняет.
+- `GuildRunSummarySnapshot` и `GuildSessionState.LastRunSummary` are populated only after a committed settlement receipt.
 - `GuildHallStartContextBuilder` уже переносит `LastRunSummary` в новый Hall context.
-- `Reception` сейчас маршрутизируется наружу через общий callback, который в `ApplicationRoot` является no-op.
+- `Reception` now opens the prepared Profile/summary families inside `GuildHallRoot`; the legacy external registrar callback remains a no-op because business actions use the narrow profile edit bridge.
 - `MainMenuRoot` отсутствует в active Bootstrap wiring; `rg` показывает consumers только внутри двух MainMenu code trees, их тестов, двух prefab assets, Addressable entry и generated constant.
 - Addressables package в текущем `Library/PackageCache` — `3.1.0`.
 
@@ -75,6 +77,7 @@ ApplicationRoot
 ├─ DungeonRunHost
 │  └─ active DungeonRunRoot --Finished(result)--> ApplicationRoot
 ├─ RewardCatalog
+├─ PlayerProfilePersistence / PlayerProfileSession
 ├─ GuildSessionState
 └─ new GuildHallRoot
    └─ RunSummary MVVM family (serialized child prefab)
@@ -92,6 +95,7 @@ ApplicationRoot
 Builder получает:
 
 - `DungeonRunResult`;
+- committed `ProfileSettlementReceipt` for the same `RunId`;
 - `RewardCatalog`;
 - validated localization-ready summary texts из `GuildHallCatalog`.
 
@@ -99,9 +103,9 @@ Builder:
 
 1. Сопоставляет `Completed`/`Defeated` с configured outcome snapshot без `Enum.ToString()` как пользовательского текста.
 2. Создаёт dungeon text snapshot со stable `DungeonId`; текущий fallback display также равен `DungeonId`, потому что result contract не несёт отдельного localization ID. Отдельный dungeon-content refactor в GH-7 не вводится.
-3. Для каждого входного `RewardGrant` вызывает `RewardCatalog.Require(rewardId)` и строит display line из configured format, display name и amount.
+3. Для Gold/resource values in the committed receipt вызывает `RewardCatalog.Require(rewardId)` and builds display lines from configured format, display name and amount.
 4. Сохраняет входной порядок и любое количество строк, включая ноль.
-5. Не изменяет catalog, result, session state, bank или save.
+5. Не изменяет catalog, result, session state, bank или save; settlement has already completed before the builder runs.
 
 Unknown reward, пустой ID или некорректный format являются configuration/programming error. Summary целиком строится до остановки run и до mutation session state, поэтому частичный summary не публикуется.
 
@@ -137,7 +141,9 @@ Unknown reward, пустой ID или некорректный format явля�
 ```text
 Finished(result)
 → TryBegin(expected DungeonRun)
-→ build complete summary (pure, no mutation)
+→ map supported rewards to profile terminal request
+→ verified PlayerProfileSession.BankTerminalResult(request)
+→ build complete summary from committed receipt (pure, no mutation)
 → show Loading
 → unsubscribe Finished
 → DungeonRunHost.Stop()
@@ -192,7 +198,7 @@ Presentation/UI/RunSummary/
 ### 6.2. Behavior
 
 - `Reception` открывает summary только если `GuildHallStartContext.LastRunSummary != null`.
-- При отсутствии summary interaction сохраняет semantic callback наружу; GH-7 не имитирует продажу, rank или registrar service.
+- При отсутствии summary interaction сохраняет semantic callback наружу; selling/rank/profile actions остаются отдельными narrow Bootstrap bridges.
 - Окно показывает header, outcome, dungeon и все reward lines; для пустого списка показывает configured empty text.
 - Открытие блокирует world movement и interaction controller.
 - Close скрывает окно и восстанавливает input.
@@ -288,10 +294,10 @@ GH-7 готов, когда:
 
 - каждый terminal result принимается Application ровно один раз;
 - Dungeon Run полностью остановлен до создания новой Guild Hall;
-- новый Hall получает session-only summary, построенный из всех переданных reward grants;
+- новый Hall получает committed summary, построенный из settlement receipt и всех поддержанных terminal reward values;
 - стойка регистрации показывает этот summary и корректно управляет modal/input lifecycle;
 - второй цикл Map → Dungeon → Hall проходит через тот же owner path без второго root/subscription;
-- ни одна награда не применяется к bank/save/profile;
+- неподдержанная награда не сохраняется; поддержанные Gold/resource grants применяются ровно один раз через Player Profile до показа summary;
 - невосстановимый переход не оставляет ложное active state;
 - MainMenu code/assets/addressable/generated ID физически отсутствуют и не имеют consumers;
 - automated checks из §8 зелёные;
@@ -299,16 +305,16 @@ GH-7 готов, когда:
 
 ## 11. Фактическая реализация и validation
 
-Реализованы `GuildRunSummaryBuilder` в `Bootstrap`, application-owned named `DungeonRunRoot.Finished` subscription для World Map и developer launches, session-only summary transfer после `DungeonRunHost.Stop()`, `PlayerFlowState.Faulted` для неудачного recovery после уничтожения outgoing owner и вложенная `RunSummary` MVVM family в `GuildHallGraybox.prefab`.
+Реализованы `GuildRunSummaryBuilder` и `RewardSettlementMapper` в `Bootstrap`, application-owned named `DungeonRunRoot.Finished` subscription для World Map и developer launches, verified exactly-once profile settlement before `DungeonRunHost.Stop()`, committed summary transfer после stop, `PlayerFlowState.Faulted` для неудачного recovery после уничтожения outgoing owner и вложенная `RunSummary` MVVM family в `GuildHallGraybox.prefab`.
 
 Production config содержит localization-ready summary texts. Reception открывает окно только при наличии session summary; variable reward rows принадлежат View, без item ViewModel. MainMenu runtime/UI trees, оба prefabs, Addressable entry и generated ID удалены после `rg`/GUID/asmdef audit.
 
 В открытом Unity Editor `6000.7.0a3` после независимого review выполнены:
 
 - Unity refresh/compile завершён, compilation state ready, compile errors отсутствуют;
-- полный project EditMode — `377/377 passed`;
+- полный project EditMode — `429/429 passed`;
 - полный project PlayMode — `102/102 passed`, включая actual Guild Hall/World Map Addressable lifecycle;
 - `rg`/GUID/asmdef/generated-ID audit — MainMenu consumers и orphaned references отсутствуют;
-- relevant `git diff --check` — чисто; общий `git diff --check` по-прежнему сообщает только pre-existing trailing whitespace в unrelated `LiberationSans SDF - Fallback.asset`.
+- `Bootstrap.csproj` compile — `0` warnings, `0` errors; scoped `git diff --check` excluding the user-owned TMP fallback asset — clean. Repository-wide `validate-unity-change.ps1 -AllAssets` reports 35 unresolved GUID diagnostics in pre-existing imported showcase assets and 8 TMP diff-check diagnostics.
 
 На независимом review дополнительно исправлены: переход Hall → Map в `Faulted` при неудачном recovery после потери owner, обязательное наличие обоих placeholders в reward format и зависимость Base ViewModel от family ModelBase вместо concrete Model. Manual full-flow smoke, build и внешний playtest не запускались.

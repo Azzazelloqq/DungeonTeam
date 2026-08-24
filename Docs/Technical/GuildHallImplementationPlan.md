@@ -1,6 +1,6 @@
 # DungeonTeam — Guild Hall Implementation Plan
 
-**Статус:** GH-0…GH-7 IMPLEMENTED AND AUTOMATION-VALIDATED; manual flow smoke not run
+**Статус:** GH-0…GH-7 IMPLEMENTED AND AUTOMATION-VALIDATED; PP-1…PP-5 integrated; PP-6 regression audited; manual flow smoke/build not run
 
 **Версия:** 0.6
 
@@ -22,11 +22,11 @@ Application start
 → NPC dialogue / Notice Board
 → World Map
 → existing Dungeon Run
-→ session-only result
+→ verified profile settlement + summary
 → new Guild Hall session
 ```
 
-Реализация не включает Player Profile, saves, деньги, продажу, ранги, inventory и quest system.
+Player Profile, V4 saves, Gold/equipment/resource settlement, selling and rank gating are integrated through Bootstrap without exposing their owners to Guild Hall runtime/UI. Quest system, new currencies and future destinations remain outside this plan.
 
 ## 2. Правила выполнения
 
@@ -49,6 +49,8 @@ Application start
 | GH-5. Notice Board | Реализован и независимо провалидирован: EditMode, PlayMode, actual Addressable prefab lifecycle |
 | GH-6. World Map и application transitions | Реализован и независимо провалидирован: compile, focused EditMode, regression EditMode/PlayMode, actual WorldMap Addressable lifecycle; manual flow smoke не запускался |
 | GH-7. Dungeon return, summary и cleanup | Реализован и automation-validated |
+
+PP integration: PP-1…PP-5 implemented with focused evidence; PP-6 full regression completed with EditMode `429/429`, PlayMode `102/102`, Bootstrap compile `0/0`, and manual flow/build still unrun.
 
 ## 3. Целевая структура
 
@@ -260,7 +262,7 @@ Assets/Prefabs/UI/WorldMap/
 2. Строить `WorldMapStartContext` в Application из актуального catalog/state.
 3. Обрабатывать:
    - Guild Hall location → новый `GuildHallRoot`;
-   - Dungeon location → проверка выбранного contract и создание текущего `DungeonRunStartRequest`;
+   - Dungeon location → проверка выбранного contract, latest profile team selection и создание текущего `DungeonRunStartRequest`;
    - unavailable location → отсутствие transition.
 4. Ввести один application transition guard вместо разрозненных boolean по features.
 5. На каждом переходе полностью освобождать outgoing root до активации incoming input.
@@ -287,7 +289,7 @@ Assets/Prefabs/UI/WorldMap/
 
 1. Перенаправить terminal `DungeonRunResult` в application session-state.
 2. Полностью остановить Dungeon Run до создания нового Guild Hall.
-3. Подготовить `GuildRunSummarySnapshot` из текущих reward definitions без bank/save semantics.
+3. Банковать supported terminal rewards через Bootstrap profile settlement; подготовить `GuildRunSummarySnapshot` только из committed receipt и текущих reward definitions.
 4. Показать короткий summary у стойки регистрации или в её dialogue UI.
 5. Удалить физически неиспользуемые MainMenu Addressable/config/code только если `rg` и assembly references доказывают отсутствие других consumers; active production wiring уже убрано в GH-6.
 6. Проверить, что после удаления не осталось orphaned generated IDs/config registrations.
@@ -299,8 +301,8 @@ Assets/Prefabs/UI/WorldMap/
 - board → contract selection;
 - exit → World Map;
 - map → existing Dungeon Run;
-- terminal result → clean Guild Hall;
-- reception → session-only summary;
+- terminal result → verified profile settlement → clean Guild Hall;
+- reception → committed summary and current profile;
 - второй цикл запускается без рестарта;
 - в hierarchy и tick/input ownership нет объектов прошлого цикла.
 
@@ -310,9 +312,9 @@ Assets/Prefabs/UI/WorldMap/
 
 | Future feature | Точка подключения |
 | --- | --- |
-| Player Profile + SaveStore V2 | Application snapshot builder и result application use case |
-| Money / inventory / selling | Конкретный reception use case и собственные immutable snapshots |
-| Guild rank | Offer availability builder, reception commands, profile state |
+| Player Profile + SaveStore V2 | Реализовано PP-1…PP-5: application snapshot builder, verified persistence и result application |
+| Money / inventory / selling | Реализовано PP-3/PP-4: concrete reception use case и immutable snapshots |
+| Guild rank | Реализовано PP-5: offer availability builder, reception commands и profile state |
 | Quest system | Отдельные quest definitions/state; board adapter или отдельная вкладка |
 | Forest destination | Новый destination feature и application mapping для `locationId` |
 | Other city locations | Новые player-facing roots/screens, выбираемые Application по location ID |
@@ -345,8 +347,8 @@ Assets/Prefabs/UI/WorldMap/
 | Старый MainMenu и новый flow конфликтуют | Убрать active production wiring в GH-6; физически удалить module/assets в GH-7 после end-to-end proof |
 | Resource/input leak при переходах | Один active owner, transition guard, disposal до следующей activation |
 | Конфиг превращается в сериализованную сцену | Unity refs и routes остаются в вручную authored prefab |
-| Save schema блокирует будущие изменения | Сейчас save отсутствует; позже сохраняются только business values и stable IDs |
+| Save schema блокирует будущие изменения | Текущий V4 record сохраняет только business values/stable IDs; V1→V4 migration покрыта focused tests |
 
 ## 8. Следующий шаг
 
-GH-7 завершён: ApplicationRoot владеет one-shot terminal subscription, строит session-only summary до `DungeonRunHost.Stop()`, создаёт новый Guild Hall и передаёт summary в дочернюю Reception MVVM family. MainMenu code, prefabs, Addressable entry и generated ID удалены после consumer audit. Автоматическая validation зафиксирована в detailed design; manual flow smoke, build и внешний playtest не запускались.
+GH-7 завершён: ApplicationRoot владеет one-shot terminal subscription, выполняет verified profile settlement до `DungeonRunHost.Stop()`, строит summary из committed receipt, создаёт новый Guild Hall и передаёт summary/profile в дочерние MVVM families. MainMenu code, prefabs, Addressable entry и generated ID удалены после consumer audit. PP-6 подтвердил full EditMode `429/429`, PlayMode `102/102` и Bootstrap compile `0/0`; manual flow smoke, build и внешний playtest не запускались.

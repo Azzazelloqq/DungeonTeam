@@ -1,6 +1,6 @@
 # DungeonTeam — Player Profile Implementation Plan
 
-**Статус:** PP-0/PP-1/PP-2 COMPLETE; PP-3/PP-4/PP-5 IMPLEMENTED, AUTOMATED VALIDATION PASSED; PP-6 DESIGNED
+**Статус:** PP-0/PP-1/PP-2 COMPLETE; PP-3/PP-4/PP-5 IMPLEMENTED, AUTOMATED VALIDATION PASSED; PP-6 AUDITED, DOCUMENTATION CLOSED WITH BASELINE MECHANICAL GAPS
 
 **Версия:** 0.5
 
@@ -26,7 +26,7 @@
 | PP-3 | Unique equipment, stackable resources and three hero slots | Implemented; targeted EditMode passed, manual Guild-to-Run smoke outstanding |
 | PP-4 | Verified result commit, Gold banking and selling | Implemented; targeted EditMode passed, manual failure/selling smoke outstanding |
 | PP-5 | Guild ranks and board gating | Implemented; focused EditMode and compilation passed, manual UI smoke outstanding |
-| PP-6 | Integrated regression and documentation closure | Designed; ready for audit implementation |
+| PP-6 | Integrated regression and documentation closure | Audited; full EditMode/PlayMode passed, repository-wide mechanical baseline gaps recorded, manual smoke/build unrun |
 
 ## 3. PP-1 — persistent read-only profile
 
@@ -210,6 +210,17 @@ The first broad MCP EditMode request did not start before the runner timeout, so
 6. Reconcile Profile, Guild Hall and application-flow documentation against current production names, save version, validation evidence and known manual gaps. Do not upgrade a historical/unrun check to passed.
 7. Fix only confirmed PP-6 defects that violate the already agreed contracts; add a behavior-focused regression test with each fix. Otherwise leave production code untouched.
 
+### PP-6 audit result (24 August 2026, revision `aac62149894df16e4651cd7286b1f903e5c73476`)
+
+- Worktree audit found only the user-owned `Assets/TextMesh Pro/Resources/Fonts & Materials/LiberationSans SDF - Fallback.asset` modification; it was preserved and excluded from scoped PP evidence.
+- Unity MCP used the open `DungeonTeam` Editor `6000.7.0a3`. Full EditMode completed `429/429 passed`; the existing PlayMode runner started normally and completed `102/102 passed`.
+- `dotnet build Bootstrap.csproj --no-restore` completed with `0` warnings and `0` errors.
+- Scoped `git diff --check` excluding the TMP fallback asset passed. Repository-wide `validate-unity-change.ps1 -AllAssets` reported `43` findings: `35` unresolved GUID diagnostics in pre-existing imported showcase assets and `8` diff-check diagnostics from the preserved TMP fallback asset. No PP production asset was changed.
+- Source/asmdef audit confirmed Guild Hall has no SaveStore or PlayerProfile session/catalog references, DungeonRun/Rewards have no profile persistence references, and Bootstrap is the only profile ↔ Hall/Board/Run bridge. The prohibited searches found no project `UnityBinaryLocalSaveSystem` consumer, no project `DiContainerProvider.Resolve<T>()` call, and no raw runtime Addressables key usage; generated `AddressableIds` remain the address source.
+- Roster, item, rank, contract and NPC handling is collection-driven in production code. Fixed fixture indexes in behavior tests and the three approved starter equipment IDs/nine authored rank entries are contract/content evidence, not generic count assumptions.
+- Profile, Guild Hall and application-flow documentation was reconciled only for confirmed current names, V4 persistence, profile-mediated run/return flow, validation results and manual gaps. No production code, prefab, assembly, save field, root or abstraction was added.
+- Manual Guild Profile → equip/sell/promote → Map → Run → return/restart flow, player build and external playtest remain unrun.
+
 ### Done when
 
 - the report separates successful compilation, automated test evidence, static/mechanical evidence and unverified manual paths;
@@ -225,7 +236,7 @@ The first broad MCP EditMode request did not start before the runner timeout, so
 - Guild Profile renders Gold, optional rank, a distinct leader region, companions, variable roster rows and current stats/skills without fixed content counts.
 - Production Guild Hall prefab and text config contain the required localization-ready bindings.
 - Equipment, editable composition, reward banking/selling, rank progression and quests remain outside PP-1 as planned.
-- SaveStore `ForceSave()` still cannot report a durable-write failure to Application; this remains the PP-4 reliability gate.
+- At the historical PP-1 baseline, SaveStore `ForceSave()` could not report a durable-write failure to Application; PP-3/PP-4 later added the verified fresh-reader persistence path.
 
 Validation recorded for PP-1:
 

@@ -42,7 +42,7 @@ GH-6 также выводит старый `MainMenuRoot` из активног
 
 - обработка terminal `DungeonRunResult`, summary и возврат Dungeon → Guild Hall — GH-7;
 - физическое удаление MainMenu code/assets/addressable entry — GH-7;
-- Player Profile, saves, деньги, inventory, продажа, rank и quests;
+- Player Profile/SaveStore ownership внутри World Map; profile bridge и persistence принадлежат Bootstrap/PlayerProfile;
 - Forest и другие новые destinations;
 - сцены, общий navigation framework, event bus или service locator;
 - новый module DI-container;
@@ -136,7 +136,7 @@ WorldMap
 - `ContractCatalog`;
 - `GuildSessionState`;
 - `DungeonRunLaunchPresetCatalog`;
-- default team selection.
+- latest profile-derived team selection prepared by Bootstrap.
 
 Алгоритм:
 
@@ -146,7 +146,7 @@ WorldMap
 4. Для `DungeonRun` потребовать выбранный contract.
 5. Потребовать, чтобы contract существовал, был доступен и его `LocationId` совпадал с выбранной location.
 6. Использовать `location.DestinationId` как ID существующего dungeon launch preset.
-7. Создать текущий `DungeonRunStartRequest` через launch preset catalog и default team.
+7. Создать текущий `DungeonRunStartRequest` через launch preset catalog и latest profile-derived team selection.
 
 Нет silent fallback на default preset или первый contract. Resolver не изменяет session state.
 
@@ -241,8 +241,8 @@ View выполняет только binding и визуальное отраж�
 ### 7.2. Startup
 
 1. Создать application services/catalogs и показать Loading.
-2. Создать пустой `GuildSessionState`.
-3. Построить актуальный `GuildHallStartContext`.
+2. Загрузить/создать и валидировать application-lifetime Player Profile до Guild Hall startup.
+3. Создать пустой `GuildSessionState` и построить актуальный `GuildHallStartContext` из profile-derived offers/snapshot.
 4. Создать и полностью initialize `GuildHallRoot`.
 5. Зафиксировать state `GuildHall`.
 6. Скрыть Loading; только после этого доступен hall input.
@@ -272,7 +272,7 @@ View выполняет только binding и визуальное отраж�
 
 ### 7.5. World Map → Dungeon Run
 
-1. До mutation UI/root resolver полностью валидирует location, выбранный contract и launch preset и создаёт request.
+1. До mutation UI/root resolver полностью валидирует location, выбранный contract и launch preset и создаёт request с latest profile-derived team selection.
 2. Guard принимает переход; показать Loading.
 3. Await close и dispose World Map.
 4. Запустить request через существующий `DungeonRunHost`.
@@ -280,7 +280,7 @@ View выполняет только binding и визуальное отраж�
 
 При ошибке запуска partial run останавливается, затем Application один раз восстанавливает World Map. Fallback на default dungeon запрещён.
 
-GH-6 не подписывает production flow на terminal result и не возвращает игрока из завершённого run: это единый scope GH-7. Dungeon Run остаётся активным owner до application shutdown или development-only команды Back.
+GH-6 не владеет profile settlement и terminal return orchestration: это единый scope GH-7/PP-4. После успешного profile settlement Application возвращает игрока в новый Guild Hall; Dungeon Run остаётся активным owner до terminal callback, application shutdown или development-only команды Back.
 
 ### 7.6. Unavailable и repeated requests
 
@@ -413,3 +413,5 @@ GH-6 готов, когда:
 - active MainMenu references в `Assets/Code/Bootstrap` отсутствуют.
 
 Не выполнялись manual start → Hall → Map → Dungeon smoke, build и внешний playtest. Отдельный production interface/универсальный transition host только ради интеграционного fake-теста не добавлялся; ordering закрыт pure policy tests, actual feature lifecycle tests и явной application orchestration.
+
+PP-6 current regression reran the full available Unity suites in the open Editor: EditMode `429/429 passed` and PlayMode `102/102 passed`; `Bootstrap.csproj` compiled with `0` warnings and `0` errors. The scoped diff check excluding the user-owned TMP fallback asset passed. Manual profile-mediated Hall → Map → Dungeon → return/restart smoke, player build and external playtest remain unrun.

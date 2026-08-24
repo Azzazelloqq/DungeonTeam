@@ -1,6 +1,6 @@
 # DungeonTeam — Player Profile GDD
 
-**Статус:** PP-1/PP-2/PP-3/PP-4/PP-5 реализованы; automated validation частично пройдена, manual Unity smoke outstanding
+**Статус:** PP-1/PP-2/PP-3/PP-4/PP-5 реализованы; PP-6 full EditMode `429/429` и PlayMode `102/102` passed, manual Unity flow smoke/build/external playtest outstanding
 
 **Версия:** 0.4
 
