@@ -8,7 +8,7 @@ using LocalSaveSystem;
 namespace DungeonTeam.Gameplay.PlayerProfile.Infrastructure
 {
     [SaveModel]
-    [SaveVersion(3)]
+    [SaveVersion(4)]
     public sealed class PlayerProfileSaveV1
     {
         [SaveFieldId("gold")] public long Gold;
@@ -126,6 +126,30 @@ namespace DungeonTeam.Gameplay.PlayerProfile.Infrastructure
             WasApplied = true;
             value.PendingTerminalResult = null;
             value.LastAppliedRunId = null;
+            return value;
+        }
+    }
+
+    public sealed class PlayerProfileV3ToV4Migrator : SaveMigrator<PlayerProfileSaveV1>
+    {
+        public bool WasApplied { get; private set; }
+        public void ClearApplied() => WasApplied = false;
+        public override int FromVersion => 3;
+        public override int ToVersion => 4;
+
+        public override PlayerProfileSaveV1 Migrate(PlayerProfileSaveV1 value)
+        {
+            if (value == null)
+            {
+                throw new InvalidOperationException("Cannot migrate a missing player profile.");
+            }
+
+            WasApplied = true;
+            if (string.IsNullOrWhiteSpace(value.RankId))
+            {
+                value.RankId = GuildRankCatalog.BaseRankId;
+            }
+
             return value;
         }
     }
@@ -478,18 +502,21 @@ namespace DungeonTeam.Gameplay.PlayerProfile.Infrastructure
             _migrators = new SaveMigratorRegistry();
             var v1ToV2 = new PlayerProfileV1ToV2Migrator();
             var v2ToV3 = new PlayerProfileV2ToV3Migrator();
+            var v3ToV4 = new PlayerProfileV3ToV4Migrator();
             _migrators.Register(v1ToV2);
             _migrators.Register(v2ToV3);
+            _migrators.Register(v3ToV4);
             _store = CreateStore();
             Repository = new SaveStorePlayerProfileRepository(
                 _store,
                 CreateStore,
                 legacyInventoryFactory,
-                () => v1ToV2.WasApplied || v2ToV3.WasApplied,
+                () => v1ToV2.WasApplied || v2ToV3.WasApplied || v3ToV4.WasApplied,
                 () =>
                 {
                     v1ToV2.ClearApplied();
                     v2ToV3.ClearApplied();
+                    v3ToV4.ClearApplied();
                 });
         }
 

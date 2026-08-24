@@ -1,0 +1,42 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8361925f64a64d11b3f9f3bdf18b947b, type: 3}
+  m_Name: GuildRankConfig
+  m_EditorClassIdentifier: DungeonTeam.PlayerProfile.Infrastructure::DungeonTeam.Gameplay.PlayerProfile.Infrastructure.GuildRankConfigPage
+  _ranks:
+  - _rankId: rank.f
+    _displayName: F
+    _promotionCost: 0
+  - _rankId: rank.e
+    _displayName: E
+    _promotionCost: 10
+  - _rankId: rank.d
+    _displayName: D
+    _promotionCost: 25
+  - _rankId: rank.c
+    _displayName: C
+    _promotionCost: 50
+  - _rankId: rank.b
+    _displayName: B
+    _promotionCost: 100
+  - _rankId: rank.a
+    _displayName: A
+    _promotionCost: 200
+  - _rankId: rank.s
+    _displayName: S
+    _promotionCost: 400
+  - _rankId: rank.ss
+    _displayName: SS
+    _promotionCost: 800
+  - _rankId: rank.sss
+    _displayName: SSS
+    _promotionCost: 1600

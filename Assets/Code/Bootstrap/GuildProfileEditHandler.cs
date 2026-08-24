@@ -15,6 +15,7 @@ namespace Code.ApplicationRoot
         private readonly GuildProfileTextSnapshot _text;
         private readonly Func<PlayerProfileState, GuildProfileSnapshot> _buildSnapshot;
         private readonly ItemCatalog _itemCatalog;
+        private readonly GuildRankCatalog _rankCatalog;
         private readonly Action<Exception> _reportPersistenceFailure;
 
         public GuildProfileEditHandler(
@@ -23,7 +24,7 @@ namespace Code.ApplicationRoot
             GuildProfileTextSnapshot text,
             Func<PlayerProfileState, GuildProfileSnapshot> buildSnapshot,
             Action<Exception> reportPersistenceFailure)
-            : this(session, teamSetup, text, buildSnapshot, null, reportPersistenceFailure)
+            : this(session, teamSetup, text, buildSnapshot, null, null, reportPersistenceFailure)
         {
         }
 
@@ -34,12 +35,25 @@ namespace Code.ApplicationRoot
             Func<PlayerProfileState, GuildProfileSnapshot> buildSnapshot,
             ItemCatalog itemCatalog,
             Action<Exception> reportPersistenceFailure)
+            : this(session, teamSetup, text, buildSnapshot, itemCatalog, null, reportPersistenceFailure)
+        {
+        }
+
+        public GuildProfileEditHandler(
+            PlayerProfileSession session,
+            DungeonRunTeamSetup teamSetup,
+            GuildProfileTextSnapshot text,
+            Func<PlayerProfileState, GuildProfileSnapshot> buildSnapshot,
+            ItemCatalog itemCatalog,
+            GuildRankCatalog rankCatalog,
+            Action<Exception> reportPersistenceFailure)
         {
             _session = session ?? throw new ArgumentNullException(nameof(session));
             _teamSetup = teamSetup ?? throw new ArgumentNullException(nameof(teamSetup));
             _text = text ?? throw new ArgumentNullException(nameof(text));
             _buildSnapshot = buildSnapshot ?? throw new ArgumentNullException(nameof(buildSnapshot));
             _itemCatalog = itemCatalog;
+            _rankCatalog = rankCatalog;
             _reportPersistenceFailure = reportPersistenceFailure ??
                 throw new ArgumentNullException(nameof(reportPersistenceFailure));
         }
@@ -49,6 +63,11 @@ namespace Code.ApplicationRoot
             if (request == null)
             {
                 throw new ArgumentNullException(nameof(request));
+            }
+
+            if (request.Kind == GuildProfileEditKind.PromoteRank)
+            {
+                return PromoteRank();
             }
 
             PlayerProfileState candidate;
@@ -108,6 +127,45 @@ namespace Code.ApplicationRoot
             }
 
             return GuildProfileEditResult.Accept(snapshot);
+        }
+
+        private GuildProfileEditResult PromoteRank()
+        {
+            if (_rankCatalog == null)
+            {
+                return GuildProfileEditResult.Reject(_text.RejectedInvalidActor);
+            }
+
+            RankPromotionResult result;
+            try
+            {
+                result = _session.PromoteRank(_rankCatalog);
+            }
+            catch (Exception exception)
+            {
+                _reportPersistenceFailure(exception);
+                return GuildProfileEditResult.Reject(_text.RejectedPersistence);
+            }
+
+            if (!result.Accepted)
+            {
+                return GuildProfileEditResult.Reject(ResolveRankRejection(result.Rejection.Value));
+            }
+
+            return GuildProfileEditResult.Accept(_buildSnapshot(_session.State));
+        }
+
+        private GuildTextSnapshot ResolveRankRejection(RankPromotionRejection rejection)
+        {
+            return rejection switch
+            {
+                RankPromotionRejection.InsufficientGold =>
+                    _text.RejectedInsufficientGold ?? _text.RejectedPersistence,
+                RankPromotionRejection.AlreadyTerminal =>
+                    _text.TerminalRank ?? _text.RejectedPersistence,
+                RankPromotionRejection.InvalidCurrentRank => _text.RejectedInvalidActor,
+                _ => throw new ArgumentOutOfRangeException(nameof(rejection), rejection, null)
+            };
         }
 
         private PlayerProfileState EquipItem(GuildProfileEditRequest request)

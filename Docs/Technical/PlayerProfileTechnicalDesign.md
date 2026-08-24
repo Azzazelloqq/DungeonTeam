@@ -667,3 +667,7 @@ EditMode coverage must prove:
 5. Guild Profile request/snapshot/ViewModel carry prepared rank data and never receive persistence/config/catalog instances.
 
 Compile all affected asmdefs plus focused PlayerProfile, GuildHall and Bootstrap EditMode suites. Run the Unity mechanical validator after config/prefab/asmdef edits. Serialized profile bindings and the real rank-gated board interaction remain manual Unity smoke; no player build or external playtest is part of PP-5.
+
+#### F. Implementation status
+
+PP-5 is implemented with the documented ownership and no new root, DI scope or generic progression layer. Independent targeted Unity EditMode passed for the five rank/catalog/session/migration cases plus the rank-gated offer case (6/6); `Bootstrap.csproj` compiled with 0 errors and 0 warnings. A broad MCP test request timed out before it started and is not counted as evidence. The Unity mechanical validator reports only the pre-existing unrelated TMP fallback whitespace. Prefab/UI promotion and board-gating smoke remains manual and unrun.

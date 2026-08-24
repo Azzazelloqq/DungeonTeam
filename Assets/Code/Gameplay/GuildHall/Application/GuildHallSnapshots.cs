@@ -30,7 +30,8 @@ namespace DungeonTeam.Gameplay.GuildHall.Application
             GuildTextSnapshot summary,
             string locationId,
             bool isAvailable,
-            GuildTextSnapshot disabledReason)
+            GuildTextSnapshot disabledReason,
+            string minimumRankId = null)
         {
             ContractId = GuildId.Require(contractId, nameof(contractId));
             Title = title ?? throw new ArgumentNullException(nameof(title));
@@ -52,6 +53,9 @@ namespace DungeonTeam.Gameplay.GuildHall.Application
 
             IsAvailable = isAvailable;
             DisabledReason = disabledReason;
+            MinimumRankId = string.IsNullOrWhiteSpace(minimumRankId)
+                ? null
+                : GuildId.Require(minimumRankId, nameof(minimumRankId));
         }
 
         public string ContractId { get; }
@@ -60,6 +64,7 @@ namespace DungeonTeam.Gameplay.GuildHall.Application
         public string LocationId { get; }
         public bool IsAvailable { get; }
         public GuildTextSnapshot DisabledReason { get; }
+        public string MinimumRankId { get; }
     }
 
     public sealed class NoticeBoardTextSnapshot

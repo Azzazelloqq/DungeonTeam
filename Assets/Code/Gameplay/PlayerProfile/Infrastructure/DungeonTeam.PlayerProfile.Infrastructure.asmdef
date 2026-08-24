@@ -1,6 +1,6 @@
 {
   "name": "DungeonTeam.PlayerProfile.Infrastructure",
   "rootNamespace": "DungeonTeam.Gameplay.PlayerProfile.Infrastructure",
-  "references": ["DungeonTeam.PlayerProfile.Application", "DungeonTeam.PlayerProfile.Domain", "DungeonTeam.Inventory.Domain", "LocalSaveSystem"],
+  "references": ["DungeonTeam.PlayerProfile.Application", "DungeonTeam.PlayerProfile.Domain", "DungeonTeam.Inventory.Domain", "DungeonTeam.Configuration", "LocalSaveSystem"],
   "autoReferenced": false
 }

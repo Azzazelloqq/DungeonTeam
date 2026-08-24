@@ -22,6 +22,20 @@ MonoBehaviour:
       _fallbackRu: "\u0418\u0441\u0441\u043B\u0435\u0434\u043E\u0432\u0430\u0442\u044C \u043F\u043E\u0434\u0433\u043E\u0442\u043E\u0432\u043B\u0435\u043D\u043D\u043E\u0435 \u043F\u043E\u0434\u0437\u0435\u043C\u0435\u043B\u044C\u0435."
     _locationId: location.dungeon
     _isAvailable: 1
+    _minimumRankId:
+    _disabledReason:
+      _textId:
+      _fallbackRu:
+  - _contractId: contract.veteran
+    _title:
+      _textId: contract.veteran.title
+      _fallbackRu: "\u0412\u0435\u0442\u0435\u0440\u0430\u043d\u0441\u043a\u0430\u044f \u044d\u043a\u0441\u043f\u0435\u0434\u0438\u0446\u0438\u044f"
+    _summary:
+      _textId: contract.veteran.summary
+      _fallbackRu: "\u041f\u0440\u043e\u0439\u0442\u0438 \u0431\u043e\u043b\u0435\u0435 \u043e\u043f\u0430\u0441\u043d\u043e\u0435 \u043f\u043e\u0434\u0437\u0435\u043c\u0435\u043b\u044c\u0435."
+    _locationId: location.dungeon
+    _isAvailable: 1
+    _minimumRankId: rank.e
     _disabledReason:
       _textId:
       _fallbackRu:

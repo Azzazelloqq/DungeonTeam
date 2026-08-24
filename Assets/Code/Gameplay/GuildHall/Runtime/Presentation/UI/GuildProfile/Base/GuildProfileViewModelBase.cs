@@ -23,6 +23,7 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Presentation.UI.GuildProfile.Ba
         public abstract IRelayCommand<object> UnequipItemCommand { get; }
         public abstract IRelayCommand<string> SellUniqueItemCommand { get; }
         public abstract IRelayCommand<string> SellResourceCommand { get; }
+        public abstract IRelayCommand<object> PromoteRankCommand { get; }
         public abstract void Open();
         public abstract void Close();
     }

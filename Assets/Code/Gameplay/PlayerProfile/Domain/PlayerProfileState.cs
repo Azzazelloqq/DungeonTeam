@@ -221,6 +221,24 @@ namespace DungeonTeam.Gameplay.PlayerProfile.Domain
                 LastAppliedRunId);
         }
 
+        public PlayerProfileState WithRank(string rankId)
+        {
+            if (string.IsNullOrWhiteSpace(rankId))
+            {
+                throw new ArgumentException("Rank ID cannot be empty.", nameof(rankId));
+            }
+
+            return new PlayerProfileState(
+                Gold,
+                rankId,
+                Heroes,
+                LeaderActorId,
+                CompanionActorIds,
+                Inventory,
+                PendingTerminalResult,
+                LastAppliedRunId);
+        }
+
         public PlayerProfileState WithTerminalState(
             PendingTerminalResultState pendingTerminalResult,
             string lastAppliedRunId)

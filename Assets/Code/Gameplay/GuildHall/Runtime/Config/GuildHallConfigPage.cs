@@ -214,6 +214,12 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Config
         [SerializeField] private GuildTextDefinitionConfig _goldLabel = new();
         [SerializeField] private GuildTextDefinitionConfig _rankLabel = new();
         [SerializeField] private GuildTextDefinitionConfig _unassignedRank = new();
+        [SerializeField] private GuildTextDefinitionConfig _currentRankLabel = new();
+        [SerializeField] private GuildTextDefinitionConfig _nextRankLabel = new();
+        [SerializeField] private GuildTextDefinitionConfig _promoteRank = new();
+        [SerializeField] private GuildTextDefinitionConfig _rejectedInsufficientGold = new();
+        [SerializeField] private GuildTextDefinitionConfig _terminalRank = new();
+        [SerializeField] private GuildTextDefinitionConfig _requiredRankOfferFormat = new();
         [SerializeField] private GuildTextDefinitionConfig _leaderLabel = new();
         [SerializeField] private GuildTextDefinitionConfig _leaderExplanation = new();
         [SerializeField] private GuildTextDefinitionConfig _teamLabel = new();
@@ -259,7 +265,13 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Config
                 Require(_rejectedTeamSize, "team size rejection"),
                 Require(_rejectedInvalidActor, "invalid actor rejection"),
                 Require(_rejectedInvalidLoadout, "invalid loadout rejection"),
-                Require(_rejectedPersistence, "persistence rejection"));
+                Require(_rejectedPersistence, "persistence rejection"),
+                Require(_currentRankLabel, "current rank label"),
+                Require(_nextRankLabel, "next rank label"),
+                Require(_promoteRank, "promote rank label"),
+                Require(_rejectedInsufficientGold, "insufficient Gold rejection"),
+                Require(_terminalRank, "terminal rank label"),
+                Require(_requiredRankOfferFormat, "required rank offer format"));
         }
 
         private static GuildTextSnapshot Require(

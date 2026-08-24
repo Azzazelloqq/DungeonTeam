@@ -42,6 +42,7 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Presentation.UI.GuildProfile
             SellResourceCommand = new RelayCommand<string>(definitionId => Edit(
                 GuildProfileEditKind.SellResource,
                 definitionId: definitionId));
+            PromoteRankCommand = new RelayCommand<object>(_ => Edit(GuildProfileEditKind.PromoteRank));
             SetLeaderCommand.AddTo(compositeDisposable);
             AddCompanionCommand.AddTo(compositeDisposable);
             RemoveCompanionCommand.AddTo(compositeDisposable);
@@ -50,6 +51,7 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Presentation.UI.GuildProfile
             UnequipItemCommand.AddTo(compositeDisposable);
             SellUniqueItemCommand.AddTo(compositeDisposable);
             SellResourceCommand.AddTo(compositeDisposable);
+            PromoteRankCommand.AddTo(compositeDisposable);
         }
 
         public override GuildProfileSnapshot Profile => model.Profile;
@@ -68,6 +70,7 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Presentation.UI.GuildProfile
         public override IRelayCommand<object> UnequipItemCommand { get; }
         public override IRelayCommand<string> SellUniqueItemCommand { get; }
         public override IRelayCommand<string> SellResourceCommand { get; }
+        public override IRelayCommand<object> PromoteRankCommand { get; }
         public override void Open() => model.Show();
 
         public override void Close()
@@ -87,7 +90,9 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Presentation.UI.GuildProfile
         {
             model.Apply(_editRequested(new GuildProfileEditRequest(
                 kind,
-                kind == GuildProfileEditKind.SellUniqueItem || kind == GuildProfileEditKind.SellResource
+                kind == GuildProfileEditKind.SellUniqueItem ||
+                kind == GuildProfileEditKind.SellResource ||
+                kind == GuildProfileEditKind.PromoteRank
                     ? null
                     : model.SelectedHero.Value.ActorId,
                 loadoutId,

@@ -51,6 +51,9 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Config
         private bool _isAvailable = true;
 
         [SerializeField]
+        private string _minimumRankId;
+
+        [SerializeField]
         private GuildTextDefinitionConfig _disabledReason;
 
         internal NoticeBoardOfferSnapshot ToSnapshot(int index)
@@ -68,7 +71,8 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Config
                     ? null
                     : (_disabledReason ?? throw new InvalidOperationException(
                         $"{location} is unavailable but has no reason."))
-                    .ToSnapshot($"{location} disabled reason"));
+                    .ToSnapshot($"{location} disabled reason"),
+                _minimumRankId);
         }
     }
 }

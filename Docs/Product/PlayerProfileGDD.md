@@ -1,6 +1,6 @@
 # DungeonTeam — Player Profile GDD
 
-**Статус:** PP-1/PP-2/PP-3/PP-4 реализованы; PP-5 спроектирован, ожидает реализации
+**Статус:** PP-1/PP-2/PP-3/PP-4/PP-5 реализованы; automated validation частично пройдена, manual Unity smoke outstanding
 
 **Версия:** 0.4
 

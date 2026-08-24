@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using DungeonTeam.Gameplay.Actors.Runtime;
 using DungeonTeam.Gameplay.GuildHall.Application;
 using DungeonTeam.Gameplay.PlayerProfile.Domain;
+using DungeonTeam.Gameplay.PlayerProfile.Application;
 using DungeonTeam.Gameplay.DungeonRun.Application;
 using DungeonTeam.Gameplay.Skills.Domain;
 using DungeonTeam.Gameplay.Skills.Runtime;
@@ -20,6 +21,18 @@ namespace Code.ApplicationRoot
             DungeonRunTeamSetup teamSetup,
             GuildProfileTextSnapshot text,
             ItemCatalog itemCatalog = null)
+        {
+            return Build(profile, actors, skills, teamSetup, text, itemCatalog, null);
+        }
+
+        public static GuildProfileSnapshot Build(
+            PlayerProfileState profile,
+            ActorConfigCatalog actors,
+            SkillCatalog skills,
+            DungeonRunTeamSetup teamSetup,
+            GuildProfileTextSnapshot text,
+            ItemCatalog itemCatalog,
+            GuildRankCatalog rankCatalog)
         {
             if (profile == null)
             {
@@ -70,14 +83,44 @@ namespace Code.ApplicationRoot
                 companions[index] = RequireHero(roster, profile.CompanionActorIds[index]);
             }
 
+            var rank = BuildRankSnapshot(profile, rankCatalog);
             return new GuildProfileSnapshot(
                 profile.Gold,
-                text.UnassignedRank.DisplayText,
+                rank?.CurrentDisplayName ?? text.UnassignedRank.DisplayText,
                 leader ?? throw new InvalidOperationException("Profile leader was not resolved."),
                 companions,
                 roster,
                 text,
-                BuildResourceRows(profile, itemCatalog));
+                BuildResourceRows(profile, itemCatalog),
+                rank);
+        }
+
+        private static GuildRankSnapshot BuildRankSnapshot(
+            PlayerProfileState profile,
+            GuildRankCatalog rankCatalog)
+        {
+            if (rankCatalog == null)
+            {
+                return null;
+            }
+
+            var current = rankCatalog.Require(profile.RankId);
+            if (!rankCatalog.TryGetNext(current.RankId, out var next))
+            {
+                return new GuildRankSnapshot(
+                    current.RankId,
+                    current.DisplayName,
+                    null,
+                    null,
+                    false);
+            }
+
+            return new GuildRankSnapshot(
+                current.RankId,
+                current.DisplayName,
+                next.DisplayName,
+                next.PromotionCost,
+                profile.Gold >= next.PromotionCost);
         }
 
         private static GuildHeroRole ResolveRole(PlayerProfileState profile, string actorId)

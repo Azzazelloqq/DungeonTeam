@@ -1,6 +1,6 @@
 # DungeonTeam — Player Profile Implementation Plan
 
-**Статус:** PP-0/PP-1/PP-2 COMPLETE; PP-3/PP-4 IMPLEMENTED, AUTOMATED VALIDATION PASSED; PP-5 DESIGNED; manual Unity smoke outstanding
+**Статус:** PP-0/PP-1/PP-2 COMPLETE; PP-3/PP-4 IMPLEMENTED, AUTOMATED VALIDATION PASSED; PP-5 IMPLEMENTED, AUTOMATED VALIDATION PASSED; manual Unity smoke outstanding
 
 **Версия:** 0.5
 
@@ -25,7 +25,7 @@
 | PP-2 | Editable leader/team/loadout and run integration | Complete |
 | PP-3 | Unique equipment, stackable resources and three hero slots | Implemented; targeted EditMode passed, manual Guild-to-Run smoke outstanding |
 | PP-4 | Verified result commit, Gold banking and selling | Implemented; targeted EditMode passed, manual failure/selling smoke outstanding |
-| PP-5 | Guild ranks and board gating | Designed; ready for implementation |
+| PP-5 | Guild ranks and board gating | Implemented; focused EditMode and compilation passed, manual UI smoke outstanding |
 | PP-6 | Integrated regression and documentation closure | Planned |
 
 ## 3. PP-1 — persistent read-only profile
@@ -188,6 +188,15 @@ Manual live verification of the return failure/retry branch and selling UI remai
 - rejection writes nothing and preserves the open profile;
 - a rank-gated offer is visible but cannot be selected before promotion and becomes selectable after a persisted promotion/reopen;
 - Profile/Guild Hall/Notice Board contain no save/config/rank-rule access and no generic progression framework is added.
+
+### Implemented and validated
+
+- `GuildRankConfigPage` authors the agreed `F → E → D → C → B → A → S → SS → SSS` ladder and Gold costs. Its BCL `GuildRankCatalog` owns ordered comparison and immediate-next lookup; Profile Domain/Application owns the promotion candidate and verified save-before-publish commit.
+- The historical profile DTO is V4 with V3→V4 migration to `rank.f`; chained legacy migration retains roster, inventory, equipment and terminal banking data.
+- Reception receives prepared rank and promotion snapshots through its existing edit bridge. Bootstrap prepares Notice Board availability from `minimumRankId`; `contract.veteran` proves a visible `rank.e` gate while still targeting the existing dungeon.
+- Independent targeted Unity EditMode: 6/6 passed (five rank/catalog/session/migration tests and one offer-availability test). `Bootstrap.csproj` compiles with 0 errors and 0 warnings. The mechanical validator reports only the unrelated pre-existing TMP fallback whitespace.
+
+The first broad MCP EditMode request did not start before the runner timeout, so it is not treated as test evidence. Manual prefab/UI proof of promotion and the disabled/re-enabled board row remains unrun; no player build or playtest was run.
 
 ## 8. PP-6 — closure
 

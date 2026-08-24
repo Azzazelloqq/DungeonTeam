@@ -149,11 +149,12 @@ namespace DungeonTeam.Gameplay.PlayerProfile.Application
             IReadOnlyList<HeroProfileState> heroes,
             string leaderActorId,
             IReadOnlyList<string> companionActorIds,
-            InventoryState inventory = null)
+            InventoryState inventory = null,
+            string rankId = GuildRankCatalog.BaseRankId)
         {
             State = new PlayerProfileState(
                 0,
-                null,
+                rankId,
                 heroes,
                 leaderActorId,
                 companionActorIds,
@@ -206,6 +207,35 @@ namespace DungeonTeam.Gameplay.PlayerProfile.Application
 
             _repository.Save(candidate);
             State = candidate;
+        }
+
+        public RankPromotionResult PromoteRank(GuildRankCatalog catalog)
+        {
+            if (catalog == null)
+            {
+                throw new ArgumentNullException(nameof(catalog));
+            }
+
+            if (string.IsNullOrWhiteSpace(State.RankId) || !catalog.Contains(State.RankId))
+            {
+                return RankPromotionResult.Reject(RankPromotionRejection.InvalidCurrentRank);
+            }
+
+            if (!catalog.TryGetNext(State.RankId, out var nextRank))
+            {
+                return RankPromotionResult.Reject(RankPromotionRejection.AlreadyTerminal);
+            }
+
+            if (State.Gold < nextRank.PromotionCost)
+            {
+                return RankPromotionResult.Reject(RankPromotionRejection.InsufficientGold);
+            }
+
+            var candidate = State
+                .WithGold(State.Gold - nextRank.PromotionCost)
+                .WithRank(nextRank.RankId);
+            Commit(candidate);
+            return RankPromotionResult.Accept(nextRank.RankId);
         }
 
         public ProfileSettlementResult BankTerminalResult(ProfileTerminalResultRequest request)

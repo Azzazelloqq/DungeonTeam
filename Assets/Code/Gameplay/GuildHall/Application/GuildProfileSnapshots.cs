@@ -13,7 +13,8 @@ namespace DungeonTeam.Gameplay.GuildHall.Application
         EquipItem = 4,
         UnequipItem = 5,
         SellUniqueItem = 6,
-        SellResource = 7
+        SellResource = 7,
+        PromoteRank = 8
     }
 
     public enum GuildProfileEquipmentSlot
@@ -40,7 +41,8 @@ namespace DungeonTeam.Gameplay.GuildHall.Application
 
             var isSale = kind == GuildProfileEditKind.SellUniqueItem ||
                 kind == GuildProfileEditKind.SellResource;
-            if (!isSale && string.IsNullOrWhiteSpace(actorId))
+            var isPromotion = kind == GuildProfileEditKind.PromoteRank;
+            if (!isSale && !isPromotion && string.IsNullOrWhiteSpace(actorId))
             {
                 throw new ArgumentException("Actor ID cannot be empty.", nameof(actorId));
             }
@@ -79,9 +81,13 @@ namespace DungeonTeam.Gameplay.GuildHall.Application
                     loadoutId != null || itemInstanceId != null || equipmentSlot.HasValue)
                     throw new ArgumentException("Selling a resource requires only its definition ID.");
             }
-            else if (itemInstanceId != null || equipmentSlot.HasValue || definitionId != null)
+            else if (itemInstanceId != null || equipmentSlot.HasValue || definitionId != null ||
+                     (isPromotion && (actorId != null || loadoutId != null)))
             {
-                throw new ArgumentException("Item edit values are valid only for equipment edits.");
+                throw new ArgumentException(
+                    isPromotion
+                        ? "Rank promotion requires no actor or item values."
+                        : "Item edit values are valid only for equipment edits.");
             }
 
             Kind = kind;
@@ -155,7 +161,13 @@ namespace DungeonTeam.Gameplay.GuildHall.Application
             GuildTextSnapshot rejectedTeamSize,
             GuildTextSnapshot rejectedInvalidActor,
             GuildTextSnapshot rejectedInvalidLoadout,
-            GuildTextSnapshot rejectedPersistence)
+            GuildTextSnapshot rejectedPersistence,
+            GuildTextSnapshot currentRankLabel = null,
+            GuildTextSnapshot nextRankLabel = null,
+            GuildTextSnapshot promoteRank = null,
+            GuildTextSnapshot rejectedInsufficientGold = null,
+            GuildTextSnapshot terminalRank = null,
+            GuildTextSnapshot requiredRankOfferFormat = null)
         {
             Header = header ?? throw new ArgumentNullException(nameof(header));
             GoldLabel = goldLabel ?? throw new ArgumentNullException(nameof(goldLabel));
@@ -184,6 +196,12 @@ namespace DungeonTeam.Gameplay.GuildHall.Application
             RejectedInvalidActor = rejectedInvalidActor ?? throw new ArgumentNullException(nameof(rejectedInvalidActor));
             RejectedInvalidLoadout = rejectedInvalidLoadout ?? throw new ArgumentNullException(nameof(rejectedInvalidLoadout));
             RejectedPersistence = rejectedPersistence ?? throw new ArgumentNullException(nameof(rejectedPersistence));
+            CurrentRankLabel = currentRankLabel ?? RankLabel;
+            NextRankLabel = nextRankLabel ?? RankLabel;
+            PromoteRank = promoteRank;
+            RejectedInsufficientGold = rejectedInsufficientGold;
+            TerminalRank = terminalRank;
+            RequiredRankOfferFormat = requiredRankOfferFormat;
         }
 
         public GuildTextSnapshot Header { get; }
@@ -209,6 +227,12 @@ namespace DungeonTeam.Gameplay.GuildHall.Application
         public GuildTextSnapshot RejectedInvalidActor { get; }
         public GuildTextSnapshot RejectedInvalidLoadout { get; }
         public GuildTextSnapshot RejectedPersistence { get; }
+        public GuildTextSnapshot CurrentRankLabel { get; }
+        public GuildTextSnapshot NextRankLabel { get; }
+        public GuildTextSnapshot PromoteRank { get; }
+        public GuildTextSnapshot RejectedInsufficientGold { get; }
+        public GuildTextSnapshot TerminalRank { get; }
+        public GuildTextSnapshot RequiredRankOfferFormat { get; }
     }
 
     public sealed class GuildHeroLoadoutSnapshot
@@ -423,7 +447,8 @@ namespace DungeonTeam.Gameplay.GuildHall.Application
             IReadOnlyList<GuildHeroSnapshot> companions,
             IReadOnlyList<GuildHeroSnapshot> roster,
             GuildProfileTextSnapshot text,
-            IReadOnlyList<GuildResourceSnapshot> resources = null)
+            IReadOnlyList<GuildResourceSnapshot> resources = null,
+            GuildRankSnapshot rank = null)
         {
             Gold = gold >= 0 ? gold : throw new ArgumentOutOfRangeException(nameof(gold));
             RankDisplayText = !string.IsNullOrWhiteSpace(rankDisplayText)
@@ -434,6 +459,7 @@ namespace DungeonTeam.Gameplay.GuildHall.Application
             _roster = Copy(roster, nameof(roster));
             Text = text ?? throw new ArgumentNullException(nameof(text));
             _resources = Copy(resources);
+            Rank = rank;
         }
 
         public long Gold { get; }
@@ -443,6 +469,7 @@ namespace DungeonTeam.Gameplay.GuildHall.Application
         public IReadOnlyList<GuildHeroSnapshot> Roster => _roster;
         public GuildProfileTextSnapshot Text { get; }
         public IReadOnlyList<GuildResourceSnapshot> Resources => _resources;
+        public GuildRankSnapshot Rank { get; }
 
         private static ReadOnlyCollection<GuildHeroSnapshot> Copy(
             IReadOnlyList<GuildHeroSnapshot> source,
@@ -472,6 +499,45 @@ namespace DungeonTeam.Gameplay.GuildHall.Application
                 copy[index] = source[index] ?? throw new ArgumentException("Resource is missing.");
             return Array.AsReadOnly(copy);
         }
+    }
+
+    public sealed class GuildRankSnapshot
+    {
+        public GuildRankSnapshot(
+            string currentRankId,
+            string currentDisplayName,
+            string nextRankDisplayName,
+            long? promotionCost,
+            bool canPromote)
+        {
+            CurrentRankId = !string.IsNullOrWhiteSpace(currentRankId)
+                ? currentRankId
+                : throw new ArgumentException("Current rank ID cannot be empty.", nameof(currentRankId));
+            CurrentDisplayName = !string.IsNullOrWhiteSpace(currentDisplayName)
+                ? currentDisplayName
+                : throw new ArgumentException("Current rank display name cannot be empty.", nameof(currentDisplayName));
+            if (promotionCost.HasValue && promotionCost.Value < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(promotionCost));
+            }
+
+            if (canPromote && (nextRankDisplayName == null || !promotionCost.HasValue))
+            {
+                throw new ArgumentException(
+                    "Promotion availability must match next-rank values.",
+                    nameof(canPromote));
+            }
+
+            NextRankDisplayName = nextRankDisplayName;
+            PromotionCost = promotionCost;
+            CanPromote = canPromote;
+        }
+
+        public string CurrentRankId { get; }
+        public string CurrentDisplayName { get; }
+        public string NextRankDisplayName { get; }
+        public long? PromotionCost { get; }
+        public bool CanPromote { get; }
     }
 
     public sealed class GuildResourceSnapshot

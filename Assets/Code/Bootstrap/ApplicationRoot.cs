@@ -81,6 +81,7 @@ namespace Code.ApplicationRoot
 		private DialogueCatalog _dialogueCatalog;
 		private AmbientNpcProfileCatalog _ambientNpcProfileCatalog;
 		private ContractCatalog _contractCatalog;
+		private GuildRankCatalog _guildRankCatalog;
 		private WorldMapCatalog _worldMapCatalog;
 		private GuildSessionState _guildSessionState;
 		private GuildHallRoot _guildHallRoot;
@@ -150,6 +151,9 @@ namespace Code.ApplicationRoot
 				_dungeonRunTeamSetup,
 				_itemCatalog,
 				out _playerProfilePersistence);
+			_guildRankCatalog = config
+				.GetConfigPage<GuildRankConfigPage>()
+				.CreateCatalog();
 			_launchPresetCatalog = config
 				.GetConfigPage<DungeonRunLaunchConfigPage>()
 				.CreateCatalog();
@@ -160,6 +164,7 @@ namespace Code.ApplicationRoot
 				_guildHallCatalog.ProfileText,
 				BuildGuildProfileSnapshot,
 				_itemCatalog,
+				_guildRankCatalog,
 				Debug.LogException);
 			_dialogueCatalog = config.GetConfigPage<DialogueConfigPage>().CreateCatalog();
 			_ambientNpcProfileCatalog = config.GetConfigPage<AmbientNpcConfigPage>().CreateCatalog();
@@ -252,6 +257,7 @@ namespace Code.ApplicationRoot
 			_dungeonRunTeamSetup = null;
 			_playerProfileSession = null;
 			_itemCatalog = null;
+			_guildRankCatalog = null;
 			_guildProfileEditHandler = null;
 			_playerProfilePersistence?.Dispose();
 			_playerProfilePersistence = null;
@@ -317,7 +323,7 @@ namespace Code.ApplicationRoot
 		{
 			var hall = new GuildHallRoot(
 				new GuildHallWorldLoader(_resourceLoader),
-				WithProfile(GuildHallStartContextBuilder.Build(_guildHallCatalog, _contractCatalog, _guildSessionState)),
+				WithProfile(BuildGuildHallStartContext()),
 				_guildHallCatalog, _ambientNpcProfileCatalog, _dialogueCatalog, _tickHandler,
 #if UNITY_EDITOR
 				new EditorGuildHallInput(),
@@ -328,6 +334,20 @@ namespace Code.ApplicationRoot
 				_guildProfileEditHandler.Handle);
 			await hall.InitializeAsync(token);
 			_guildHallRoot = hall;
+		}
+
+		private GuildHallStartContext BuildGuildHallStartContext()
+		{
+			var offers = GuildOfferAvailabilityBuilder.Build(
+				_contractCatalog,
+				_guildRankCatalog,
+				_playerProfileSession.State.RankId,
+				_guildHallCatalog.ProfileText.RequiredRankOfferFormat);
+			return new GuildHallStartContext(
+				_guildHallCatalog.Npcs,
+				offers,
+				_guildSessionState.SelectedContractId,
+				_guildSessionState.LastRunSummary);
 		}
 
 		private GuildHallStartContext WithProfile(GuildHallStartContext context) => new(
@@ -342,7 +362,8 @@ namespace Code.ApplicationRoot
 				_skillCatalog,
 				_dungeonRunTeamSetup,
 				_guildHallCatalog.ProfileText,
-				_itemCatalog);
+				_itemCatalog,
+				_guildRankCatalog);
 
 		private void OnGuildHallWorldMapRequested() =>
 			TransitionToWorldMapAsync(CancellationToken).Forget(Debug.LogException);

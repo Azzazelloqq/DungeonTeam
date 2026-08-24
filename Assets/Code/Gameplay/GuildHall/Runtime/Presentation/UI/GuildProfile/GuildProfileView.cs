@@ -145,6 +145,16 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Presentation.UI.GuildProfile
         private void CreateEditRows(GuildHeroSnapshot hero)
         {
             var text = viewModel.Profile.Text;
+            var rank = viewModel.Profile.Rank;
+            if (rank != null && rank.NextRankDisplayName != null && rank.PromotionCost.HasValue)
+            {
+                var promoteLabel = text.PromoteRank ?? text.RankLabel;
+                CreateEditRow(
+                    $"{promoteLabel.DisplayText}: {rank.NextRankDisplayName} ({rank.PromotionCost.Value})",
+                    () => viewModel.PromoteRankCommand.Execute(null),
+                    rank.CanPromote);
+            }
+
             if (hero.Role != GuildHeroRole.Leader)
             {
                 CreateEditRow(text.MakeLeader.DisplayText, () =>
@@ -272,7 +282,19 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Presentation.UI.GuildProfile
             var text = profile.Text;
             _headerText.SetText(text.Header.DisplayText);
             _goldText.SetText($"{text.GoldLabel.DisplayText}: {profile.Gold}");
-            _rankText.SetText($"{text.RankLabel.DisplayText}: {profile.RankDisplayText}");
+            var rankDisplay = $"{text.CurrentRankLabel.DisplayText}: {profile.RankDisplayText}";
+            if (profile.Rank?.NextRankDisplayName != null && profile.Rank.PromotionCost.HasValue)
+            {
+                rankDisplay +=
+                    $" | {text.NextRankLabel.DisplayText}: {profile.Rank.NextRankDisplayName} " +
+                    $"({profile.Rank.PromotionCost.Value})";
+            }
+            else if (profile.Rank != null && text.TerminalRank != null)
+            {
+                rankDisplay += $" — {text.TerminalRank.DisplayText}";
+            }
+
+            _rankText.SetText(rankDisplay);
             _leaderLabelText.SetText(text.LeaderLabel.DisplayText);
             _leaderExplanationText.SetText(text.LeaderExplanation.DisplayText);
             _teamLabelText.SetText(text.TeamLabel.DisplayText);
