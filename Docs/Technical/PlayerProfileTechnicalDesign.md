@@ -1,10 +1,10 @@
 # DungeonTeam — Player Profile Technical Design
 
-**Статус:** PP-1/PP-2 IMPLEMENTED; PP-3 REQUIRES ITEM/EQUIPMENT DESIGN
+**Статус:** PP-1/PP-2 IMPLEMENTED; PP-3 DESIGNED, NOT IMPLEMENTED
 
-**Версия:** 0.3
+**Версия:** 0.4
 
-**Дата:** 16 августа 2026
+**Дата:** 24 августа 2026
 
 **Product source:** [Player Profile GDD](../Product/PlayerProfileGDD.md)
 
@@ -96,7 +96,7 @@ Invariants:
 
 Domain does not know whether an actor/level/loadout exists in current content. Application initialization validates the loaded snapshot against the seed/current definitions prepared by composition. Unknown or incompatible IDs are an explicit load error in PP-1; silent replacement with defaults is forbidden.
 
-PP-1 does not reserve inventory/equipment fields. PP-3 changes save version and supplies a migration.
+PP-1 does not reserve inventory/equipment fields. PP-3 changes the profile record to V2 and supplies a migration.
 
 ## 4. First-profile seed and content resolution
 
@@ -271,7 +271,7 @@ Manual full-flow smoke and build are reported separately and are not PP-1 automa
 
 ## 12. Non-goals and later decisions
 
-- PP-3: separately designed inventory/equipment with real items and stat application;
+- PP-3: implemented inventory/equipment work after the approved contract in section 14;
 - PP-4: durable terminal-result commit, Gold banking and selling;
 - PP-5: configured guild rank ladder, promotion and board availability;
 - quests remain a separate feature and save key;
@@ -375,3 +375,93 @@ The final run boundary still calls `DungeonRunTeamSetup.RequireValid`; Profile e
 - C# solution compile passed with 0 errors. Scoped `git diff --check` passed; the project-wide mechanical script reports only pre-existing whitespace in the unrelated modified TMP fallback asset.
 - Full Unity EditMode/PlayMode automation and runtime visual interaction were not run because the project was owned by the open Editor and Unity MCP was unavailable. The implementation reuses the existing validated dynamic roster-row bindings for action/loadout rows and does not add serialized prefab fields; this is not a runtime visual proof.
 - The documented SaveStore `ForceSave()` swallowed-I/O limitation remains unchanged and outside the PP-2 durability claim.
+
+## 14. PP-3 — inventory, equipment and save contract
+
+### 14.1. Responsibility and boundary
+
+`Inventory` is a reusable player-owned feature: it owns unique item instances, stackable resources and equipment assignment. `PlayerProfile` remains the application-lifetime aggregate and the only persistent record owner. Inventory does not know Guild Hall, Dungeon Run, Unity, Addressables or SaveStore; Guild Hall and Dungeon Run receive prepared flat snapshots from Bootstrap.
+
+The real implementation creates only the required pure assemblies:
+
+```text
+Inventory.Domain                 (BCL-only ownership/equip invariants)
+Inventory.Application            (catalog validation and use cases)
+PlayerProfile.Domain -> Inventory.Domain
+PlayerProfile.Application -> PlayerProfile.Domain, Inventory.Application
+PlayerProfile.Infrastructure -> PlayerProfile.Application/Domain, Inventory.Domain, LocalSaveSystem
+Bootstrap -> all composition consumers
+```
+
+`DungeonRun.Application` receives its own immutable equipment bonus values in the already prepared team selection; it does not reference Inventory. `GuildHall.Application` receives only profile/detail snapshots and edit request/result values. No Inventory root, DI scope, event bus, generic stat-modifier engine or standalone inventory screen is introduced.
+
+### 14.2. Domain state and rules
+
+```text
+InventoryState
+├─ uniqueItems: ItemInstanceState[]
+│  ├─ instanceId (stable, unique)
+│  └─ definitionId
+├─ resources: ResourceStackState[]
+│  ├─ definitionId (unique)
+│  └─ quantity > 0
+└─ equipmentByHero: HeroEquipmentState[]
+   ├─ actorId (unique roster actor)
+   ├─ weaponInstanceId?
+   ├─ armorInstanceId?
+   └─ relicInstanceId?
+```
+
+- `Weapon`, `Armor` and `Relic` are the only PP-3 slots.
+- Every equipped ID belongs to `uniqueItems`; an item can occupy at most one hero slot.
+- `Equip` validates ownership, configured slot and configured eligible actor. It replaces only the target slot and returns the old instance to the same inventory state.
+- `Unequip` removes a currently equipped instance. Resources cannot be equipped, and equipment cannot stack.
+- Profile/Inventory Domain validates ownership and uniqueness; `Inventory.Application` validates current definition compatibility. Unknown or removed definition/instance references are an explicit load error, never silently removed.
+
+No capacity, sorting, durability, repair, rarity, random affix, crafting, set bonus, consumable use or generic modifier pipeline belongs to PP-3.
+
+### 14.3. Definitions and first content
+
+Typed config owns static display data, sale value, slot, eligible actor IDs and one of exactly three current effects:
+
+| Definition | Slot | Effect |
+| --- | --- | --- |
+| `equipment.training-blade` | Weapon | `PrimaryPower + value` |
+| `equipment.warden-coat` | Armor | `MaximumHealth + value` |
+| `equipment.pathfinder-charm` | Relic | `MovementSpeed + value` |
+| `resource.monster-crystal` | Resource | stackable, no PP-3 use |
+
+The initial values are authored config, not code constants. A profile starts, or migrates from V1, with one deterministic unique instance of each equipment definition and no resources. The three effects are mapped explicitly to the current actor/run stats; extending them requires a new product rule and a concrete mapping, not a catch-all modifier abstraction.
+
+### 14.4. Save V2 and observable write result
+
+The key remains `player.profile`; Gold, roster, inventory and equipment are one SaveStore entry. The existing CLR DTO type must retain its stored type identity while its `[SaveVersion]` becomes `2`; renaming `PlayerProfileSaveV1` during this migration would make SaveStore reject the old entry by type name before a migrator can run. A V1→V2 migrator initializes empty resources, one deterministic starter instance per first equipment definition and no equipped IDs.
+
+SaveStore uses atomic replacement for an individual key file, but `ForceSave()` catches write exceptions and returns no result. PP-3 replaces the repository write path with the following verified write; its existing immediate profile edits keep their immediate UX only after this verification. PP-4 reuses the same path:
+
+1. write the full candidate record through SaveStore V2 and `ForceSave()`;
+2. create a fresh SaveStore reader with the same options, registry, migrators and key;
+3. read and semantically compare the persisted record with the candidate;
+4. only then replace application session state and report success;
+5. on mismatch/read failure, discard and recreate the live store from disk, keep the old session state and return a configured persistence rejection.
+
+This uses no second save format or raw file parser. It proves that a fresh SaveStore reader observes the candidate after the synchronous write; it does not claim a stronger hardware/fsync guarantee than the installed package exposes.
+
+### 14.5. PP-4 terminal result transaction
+
+PP-4 upgrades the same record to V3 with `pendingTerminalResult` and `lastAppliedRunId`. `DungeonRunResult` receives a stable run ID. The application executes only one active result at a time:
+
+1. verified-save pending result before showing it as banked;
+2. on load/retry, if pending run ID differs from `lastAppliedRunId`, build the complete profile candidate — Gold, resources and unique instances — and verified-save it with `lastAppliedRunId` set and pending cleared;
+3. if it already matches, clear only the stale pending value by the same verified path;
+4. Guild Hall receives debrief only from the committed profile snapshot.
+
+The result cannot be applied twice across restart, and failed persistence cannot be displayed as a successful bank operation. Selling is a later PP-4 use case: atomically remove a stack/resource or unique instance and increase Gold in the same V3 candidate record.
+
+### 14.6. PP-3 tests and proof
+
+- EditMode: unique instance ownership, no duplicate equip, slot replacement, transfer, unequip, invalid actor/slot/definition, resource positive quantities and variable roster/item counts.
+- EditMode: V1→V2 migration preserves all prior profile fields and produces exactly the three required starter instances once; a second load never creates duplicates.
+- EditMode: mapping equipped values into two different team fixtures changes only the documented run stats; no fixed production roster or item count assertions.
+- EditMode: verified-write repository keeps session state unchanged when a fresh reader cannot observe the candidate.
+- PlayMode/manual proof: profile shows inventory/equipment, commands update the detail state, and the next run visibly receives each of the three concrete effects.

@@ -1,10 +1,10 @@
 # DungeonTeam — Player Profile Implementation Plan
 
-**Статус:** PP-0/PP-1/PP-2 COMPLETE; PP-3 REQUIRES PRODUCT/TECHNICAL DESIGN
+**Статус:** PP-0/PP-1/PP-2 COMPLETE; PP-3 DESIGNED, NOT IMPLEMENTED
 
-**Версия:** 0.3
+**Версия:** 0.4
 
-**Дата:** 16 августа 2026
+**Дата:** 24 августа 2026
 
 **Design:** [Player Profile Technical Design](./PlayerProfileTechnicalDesign.md)
 
@@ -23,8 +23,8 @@
 | PP-0 | Product/technical design, boundaries and order | Complete |
 | PP-1 | Read-only persistent profile vertical slice | Complete |
 | PP-2 | Editable leader/team/loadout and run integration | Complete |
-| PP-3 | Inventory/equipment after separate item design | Requires product/design decision |
-| PP-4 | Result commit, Gold banking and selling | Planned after persistence reliability gate |
+| PP-3 | Unique equipment, stackable resources and three hero slots | Designed; implementation requires approval |
+| PP-4 | Verified result commit, Gold banking and selling | Designed; follows PP-3 |
 | PP-5 | Guild ranks and board gating | Requires rank rules/content decision |
 | PP-6 | Integrated regression and documentation closure | Planned |
 
@@ -107,33 +107,37 @@ PP-2 does not add recruitment, hero purchase, equipment or skill-tree progressio
 
 ## 5. PP-3 — inventory and equipment
 
-Before code, a separate product/technical decision must define:
+**Goal:** a player owns three real starter equipment instances, equips them on heroes and sees their documented effects in the next run.
 
-- whether gear is unique instances or stackable definitions;
-- current equipment slots;
-- ownership and sale semantics;
-- stat/effect application;
-- what happens to incompatible/removed content;
-- the minimum actual item set that changes gameplay.
+**Decisions:** gear is unique by `instanceId`; monster crystals are stackable by definition; each hero has `Weapon`, `Armor`, `Relic`; there is no capacity, rarity, durability, crafting or generic modifier framework. The starter blade, coat and charm respectively affect Primary power, maximum health and movement speed. Details are fixed in technical design section 14.
 
-After that decision:
+### Work
 
-1. Add the smallest real Item/Equipment Domain/Application boundary; do not put item rules in PlayerProfile UI.
-2. Add typed item definitions/config only for implemented content.
-3. Extend profile save through V1→V2 migration with inventory/equipped IDs.
-4. Add equip/unequip use cases and derived actor/run snapshot application.
-5. Add equipment details/editing to Profile UI.
-6. Prove that equipped effects reach the actual run and are removed/replaced correctly.
+1. Add only the required Inventory Domain/Application assemblies and directed references.
+2. TDD unique ownership, slot, transfer and stack invariants.
+3. Add typed item/resource config and the three starter definitions.
+4. Move the profile record to V2 without changing its stored CLR type identity; V1 migration creates starter instances exactly once.
+5. Replace the current repository write path with the documented fresh-reader verified write and reset-from-disk failure path.
+6. Map concrete equipped effects into the current Dungeon Run selection without a Dungeon Run → Inventory dependency.
+7. Add equip/unequip detail actions and immutable presentation snapshots to the existing Guild Profile family.
+8. Add focused EditMode behavior/migration/write-verification tests and UI/run PlayMode proof.
 
-Empty slots, fake items and a generic modifier framework are not PP-3 substitutes.
+### Done when
+
+- an item is never duplicated or equipped twice;
+- a player can move each starter item between eligible heroes, replace a slot and unequip it;
+- all three effects are visible in the next run and disappear on unequip;
+- V1 profiles migrate without losing roster, Gold, rank or loadout data;
+- a failed or unverifiable write keeps the previously persisted profile active;
+- no item UI reads SaveStore/config directly and no generic inventory framework is introduced.
 
 ## 6. PP-4 — rewards, Gold and selling
 
-**Prerequisite:** persistence write failures must be observable to Application.
+**Prerequisite:** PP-3 verified-write repository is implemented and proven.
 
 1. Give terminal results a stable id and explicit bankable payload; keep run-local collection separate.
-2. Add idempotent Application commit: the same result cannot change the profile twice.
-3. Persist pending/applied state before showing rewards as banked.
+2. Save pending state in the same V3 profile record before showing rewards as banked.
+3. Add idempotent Application commit: the same result cannot change the profile twice, including after restart.
 4. Map Gold rewards to the single wallet; item/crystal rewards to real inventory definitions.
 5. Replace session-only debrief data where needed with an already-applied persistent snapshot.
 6. Add concrete Reception sell use case with prepared prices and an atomic inventory→Gold mutation.

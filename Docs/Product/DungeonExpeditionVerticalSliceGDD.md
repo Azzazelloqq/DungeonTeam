@@ -2,9 +2,9 @@
 
 **Статус:** нормативный scope текущей реализации
 
-**Версия:** 0.4
+**Версия:** 0.5
 
-**Дата:** 14 августа 2026
+**Дата:** 24 августа 2026
 
 **Заменяет для текущего playable:** `CoreCombatPrototypeGDD.md`
 
@@ -25,7 +25,7 @@ Slice должен доказать не только боевую читаем�
 5. Закрытая authored-дверь скрывает комнату, врагов, награды и HUD-маркеры за ней; interaction в допустимой дистанции открывает дверь и раскрывает следующую зону.
 6. Когда сундук доступен, HUD показывает interaction prompt, а открытие не требует пиксельного наведения.
 7. В encounter враги читаются по механике и телеграфам; лидер использует `Primary` вручную, а спутники автономно выбирают допустимые действия при валидной цели и готовом cooldown.
-8. После победы группа продолжает маршрут и достигает выхода; после `Completed` или `Defeated` показывается terminal summary с единственным переходом в главное меню.
+8. После победы группа продолжает маршрут и достигает выхода; после `Completed` или `Defeated` показывается terminal summary, затем application возвращает игрока в новую Guild Hall session. Main Menu больше не является production-flow.
 
 ## 3. In scope
 
@@ -40,7 +40,7 @@ Slice должен доказать не только боевую читаем�
 - ручной видимый `Primary` и `Active1` лидера; автономный выбор действий спутниками;
 - target priority и отдельный одноразовый жёсткий `FOLLOW`; `Dodge` и будущие тактические команды не входят в текущий scope;
 - HUD для health/cooldowns/target/`Primary`/`Active1`/`FOLLOW`/interaction и terminal summary; скрытые за visibility-boundary объекты не публикуют target/interaction markers;
-- terminal flow `Completed/Defeated → summary → main menu`; `Run Again` в текущий scope не входит;
+- terminal flow `Completed/Defeated → session summary → Guild Hall`; `Run Again` в текущий scope не входит;
 - project-owned prefabs, models, materials, textures, VFX slots и definitions;
 - Editor/PC playable как текущий путь проверки slice; Android build и device profiling отложены и не являются gate текущего slice;
 - automated validation Unity dependencies: production content не ссылается на `Assets/ImportedAssets`.
@@ -92,12 +92,12 @@ Runtime не ищет эти точки по строковым именам и 
 
 - procedural generation, room grammar и route choice;
 - inventory, loot tables, equipment, economy и progression;
-- hub, narrative, contracts и extraction;
+- расширение hub, narrative, contracts и extraction beyond the implemented return-to-Guild-Hall flow;
 - универсальные ability/interaction/AI frameworks;
 - Addressables до появления generated-key API;
 - production animation set и final audio;
 - отдельные Goblin/Minotaur/Skeleton production-модели и визуальное разнообразие врагов;
-- `Run Again`; следующий запуск пока начинается из главного меню, а в будущем terminal flow может вести в хаб;
+- `Run Again`; следующий запуск начинается через существующие Guild Hall, Notice Board и World Map;
 - универсальная fog-of-war, grid visibility, minimap reveal, stealth/perception и симуляция освещения;
 - VFX Graph как обязательный delivery: он добавляется только для конкретного эффекта после визуального и performance smoke.
 
@@ -113,6 +113,6 @@ Slice считается готовым, когда:
 - сундук открывается один раз и не ломает progression;
 - лидер выполняет различимую ручную атаку через `Primary`, а спутники автоматически выполняют различимые полезные действия;
 - в encounter присутствуют три механически различимых enemy archetype; разные production-модели не требуются;
-- победа открывает путь к выходу; `Completed` и `Defeated` показывают summary и по одной команде возвращают в главное меню без повторного применения результата;
+- победа открывает путь к выходу; `Completed` и `Defeated` показывают summary и возвращают в Guild Hall без повторного применения результата;
 - production dependency audit возвращает ноль путей из `Assets/ImportedAssets`;
 - EditMode/PlayMode проверки зелёные, а corridor smoke пройден в Editor/PC без blocking console errors; Android build и device profiler не входят в текущий acceptance.
