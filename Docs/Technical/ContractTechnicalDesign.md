@@ -1,6 +1,6 @@
 # DungeonTeam — Contract CQ-0 Technical Design
 
-**Status:** DESIGNED
+**Status:** IMPLEMENTED AND AUTOMATION-VALIDATED (CQ-0); manual flow smoke/build not run
 
 ## Boundary
 
@@ -36,3 +36,17 @@ World Map resolution requires the persisted active contract, not merely `GuildSe
 - only the matching successful production run completes the active contract once;
 - board/map/DungeonRun remain free of persistence/config/domain access outside Bootstrap;
 - no quest reward, count/reputation/rank mutation or generic quest system is added.
+
+## Implementation status and validation
+
+Implemented the three directed Contracts assemblies and EditMode test assembly. `ContractSession` owns only the loaded `ContractState`; `SaveStoreContractRepository` persists `guild.contracts` as `ContractSaveV1` with tagged V2 SaveStore data and verifies an optional fresh reader before publishing session state. Contract and Player Profile use separate keys in the same SaveStore directory, so no profile schema or profile save key was changed.
+
+Bootstrap owns `ContractPersistence` and the application-lifetime session. It builds status-aware board offers, requires the same prepared availability at the acceptance boundary (including rank gating), resolves the World Map from persisted active state, carries the accepted ID in `DungeonRunStartRequest`, and completes it only after a successful production terminal profile settlement. Defeat, developer runs, back, mismatched IDs and duplicate callbacks do not complete it.
+
+Independently validated in Unity `6000.7.0a3`:
+
+- Contracts + Bootstrap + GuildHall focused EditMode: `59/59 passed`;
+- `dotnet build Bootstrap.csproj --no-restore -v:minimal`: `0` warnings, `0` errors;
+- scoped `git diff --check` excluding the user-owned TMP fallback asset: clean.
+
+The manual Hall → accept → Map → completed Dungeon → Hall → restart smoke and a player build were not run.

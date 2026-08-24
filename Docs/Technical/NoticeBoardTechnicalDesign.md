@@ -137,19 +137,19 @@ View не выбирает контракт, не меняет availability и �
 
 ## 6. Композиция и semantic output
 
-`GuildHallRoot` получает callback `Action<string> contractSelected` от application owner.
+`GuildHallRoot` получает синхронный callback `Func<string, bool> contractAccepted` от application owner.
 
 Поток выбора:
 
 ```text
 item command
-→ NoticeBoardModel validates available + not already selected
+→ NoticeBoardModel validates prepared availability
 → GuildHallRoot callback(contractId)
-→ application owner updates GuildSessionState.SelectContract(contractId)
-→ board applies the same accepted selection to its session UI-state
+→ Bootstrap повторно валидирует availability, сохраняет CQ-0 active contract и обновляет session hint
+→ board applies state only when callback accepted it
 ```
 
-В GH-5 callback синхронный и не возвращает отказ: availability уже зафиксирована согласованным `GuildHallStartContext`. Асинхронная бизнес-проверка не добавляется без реальной потребности.
+CQ-0 сохраняет callback синхронным, но возвращает отказ: Bootstrap является единственной границей между UI и persistent contract state. Доска не читает config/save/domain и не завершает контракт самостоятельно.
 
 `GuildHallRoot.HandleInteraction` маршрутизирует:
 

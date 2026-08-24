@@ -90,7 +90,7 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Presentation.UI.NoticeBoard
                     continue;
                 }
 
-                if (!offer.IsAvailable)
+                if (!offer.CanAccept)
                 {
                     return false;
                 }

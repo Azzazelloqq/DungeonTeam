@@ -1,0 +1,6 @@
+{
+  "name": "DungeonTeam.Contracts.Infrastructure",
+  "rootNamespace": "DungeonTeam.Gameplay.Contracts.Infrastructure",
+  "references": ["DungeonTeam.Contracts.Application", "DungeonTeam.Contracts.Domain", "DungeonTeam.Configuration", "LocalSaveSystem"],
+  "autoReferenced": false
+}

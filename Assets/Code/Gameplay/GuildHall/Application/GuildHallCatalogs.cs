@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using DungeonTeam.Gameplay.AmbientNpc.Application;
+using DungeonTeam.Gameplay.Contracts.Domain;
 
 namespace DungeonTeam.Gameplay.GuildHall.Application
 {
@@ -126,41 +127,6 @@ namespace DungeonTeam.Gameplay.GuildHall.Application
         }
     }
 
-    public sealed class ContractCatalog
-    {
-        private readonly IReadOnlyDictionary<string, NoticeBoardOfferSnapshot> _offersById;
-
-        public ContractCatalog(IReadOnlyList<NoticeBoardOfferSnapshot> offers)
-        {
-            Offers = Snapshot.Copy(offers, nameof(offers));
-            var byId = new Dictionary<string, NoticeBoardOfferSnapshot>(StringComparer.Ordinal);
-            for (var index = 0; index < Offers.Count; index++)
-            {
-                var offer = Offers[index];
-                if (!byId.TryAdd(offer.ContractId, offer))
-                {
-                    throw new ArgumentException(
-                        $"Contract ID '{offer.ContractId}' is duplicated.",
-                        nameof(offers));
-                }
-            }
-
-            _offersById = new ReadOnlyDictionary<string, NoticeBoardOfferSnapshot>(byId);
-        }
-
-        public IReadOnlyList<NoticeBoardOfferSnapshot> Offers { get; }
-
-        public NoticeBoardOfferSnapshot Require(string contractId)
-        {
-            if (!_offersById.TryGetValue(GuildId.Require(contractId, nameof(contractId)), out var offer))
-            {
-                throw new KeyNotFoundException($"Unknown contract ID '{contractId}'.");
-            }
-
-            return offer;
-        }
-    }
-
     public static class GuildContentValidator
     {
         public static void Validate(
@@ -195,7 +161,6 @@ namespace DungeonTeam.Gameplay.GuildHall.Application
                 throw new ArgumentNullException(nameof(contractLocationIds));
             }
 
-            var locations = new HashSet<string>(contractLocationIds, StringComparer.Ordinal);
             for (var index = 0; index < guildHall.Npcs.Count; index++)
             {
                 var npc = guildHall.Npcs[index];
@@ -212,15 +177,7 @@ namespace DungeonTeam.Gameplay.GuildHall.Application
                 }
             }
 
-            for (var index = 0; index < contracts.Offers.Count; index++)
-            {
-                var offer = contracts.Offers[index];
-                if (!locations.Contains(offer.LocationId))
-                {
-                    throw new InvalidOperationException(
-                        $"Contract '{offer.ContractId}' references unsupported location '{offer.LocationId}'.");
-                }
-            }
+            contracts.ValidateSupportedLocations(contractLocationIds);
         }
     }
 
@@ -246,9 +203,28 @@ namespace DungeonTeam.Gameplay.GuildHall.Application
                 throw new ArgumentNullException(nameof(sessionState));
             }
 
+            var offers = new NoticeBoardOfferSnapshot[contracts.Definitions.Count];
+            for (var index = 0; index < offers.Length; index++)
+            {
+                var definition = contracts.Definitions[index];
+                var disabledReason = definition.AuthoredDisabledReason == null
+                    ? null
+                    : new GuildTextSnapshot(
+                        definition.AuthoredDisabledReason.TextId,
+                        definition.AuthoredDisabledReason.DisplayText);
+                offers[index] = new NoticeBoardOfferSnapshot(
+                    definition.ContractId,
+                    new GuildTextSnapshot(definition.Title.TextId, definition.Title.DisplayText),
+                    new GuildTextSnapshot(definition.Summary.TextId, definition.Summary.DisplayText),
+                    definition.LocationId,
+                    definition.IsAuthoredAvailable,
+                    disabledReason,
+                    definition.MinimumRankId);
+            }
+
             return new GuildHallStartContext(
                 guildHall.Npcs,
-                contracts.Offers,
+                offers,
                 sessionState.SelectedContractId,
                 sessionState.LastRunSummary);
         }

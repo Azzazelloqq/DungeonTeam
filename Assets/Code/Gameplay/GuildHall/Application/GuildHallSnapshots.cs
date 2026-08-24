@@ -24,6 +24,14 @@ namespace DungeonTeam.Gameplay.GuildHall.Application
 
     public sealed class NoticeBoardOfferSnapshot
     {
+        public enum OfferStatus
+        {
+            Available = 0,
+            Disabled = 1,
+            Active = 2,
+            Completed = 3
+        }
+
         public NoticeBoardOfferSnapshot(
             string contractId,
             GuildTextSnapshot title,
@@ -32,19 +40,56 @@ namespace DungeonTeam.Gameplay.GuildHall.Application
             bool isAvailable,
             GuildTextSnapshot disabledReason,
             string minimumRankId = null)
+            : this(
+                contractId,
+                title,
+                summary,
+                locationId,
+                isAvailable,
+                disabledReason,
+                minimumRankId,
+                isAvailable ? OfferStatus.Available : OfferStatus.Disabled,
+                null)
+        {
+        }
+
+        public NoticeBoardOfferSnapshot(
+            string contractId,
+            GuildTextSnapshot title,
+            GuildTextSnapshot summary,
+            string locationId,
+            bool isAvailable,
+            GuildTextSnapshot disabledReason,
+            string minimumRankId,
+            OfferStatus status,
+            GuildTextSnapshot statusText)
         {
             ContractId = GuildId.Require(contractId, nameof(contractId));
             Title = title ?? throw new ArgumentNullException(nameof(title));
             Summary = summary ?? throw new ArgumentNullException(nameof(summary));
             LocationId = GuildId.Require(locationId, nameof(locationId));
-            if (isAvailable && disabledReason != null)
+            if (status == OfferStatus.Available && !isAvailable)
+            {
+                throw new ArgumentException(
+                    "An available status requires an available offer.",
+                    nameof(isAvailable));
+            }
+
+            if (status == OfferStatus.Disabled && isAvailable)
+            {
+                throw new ArgumentException(
+                    "A disabled status requires an unavailable offer.",
+                    nameof(isAvailable));
+            }
+
+            if (status == OfferStatus.Available && disabledReason != null)
             {
                 throw new ArgumentException(
                     "An available offer cannot have a disabled reason.",
                     nameof(disabledReason));
             }
 
-            if (!isAvailable && disabledReason == null)
+            if (status == OfferStatus.Disabled && disabledReason == null)
             {
                 throw new ArgumentException(
                     "An unavailable offer requires a disabled reason.",
@@ -56,6 +101,8 @@ namespace DungeonTeam.Gameplay.GuildHall.Application
             MinimumRankId = string.IsNullOrWhiteSpace(minimumRankId)
                 ? null
                 : GuildId.Require(minimumRankId, nameof(minimumRankId));
+            Status = status;
+            StatusText = statusText;
         }
 
         public string ContractId { get; }
@@ -65,6 +112,12 @@ namespace DungeonTeam.Gameplay.GuildHall.Application
         public bool IsAvailable { get; }
         public GuildTextSnapshot DisabledReason { get; }
         public string MinimumRankId { get; }
+        public OfferStatus Status { get; }
+        public GuildTextSnapshot StatusText { get; }
+        public GuildTextSnapshot ActionText => StatusText;
+        public bool CanAccept => IsAvailable && Status == OfferStatus.Available;
+        public bool IsActive => Status == OfferStatus.Active;
+        public bool IsCompleted => Status == OfferStatus.Completed;
     }
 
     public sealed class NoticeBoardTextSnapshot
@@ -81,6 +134,7 @@ namespace DungeonTeam.Gameplay.GuildHall.Application
             Selected = selected ?? throw new ArgumentNullException(nameof(selected));
             Close = close ?? throw new ArgumentNullException(nameof(close));
             Empty = empty ?? throw new ArgumentNullException(nameof(empty));
+            Completed = Selected;
         }
 
         public GuildTextSnapshot Header { get; }
@@ -88,6 +142,7 @@ namespace DungeonTeam.Gameplay.GuildHall.Application
         public GuildTextSnapshot Selected { get; }
         public GuildTextSnapshot Close { get; }
         public GuildTextSnapshot Empty { get; }
+        public GuildTextSnapshot Completed { get; }
     }
 
     public sealed class GuildRunSummarySnapshot
@@ -234,6 +289,11 @@ namespace DungeonTeam.Gameplay.GuildHall.Application
         public void SelectContract(string contractId)
         {
             SelectedContractId = GuildId.Require(contractId, nameof(contractId));
+        }
+
+        public void ClearSelectedContract()
+        {
+            SelectedContractId = null;
         }
 
         public void SetLastRunSummary(GuildRunSummarySnapshot summary)

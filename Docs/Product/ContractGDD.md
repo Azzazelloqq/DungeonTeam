@@ -1,6 +1,6 @@
 # DungeonTeam — Contract GDD
 
-**Статус:** CQ-0 agreed and designed; implementation pending
+**Статус:** CQ-0 implemented; automated validation passed
 
 ## CQ-0 player loop
 

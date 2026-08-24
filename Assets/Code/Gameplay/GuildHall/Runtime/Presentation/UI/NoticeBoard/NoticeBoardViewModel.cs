@@ -11,7 +11,7 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Presentation.UI.NoticeBoard
 {
     public sealed class NoticeBoardViewModel : ViewModelBase<NoticeBoardModel>
     {
-        private readonly Action<string> _contractSelected;
+        private readonly Func<string, bool> _contractAccepted;
         private readonly Action _closed;
         private readonly IReadOnlyList<NoticeBoardItemViewModel> _items;
 
@@ -19,9 +19,26 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Presentation.UI.NoticeBoard
             NoticeBoardModel model,
             Action<string> contractSelected,
             Action closed)
+            : this(
+                model,
+                contractSelected == null
+                    ? null
+                    : new Func<string, bool>(contractId =>
+                    {
+                        contractSelected(contractId);
+                        return true;
+                    }),
+                closed)
+        {
+        }
+
+        public NoticeBoardViewModel(
+            NoticeBoardModel model,
+            Func<string, bool> contractAccepted,
+            Action closed)
             : base(model)
         {
-            _contractSelected = contractSelected ?? throw new ArgumentNullException(nameof(contractSelected));
+            _contractAccepted = contractAccepted ?? throw new ArgumentNullException(nameof(contractAccepted));
             _closed = closed ?? throw new ArgumentNullException(nameof(closed));
 
             var items = new List<NoticeBoardItemViewModel>(model.Offers.Count);
@@ -53,8 +70,10 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Presentation.UI.NoticeBoard
                 return;
             }
 
-            _contractSelected(contractId);
-            model.ApplyAcceptedSelection(contractId);
+            if (_contractAccepted(contractId))
+            {
+                model.ApplyAcceptedSelection(contractId);
+            }
         }
 
         public void Close()

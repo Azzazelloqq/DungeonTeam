@@ -1,0 +1,8 @@
+{
+  "name": "DungeonTeam.Contracts.Tests.EditMode",
+  "rootNamespace": "DungeonTeam.Gameplay.Contracts.Tests.EditMode",
+  "references": ["DungeonTeam.Contracts.Domain", "DungeonTeam.Contracts.Application", "DungeonTeam.Contracts.Infrastructure", "LocalSaveSystem"],
+  "includePlatforms": ["Editor"],
+  "optionalUnityReferences": ["TestAssemblies"],
+  "autoReferenced": false
+}

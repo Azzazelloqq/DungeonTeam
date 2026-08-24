@@ -2,7 +2,8 @@
   "name": "DungeonTeam.GuildHall.Application",
   "rootNamespace": "DungeonTeam.Gameplay.GuildHall.Application",
   "references": [
-    "DungeonTeam.AmbientNpc.Application"
+    "DungeonTeam.AmbientNpc.Application",
+    "DungeonTeam.Contracts.Domain"
   ],
   "autoReferenced": false,
   "noEngineReferences": true

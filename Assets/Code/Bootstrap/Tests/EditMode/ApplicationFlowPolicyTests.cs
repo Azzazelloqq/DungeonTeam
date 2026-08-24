@@ -1,4 +1,5 @@
 using System;
+using DungeonTeam.Gameplay.Contracts.Domain;
 using DungeonTeam.Gameplay.DungeonRun.Application;
 using DungeonTeam.Gameplay.DungeonRun.Runtime;
 using DungeonTeam.Gameplay.GuildHall.Application;
@@ -128,6 +129,7 @@ namespace Code.ApplicationRoot.Tests.EditMode
             Assert.That(destination.IsUnavailable, Is.False);
             Assert.That(destination.Request.Dungeon.DungeonId, Is.EqualTo("dungeon.one"));
             Assert.That(destination.Request.Dungeon.Seed, Is.EqualTo(17));
+            Assert.That(destination.Request.ContractId, Is.EqualTo("contract.one"));
         }
 
         [Test]
@@ -285,13 +287,16 @@ namespace Code.ApplicationRoot.Tests.EditMode
 
         private static WorldMapDestinationResolver CreateResolver(
             WorldLocationSnapshot location,
-            NoticeBoardOfferSnapshot offer,
+            ContractDefinition offer,
             GuildSessionState session)
         {
             var locations = new WorldMapCatalog(
                 new[] { location },
                 new WorldMapUiTextSnapshot(MapText("map.title"), MapText("map.back"), MapText("map.empty")));
             var contracts = new ContractCatalog(new[] { offer });
+            var contractState = session.SelectedContractId == null
+                ? new ContractState()
+                : new ContractState(session.SelectedContractId, Array.Empty<string>());
             var presets = new DungeonRunLaunchPresetCatalog(
                 new[]
                 {
@@ -307,7 +312,7 @@ namespace Code.ApplicationRoot.Tests.EditMode
             var team = new DungeonRunTeamSelection(
                 new DungeonRunActorSelection("actor.leader", 1, "loadout.default"),
                 Array.Empty<DungeonRunActorSelection>());
-            return new WorldMapDestinationResolver(locations, contracts, session, presets, team);
+            return new WorldMapDestinationResolver(locations, contracts, contractState, presets, team);
         }
 
         private static WorldLocationSnapshot Location(
@@ -326,15 +331,15 @@ namespace Code.ApplicationRoot.Tests.EditMode
                 destinationId);
         }
 
-        private static NoticeBoardOfferSnapshot Offer(string id, string locationId, bool isAvailable)
+        private static ContractDefinition Offer(string id, string locationId, bool isAvailable)
         {
-            return new NoticeBoardOfferSnapshot(
+            return new ContractDefinition(
                 id,
-                GuildText($"{id}.title"),
-                GuildText($"{id}.summary"),
+                new ContractTextSnapshot($"{id}.title", $"{id}.title"),
+                new ContractTextSnapshot($"{id}.summary", $"{id}.summary"),
                 locationId,
                 isAvailable,
-                isAvailable ? null : GuildText($"{id}.disabled"));
+                isAvailable ? null : new ContractTextSnapshot($"{id}.disabled", $"{id}.disabled"));
         }
 
         private static WorldMapTextSnapshot MapText(string id) => new(id, id);

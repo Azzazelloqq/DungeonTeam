@@ -127,7 +127,8 @@ namespace DungeonTeam.Gameplay.DungeonRun.Application
         public DungeonRunStartRequest CreateRequest(
             string presetId,
             int? seedOverride,
-            DungeonRunTeamSelection team)
+            DungeonRunTeamSelection team,
+            string contractId = null)
         {
             var preset = Require(presetId);
             return new DungeonRunStartRequest(
@@ -136,7 +137,8 @@ namespace DungeonTeam.Gameplay.DungeonRun.Application
                     preset.ScenarioId,
                     preset.DifficultyId,
                     seedOverride ?? preset.DefaultSeed),
-                team);
+                team,
+                contractId);
         }
     }
 }

@@ -5,6 +5,7 @@
     "Bootstrap",
     "DungeonTeam.WorldMap",
     "DungeonTeam.GuildHall.Application",
+    "DungeonTeam.Contracts.Domain",
     "DungeonTeam.DungeonRun.Application",
     "DungeonTeam.DungeonRun.Runtime",
     "DungeonTeam.Rewards.Runtime",

@@ -1,4 +1,5 @@
 using System;
+using DungeonTeam.Gameplay.Contracts.Domain;
 using DungeonTeam.Gameplay.GuildHall.Application;
 using DungeonTeam.Gameplay.PlayerProfile.Application;
 using NUnit.Framework;
@@ -14,7 +15,7 @@ namespace Code.ApplicationRoot.Tests.EditMode
             {
                 Offer("contract.demo", null, true, null),
                 Offer("contract.veteran", "rank.e", true, null),
-                Offer("contract.authored-disabled", null, false, Text("disabled"))
+                Offer("contract.authored-disabled", null, false, "disabled")
             };
             var catalog = new ContractCatalog(offers);
             var ranks = new GuildRankCatalog(new[]
@@ -25,14 +26,18 @@ namespace Code.ApplicationRoot.Tests.EditMode
 
             var blocked = GuildOfferAvailabilityBuilder.Build(
                 catalog,
+                new ContractState(),
                 ranks,
                 "rank.f",
-                Text("Required rank: {0}"));
+                Text("Required rank: {0}"),
+                NoticeBoardText());
             var available = GuildOfferAvailabilityBuilder.Build(
                 catalog,
+                new ContractState(),
                 ranks,
                 "rank.e",
-                Text("Required rank: {0}"));
+                Text("Required rank: {0}"),
+                NoticeBoardText());
 
             Assert.That(blocked, Has.Length.EqualTo(offers.Length));
             Assert.That(blocked[0].IsAvailable, Is.True);
@@ -44,20 +49,23 @@ namespace Code.ApplicationRoot.Tests.EditMode
             Assert.That(available[1].DisabledReason, Is.Null);
         }
 
-        private static NoticeBoardOfferSnapshot Offer(
+        private static ContractDefinition Offer(
             string contractId,
             string minimumRankId,
             bool isAvailable,
-            GuildTextSnapshot disabledReason) =>
+            string disabledReason) =>
             new(
                 contractId,
-                Text(contractId + ".title"),
-                Text(contractId + ".summary"),
+                new ContractTextSnapshot(contractId + ".title", contractId),
+                new ContractTextSnapshot(contractId + ".summary", "Описание"),
                 "location.dungeon",
                 isAvailable,
-                disabledReason,
+                isAvailable ? null : new ContractTextSnapshot(contractId + ".reason", disabledReason),
                 minimumRankId);
 
-        private static GuildTextSnapshot Text(string value) => new(value, value);
+        private static GuildTextSnapshot Text(string value) => new(value.Replace(" ", "."), value);
+
+        private static NoticeBoardTextSnapshot NoticeBoardText() => new(
+            Text("Контракты"), Text("Выбрать"), Text("Выбрано"), Text("Закрыть"), Text("Нет"));
     }
 }

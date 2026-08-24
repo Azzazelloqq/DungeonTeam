@@ -21,6 +21,8 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Presentation.UI.NoticeBoard
         private UnityAction _selectRequested;
         private NoticeBoardTextSnapshot _text;
         private bool _isAvailable;
+        private bool _isCompleted;
+        private string _statusText;
 
         internal Button SelectButton => _selectButton;
 
@@ -33,10 +35,13 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Presentation.UI.NoticeBoard
 
             _text = text ?? throw new ArgumentNullException(nameof(text));
             ValidateBindings();
-            _isAvailable = viewModel.IsAvailable;
+            _isAvailable = viewModel.CanAccept;
+            _isCompleted = viewModel.IsCompleted;
+            _statusText = viewModel.StatusText;
             _titleText.SetText(viewModel.Title);
             _summaryText.SetText(viewModel.Summary);
-            _disabledReasonText.SetText(viewModel.DisabledReason);
+            _disabledReasonText.SetText(
+                _isCompleted || viewModel.IsActive ? viewModel.StatusText : viewModel.DisabledReason);
             _disabledReasonText.gameObject.SetActive(!_isAvailable);
             _selectButton.interactable = _isAvailable;
             _selectRequested = () => viewModel.SelectCommand.Execute(null);
@@ -69,7 +74,9 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Presentation.UI.NoticeBoard
         {
             _selectedMarker.SetActive(isSelected);
             _selectLabel.SetText(
-                isSelected ? _text.Selected.DisplayText : _text.Select.DisplayText);
+                _isCompleted || !string.IsNullOrWhiteSpace(_statusText)
+                    ? _statusText
+                    : isSelected ? _text.Selected.DisplayText : _text.Select.DisplayText);
         }
     }
 }

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using DungeonTeam.Gameplay.Contracts.Domain;
 using DungeonTeam.Gameplay.GuildHall.Application;
 using DungeonTeam.Gameplay.AmbientNpc.Application;
 using NUnit.Framework;
@@ -60,7 +61,24 @@ namespace DungeonTeam.Gameplay.GuildHall.Tests.EditMode
                 CreateNoticeBoardText(),
                 CreateRunSummaryText(),
                 CreateProfileText());
-            var contractCatalog = new ContractCatalog(offers);
+            var definitions = new ContractDefinition[count];
+            for (var index = 0; index < count; index++)
+            {
+                definitions[index] = new ContractDefinition(
+                    offers[index].ContractId,
+                    new ContractTextSnapshot(offers[index].Title.TextId, offers[index].Title.DisplayText),
+                    new ContractTextSnapshot(offers[index].Summary.TextId, offers[index].Summary.DisplayText),
+                    offers[index].LocationId,
+                    offers[index].IsAvailable,
+                    offers[index].DisabledReason == null
+                        ? null
+                        : new ContractTextSnapshot(
+                            offers[index].DisabledReason.TextId,
+                            offers[index].DisabledReason.DisplayText),
+                    offers[index].MinimumRankId);
+            }
+
+            var contractCatalog = new ContractCatalog(definitions);
             var sessionState = new GuildSessionState();
 
             var context = GuildHallStartContextBuilder.Build(

@@ -24,7 +24,11 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Presentation.UI.NoticeBoard
         public string Title => model.Offer.Title.DisplayText;
         public string Summary => model.Offer.Summary.DisplayText;
         public bool IsAvailable => model.Offer.IsAvailable;
+        public bool CanAccept => model.Offer.CanAccept;
+        public bool IsActive => model.Offer.IsActive;
+        public bool IsCompleted => model.Offer.IsCompleted;
         public string DisabledReason => model.Offer.DisabledReason?.DisplayText ?? string.Empty;
+        public string StatusText => model.Offer.StatusText?.DisplayText ?? string.Empty;
         public IReadOnlyReactiveProperty<bool> IsSelected => model.IsSelected;
         public IRelayCommand<object> SelectCommand { get; }
 

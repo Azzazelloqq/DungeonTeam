@@ -106,6 +106,24 @@ namespace DungeonTeam.Gameplay.GuildHall.Tests.EditMode
             model.Dispose();
         }
 
+        [Test]
+        public void Select_WhenAcceptanceIsRejected_DoesNotPublishSelection()
+        {
+            var model = new NoticeBoardModel(
+                new[] { CreateOffer("contract.first", true), CreateOffer("contract.second", true) },
+                "contract.first",
+                CreateText());
+            var viewModel = new NoticeBoardViewModel(model, _ => false, () => { });
+            viewModel.Initialize();
+
+            viewModel.Items[1].SelectCommand.Execute(null);
+
+            Assert.That(model.SelectedContractId.Value, Is.EqualTo("contract.first"));
+            Assert.That(viewModel.Items[0].IsSelected.Value, Is.True);
+            Assert.That(viewModel.Items[1].IsSelected.Value, Is.False);
+            viewModel.Dispose();
+        }
+
         private static NoticeBoardViewModel CreateViewModel(
             IReadOnlyList<NoticeBoardOfferSnapshot> offers,
             string selectedContractId,

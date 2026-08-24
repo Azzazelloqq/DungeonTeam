@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading;
 using Azzazelloqq.Config;
 using Code.Addressables.Generated;
@@ -14,6 +15,9 @@ using DungeonTeam.Feedback.Runtime.Haptics;
 using DungeonTeam.Feedback.Runtime.Music;
 using DungeonTeam.Gameplay.Actors.Runtime;
 using DungeonTeam.Gameplay.Chests.Runtime;
+using DungeonTeam.Gameplay.Contracts.Application;
+using DungeonTeam.Gameplay.Contracts.Domain;
+using DungeonTeam.Gameplay.Contracts.Infrastructure;
 using DungeonTeam.Gameplay.Dungeon.Application;
 using DungeonTeam.Gameplay.DungeonRun.Application;
 using DungeonTeam.Gameplay.DungeonRun.Runtime;
@@ -38,6 +42,7 @@ using DungeonTeam.Gameplay.PlayerProfile.Infrastructure;
 using DungeonTeam.UI.WorldMap;
 using DungeonTeam.DeveloperTools;
 using LightDI.Runtime;
+using LocalSaveSystem;
 using ResourceLoader;
 using ResourceLoader.AddressableResourceLoader;
 using RootPattern;
@@ -80,7 +85,9 @@ namespace Code.ApplicationRoot
 		private GuildHallCatalog _guildHallCatalog;
 		private DialogueCatalog _dialogueCatalog;
 		private AmbientNpcProfileCatalog _ambientNpcProfileCatalog;
-		private ContractCatalog _contractCatalog;
+		private DungeonTeam.Gameplay.Contracts.Domain.ContractCatalog _contractCatalog;
+		private ContractPersistence _contractPersistence;
+		private ContractSession _contractSession;
 		private GuildRankCatalog _guildRankCatalog;
 		private WorldMapCatalog _worldMapCatalog;
 		private GuildSessionState _guildSessionState;
@@ -93,6 +100,7 @@ namespace Code.ApplicationRoot
 		private FeedbackBankLoader _feedbackBankLoader;
 		private DungeonRunHost _dungeonRunHost;
 		private DungeonRunRoot _finishedRunSubscription;
+		private string _activeRunContractId;
 		private GuildRunSummaryBuilder _runSummaryBuilder;
 		private RewardSettlementMapper _rewardSettlementMapper;
 		private DeveloperRunConsoleController _developerConsoleController;
@@ -151,6 +159,14 @@ namespace Code.ApplicationRoot
 				_dungeonRunTeamSetup,
 				_itemCatalog,
 				out _playerProfilePersistence);
+			_contractPersistence = new ContractPersistence(new SaveStoreOptions(
+				Path.Combine(Application.persistentDataPath, "DungeonTeam"))
+			{
+				UseTaggedFormat = true,
+				UseAtomicWrite = true,
+				SaveOnQuit = true
+			});
+			_contractSession = new ContractSession(_contractPersistence.Repository);
 			_guildRankCatalog = config
 				.GetConfigPage<GuildRankConfigPage>()
 				.CreateCatalog();
@@ -168,7 +184,8 @@ namespace Code.ApplicationRoot
 				Debug.LogException);
 			_dialogueCatalog = config.GetConfigPage<DialogueConfigPage>().CreateCatalog();
 			_ambientNpcProfileCatalog = config.GetConfigPage<AmbientNpcConfigPage>().CreateCatalog();
-			_contractCatalog = config.GetConfigPage<ContractConfigPage>().CreateCatalog();
+			var contractConfig = config.GetConfigPage<ContractConfigPage>();
+			_contractCatalog = contractConfig.CreateCatalog();
 			_worldMapCatalog = config.GetConfigPage<WorldMapConfigPage>().CreateCatalog();
 			GuildContentValidator.Validate(
 				_guildHallCatalog,
@@ -176,6 +193,7 @@ namespace Code.ApplicationRoot
 				_ambientNpcProfileCatalog,
 				_contractCatalog,
 				_worldMapCatalog.ContractDestinationLocationIds);
+			_contractCatalog.ValidateSupportedLocations(_worldMapCatalog.ContractDestinationLocationIds);
 			for (var index = 0; index < _worldMapCatalog.Locations.Count; index++)
 			{
 				var location = _worldMapCatalog.Locations[index];
@@ -243,6 +261,7 @@ namespace Code.ApplicationRoot
 
 			_developerConsoleController = null;
 			_dungeonRunHost = null;
+			_activeRunContractId = null;
 			_runSummaryBuilder = null;
 			_rewardSettlementMapper = null;
 			_dungeonFactory = null;
@@ -256,11 +275,14 @@ namespace Code.ApplicationRoot
 			_enemyBehaviorCatalog = null;
 			_dungeonRunTeamSetup = null;
 			_playerProfileSession = null;
+			_contractSession = null;
 			_itemCatalog = null;
 			_guildRankCatalog = null;
 			_guildProfileEditHandler = null;
 			_playerProfilePersistence?.Dispose();
 			_playerProfilePersistence = null;
+			_contractPersistence?.Dispose();
+			_contractPersistence = null;
 			_launchPresetCatalog = null;
 			_guildHallCatalog = null;
 			_dialogueCatalog = null;
@@ -330,24 +352,50 @@ namespace Code.ApplicationRoot
 #else
 				new EditorGuildHallInput(),
 #endif
-				_ => { }, OnGuildHallWorldMapRequested, _guildSessionState.SelectContract,
-				_guildProfileEditHandler.Handle);
+				_ => { }, OnGuildHallWorldMapRequested, AcceptContract,
+				_guildProfileEditHandler.Handle, true);
 			await hall.InitializeAsync(token);
 			_guildHallRoot = hall;
 		}
 
 		private GuildHallStartContext BuildGuildHallStartContext()
 		{
-			var offers = GuildOfferAvailabilityBuilder.Build(
+			var offers = ContractSnapshotBuilder.Build(
 				_contractCatalog,
+				_contractSession.State,
 				_guildRankCatalog,
 				_playerProfileSession.State.RankId,
-				_guildHallCatalog.ProfileText.RequiredRankOfferFormat);
+				_guildHallCatalog.ProfileText.RequiredRankOfferFormat,
+				_guildHallCatalog.NoticeBoardText);
 			return new GuildHallStartContext(
 				_guildHallCatalog.Npcs,
 				offers,
-				_guildSessionState.SelectedContractId,
+				_contractSession.State.ActiveContractId,
 				_guildSessionState.LastRunSummary);
+		}
+
+		private bool AcceptContract(string contractId)
+		{
+			if (!ContractSnapshotBuilder.IsAvailableForAcceptance(
+					contractId,
+					_contractCatalog,
+					_contractSession.State,
+					_guildRankCatalog,
+					_playerProfileSession.State.RankId,
+					_guildHallCatalog.ProfileText.RequiredRankOfferFormat,
+					_guildHallCatalog.NoticeBoardText))
+			{
+				return false;
+			}
+
+			var result = _contractSession.Accept(contractId, _contractCatalog);
+			if (!result.Accepted)
+			{
+				return false;
+			}
+
+			_guildSessionState.SelectContract(contractId);
+			return true;
 		}
 
 		private GuildHallStartContext WithProfile(GuildHallStartContext context) => new(
@@ -464,7 +512,7 @@ namespace Code.ApplicationRoot
 				destination = new WorldMapDestinationResolver(
 					_worldMapCatalog,
 					_contractCatalog,
-					_guildSessionState,
+					_contractSession.State,
 					_launchPresetCatalog,
 					PlayerProfileComposition.MapToTeamSelection(_playerProfileSession.State, _itemCatalog))
 					.Resolve(locationId);
@@ -505,6 +553,7 @@ namespace Code.ApplicationRoot
 			{
 				await ShowLoadingScreenAsync(token);
 				await CloseWorldMapAsync(token);
+				_activeRunContractId = request.ContractId;
 				await _dungeonRunHost.StartAsync(request, token);
 				SubscribeToDungeonRunFinished(_dungeonRunHost.ActiveRun);
 				lease.Complete(PlayerFlowState.DungeonRun);
@@ -551,6 +600,7 @@ namespace Code.ApplicationRoot
 				_guildHallRoot?.Dispose();
 				_guildHallRoot = null;
 				DisposeDungeonRun();
+				_activeRunContractId = null;
 				await _dungeonRunHost.StartAsync(request, token);
 				SubscribeToDungeonRunFinished(_dungeonRunHost.ActiveRun);
 				lease.Complete(PlayerFlowState.DungeonRun);
@@ -739,6 +789,7 @@ namespace Code.ApplicationRoot
 		{
 			UnsubscribeFromDungeonRunFinished();
 			_dungeonRunHost?.Stop();
+			_activeRunContractId = null;
 		}
 
 		private void SubscribeToDungeonRunFinished(DungeonRunRoot run)
@@ -805,6 +856,15 @@ namespace Code.ApplicationRoot
 					settlement.Receipt,
 					_rewardCatalog,
 					_guildHallCatalog.RunSummaryText);
+				if (result.Outcome == DungeonRunOutcome.Completed &&
+					!string.IsNullOrWhiteSpace(_activeRunContractId))
+				{
+					var completion = _contractSession.CompleteActive(_activeRunContractId);
+					if (completion.Completed)
+					{
+						_guildSessionState.ClearSelectedContract();
+					}
+				}
 				await ShowLoadingScreenAsync(token);
 				UnsubscribeFromDungeonRunFinished();
 				_dungeonRunHost.Stop();

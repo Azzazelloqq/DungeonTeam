@@ -1,4 +1,5 @@
 using System;
+using DungeonTeam.Gameplay.Contracts.Domain;
 using DungeonTeam.Gameplay.GuildHall.Application;
 using UnityEngine;
 
@@ -18,6 +19,18 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Config
             try
             {
                 return new GuildTextSnapshot(_textId, _fallbackRu);
+            }
+            catch (ArgumentException exception)
+            {
+                throw new InvalidOperationException($"{location}: {exception.Message}", exception);
+            }
+        }
+
+        internal ContractTextSnapshot ToContractSnapshot(string location)
+        {
+            try
+            {
+                return new ContractTextSnapshot(_textId, _fallbackRu);
             }
             catch (ArgumentException exception)
             {

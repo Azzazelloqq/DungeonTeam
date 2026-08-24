@@ -1,4 +1,5 @@
 using System;
+using DungeonTeam.Gameplay.Contracts.Domain;
 using DungeonTeam.Gameplay.GuildHall.Application;
 using DungeonTeam.Gameplay.AmbientNpc.Application;
 using DungeonTeam.UI.WorldMap;
@@ -144,10 +145,10 @@ namespace DungeonTeam.Gameplay.GuildHall.Tests.EditMode
         {
             return new ContractCatalog(new[]
             {
-                new NoticeBoardOfferSnapshot(
+                new ContractDefinition(
                     "contract.demo",
-                    Text("contract.demo.title"),
-                    Text("contract.demo.summary"),
+                    new ContractTextSnapshot("contract.demo.title", "contract.demo.title"),
+                    new ContractTextSnapshot("contract.demo.summary", "contract.demo.summary"),
                     "location.dungeon",
                     true,
                     null)

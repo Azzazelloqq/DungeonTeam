@@ -32,6 +32,7 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Composition
         private readonly Action<GuildHallInteractionRequest> _interactionRequested;
         private readonly Action _worldMapRequested;
         private readonly Action<string> _contractSelected;
+        private Func<string, bool> _contractAccepted;
         private readonly Func<GuildProfileEditRequest, GuildProfileEditResult> _profileEditRequested;
 
         private IGuildHallInput _pendingInput;
@@ -107,7 +108,46 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Composition
             _worldMapRequested = worldMapRequested ?? throw new ArgumentNullException(
                 nameof(worldMapRequested));
             _contractSelected = contractSelected ?? (_ => { });
+            _contractAccepted = id =>
+            {
+                _contractSelected(id);
+                return true;
+            };
             _profileEditRequested = profileEditRequested;
+        }
+
+        public GuildHallRoot(
+            GuildHallWorldLoader worldLoader,
+            GuildHallStartContext startContext,
+            GuildHallCatalog catalog,
+            AmbientNpcProfileCatalog ambientProfiles,
+            DialogueCatalog dialogues,
+            ITickHandler tickHandler,
+            IGuildHallInput input,
+            Action<GuildHallInteractionRequest> interactionRequested,
+            Action worldMapRequested,
+            Func<string, bool> contractAccepted,
+            Func<GuildProfileEditRequest, GuildProfileEditResult> profileEditRequested,
+            bool useContractAcceptance)
+            : this(
+                worldLoader,
+                startContext,
+                catalog,
+                ambientProfiles,
+                dialogues,
+                tickHandler,
+                input,
+                interactionRequested,
+                worldMapRequested,
+                (Action<string>)null,
+                profileEditRequested)
+        {
+            if (!useContractAcceptance)
+            {
+                throw new ArgumentException("Contract acceptance bridge must be enabled.", nameof(useContractAcceptance));
+            }
+
+            _contractAccepted = contractAccepted ?? throw new ArgumentNullException(nameof(contractAccepted));
         }
 
         internal NoticeBoardViewBase NoticeBoardView => _noticeBoardView;
@@ -142,7 +182,7 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Composition
                     _catalog.NoticeBoardText);
                 _noticeBoardViewModel = new NoticeBoardViewModel(
                     _noticeBoardModel,
-                    HandleContractSelected,
+                    (Func<string, bool>)HandleContractAccepted,
                     CloseNoticeBoard);
                 _noticeBoardViewModel.Initialize();
                 _noticeBoardView.Initialize(_noticeBoardViewModel, disposeWithViewModel: false);
@@ -388,6 +428,17 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Composition
         private void HandleContractSelected(string contractId)
         {
             _contractSelected(contractId);
+        }
+
+        private bool HandleContractAccepted(string contractId)
+        {
+            if (_contractAccepted != null)
+            {
+                return _contractAccepted(contractId);
+            }
+
+            HandleContractSelected(contractId);
+            return true;
         }
 
         private void OpenRunSummary()

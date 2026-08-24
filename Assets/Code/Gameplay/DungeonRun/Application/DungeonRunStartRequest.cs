@@ -7,7 +7,8 @@ namespace DungeonTeam.Gameplay.DungeonRun.Application
     {
         public DungeonRunStartRequest(
             DungeonBuildRequest dungeon,
-            DungeonRunTeamSelection team)
+            DungeonRunTeamSelection team,
+            string contractId = null)
         {
             if (string.IsNullOrWhiteSpace(dungeon.DungeonId) ||
                 string.IsNullOrWhiteSpace(dungeon.ScenarioId) ||
@@ -20,10 +21,13 @@ namespace DungeonTeam.Gameplay.DungeonRun.Application
 
             Dungeon = dungeon;
             Team = team ?? throw new ArgumentNullException(nameof(team));
+            ContractId = string.IsNullOrWhiteSpace(contractId) ? null : contractId;
         }
 
         public DungeonBuildRequest Dungeon { get; }
 
         public DungeonRunTeamSelection Team { get; }
+
+        public string ContractId { get; }
     }
 }

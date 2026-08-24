@@ -44,7 +44,7 @@ namespace DungeonTeam.Gameplay.GuildHall.Tests.EditMode
             }
 
             Assert.That(guildHall.Npcs, Is.Not.Empty);
-            Assert.That(contracts.Offers, Is.Not.Empty);
+            Assert.That(contracts.Definitions, Is.Not.Empty);
             Assert.That(worldMap.Locations, Is.Not.Empty);
             Assert.That(guildHall.NoticeBoardText.Header.DisplayText, Is.Not.Empty);
         }

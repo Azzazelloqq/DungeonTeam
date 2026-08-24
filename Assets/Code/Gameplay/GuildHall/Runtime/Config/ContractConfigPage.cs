@@ -1,6 +1,6 @@
 using System;
 using Code.Configuration;
-using DungeonTeam.Gameplay.GuildHall.Application;
+using DungeonTeam.Gameplay.Contracts.Domain;
 using UnityEngine;
 
 namespace DungeonTeam.Gameplay.GuildHall.Runtime.Config
@@ -13,22 +13,22 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Config
         [SerializeField]
         private ContractDefinitionConfig[] _contracts = Array.Empty<ContractDefinitionConfig>();
 
-        public ContractCatalog CreateCatalog()
+        public DungeonTeam.Gameplay.Contracts.Domain.ContractCatalog CreateCatalog()
         {
             if (_contracts == null)
             {
                 throw new InvalidOperationException("Guild contracts cannot be null.");
             }
 
-            var offers = new NoticeBoardOfferSnapshot[_contracts.Length];
+            var definitions = new ContractDefinition[_contracts.Length];
             for (var index = 0; index < _contracts.Length; index++)
             {
-                offers[index] = (_contracts[index] ?? throw new InvalidOperationException(
+                definitions[index] = (_contracts[index] ?? throw new InvalidOperationException(
                         $"Guild contract at index {index} is missing."))
-                    .ToSnapshot(index);
+                    .ToDefinition(index);
             }
 
-            return new ContractCatalog(offers);
+            return new DungeonTeam.Gameplay.Contracts.Domain.ContractCatalog(definitions);
         }
     }
 
@@ -56,22 +56,25 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Config
         [SerializeField]
         private GuildTextDefinitionConfig _disabledReason;
 
-        internal NoticeBoardOfferSnapshot ToSnapshot(int index)
+        internal ContractDefinition ToDefinition(int index)
         {
             var location = $"Guild contract at index {index}";
-            return new NoticeBoardOfferSnapshot(
+            var title = (_title ?? throw new InvalidOperationException(
+                    $"{location} has no title.")).ToContractSnapshot($"{location} title");
+            var summary = (_summary ?? throw new InvalidOperationException(
+                    $"{location} has no summary.")).ToContractSnapshot($"{location} summary");
+            var disabledReason = _isAvailable
+                ? null
+                : (_disabledReason ?? throw new InvalidOperationException(
+                    $"{location} is unavailable but has no reason.")).ToContractSnapshot(
+                    $"{location} disabled reason");
+            return new ContractDefinition(
                 _contractId,
-                (_title ?? throw new InvalidOperationException(
-                    $"{location} has no title.")).ToSnapshot($"{location} title"),
-                (_summary ?? throw new InvalidOperationException(
-                    $"{location} has no summary.")).ToSnapshot($"{location} summary"),
+                title,
+                summary,
                 _locationId,
                 _isAvailable,
-                _isAvailable
-                    ? null
-                    : (_disabledReason ?? throw new InvalidOperationException(
-                        $"{location} is unavailable but has no reason."))
-                    .ToSnapshot($"{location} disabled reason"),
+                disabledReason,
                 _minimumRankId);
         }
     }

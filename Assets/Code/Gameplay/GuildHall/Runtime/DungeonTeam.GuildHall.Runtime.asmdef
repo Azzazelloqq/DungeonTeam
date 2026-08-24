@@ -3,6 +3,7 @@
   "rootNamespace": "DungeonTeam.Gameplay.GuildHall.Runtime",
   "references": [
     "DungeonTeam.GuildHall.Application",
+    "DungeonTeam.Contracts.Domain",
     "DungeonTeam.AmbientNpc.Application",
     "DungeonTeam.AmbientNpc.Runtime",
     "DungeonTeam.Configuration",

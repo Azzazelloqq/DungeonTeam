@@ -1,0 +1,7 @@
+{
+  "name": "DungeonTeam.Contracts.Application",
+  "rootNamespace": "DungeonTeam.Gameplay.Contracts.Application",
+  "references": ["DungeonTeam.Contracts.Domain"],
+  "autoReferenced": false,
+  "noEngineReferences": true
+}
