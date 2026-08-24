@@ -70,6 +70,37 @@ namespace DungeonTeam.Gameplay.PlayerProfile.Tests.EditMode
             Assert.That(dto.EquipmentByHero, Has.Length.EqualTo(1));
             Assert.That(dto.EquipmentByHero[0].ActorId, Is.EqualTo("leader"));
         }
+
+        [Test]
+        public void V2ToV3Migrator_LeavesNewTerminalFieldsAbsent()
+        {
+            var dto = new PlayerProfileSaveV1
+            {
+                Gold = 12,
+                Heroes = new[] { new PlayerProfileHeroSaveV1 { ActorId = "leader", Level = 1, LoadoutId = "loadout" } },
+                LeaderActorId = "leader",
+                CompanionActorIds = Array.Empty<string>(),
+                UniqueItems = Array.Empty<PlayerProfileItemInstanceSaveV2>(),
+                Resources = Array.Empty<PlayerProfileResourceStackSaveV2>(),
+                EquipmentByHero = new[] { new PlayerProfileHeroEquipmentSaveV2 { ActorId = "leader" } }
+            };
+            var migrator = new PlayerProfileV2ToV3Migrator();
+
+            dto.PendingTerminalResult = new PlayerProfilePendingTerminalResultSaveV3
+            {
+                RunId = "stale",
+                GoldAmount = 1,
+                ResourceGrants = Array.Empty<PlayerProfileTerminalResourceGrantSaveV3>()
+            };
+            dto.LastAppliedRunId = "stale";
+            migrator.Migrate(dto);
+
+            Assert.That(migrator.WasApplied, Is.True);
+            Assert.That(dto.PendingTerminalResult, Is.Null);
+            Assert.That(dto.LastAppliedRunId, Is.Null);
+            Assert.That(dto.Gold, Is.EqualTo(12));
+            Assert.That(dto.Heroes[0].ActorId, Is.EqualTo("leader"));
+        }
         SaveStore CreateStore() => new(new SaveStoreOptions(_path) { UseTaggedFormat = true, UseAtomicWrite = true });
     }
 }

@@ -1,6 +1,6 @@
 # DungeonTeam — Player Profile Implementation Plan
 
-**Статус:** PP-0/PP-1/PP-2 COMPLETE; PP-3 IMPLEMENTED, AUTOMATED VALIDATION PASSED; manual Unity smoke outstanding
+**Статус:** PP-0/PP-1/PP-2 COMPLETE; PP-3/PP-4 IMPLEMENTED, AUTOMATED VALIDATION PASSED; manual Unity smoke outstanding
 
 **Версия:** 0.5
 
@@ -24,7 +24,7 @@
 | PP-1 | Read-only persistent profile vertical slice | Complete |
 | PP-2 | Editable leader/team/loadout and run integration | Complete |
 | PP-3 | Unique equipment, stackable resources and three hero slots | Implemented; targeted EditMode passed, manual Guild-to-Run smoke outstanding |
-| PP-4 | Verified result commit, Gold banking and selling | Designed; follows PP-3 |
+| PP-4 | Verified result commit, Gold banking and selling | Implemented; targeted EditMode passed, manual failure/selling smoke outstanding |
 | PP-5 | Guild ranks and board gating | Requires rank rules/content decision |
 | PP-6 | Integrated regression and documentation closure | Planned |
 
@@ -158,6 +158,16 @@ Manual Guild Profile → equip/transfer/unequip → Map → Run proof remains in
 8. Run targeted EditMode suites, compilation, asmdef/GUID validation and preserve a clear manual-smoke boundary.
 
 No shop, exchange rates, second currency, quantity picker, new reward IDs or unique-equipment dungeon drops are added.
+
+### Implemented and validated
+
+- `DungeonRunResult` carries one stable run ID; Bootstrap maps only the current Gold/silver/crystal reward IDs before profile persistence.
+- Profile V3 persists a pending terminal result and last applied run ID, recovers interrupted pending work at startup and returns a receipt only after the applied record is verified.
+- Dungeon return now banks before it stops the run or creates a summary. A failed/rejected bank returns to Guild Hall with no reward-success summary.
+- Reception sells an unequipped unique item or a whole resource stack at `ItemCatalog` prices through the existing Profile bridge.
+- Targeted Unity EditMode: 119/119 passed. `Bootstrap.csproj` compiles with 0 errors and 0 warnings. The project mechanical validator reports only the unrelated pre-existing TMP fallback whitespace.
+
+Manual live verification of the return failure/retry branch and selling UI remains unrun; no player build or playtest was run.
 
 ## 7. PP-5 — guild ranks
 

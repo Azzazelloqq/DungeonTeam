@@ -1,5 +1,6 @@
 using System;
 using NUnit.Framework;
+using DungeonTeam.Gameplay.Inventory.Domain;
 using DungeonTeam.Gameplay.PlayerProfile.Domain;
 using DungeonTeam.Gameplay.PlayerProfile.Application;
 
@@ -108,6 +109,182 @@ namespace DungeonTeam.Gameplay.PlayerProfile.Tests.EditMode
             Assert.That(session.State.Heroes[2].LoadoutId, Is.EqualTo("third.alt"));
         }
 
+        [Test]
+        public void Session_BankTerminalResult_AppliesGoldAndResourceOnce()
+        {
+            var repository = new RecordingRepository();
+            var session = new PlayerProfileSession(
+                repository,
+                new PlayerProfileSeed(
+                    new[] { new HeroProfileState("leader", 1, "loadout") },
+                    "leader",
+                    Array.Empty<string>()));
+            var initialSaveCount = repository.SaveCount;
+
+            var result = session.BankTerminalResult(new ProfileTerminalResultRequest(
+                "run-one",
+                7,
+                new[] { new ProfileResourceGrant("resource.monster-crystal", 3) }));
+
+            Assert.That(result.IsApplied, Is.True);
+            Assert.That(result.Receipt.RunId, Is.EqualTo("run-one"));
+            Assert.That(session.State.Gold, Is.EqualTo(7));
+            Assert.That(session.State.Inventory.Resources[0].Quantity, Is.EqualTo(3));
+            Assert.That(repository.SaveCount, Is.EqualTo(initialSaveCount + 2));
+        }
+
+        [Test]
+        public void Session_BankSameRunAgain_ReturnsAlreadyAppliedWithoutSaving()
+        {
+            var repository = new RecordingRepository();
+            var session = new PlayerProfileSession(
+                repository,
+                new PlayerProfileSeed(
+                    new[] { new HeroProfileState("leader", 1, "loadout") },
+                    "leader",
+                    Array.Empty<string>()));
+            session.BankTerminalResult(new ProfileTerminalResultRequest(
+                "run-one", 7, Array.Empty<ProfileResourceGrant>()));
+            var saveCount = repository.SaveCount;
+
+            var result = session.BankTerminalResult(new ProfileTerminalResultRequest(
+                "run-one", 99, Array.Empty<ProfileResourceGrant>()));
+
+            Assert.That(result.Status, Is.EqualTo(ProfileSettlementStatus.AlreadyApplied));
+            Assert.That(result.Receipt, Is.Null);
+            Assert.That(repository.SaveCount, Is.EqualTo(saveCount));
+            Assert.That(session.State.Gold, Is.EqualTo(7));
+        }
+
+        [Test]
+        public void Session_Recovery_AppliesPersistedPendingBeforeConsumersUseState()
+        {
+            var repository = new RecordingRepository
+            {
+                LoadedState = CreateThreeHeroState().WithTerminalState(
+                    new PendingTerminalResultState(
+                        "run-recovery",
+                        11,
+                        new[] { new ResourceStackState("resource.monster-crystal", 2) }),
+                    null)
+            };
+
+            var session = new PlayerProfileSession(
+                repository,
+                new PlayerProfileSeed(
+                    new[] { new HeroProfileState("leader", 1, "loadout") },
+                    "leader",
+                    Array.Empty<string>()));
+
+            Assert.That(session.State.PendingTerminalResult, Is.Null);
+            Assert.That(session.State.LastAppliedRunId, Is.EqualTo("run-recovery"));
+            Assert.That(session.State.Gold, Is.EqualTo(11));
+            Assert.That(session.State.Inventory.Resources[0].Quantity, Is.EqualTo(2));
+        }
+
+        [Test]
+        public void Session_BankDifferentRunWhilePending_RejectsWithoutOverwrite()
+        {
+            var repository = new RecordingRepository();
+            var session = new PlayerProfileSession(
+                repository,
+                new PlayerProfileSeed(
+                    new[] { new HeroProfileState("leader", 1, "loadout") },
+                    "leader",
+                    Array.Empty<string>()));
+            repository.FailOnSaveNumber = 3;
+            Assert.Throws<InvalidOperationException>(() => session.BankTerminalResult(
+                new ProfileTerminalResultRequest(
+                    "run-pending",
+                    5,
+                    new[] { new ProfileResourceGrant("resource.monster-crystal", 1) })));
+            var saveCount = repository.SaveCount;
+
+            Assert.Throws<InvalidOperationException>(() => session.BankTerminalResult(
+                new ProfileTerminalResultRequest("run-other", 2, Array.Empty<ProfileResourceGrant>())));
+            Assert.That(repository.SaveCount, Is.EqualTo(saveCount));
+            Assert.That(session.State.PendingTerminalResult.RunId, Is.EqualTo("run-pending"));
+        }
+
+        [Test]
+        public void Session_BankPersistenceFailure_DoesNotPublishReceiptOrAppliedState()
+        {
+            var repository = new RecordingRepository();
+            var session = new PlayerProfileSession(
+                repository,
+                new PlayerProfileSeed(
+                    new[] { new HeroProfileState("leader", 1, "loadout") },
+                    "leader",
+                    Array.Empty<string>()));
+            repository.ThrowOnSave = true;
+
+            Assert.Throws<InvalidOperationException>(() => session.BankTerminalResult(
+                new ProfileTerminalResultRequest("run-failed", 9, Array.Empty<ProfileResourceGrant>())));
+            Assert.That(session.State.Gold, Is.EqualTo(0));
+            Assert.That(session.State.PendingTerminalResult, Is.Null);
+            Assert.That(session.State.LastAppliedRunId, Is.Null);
+        }
+
+        [Test]
+        public void State_SellUnequippedUniqueItem_RemovesItemAndAddsCatalogPriceAtomically()
+        {
+            var state = new PlayerProfileState(
+                2,
+                null,
+                new[] { new HeroProfileState("leader", 1, "loadout") },
+                "leader",
+                Array.Empty<string>(),
+                new InventoryState(
+                    new[] { new ItemInstanceState("blade", "equipment.training-blade") },
+                    Array.Empty<ResourceStackState>(),
+                    new[] { new HeroEquipmentState("leader") }));
+
+            var sold = state.SellUniqueItem("blade", 13);
+
+            Assert.That(sold.Gold, Is.EqualTo(15));
+            Assert.That(sold.Inventory.UniqueItems, Is.Empty);
+            Assert.That(state.Inventory.UniqueItems, Has.Count.EqualTo(1));
+        }
+
+        [Test]
+        public void State_SellEquippedUniqueItem_RejectsWithoutChangingState()
+        {
+            var state = new PlayerProfileState(
+                2,
+                null,
+                new[] { new HeroProfileState("leader", 1, "loadout") },
+                "leader",
+                Array.Empty<string>(),
+                new InventoryState(
+                    new[] { new ItemInstanceState("blade", "equipment.training-blade") },
+                    Array.Empty<ResourceStackState>(),
+                    new[] { new HeroEquipmentState("leader", "blade") }));
+
+            Assert.Throws<InvalidOperationException>(() => state.SellUniqueItem("blade", 13));
+            Assert.That(state.Gold, Is.EqualTo(2));
+            Assert.That(state.Inventory.UniqueItems, Has.Count.EqualTo(1));
+        }
+
+        [Test]
+        public void State_SellResource_RemovesWholeStackAndAddsStackPrice()
+        {
+            var state = new PlayerProfileState(
+                2,
+                null,
+                new[] { new HeroProfileState("leader", 1, "loadout") },
+                "leader",
+                Array.Empty<string>(),
+                new InventoryState(
+                    Array.Empty<ItemInstanceState>(),
+                    new[] { new ResourceStackState("resource.monster-crystal", 4) },
+                    new[] { new HeroEquipmentState("leader") }));
+
+            var sold = state.SellResource("resource.monster-crystal", 20);
+
+            Assert.That(sold.Gold, Is.EqualTo(22));
+            Assert.That(sold.Inventory.Resources, Is.Empty);
+        }
+
         private static PlayerProfileState CreateThreeHeroState() => new(
             0,
             null,
@@ -123,17 +300,20 @@ namespace DungeonTeam.Gameplay.PlayerProfile.Tests.EditMode
         private sealed class RecordingRepository : IPlayerProfileRepository
         {
             public bool ThrowOnSave { get; set; }
+            public int FailOnSaveNumber { get; set; }
             public int SaveCount { get; private set; }
+            public PlayerProfileState LoadedState { get; set; }
             public bool TryLoad(out PlayerProfileState state)
             {
-                state = null;
-                return false;
+                state = LoadedState;
+                LoadedState = null;
+                return state != null;
             }
 
             public void Save(PlayerProfileState state)
             {
                 SaveCount++;
-                if (ThrowOnSave)
+                if (ThrowOnSave || SaveCount == FailOnSaveNumber)
                 {
                     throw new InvalidOperationException("Save failed.");
                 }

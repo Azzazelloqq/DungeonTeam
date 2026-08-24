@@ -11,7 +11,9 @@ namespace DungeonTeam.Gameplay.GuildHall.Application
         RemoveCompanion = 2,
         SetLoadout = 3,
         EquipItem = 4,
-        UnequipItem = 5
+        UnequipItem = 5,
+        SellUniqueItem = 6,
+        SellResource = 7
     }
 
     public enum GuildProfileEquipmentSlot
@@ -28,14 +30,17 @@ namespace DungeonTeam.Gameplay.GuildHall.Application
             string actorId,
             string loadoutId = null,
             string itemInstanceId = null,
-            GuildProfileEquipmentSlot? equipmentSlot = null)
+            GuildProfileEquipmentSlot? equipmentSlot = null,
+            string definitionId = null)
         {
             if (!Enum.IsDefined(typeof(GuildProfileEditKind), kind))
             {
                 throw new ArgumentOutOfRangeException(nameof(kind));
             }
 
-            if (string.IsNullOrWhiteSpace(actorId))
+            var isSale = kind == GuildProfileEditKind.SellUniqueItem ||
+                kind == GuildProfileEditKind.SellResource;
+            if (!isSale && string.IsNullOrWhiteSpace(actorId))
             {
                 throw new ArgumentException("Actor ID cannot be empty.", nameof(actorId));
             }
@@ -62,7 +67,19 @@ namespace DungeonTeam.Gameplay.GuildHall.Application
                 if (!equipmentSlot.HasValue || loadoutId != null || itemInstanceId != null)
                     throw new ArgumentException("Unequip requires an equipment slot and no other edit value.");
             }
-            else if (itemInstanceId != null || equipmentSlot.HasValue)
+            else if (kind == GuildProfileEditKind.SellUniqueItem)
+            {
+                if (string.IsNullOrWhiteSpace(itemInstanceId) || actorId != null ||
+                    loadoutId != null || equipmentSlot.HasValue || definitionId != null)
+                    throw new ArgumentException("Selling a unique item requires only its instance ID.");
+            }
+            else if (kind == GuildProfileEditKind.SellResource)
+            {
+                if (string.IsNullOrWhiteSpace(definitionId) || actorId != null ||
+                    loadoutId != null || itemInstanceId != null || equipmentSlot.HasValue)
+                    throw new ArgumentException("Selling a resource requires only its definition ID.");
+            }
+            else if (itemInstanceId != null || equipmentSlot.HasValue || definitionId != null)
             {
                 throw new ArgumentException("Item edit values are valid only for equipment edits.");
             }
@@ -72,6 +89,7 @@ namespace DungeonTeam.Gameplay.GuildHall.Application
             LoadoutId = loadoutId;
             ItemInstanceId = itemInstanceId;
             EquipmentSlot = equipmentSlot;
+            DefinitionId = definitionId;
         }
 
         public GuildProfileEditKind Kind { get; }
@@ -79,6 +97,7 @@ namespace DungeonTeam.Gameplay.GuildHall.Application
         public string LoadoutId { get; }
         public string ItemInstanceId { get; }
         public GuildProfileEquipmentSlot? EquipmentSlot { get; }
+        public string DefinitionId { get; }
     }
 
     public sealed class GuildProfileEditResult
@@ -262,7 +281,9 @@ namespace DungeonTeam.Gameplay.GuildHall.Application
             string definitionId,
             string displayText,
             GuildProfileEquipmentSlot slot,
-            bool isEquipped)
+            bool isEquipped,
+            long saleValue = 0,
+            bool canEquip = true)
         {
             InstanceId = Require(instanceId, nameof(instanceId));
             DefinitionId = Require(definitionId, nameof(definitionId));
@@ -271,6 +292,8 @@ namespace DungeonTeam.Gameplay.GuildHall.Application
                 throw new ArgumentOutOfRangeException(nameof(slot));
             Slot = slot;
             IsEquipped = isEquipped;
+            SaleValue = saleValue >= 0 ? saleValue : throw new ArgumentOutOfRangeException(nameof(saleValue));
+            CanEquip = canEquip;
         }
 
         public string InstanceId { get; }
@@ -278,6 +301,8 @@ namespace DungeonTeam.Gameplay.GuildHall.Application
         public string DisplayText { get; }
         public GuildProfileEquipmentSlot Slot { get; }
         public bool IsEquipped { get; }
+        public long SaleValue { get; }
+        public bool CanEquip { get; }
 
         private static string Require(string value, string name) =>
             !string.IsNullOrWhiteSpace(value) ? value : throw new ArgumentException("Value cannot be empty.", name);
@@ -452,14 +477,21 @@ namespace DungeonTeam.Gameplay.GuildHall.Application
     public sealed class GuildResourceSnapshot
     {
         public GuildResourceSnapshot(string definitionId, string displayText, int quantity)
+            : this(definitionId, displayText, quantity, 0)
+        {
+        }
+
+        public GuildResourceSnapshot(string definitionId, string displayText, int quantity, long saleValue)
         {
             DefinitionId = !string.IsNullOrWhiteSpace(definitionId) ? definitionId : throw new ArgumentException("Definition ID cannot be empty.", nameof(definitionId));
             DisplayText = !string.IsNullOrWhiteSpace(displayText) ? displayText : throw new ArgumentException("Display text cannot be empty.", nameof(displayText));
             Quantity = quantity > 0 ? quantity : throw new ArgumentOutOfRangeException(nameof(quantity));
+            SaleValue = saleValue >= 0 ? saleValue : throw new ArgumentOutOfRangeException(nameof(saleValue));
         }
 
         public string DefinitionId { get; }
         public string DisplayText { get; }
         public int Quantity { get; }
+        public long SaleValue { get; }
     }
 }

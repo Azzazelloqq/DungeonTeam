@@ -187,7 +187,7 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Presentation.UI.GuildProfile
             for (var index = 0; index < hero.InventoryItems.Count; index++)
             {
                 var item = hero.InventoryItems[index];
-                if (!item.IsEquipped)
+                if (!item.IsEquipped && item.CanEquip)
                 {
                     var instanceId = item.InstanceId;
                     CreateEditRow(
@@ -195,6 +195,25 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Presentation.UI.GuildProfile
                         () => viewModel.EquipItemCommand.Execute(instanceId),
                         true);
                 }
+
+                if (!item.IsEquipped)
+                {
+                    var instanceId = item.InstanceId;
+                    CreateEditRow(
+                        $"Sell: {item.DisplayText} +{item.SaleValue}",
+                        () => viewModel.SellUniqueItemCommand.Execute(instanceId),
+                        true);
+                }
+            }
+
+            for (var index = 0; index < viewModel.Profile.Resources.Count; index++)
+            {
+                var resource = viewModel.Profile.Resources[index];
+                var definitionId = resource.DefinitionId;
+                CreateEditRow(
+                    $"Sell: {resource.DisplayText} x{resource.Quantity} +{resource.SaleValue}",
+                    () => viewModel.SellResourceCommand.Execute(definitionId),
+                    true);
             }
         }
 

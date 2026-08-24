@@ -64,6 +64,8 @@ namespace Code.ApplicationRoot
                         request.LoadoutId),
                     GuildProfileEditKind.EquipItem => EquipItem(request),
                     GuildProfileEditKind.UnequipItem => UnequipItem(request),
+                    GuildProfileEditKind.SellUniqueItem => SellUniqueItem(request),
+                    GuildProfileEditKind.SellResource => SellResource(request),
                     _ => throw new ArgumentOutOfRangeException(nameof(request))
                 };
             }
@@ -75,6 +77,10 @@ namespace Code.ApplicationRoot
                         : _text.RejectedInvalidActor);
             }
             catch (InvalidOperationException)
+            {
+                return GuildProfileEditResult.Reject(_text.RejectedInvalidActor);
+            }
+            catch (OverflowException)
             {
                 return GuildProfileEditResult.Reject(_text.RejectedInvalidActor);
             }
@@ -123,6 +129,31 @@ namespace Code.ApplicationRoot
                 _session.State.Inventory.Unequip(
                     request.ActorId,
                     ToInventorySlot(request.EquipmentSlot.Value)));
+        }
+
+        private PlayerProfileState SellUniqueItem(GuildProfileEditRequest request)
+        {
+            if (_itemCatalog == null)
+                throw new InvalidOperationException("Item catalog is not configured.");
+            if (!_session.State.Inventory.TryGetInstance(request.ItemInstanceId, out var item))
+                throw new ArgumentException("Item instance is not owned.");
+            if (!_itemCatalog.TryGetEquipment(item.DefinitionId, out var definition))
+                throw new ArgumentException("Item definition is not configured.");
+
+            return _session.State.SellUniqueItem(request.ItemInstanceId, definition.SaleValue);
+        }
+
+        private PlayerProfileState SellResource(GuildProfileEditRequest request)
+        {
+            if (_itemCatalog == null)
+                throw new InvalidOperationException("Item catalog is not configured.");
+            if (!_session.State.Inventory.TryGetResource(request.DefinitionId, out var resource))
+                throw new ArgumentException("Resource stack is not owned.");
+            if (!_itemCatalog.TryGetResource(request.DefinitionId, out var definition))
+                throw new ArgumentException("Resource definition is not configured.");
+
+            var saleValue = checked((long)definition.SaleValue * resource.Quantity);
+            return _session.State.SellResource(request.DefinitionId, saleValue);
         }
 
         private static EquipmentSlot ToInventorySlot(GuildProfileEquipmentSlot slot) => slot switch

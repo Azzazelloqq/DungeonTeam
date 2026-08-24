@@ -1,8 +1,10 @@
 using System;
 using DungeonTeam.Gameplay.DungeonRun.Application;
+using DungeonTeam.Gameplay.DungeonRun.Runtime;
 using DungeonTeam.Gameplay.GuildHall.Application;
 using DungeonTeam.Gameplay.PlayerProfile.Application;
 using DungeonTeam.Gameplay.PlayerProfile.Domain;
+using DungeonTeam.Gameplay.Rewards.Runtime;
 using DungeonTeam.UI.WorldMap;
 using NUnit.Framework;
 
@@ -36,6 +38,66 @@ namespace Code.ApplicationRoot.Tests.EditMode
 
             Assert.That(gate.State, Is.EqualTo(PlayerFlowState.Disposed));
             Assert.That(gate.TryBegin(PlayerFlowState.Disposed, out _), Is.False);
+        }
+
+        [Test]
+        public void RewardSettlementMapper_MapsCurrentRewardsToGoldAndCrystalResource()
+        {
+            var result = new DungeonRunResult(
+                "run-id",
+                DungeonRunOutcome.Completed,
+                "dungeon",
+                1,
+                0,
+                new[]
+                {
+                    new RewardGrant("reward.silver", 4),
+                    new RewardGrant("reward.gold", 6),
+                    new RewardGrant("reward.crystal", 3)
+                });
+            var rewards = new RewardCatalog(new[]
+            {
+                new RewardDefinition("reward.gold", "Gold"),
+                new RewardDefinition("reward.silver", "Silver"),
+                new RewardDefinition("reward.crystal", "Crystal")
+            });
+
+            var request = new RewardSettlementMapper().Map(result, rewards);
+
+            Assert.That(request.RunId, Is.EqualTo("run-id"));
+            Assert.That(request.GoldAmount, Is.EqualTo(10));
+            Assert.That(request.ResourceGrants, Has.Count.EqualTo(1));
+            Assert.That(request.ResourceGrants[0].DefinitionId, Is.EqualTo("resource.monster-crystal"));
+            Assert.That(request.ResourceGrants[0].Amount, Is.EqualTo(3));
+        }
+
+        [Test]
+        public void RewardSettlementMapper_UnknownRewardRejectsBeforeProfileSave()
+        {
+            var result = new DungeonRunResult(
+                "run-id",
+                DungeonRunOutcome.Completed,
+                "dungeon",
+                1,
+                0,
+                new[] { new RewardGrant("reward.unknown", 2) });
+            var rewards = new RewardCatalog(new[]
+            {
+                new RewardDefinition("reward.gold", "Gold"),
+                new RewardDefinition("reward.unknown", "Unknown")
+            });
+            var repository = new RecordingProfileRepository();
+            var session = new PlayerProfileSession(
+                repository,
+                new PlayerProfileSeed(
+                    new[] { new HeroProfileState("leader", 1, "loadout") },
+                    "leader",
+                    Array.Empty<string>()));
+            var saveCount = repository.SaveCount;
+
+            Assert.Throws<InvalidOperationException>(() => new RewardSettlementMapper().Map(result, rewards));
+            Assert.That(repository.SaveCount, Is.EqualTo(saveCount));
+            Assert.That(session.State.Gold, Is.EqualTo(0));
         }
 
         [Test]

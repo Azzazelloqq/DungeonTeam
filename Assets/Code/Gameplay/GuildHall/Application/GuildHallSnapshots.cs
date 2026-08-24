@@ -235,6 +235,11 @@ namespace DungeonTeam.Gameplay.GuildHall.Application
         {
             LastRunSummary = summary ?? throw new ArgumentNullException(nameof(summary));
         }
+
+        public void ClearLastRunSummary()
+        {
+            LastRunSummary = null;
+        }
     }
 
     internal static class GuildId

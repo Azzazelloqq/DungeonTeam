@@ -93,6 +93,7 @@ namespace Code.ApplicationRoot
 		private DungeonRunHost _dungeonRunHost;
 		private DungeonRunRoot _finishedRunSubscription;
 		private GuildRunSummaryBuilder _runSummaryBuilder;
+		private RewardSettlementMapper _rewardSettlementMapper;
 		private DeveloperRunConsoleController _developerConsoleController;
 		private DeveloperRunConsoleView _developerConsoleView;
 
@@ -199,6 +200,7 @@ namespace Code.ApplicationRoot
 			_globalContainer.RegisterAsSingleton(_feedbackBankLoader);
 			_dungeonRunHost = new DungeonRunHost(CreateDungeonRunRoot);
 			_runSummaryBuilder = new GuildRunSummaryBuilder();
+			_rewardSettlementMapper = new RewardSettlementMapper();
 
 			_guildSessionState = new GuildSessionState();
 			_transitionGate = new ApplicationTransitionGate(PlayerFlowState.Initializing);
@@ -237,6 +239,7 @@ namespace Code.ApplicationRoot
 			_developerConsoleController = null;
 			_dungeonRunHost = null;
 			_runSummaryBuilder = null;
+			_rewardSettlementMapper = null;
 			_dungeonFactory = null;
 			_actorDefinitionLoader = null;
 			_actorCatalog = null;
@@ -761,8 +764,24 @@ namespace Code.ApplicationRoot
 			var isRunStopped = false;
 			try
 			{
+				var request = _rewardSettlementMapper.Map(result, _rewardCatalog);
+				var settlement = _playerProfileSession.BankTerminalResult(request);
+				if (!settlement.IsApplied)
+				{
+					UnsubscribeFromDungeonRunFinished();
+					_dungeonRunHost.Stop();
+					isRunStopped = true;
+					_guildSessionState.ClearLastRunSummary();
+					await ShowLoadingScreenAsync(token);
+					await CreateGuildHallAsync(token);
+					lease.Complete(PlayerFlowState.GuildHall);
+					canHideLoading = true;
+					return;
+				}
+
 				var summary = _runSummaryBuilder.Build(
 					result,
+					settlement.Receipt,
 					_rewardCatalog,
 					_guildHallCatalog.RunSummaryText);
 				await ShowLoadingScreenAsync(token);
@@ -783,9 +802,12 @@ namespace Code.ApplicationRoot
 				Debug.LogException(exception);
 				if (!isRunStopped)
 				{
-					return;
+					UnsubscribeFromDungeonRunFinished();
+					_dungeonRunHost.Stop();
+					isRunStopped = true;
 				}
 
+				_guildSessionState.ClearLastRunSummary();
 				_guildHallRoot?.Dispose();
 				_guildHallRoot = null;
 				canHideLoading = await TryRestoreGuildHallAsync(token);

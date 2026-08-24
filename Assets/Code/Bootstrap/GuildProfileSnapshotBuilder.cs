@@ -206,7 +206,7 @@ namespace Code.ApplicationRoot
             for (var index = 0; index < inventory.UniqueItems.Count; index++)
             {
                 var item = inventory.UniqueItems[index];
-                if (!itemCatalog.TryGetEquipment(item.DefinitionId, out var definition) || !definition.IsEligibleFor(actorId))
+                if (!itemCatalog.TryGetEquipment(item.DefinitionId, out var definition))
                     continue;
                 var equipped = inventory.TryGetEquipment(actorId, out var equipment) &&
                     (string.Equals(equipment.WeaponInstanceId, item.InstanceId, StringComparison.Ordinal) ||
@@ -217,7 +217,9 @@ namespace Code.ApplicationRoot
                     item.DefinitionId,
                     definition.DisplayName,
                     ToGuildSlot(definition.Slot),
-                    equipped));
+                    equipped,
+                    definition.SaleValue,
+                    definition.IsEligibleFor(actorId)));
             }
             return rows.ToArray();
         }
@@ -228,10 +230,15 @@ namespace Code.ApplicationRoot
             for (var index = 0; index < rows.Length; index++)
             {
                 var resource = profile.Inventory.Resources[index];
-                var display = itemCatalog != null && itemCatalog.TryGetResource(resource.DefinitionId, out var definition)
+                ResourceItemDefinition definition = null;
+                var hasDefinition = itemCatalog != null && itemCatalog.TryGetResource(resource.DefinitionId, out definition);
+                var display = hasDefinition
                     ? definition.DisplayName
                     : resource.DefinitionId;
-                rows[index] = new GuildResourceSnapshot(resource.DefinitionId, display, resource.Quantity);
+                var saleValue = hasDefinition
+                    ? checked((long)definition.SaleValue * resource.Quantity)
+                    : 0L;
+                rows[index] = new GuildResourceSnapshot(resource.DefinitionId, display, resource.Quantity, saleValue);
             }
             return rows;
         }

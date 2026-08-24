@@ -8,7 +8,7 @@ using LocalSaveSystem;
 namespace DungeonTeam.Gameplay.PlayerProfile.Infrastructure
 {
     [SaveModel]
-    [SaveVersion(2)]
+    [SaveVersion(3)]
     public sealed class PlayerProfileSaveV1
     {
         [SaveFieldId("gold")] public long Gold;
@@ -19,6 +19,8 @@ namespace DungeonTeam.Gameplay.PlayerProfile.Infrastructure
         [SaveFieldId("inventory_unique_items")] public PlayerProfileItemInstanceSaveV2[] UniqueItems;
         [SaveFieldId("inventory_resources")] public PlayerProfileResourceStackSaveV2[] Resources;
         [SaveFieldId("inventory_equipment_by_hero")] public PlayerProfileHeroEquipmentSaveV2[] EquipmentByHero;
+        [SaveFieldId("pending_terminal_result")] public PlayerProfilePendingTerminalResultSaveV3 PendingTerminalResult;
+        [SaveFieldId("last_applied_run_id")] public string LastAppliedRunId;
     }
 
     [SaveModel]
@@ -56,6 +58,23 @@ namespace DungeonTeam.Gameplay.PlayerProfile.Infrastructure
         [SaveFieldId("relic_instance_id")] public string RelicInstanceId;
     }
 
+    [SaveModel]
+    [SaveVersion(1)]
+    public sealed class PlayerProfilePendingTerminalResultSaveV3
+    {
+        [SaveFieldId("run_id")] public string RunId;
+        [SaveFieldId("gold_amount")] public long GoldAmount;
+        [SaveFieldId("resource_grants")] public PlayerProfileTerminalResourceGrantSaveV3[] ResourceGrants;
+    }
+
+    [SaveModel]
+    [SaveVersion(1)]
+    public sealed class PlayerProfileTerminalResourceGrantSaveV3
+    {
+        [SaveFieldId("definition_id")] public string DefinitionId;
+        [SaveFieldId("amount")] public int Amount;
+    }
+
     public sealed class PlayerProfilePersistenceException : InvalidOperationException
     {
         public PlayerProfilePersistenceException(string message, Exception innerException = null) : base(message, innerException) { }
@@ -86,6 +105,27 @@ namespace DungeonTeam.Gameplay.PlayerProfile.Infrastructure
                 for (var index = 0; index < heroes.Length; index++)
                     value.EquipmentByHero[index] = new PlayerProfileHeroEquipmentSaveV2 { ActorId = heroes[index]?.ActorId };
             }
+            return value;
+        }
+    }
+
+    public sealed class PlayerProfileV2ToV3Migrator : SaveMigrator<PlayerProfileSaveV1>
+    {
+        public bool WasApplied { get; private set; }
+        public void ClearApplied() => WasApplied = false;
+        public override int FromVersion => 2;
+        public override int ToVersion => 3;
+
+        public override PlayerProfileSaveV1 Migrate(PlayerProfileSaveV1 value)
+        {
+            if (value == null)
+            {
+                throw new InvalidOperationException("Cannot migrate a missing player profile.");
+            }
+
+            WasApplied = true;
+            value.PendingTerminalResult = null;
+            value.LastAppliedRunId = null;
             return value;
         }
     }
@@ -238,7 +278,36 @@ namespace DungeonTeam.Gameplay.PlayerProfile.Infrastructure
             {
                 Gold = state.Gold, RankId = state.RankId, Heroes = heroes,
                 LeaderActorId = state.LeaderActorId, CompanionActorIds = companions,
-                UniqueItems = items, Resources = resources, EquipmentByHero = equipment
+                UniqueItems = items, Resources = resources, EquipmentByHero = equipment,
+                PendingTerminalResult = ToPendingDto(state.PendingTerminalResult),
+                LastAppliedRunId = state.LastAppliedRunId
+            };
+        }
+
+        private static PlayerProfilePendingTerminalResultSaveV3 ToPendingDto(
+            PendingTerminalResultState pending)
+        {
+            if (pending == null)
+            {
+                return null;
+            }
+
+            var grants = new PlayerProfileTerminalResourceGrantSaveV3[pending.ResourceGrants.Count];
+            for (var index = 0; index < grants.Length; index++)
+            {
+                var grant = pending.ResourceGrants[index];
+                grants[index] = new PlayerProfileTerminalResourceGrantSaveV3
+                {
+                    DefinitionId = grant.DefinitionId,
+                    Amount = grant.Quantity
+                };
+            }
+
+            return new PlayerProfilePendingTerminalResultSaveV3
+            {
+                RunId = pending.RunId,
+                GoldAmount = pending.GoldAmount,
+                ResourceGrants = grants
             };
         }
 
@@ -257,7 +326,39 @@ namespace DungeonTeam.Gameplay.PlayerProfile.Infrastructure
             var inventory = dto.UniqueItems != null && dto.Resources != null && dto.EquipmentByHero != null
                 ? ToInventory(dto)
                 : legacyInventoryFactory?.Invoke(heroes) ?? InventoryState.Empty;
-            return new PlayerProfileState(dto.Gold, dto.RankId, heroes, dto.LeaderActorId, dto.CompanionActorIds, inventory);
+            return new PlayerProfileState(
+                dto.Gold,
+                dto.RankId,
+                heroes,
+                dto.LeaderActorId,
+                dto.CompanionActorIds,
+                inventory,
+                ToPendingState(dto.PendingTerminalResult),
+                dto.LastAppliedRunId);
+        }
+
+        private static PendingTerminalResultState ToPendingState(
+            PlayerProfilePendingTerminalResultSaveV3 pending)
+        {
+            if (pending == null)
+            {
+                return null;
+            }
+
+            if (pending.ResourceGrants == null)
+            {
+                throw new InvalidOperationException("Pending terminal result resource grants are missing.");
+            }
+
+            var grants = new ResourceStackState[pending.ResourceGrants.Length];
+            for (var index = 0; index < grants.Length; index++)
+            {
+                var grant = pending.ResourceGrants[index] ?? throw new InvalidOperationException(
+                    $"Pending terminal resource grant {index} is missing.");
+                grants[index] = new ResourceStackState(grant.DefinitionId, grant.Amount);
+            }
+
+            return new PendingTerminalResultState(pending.RunId, pending.GoldAmount, grants);
         }
 
         private static InventoryState ToInventory(PlayerProfileSaveV1 dto)
@@ -287,11 +388,13 @@ namespace DungeonTeam.Gameplay.PlayerProfile.Infrastructure
         {
             if (expected.Gold != observed.Gold || !string.Equals(expected.RankId, observed.RankId, StringComparison.Ordinal) ||
                 !string.Equals(expected.LeaderActorId, observed.LeaderActorId, StringComparison.Ordinal) ||
+                !string.Equals(expected.LastAppliedRunId, observed.LastAppliedRunId, StringComparison.Ordinal) ||
                 !EqualStrings(expected.CompanionActorIds, observed.CompanionActorIds) ||
                 expected.Heroes.Count != observed.Heroes.Count ||
                 expected.Inventory.UniqueItems.Count != observed.Inventory.UniqueItems.Count ||
                 expected.Inventory.Resources.Count != observed.Inventory.Resources.Count ||
-                expected.Inventory.EquipmentByHero.Count != observed.Inventory.EquipmentByHero.Count) return false;
+                expected.Inventory.EquipmentByHero.Count != observed.Inventory.EquipmentByHero.Count ||
+                !Equivalent(expected.PendingTerminalResult, observed.PendingTerminalResult)) return false;
             for (var index = 0; index < expected.Heroes.Count; index++)
             {
                 var left = expected.Heroes[index]; var right = observed.Heroes[index];
@@ -320,6 +423,36 @@ namespace DungeonTeam.Gameplay.PlayerProfile.Infrastructure
             return true;
         }
 
+        private static bool Equivalent(
+            PendingTerminalResultState expected,
+            PendingTerminalResultState observed)
+        {
+            if (expected == null || observed == null)
+            {
+                return expected == null && observed == null;
+            }
+
+            if (!string.Equals(expected.RunId, observed.RunId, StringComparison.Ordinal) ||
+                expected.GoldAmount != observed.GoldAmount ||
+                expected.ResourceGrants.Count != observed.ResourceGrants.Count)
+            {
+                return false;
+            }
+
+            for (var index = 0; index < expected.ResourceGrants.Count; index++)
+            {
+                var left = expected.ResourceGrants[index];
+                var right = observed.ResourceGrants[index];
+                if (!string.Equals(left.DefinitionId, right.DefinitionId, StringComparison.Ordinal) ||
+                    left.Quantity != right.Quantity)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
         private static bool EqualStrings(IReadOnlyList<string> left, IReadOnlyList<string> right)
         {
             if (left.Count != right.Count) return false;
@@ -343,15 +476,21 @@ namespace DungeonTeam.Gameplay.PlayerProfile.Infrastructure
             _options = options ?? throw new ArgumentNullException(nameof(options));
             _registry = SaveRegistry.CreateDefault(new SaveSerializationOptions { UseTaggedFormat = _options.UseTaggedFormat });
             _migrators = new SaveMigratorRegistry();
-            var migrator = new PlayerProfileV1ToV2Migrator();
-            _migrators.Register(migrator);
+            var v1ToV2 = new PlayerProfileV1ToV2Migrator();
+            var v2ToV3 = new PlayerProfileV2ToV3Migrator();
+            _migrators.Register(v1ToV2);
+            _migrators.Register(v2ToV3);
             _store = CreateStore();
             Repository = new SaveStorePlayerProfileRepository(
                 _store,
                 CreateStore,
                 legacyInventoryFactory,
-                () => migrator.WasApplied,
-                migrator.ClearApplied);
+                () => v1ToV2.WasApplied || v2ToV3.WasApplied,
+                () =>
+                {
+                    v1ToV2.ClearApplied();
+                    v2ToV3.ClearApplied();
+                });
         }
 
         public SaveStorePlayerProfileRepository Repository { get; }

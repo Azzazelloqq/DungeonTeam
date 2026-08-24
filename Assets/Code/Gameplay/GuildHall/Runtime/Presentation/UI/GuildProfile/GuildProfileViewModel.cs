@@ -36,12 +36,20 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Presentation.UI.GuildProfile
             UnequipItemCommand = new RelayCommand<object>(slot => Edit(
                 GuildProfileEditKind.UnequipItem,
                 equipmentSlot: (GuildProfileEquipmentSlot)slot));
+            SellUniqueItemCommand = new RelayCommand<string>(instanceId => Edit(
+                GuildProfileEditKind.SellUniqueItem,
+                itemInstanceId: instanceId));
+            SellResourceCommand = new RelayCommand<string>(definitionId => Edit(
+                GuildProfileEditKind.SellResource,
+                definitionId: definitionId));
             SetLeaderCommand.AddTo(compositeDisposable);
             AddCompanionCommand.AddTo(compositeDisposable);
             RemoveCompanionCommand.AddTo(compositeDisposable);
             SetLoadoutCommand.AddTo(compositeDisposable);
             EquipItemCommand.AddTo(compositeDisposable);
             UnequipItemCommand.AddTo(compositeDisposable);
+            SellUniqueItemCommand.AddTo(compositeDisposable);
+            SellResourceCommand.AddTo(compositeDisposable);
         }
 
         public override GuildProfileSnapshot Profile => model.Profile;
@@ -58,6 +66,8 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Presentation.UI.GuildProfile
         public override IRelayCommand<string> SetLoadoutCommand { get; }
         public override IRelayCommand<string> EquipItemCommand { get; }
         public override IRelayCommand<object> UnequipItemCommand { get; }
+        public override IRelayCommand<string> SellUniqueItemCommand { get; }
+        public override IRelayCommand<string> SellResourceCommand { get; }
         public override void Open() => model.Show();
 
         public override void Close()
@@ -72,15 +82,18 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Presentation.UI.GuildProfile
             GuildProfileEditKind kind,
             string loadoutId = null,
             string itemInstanceId = null,
-            GuildProfileEquipmentSlot? equipmentSlot = null)
+            GuildProfileEquipmentSlot? equipmentSlot = null,
+            string definitionId = null)
         {
-            var selected = model.SelectedHero.Value;
             model.Apply(_editRequested(new GuildProfileEditRequest(
                 kind,
-                selected.ActorId,
+                kind == GuildProfileEditKind.SellUniqueItem || kind == GuildProfileEditKind.SellResource
+                    ? null
+                    : model.SelectedHero.Value.ActorId,
                 loadoutId,
                 itemInstanceId,
-                equipmentSlot)));
+                equipmentSlot,
+                definitionId)));
         }
 
         protected override void OnInitialize() { }

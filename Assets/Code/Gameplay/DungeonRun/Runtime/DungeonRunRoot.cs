@@ -42,6 +42,7 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
         private readonly TeamControlSettings _teamControlSettings;
         private readonly HeroControlSettings _heroControlSettings;
         private readonly EnemyBehaviorCatalog _enemyBehaviorCatalog;
+        private readonly string _runId = Guid.NewGuid().ToString("N");
         private readonly RewardPickupFactory _rewardPickupFactory = new();
         private readonly ChestFactory _chestFactory = new();
         private readonly List<ActorInstance> _heroes = new();
@@ -934,6 +935,7 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
             DisposeSkillExecution();
             DisposeCombatControllers();
             var result = new DungeonRunResult(
+                _runId,
                 outcome,
                 MapSnapshot.DungeonId,
                 MapSnapshot.Seed,

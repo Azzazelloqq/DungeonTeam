@@ -18,7 +18,29 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
             int seed,
             int killedEnemies,
             RewardGrant[] collectedRewards)
+            : this(
+                Guid.NewGuid().ToString("N"),
+                outcome,
+                dungeonId,
+                seed,
+                killedEnemies,
+                collectedRewards)
         {
+        }
+
+        internal DungeonRunResult(
+            string runId,
+            DungeonRunOutcome outcome,
+            string dungeonId,
+            int seed,
+            int killedEnemies,
+            RewardGrant[] collectedRewards)
+        {
+            if (string.IsNullOrWhiteSpace(runId))
+            {
+                throw new ArgumentException("Run ID cannot be empty.", nameof(runId));
+            }
+
             if (string.IsNullOrWhiteSpace(dungeonId))
             {
                 throw new ArgumentException("Dungeon id cannot be empty.", nameof(dungeonId));
@@ -34,6 +56,7 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
                 throw new ArgumentNullException(nameof(collectedRewards));
             }
 
+            RunId = runId;
             Outcome = outcome;
             DungeonId = dungeonId;
             Seed = seed;
@@ -49,7 +72,20 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
             CollectedRewardCount = collectedRewardCount;
         }
 
+        internal DungeonRunResult(
+            DungeonRunOutcome outcome,
+            string dungeonId,
+            int seed,
+            int killedEnemies,
+            RewardGrant[] collectedRewards,
+            string runId)
+            : this(runId, outcome, dungeonId, seed, killedEnemies, collectedRewards)
+        {
+        }
+
         public DungeonRunOutcome Outcome { get; }
+
+        public string RunId { get; }
 
         public string DungeonId { get; }
 
