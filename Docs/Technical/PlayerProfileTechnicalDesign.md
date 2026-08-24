@@ -612,3 +612,58 @@ Extend the existing Guild Profile request/result bridge only with `SellUniqueIte
 4. Change terminal return ordering and summary builder input; test bank → stop → summary ordering and bank-failure recovery.
 5. Add prepared sell rows/commands to the existing Profile MVVM/View and tests that it carries no persistence/config objects.
 6. Run affected EditMode suites, Unity compile and mechanical validation. Manual smoke, if later desired, is Guild → Map → Dungeon → return summary → sell → restart; it is not silently claimed by a build.
+
+### 14.9. PP-5 implementation blueprint — guild rank and contract gating
+
+#### A. Scope and ownership
+
+PP-5 introduces the agreed guild rank ladder only: `rank.f`, `rank.e`, `rank.d`, `rank.c`, `rank.b`, `rank.a`, `rank.s`, `rank.ss`, `rank.sss`. It is an application-lifetime property of `PlayerProfileState`, not a hero level, Guild Hall session value or Notice Board rule. New/migrated profiles receive `rank.f`; a player can buy only the immediate next configured rank, never skip, demote or rebuy a rank.
+
+The present requirement is Gold only. The catalog contains the price for each destination rank; production content uses `10, 25, 50, 100, 200, 400, 800, 1600` from `E` through `SSS`. Contract completions, reputation, rank rewards, shops, new currencies, rank effects in Dungeon Run and any generic progression/reputation framework are explicit non-goals. A later Contract/Quest owner may add a new explicit input to promotion rules; PP-5 does not reserve a counter or interface for it.
+
+`PlayerProfile.Domain` owns immutable rank replacement on the aggregate. `PlayerProfile.Application` owns the pure ordered rank catalog and promotion decision. `PlayerProfile.Infrastructure` owns the Unity `GuildRankConfigPage` adapter alongside the existing concrete SaveStore adapter; it adds a directed `DungeonTeam.Configuration` reference rather than creating an assembly only for one config page. Bootstrap creates the catalog once, validates the loaded profile rank, calls the promotion application use case and maps rank facts to Guild Hall snapshots. `GuildHall.Application` only owns immutable display/command snapshots; `GuildHall.Runtime` only binds the existing Profile and Notice Board MVVM families.
+
+```text
+Bootstrap/ApplicationRoot
+ ├─ PlayerProfile.Infrastructure: GuildRankConfigPage -> GuildRankCatalog
+ ├─ PlayerProfile.Application: PromoteRank(profile, catalog) -> candidate/result
+ ├─ PlayerProfileSession: verified Commit(candidate)
+ └─ Guild Hall snapshots: prepared rank/promotion + prepared offer availability
+
+GuildHall Runtime / Notice Board -X-> PlayerProfile Session, SaveStore, GuildRankCatalog, config
+DungeonRun -X-> rank/profile persistence
+```
+
+No root, DI scope, event bus, rank service locator, generic requirement evaluator or new UI screen is introduced. `ApplicationRoot` continues to own the profile session/persistence and all cross-feature mapping. No asynchronous operation, addressable handle or new cancellation ownership is created.
+
+#### B. Static rank and contract data
+
+`GuildRankConfigPage` serializes an ordered non-null list of `GuildRankDefinitionConfig { rankId, displayName, promotionCost }`. `CreateCatalog()` maps it to BCL-only `GuildRankDefinition`/`GuildRankCatalog`. The catalog rejects empty or duplicate IDs, a missing `rank.f`, negative cost, a non-zero cost on the base rank, or a terminal rank with a next step. It exposes `Require(rankId)`, `TryGetNext(rankId, out definition)` and order comparison; callers cannot rely on enum ordinals or string lexicographic ordering.
+
+`ContractDefinitionConfig` gains optional `minimumRankId`. During Bootstrap initialization each non-null value is checked against the same catalog. The existing `ContractCatalog` remains static authored content, so it does not receive a player rank or calculate availability. A narrow Bootstrap `GuildOfferAvailabilityBuilder` copies every contract to a fresh `NoticeBoardOfferSnapshot`: author-disabled offers stay disabled, otherwise a profile below `minimumRankId` receives the configured `profile.rank.required` text formatted with the target rank display name. No minimum rank means available. The Board's existing `IsAvailable`/disabled-reason contract remains unchanged.
+
+Production content contains all nine rank definitions, `contract.demo` at `rank.f`, and one distinct `contract.veteran` at `rank.e` pointing to the already supported dungeon location. This is an observable gate, not a second dungeon or a fake quest.
+
+#### C. State, migration and promotion transaction
+
+The historical stored CLR type remains `PlayerProfileSaveV1`; it becomes `[SaveVersion(4)]`. `PlayerProfileV3ToV4Migrator` assigns `rank.f` only when `RankId` is absent. A fresh profile receives `rank.f` in `PlayerProfileComposition`. The existing V1→V2 and V2→V3 migrations retain their fields; a sequential V1→V2→V3→V4 load must preserve inventory/equipment and pending terminal values. Repository equivalence already includes `RankId`; no new SaveKey or second save record is introduced.
+
+`PlayerProfileState.WithRank(rankId)` performs only aggregate-safe replacement. `RankPromotionResult` is a BCL immutable result with `Accepted`, optional `NextRankId` and a reject reason enum (`AlreadyTerminal`, `InsufficientGold`, `InvalidCurrentRank`). `PlayerProfileSession.PromoteRank(catalog)` asks the catalog for the immediate next rank, verifies `Gold >= promotionCost`, builds `WithGold(Gold - cost).WithRank(nextId)`, then uses the existing save-before-publish `Commit`. It returns a result only after `Commit` succeeds. A rejected request performs zero save; a persistence exception leaves state and the UI snapshot unchanged and is mapped through the existing configured persistence feedback.
+
+#### D. Reception and board presentation
+
+Extend exactly the existing `GuildProfileEditKind` bridge with `PromoteRank`; it has no actor/item/loadout payload. `GuildProfileSnapshot` receives prepared `GuildRankSnapshot { currentRankId, currentDisplayName, nextRankDisplayName?, promotionCost?, canPromote }`. `GuildProfileTextSnapshot` adds localization-ready labels for current/next rank, promotion action, insufficient-Gold rejection, terminal-rank state and the required-rank offer format. `GuildProfileSnapshotBuilder` receives the catalog and creates the prepared snapshot; ViewModel adds one command and View reuses the existing action/feedback region. It never formats config text or resolves a rank itself.
+
+`GuildProfileEditHandler` receives the catalog and delegates only the promotion candidate to the session; on success it rebuilds the same snapshot. `ApplicationRoot.CreateGuildHallAsync` prepares rank-filtered offers before constructing `GuildHallStartContext`. Reopening after promotion rebuilds both Profile and Notice Board contexts from the accepted profile state. No existing board selection, modal input or Hall-to-Map ownership changes.
+
+#### E. Tests and validation
+
+EditMode coverage must prove:
+
+1. rank catalog validation and order comparison for fixture-defined ladders of variable length;
+2. promotion only to the immediate next rank, exact Gold debit, terminal rejection, insufficient-Gold rejection and zero-save rejection;
+3. V3→V4 and chained legacy migration preserve all existing state and initialize only absent rank to `rank.f`;
+4. Bootstrap offer preparation preserves every offer and author-disabled reason, blocks only below-minimum ranks and unblocks after accepted promotion;
+5. Guild Profile request/snapshot/ViewModel carry prepared rank data and never receive persistence/config/catalog instances.
+
+Compile all affected asmdefs plus focused PlayerProfile, GuildHall and Bootstrap EditMode suites. Run the Unity mechanical validator after config/prefab/asmdef edits. Serialized profile bindings and the real rank-gated board interaction remain manual Unity smoke; no player build or external playtest is part of PP-5.

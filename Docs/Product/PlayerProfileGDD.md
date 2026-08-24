@@ -1,8 +1,8 @@
 # DungeonTeam — Player Profile GDD
 
-**Статус:** направление согласовано; PP-1/PP-2 реализованы; PP-3 спроектирован, не реализован
+**Статус:** PP-1/PP-2/PP-3/PP-4 реализованы; PP-5 спроектирован, ожидает реализации
 
-**Версия:** 0.3
+**Версия:** 0.4
 
 **Дата:** 24 августа 2026
 
@@ -118,10 +118,12 @@ PP-1 отображает текущий состав, созданный из p
 
 Ранг относится к профилю гильдии/авантюриста, а не заменяет уровень конкретного героя.
 
-- PP-1 поддерживает отсутствие присвоенного ранга и показывает `Ранг: —`.
-- Стабильный `rankId`, definitions, лестница рангов, требования и стоимость повышения вводятся в PP-5 после отдельного продуктового решения.
-- Повышение выполняется у стойки регистрации и только через профильный use case.
-- Доска позже получает уже рассчитанную доступность предложения; она не читает rank state и не проверяет правила сама.
+- Лестница фиксирована в направлении от младшего к старшему: `F → E → D → C → B → A → S → SS → SSS`. Стабильные IDs — `rank.f` … `rank.sss`; отображаемое обозначение и цена принадлежат config.
+- Новый и мигрированный профиль получает `rank.f`. Ранг не понижается и не пропускает ступени.
+- В PP-5 повышение выполняется только у стойки регистрации и тратит Gold по следующему definition. Временная production-кривая для текущего vertical slice: `E 10`, `D 25`, `C 50`, `B 100`, `A 200`, `S 400`, `SS 800`, `SSS 1600`; это content balance, а не правило в коде.
+- Выполненные контракты, reputation и другие требования не имитируются полями профиля: они появятся только с отдельным Contract/Quest owner. Текущий promotion use case проверяет только текущую ступень и Gold.
+- Contract definition может указать `minimumRankId`. Bootstrap рассчитывает availability и подготовленный disabled text; Notice Board не читает profile rank и не проверяет лестницу сам.
+- Недоступный контракт остаётся видимым на доске с указанием требуемого ранга. Контракт без `minimumRankId` доступен всем.
 
 ## 8. Сохранения
 
@@ -137,7 +139,7 @@ PP-1 сохраняет одним versioned profile record:
 
 PP-3 меняет record до V2: добавляет unique item instances, stackable resources и hero equipment. V1→V2 migration создаёт пустые resource stacks, три детерминированных starter instances и пустые слоты; после migration item instance может быть надет игроком явно. Пустые поля «на будущее» в PP-1 не резервировались.
 
-Все постоянные player-owned данные остаются в одном key `player.profile`. Это исключает межключевую «транзакцию» Gold/inventory/equipment и сохраняет атомарность, которую SaveStore предоставляет для одного record. PP-4 добавит в этот же record pending terminal result и последний применённый run ID.
+Все постоянные player-owned данные остаются в одном key `player.profile`. Это исключает межключевую «транзакцию» Gold/inventory/equipment и сохраняет атомарность, которую SaveStore предоставляет для одного record. PP-4 добавил в этот же record pending terminal result и последний применённый run ID. PP-5 повышает версию record до V4, чтобы старое optional/empty rank value мигрировало в обязательный `rank.f`.
 
 ## 9. Квесты
 
@@ -161,12 +163,11 @@ PP-3 меняет record до V2: добавляет unique item instances, stac
 6. Характеристики и навыки соответствуют текущим Actor/Skill definitions и выбранному loadout.
 7. Количество героев, спутников, уровней и skill slots берётся из входных данных, а не фиксируется тестом.
 
-## 11. Still out of scope after PP-2
+## 11. Still out of scope after PP-5
 
 - повышение уровня, recruitment/purchase героев и skill-tree progression;
-- реализованный inventory/equipment (появляется только в PP-3);
-- применение наград, продажа и покупка;
-- rank definitions, promotion rules и contract gating;
+- покупка, shop, exchange rates и вторая валюта;
+- completed-contract/reputation requirements для ранга;
 - квесты;
 - cloud/account save, несколько профилей и save-slot UI;
 - универсальная progression/economy/item framework;

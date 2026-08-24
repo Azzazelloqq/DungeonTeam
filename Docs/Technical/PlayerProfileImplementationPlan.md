@@ -1,6 +1,6 @@
 # DungeonTeam — Player Profile Implementation Plan
 
-**Статус:** PP-0/PP-1/PP-2 COMPLETE; PP-3/PP-4 IMPLEMENTED, AUTOMATED VALIDATION PASSED; manual Unity smoke outstanding
+**Статус:** PP-0/PP-1/PP-2 COMPLETE; PP-3/PP-4 IMPLEMENTED, AUTOMATED VALIDATION PASSED; PP-5 DESIGNED; manual Unity smoke outstanding
 
 **Версия:** 0.5
 
@@ -25,7 +25,7 @@
 | PP-2 | Editable leader/team/loadout and run integration | Complete |
 | PP-3 | Unique equipment, stackable resources and three hero slots | Implemented; targeted EditMode passed, manual Guild-to-Run smoke outstanding |
 | PP-4 | Verified result commit, Gold banking and selling | Implemented; targeted EditMode passed, manual failure/selling smoke outstanding |
-| PP-5 | Guild ranks and board gating | Requires rank rules/content decision |
+| PP-5 | Guild ranks and board gating | Designed; ready for implementation |
 | PP-6 | Integrated regression and documentation closure | Planned |
 
 ## 3. PP-1 — persistent read-only profile
@@ -171,14 +171,23 @@ Manual live verification of the return failure/retry branch and selling UI remai
 
 ## 7. PP-5 — guild ranks
 
-Before code, agree the rank ladder, promotion requirements, cost and at least one actual gated behavior.
+**Agreed product contract:** `F → E → D → C → B → A → S → SS → SSS`; a new profile starts at `F`; promotions are sequential and Gold-only in this slice. Current content prices are `10/25/50/100/200/400/800/1600` Gold for `E` through `SSS`. Contract-completion requirements remain outside PP-5 until the future Contract/Quest owner exists.
 
-1. Add rank definitions/config and validate their order/IDs.
-2. Add promotion eligibility and mutation in Profile Domain/Application.
-3. Expose promotion at Reception with explicit requirement/result snapshot.
-4. Let Application prepare Notice Board availability from the current rank; Board remains presentation-only.
-5. Extend save through a versioned migration only if V1 optional rank representation is insufficient.
-6. Test boundaries from supplied rank definitions, not a fixed number or hard-coded names.
+1. Add typed rank config and a pure ordered `GuildRankCatalog`; reject empty/duplicate IDs, non-monotonic order, negative cost and a ladder without `rank.f`.
+2. Add promotion eligibility and mutation in Profile Domain/Application; reject an unknown/current-max rank or insufficient Gold without saving.
+3. Move the persisted profile record to V4 with a V3→V4 migration that assigns `rank.f` only when old rank is absent. Fresh profile creation also assigns `rank.f`.
+4. Extend the existing reception profile snapshot/request/result family with current rank, next-rank cost/state and a single promotion command. It receives no rank catalog/session/save object.
+5. Add `minimumRankId` to static contract config. Bootstrap applies the profile/catalog rule while preparing Notice Board offers; Board remains presentation-only and keeps its current disabled-item behavior.
+6. Author the nine production rank definitions and a second, intentionally rank-gated contract targeting the current dungeon, so availability is observable without inventing a new destination or quest system.
+7. Test rank boundaries from supplied definitions and fixture Gold, never fixed rank counts/names in generic behavior tests. Run focused EditMode, compile, mechanical validation and keep prefab/UI smoke explicitly manual.
+
+### Done when
+
+- a V1/V2/V3 profile opens as `F` without losing Gold, roster, inventory, equipment or terminal state;
+- only the immediate next rank can be bought, exactly its configured Gold is removed and persistence succeeds before the new snapshot is published;
+- rejection writes nothing and preserves the open profile;
+- a rank-gated offer is visible but cannot be selected before promotion and becomes selectable after a persisted promotion/reopen;
+- Profile/Guild Hall/Notice Board contain no save/config/rank-rule access and no generic progression framework is added.
 
 ## 8. PP-6 — closure
 
