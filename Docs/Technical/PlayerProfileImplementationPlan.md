@@ -146,17 +146,18 @@ Manual Guild Profile → equip/transfer/unequip → Map → Run proof remains in
 
 ## 6. PP-4 — rewards, Gold and selling
 
-**Prerequisite:** PP-3 verified-write repository is implemented and proven.
+**Prerequisite met:** PP-3 verified-write repository is implemented and targeted automated validation passed. Full design is section 14.8 of the technical design.
 
-1. Give terminal results a stable id and explicit bankable payload; keep run-local collection separate.
-2. Save pending state in the same V3 profile record before showing rewards as banked.
-3. Add idempotent Application commit: the same result cannot change the profile twice, including after restart.
-4. Map Gold rewards to the single wallet; item/crystal rewards to real inventory definitions.
-5. Replace session-only debrief data where needed with an already-applied persistent snapshot.
-6. Add concrete Reception sell use case with prepared prices and an atomic inventory→Gold mutation.
-7. Test retry after failure, reload and double-submit.
+1. TDD V2→V3 migration, pending recovery, duplicate submission, failed verification and atomic sell candidates.
+2. Add one stable run ID per `DungeonRunRoot` and keep it in `DungeonRunResult`.
+3. Add the narrow Bootstrap mapping for the current three reward IDs only: Gold/silver to wallet, crystal to `resource.monster-crystal`; reject unknown IDs before saving.
+4. Extend the existing profile DTO/state/session to V3 with `pendingTerminalResult` and `lastAppliedRunId`; persist pending before apply, then apply once via the verified repository path.
+5. Recover an interrupted pending result during profile initialization before Guild Hall consumes the profile.
+6. Make terminal return build a Guild summary only from a committed receipt; failure returns to Guild Hall without a reward-success summary.
+7. Extend existing Profile snapshots/MVVM/View and Bootstrap handler with sell-one-unique (only unequipped) and sell-whole-resource-stack actions at configured item prices.
+8. Run targeted EditMode suites, compilation, asmdef/GUID validation and preserve a clear manual-smoke boundary.
 
-No shop, exchange rates or second spendable currency are added.
+No shop, exchange rates, second currency, quantity picker, new reward IDs or unique-equipment dungeon drops are added.
 
 ## 7. PP-5 — guild ranks
 

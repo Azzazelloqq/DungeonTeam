@@ -557,3 +557,58 @@ This keeps the existing combat/skill lifecycle, tick ownership and presentation 
 7. Run compile, affected EditMode suites, lifecycle/Addressable regression and the Unity mechanical validator. Run manual Guild Profile → equip → Map → Run smoke because prefab/UI/input/runtime effects are not proven by compile.
 
 PP-3 is complete only when a migrated V1 profile remains valid, the three item effects are observable in the next run, an unverifiable write leaves the previous profile active, and no new reverse reference or service locator appears.
+
+### 14.8. PP-4 implementation blueprint — banked terminal rewards and selling
+
+#### A. Scope and boundary
+
+PP-4 turns only existing `RewardGrant` content into persistent player data: `reward.gold` and `reward.silver` add Gold; `reward.crystal` adds the existing stackable `resource.monster-crystal`. No new reward IDs, equipment drops, shop, second currency, price negotiation, quantity picker or quest reward pipeline is introduced. Unique equipment is sellable because PP-3 already owns unique instances, but current dungeon content does not create new unique gear.
+
+`DungeonRun.Runtime` keeps collecting `RewardGrant` and does not depend on profile, inventory or save code. `Rewards.Runtime` keeps definitions/presentation names. Bootstrap is the only mapper from a completed `DungeonRunResult` plus `RewardCatalog` to a PlayerProfile application request, and is the only consumer that can then create a Guild summary. GuildHall receives only prepared snapshots/commands; it never sees pending records, SaveStore, `DungeonRunResult`, `RewardCatalog` or item config.
+
+No new root, DI scope, event bus, generic transaction framework or cross-feature assembly is added.
+
+#### B. Stable terminal identity and BCL request
+
+`DungeonRunRoot` creates one `Guid.NewGuid().ToString("N")` run ID when it is created and appends it to immutable `DungeonRunResult`. The ID is copied unchanged through the one existing `Finished` event; it is not calculated from dungeon/seed and all config/dev/enemy paths keep their current result behavior.
+
+`PlayerProfile.Application` owns small BCL request/receipt values:
+
+```text
+ProfileTerminalResultRequest { RunId, GoldAmount, ResourceGrants[] }
+ProfileSettlementReceipt       { RunId, GoldAmount, ResourceGrants[] }
+```
+
+They validate stable IDs, positive values and duplicate resource IDs. Bootstrap's concrete `RewardSettlementMapper` accepts exactly the three configured reward IDs above, aggregates by target and rejects an unknown reward before any profile save. The mapper is not a new general reward service.
+
+#### C. Profile V3 and exactly-once algorithm
+
+The stored CLR type remains `PlayerProfileSaveV1`; it becomes `[SaveVersion(3)]` and gains stable fields `pending_terminal_result` and `last_applied_run_id`. A V2→V3 migrator sets both absent. Domain state contains the equivalent optional `PendingTerminalResultState` and optional last-applied ID; both are immutable and defensive.
+
+`PlayerProfileSession.BankTerminalResult(request)` is synchronous cold-path application logic:
+
+1. If `lastAppliedRunId == request.RunId`, return `AlreadyApplied` with no save and no receipt.
+2. If another pending ID exists, reject rather than overwrite it. If the same pending ID exists, reuse its canonical payload.
+3. Otherwise verified-save a candidate holding that pending payload. Only after success may the session publish it.
+4. Derive one candidate with Gold/resources incremented, pending cleared and `lastAppliedRunId` set; verified-save it, then publish and return its receipt.
+
+On application creation, `PlayerProfileSession` calls `RecoverPendingTerminalResult()` before Guild consumers exist. It applies the stored pending payload using step 4. A crash after step 3 therefore finishes once on the next start; a crash after step 4 reads `lastAppliedRunId` and cannot apply that run again. A `PlayerProfilePersistenceException` never produces a receipt/summary and leaves the in-memory session state unchanged. The existing fresh-reader verification remains the only write proof; PP-4 does not claim an fsync guarantee beyond it.
+
+#### D. Return flow and summary
+
+`ApplicationRoot.ReturnFromFinishedDungeonRunAsync` banks the mapped request before it stops the run or stores a Guild summary. It builds `GuildRunSummarySnapshot` only from the returned `ProfileSettlementReceipt` plus configured texts/catalog display values; it never shows a raw unbanked `DungeonRunResult` as success. Duplicate terminal callbacks are ignored by the existing named subscription/gate and receive no second summary.
+
+If banking rejects or persistence is unverifiable, the run is stopped and the current recovery-to-GuildHall path runs with no reward summary; the exception is reported, but Gold/inventory success is not displayed. This prevents a terminal root from becoming stuck and never lies about a banked payout.
+
+#### E. Reception selling
+
+Extend the existing Guild Profile request/result bridge only with `SellUniqueItem(instanceId)` and `SellResource(definitionId)`. The prepared snapshot exposes sell actions/prices, not catalog objects. A unique instance may be sold only while not equipped by any hero; a resource sale sells its whole current stack. `ItemCatalog` remains the price authority (`saleValue`); the candidate removes the instance/stack and adds `saleValue` or `saleValue × quantity` Gold in one `PlayerProfileState` replacement, then uses the same save-before-publish session commit. Invalid/equipped/missing targets leave state untouched and use existing configured rejection feedback.
+
+#### F. Delivery and proof
+
+1. Add failing pure tests for V2→V3 migration, pending recovery, duplicate same-run submission, persistence failure and whole-stack/unequipped-item sale.
+2. Add run ID, Bootstrap mapper and result-to-profile request tests with variable grants; unknown IDs must save zero data.
+3. Implement V3 DTO/migrator/domain/session state and verified two-step banking.
+4. Change terminal return ordering and summary builder input; test bank → stop → summary ordering and bank-failure recovery.
+5. Add prepared sell rows/commands to the existing Profile MVVM/View and tests that it carries no persistence/config objects.
+6. Run affected EditMode suites, Unity compile and mechanical validation. Manual smoke, if later desired, is Guild → Map → Dungeon → return summary → sell → restart; it is not silently claimed by a build.
