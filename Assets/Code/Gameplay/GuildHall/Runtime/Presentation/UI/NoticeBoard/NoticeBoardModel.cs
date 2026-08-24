@@ -18,7 +18,8 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Presentation.UI.NoticeBoard
         public NoticeBoardModel(
             IReadOnlyList<NoticeBoardOfferSnapshot> offers,
             string selectedContractId,
-            NoticeBoardTextSnapshot text)
+            NoticeBoardTextSnapshot text,
+            IReadOnlyList<QuestBoardEntrySnapshot> quests = null)
         {
             if (offers == null)
             {
@@ -50,6 +51,20 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Presentation.UI.NoticeBoard
             }
 
             _offers = new ReadOnlyCollection<NoticeBoardOfferSnapshot>(copy);
+            var questCopy = quests ?? Array.Empty<QuestBoardEntrySnapshot>();
+            var questIds = new HashSet<string>(StringComparer.Ordinal);
+            for (var index = 0; index < questCopy.Count; index++)
+            {
+                var quest = questCopy[index] ?? throw new ArgumentException(
+                    $"Quest Board entry at index {index} is missing.", nameof(quests));
+                if (!questIds.Add(quest.QuestId))
+                    throw new ArgumentException(
+                        $"Quest Board entry ID '{quest.QuestId}' is duplicated.", nameof(quests));
+            }
+
+            var questSnapshot = new QuestBoardEntrySnapshot[questCopy.Count];
+            for (var index = 0; index < questSnapshot.Length; index++) questSnapshot[index] = questCopy[index];
+            Quests = new ReadOnlyCollection<QuestBoardEntrySnapshot>(questSnapshot);
             Text = text ?? throw new ArgumentNullException(nameof(text));
             _selectedContractId.SetValue(selectedContractId);
             _isVisible.AddTo(compositeDisposable);
@@ -58,6 +73,7 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Presentation.UI.NoticeBoard
 
         public IReadOnlyList<NoticeBoardOfferSnapshot> Offers => _offers;
         public NoticeBoardTextSnapshot Text { get; }
+        public IReadOnlyList<QuestBoardEntrySnapshot> Quests { get; }
         public IReadOnlyReactiveProperty<bool> IsVisible => _isVisible;
         public IReadOnlyReactiveProperty<string> SelectedContractId => _selectedContractId;
 

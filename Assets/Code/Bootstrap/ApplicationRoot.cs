@@ -18,6 +18,10 @@ using DungeonTeam.Gameplay.Chests.Runtime;
 using DungeonTeam.Gameplay.Contracts.Application;
 using DungeonTeam.Gameplay.Contracts.Domain;
 using DungeonTeam.Gameplay.Contracts.Infrastructure;
+using DungeonTeam.Gameplay.Quests.Application;
+using DungeonTeam.Gameplay.Quests.Domain;
+using DungeonTeam.Gameplay.Quests.Infrastructure;
+using DungeonTeam.Gameplay.Quests.Runtime;
 using DungeonTeam.Gameplay.Dungeon.Application;
 using DungeonTeam.Gameplay.DungeonRun.Application;
 using DungeonTeam.Gameplay.DungeonRun.Runtime;
@@ -88,6 +92,10 @@ namespace Code.ApplicationRoot
 		private DungeonTeam.Gameplay.Contracts.Domain.ContractCatalog _contractCatalog;
 		private ContractPersistence _contractPersistence;
 		private ContractSession _contractSession;
+		private QuestConfigPage _questConfigPage;
+		private QuestCatalog _questCatalog;
+		private QuestPersistence _questPersistence;
+		private QuestSession _questSession;
 		private GuildRankCatalog _guildRankCatalog;
 		private WorldMapCatalog _worldMapCatalog;
 		private GuildSessionState _guildSessionState;
@@ -187,6 +195,18 @@ namespace Code.ApplicationRoot
 			var contractConfig = config.GetConfigPage<ContractConfigPage>();
 			_contractCatalog = contractConfig.CreateCatalog();
 			_worldMapCatalog = config.GetConfigPage<WorldMapConfigPage>().CreateCatalog();
+			_questConfigPage = config.GetConfigPage<QuestConfigPage>();
+			_questCatalog = _questConfigPage.CreateCatalog();
+			_questPersistence = new QuestPersistence(new SaveStoreOptions(
+				Path.Combine(Application.persistentDataPath, "DungeonTeam"))
+			{
+				UseTaggedFormat = true,
+				UseAtomicWrite = true,
+				SaveOnQuit = true
+			});
+			_questSession = new QuestSession(_questPersistence.Repository);
+			_questSession.State.ValidateAgainst(_questCatalog);
+			ValidateQuestTargets(_questCatalog, _launchPresetCatalog, _itemCatalog, _guildHallCatalog);
 			GuildContentValidator.Validate(
 				_guildHallCatalog,
 				_dialogueCatalog,
@@ -276,6 +296,7 @@ namespace Code.ApplicationRoot
 			_dungeonRunTeamSetup = null;
 			_playerProfileSession = null;
 			_contractSession = null;
+			_questSession = null;
 			_itemCatalog = null;
 			_guildRankCatalog = null;
 			_guildProfileEditHandler = null;
@@ -283,6 +304,10 @@ namespace Code.ApplicationRoot
 			_playerProfilePersistence = null;
 			_contractPersistence?.Dispose();
 			_contractPersistence = null;
+			_questPersistence?.Dispose();
+			_questPersistence = null;
+			_questConfigPage = null;
+			_questCatalog = null;
 			_launchPresetCatalog = null;
 			_guildHallCatalog = null;
 			_dialogueCatalog = null;
@@ -352,8 +377,8 @@ namespace Code.ApplicationRoot
 #else
 				new EditorGuildHallInput(),
 #endif
-				_ => { }, OnGuildHallWorldMapRequested, AcceptContract,
-				_guildProfileEditHandler.Handle, true);
+				_ => { }, OnGuildHallWorldMapRequested, AcceptContract, AcceptQuest,
+				OnDialogueCompleted, _guildProfileEditHandler.Handle, true);
 			await hall.InitializeAsync(token);
 			_guildHallRoot = hall;
 		}
@@ -367,11 +392,63 @@ namespace Code.ApplicationRoot
 				_playerProfileSession.State.RankId,
 				_guildHallCatalog.ProfileText.RequiredRankOfferFormat,
 				_guildHallCatalog.NoticeBoardText);
+			var quests = BuildQuestBoardSnapshots();
 			return new GuildHallStartContext(
 				_guildHallCatalog.Npcs,
 				offers,
 				_contractSession.State.ActiveContractId,
-				_guildSessionState.LastRunSummary);
+				_guildSessionState.LastRunSummary,
+				null,
+				quests);
+		}
+
+		private QuestBoardEntrySnapshot[] BuildQuestBoardSnapshots()
+		{
+			var snapshots = new QuestBoardEntrySnapshot[_questCatalog.Definitions.Count];
+			for (var index = 0; index < snapshots.Length; index++)
+			{
+				var definition = _questCatalog.Definitions[index];
+				var completed = _questSession.State.IsCompleted(definition.QuestId);
+				var accepted = _questSession.State.IsActive(definition.QuestId);
+				var unlocked = _questCatalog.IsQuestUnlocked(definition.QuestId, _questSession.State);
+				var status = completed
+					? QuestBoardEntrySnapshot.EntryStatus.Completed
+					: accepted
+						? QuestBoardEntrySnapshot.EntryStatus.Accepted
+						: unlocked
+							? QuestBoardEntrySnapshot.EntryStatus.Available
+							: QuestBoardEntrySnapshot.EntryStatus.Locked;
+				var current = completed ? definition.Objective.RequiredProgress : _questSession.State.GetProgress(definition.QuestId);
+				var statusText = status switch
+				{
+					QuestBoardEntrySnapshot.EntryStatus.Completed => _guildHallCatalog.NoticeBoardText.QuestCompleted,
+					QuestBoardEntrySnapshot.EntryStatus.Accepted => _guildHallCatalog.NoticeBoardText.QuestAccepted,
+					QuestBoardEntrySnapshot.EntryStatus.Locked => _guildHallCatalog.NoticeBoardText.QuestLocked,
+					_ => _guildHallCatalog.NoticeBoardText.QuestAccept
+				};
+				snapshots[index] = new QuestBoardEntrySnapshot(
+					definition.QuestId,
+					new GuildTextSnapshot(definition.Title.TextId, definition.Title.DisplayText),
+					new GuildTextSnapshot(definition.Summary.TextId, definition.Summary.DisplayText),
+					new GuildTextSnapshot(definition.ObjectiveText.TextId, definition.ObjectiveText.DisplayText),
+					new GuildTextSnapshot($"quest.{definition.QuestId}.progress", $"{current}/{definition.Objective.RequiredProgress}"),
+					new GuildTextSnapshot(statusText.TextId, statusText.DisplayText),
+					status == QuestBoardEntrySnapshot.EntryStatus.Available,
+					status);
+			}
+			return snapshots;
+		}
+
+		private bool AcceptQuest(string questId)
+		{
+			if (!_questCatalog.Contains(questId) || !_questCatalog.IsQuestUnlocked(questId, _questSession.State) ||
+				_questSession.State.IsActive(questId) || _questSession.State.IsCompleted(questId)) return false;
+			return _questSession.Accept(questId, _questCatalog);
+		}
+
+		private void OnDialogueCompleted(string npcId)
+		{
+			_questSession?.RecordDialogueCompleted(npcId, _questCatalog);
 		}
 
 		private bool AcceptContract(string contractId)
@@ -400,7 +477,7 @@ namespace Code.ApplicationRoot
 
 		private GuildHallStartContext WithProfile(GuildHallStartContext context) => new(
 			context.Npcs, context.Offers, context.SelectedContractId, context.LastRunSummary,
-			BuildGuildProfileSnapshot(_playerProfileSession.State));
+			BuildGuildProfileSnapshot(_playerProfileSession.State), context.QuestEntries);
 
 		private GuildProfileSnapshot BuildGuildProfileSnapshot(
 			PlayerProfileState profile) =>
@@ -856,6 +933,17 @@ namespace Code.ApplicationRoot
 					settlement.Receipt,
 					_rewardCatalog,
 					_guildHallCatalog.RunSummaryText);
+				if (result.Outcome == DungeonRunOutcome.Completed)
+				{
+					_questSession.RecordDungeonCompleted(result.DungeonId, _questCatalog);
+					var grants = new QuestResourceGrant[settlement.Receipt.ResourceGrants.Count];
+					for (var index = 0; index < grants.Length; index++)
+					{
+						var grant = settlement.Receipt.ResourceGrants[index];
+						grants[index] = new QuestResourceGrant(grant.DefinitionId, grant.Amount);
+					}
+					_questSession.RecordSettledResources(grants, _questCatalog);
+				}
 				if (result.Outcome == DungeonRunOutcome.Completed &&
 					!string.IsNullOrWhiteSpace(_activeRunContractId))
 				{
@@ -947,6 +1035,41 @@ namespace Code.ApplicationRoot
 			}
 
 			return actorIds;
+		}
+
+		private static void ValidateQuestTargets(
+			QuestCatalog quests,
+			DungeonRunLaunchPresetCatalog launchPresets,
+			ItemCatalog items,
+			GuildHallCatalog guildHall)
+		{
+			if (quests == null || launchPresets == null || items == null || guildHall == null)
+				throw new ArgumentNullException(nameof(quests));
+			for (var index = 0; index < quests.Definitions.Count; index++)
+			{
+				var objective = quests.Definitions[index].Objective;
+				switch (objective.Kind)
+				{
+					case QuestObjectiveKind.CompleteDungeon:
+						var dungeonExists = false;
+						for (var preset = 0; preset < launchPresets.Presets.Count; preset++)
+							dungeonExists |= launchPresets.Presets[preset].DungeonId == objective.TargetId;
+						if (!dungeonExists) throw new InvalidOperationException(
+							$"Quest '{quests.Definitions[index].QuestId}' references unknown dungeon '{objective.TargetId}'.");
+						break;
+					case QuestObjectiveKind.CollectResource:
+						if (!items.TryGetResource(objective.TargetId, out _)) throw new InvalidOperationException(
+							$"Quest '{quests.Definitions[index].QuestId}' references unknown resource '{objective.TargetId}'.");
+						break;
+					case QuestObjectiveKind.CompleteDialogue:
+						var npcExists = false;
+						for (var npc = 0; npc < guildHall.Npcs.Count; npc++) npcExists |= guildHall.Npcs[npc].NpcId == objective.TargetId;
+						if (!npcExists) throw new InvalidOperationException(
+							$"Quest '{quests.Definitions[index].QuestId}' references unknown NPC '{objective.TargetId}'.");
+						break;
+					default: throw new ArgumentOutOfRangeException(nameof(objective.Kind), objective.Kind, null);
+				}
+			}
 		}
 
 		private void CreateDeveloperConsole()

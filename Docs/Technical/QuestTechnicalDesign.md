@@ -1,6 +1,6 @@
 # DungeonTeam — Quest Q-0 Technical Design
 
-**Status:** READY FOR IMPLEMENTATION
+**Status:** IMPLEMENTED AND AUTOMATION-VALIDATED (Q-0); manual flow smoke/build not run
 
 ## 1. Boundary and ownership
 
@@ -84,3 +84,17 @@ PlayMode/manual:
 ## 8. Done criteria
 
 Q-0 is done when the three authored examples visibly demonstrate binary dungeon completion, persisted accumulating resources and completed NPC dialogue; their progress survives restart; they stay separate from Contracts/Profile state; and no additional objective/reward/quest framework is introduced.
+
+## 9. Implementation status and validation
+
+Implemented `Quests.Domain`, `.Application`, `.Infrastructure`, `.Runtime` and focused EditMode tests. `guild.quests` is a separate V1 tagged SaveStore record. The production config contains the two-step `chain.first-expedition` (`quest.clear-crypt` → `quest.crystal-supply`) and standalone `quest.speak-debater`.
+
+Bootstrap owns Quest persistence/session, only forwards terminal data after a successful profile settlement, and receives completed dialogue NPC IDs from Guild Hall. Notice Board has separate quest snapshots and rows, so contract state and quest state are not conflated.
+
+Independently validated in Unity `6000.7.0a3`:
+
+- Quest EditMode: `3/3 passed`;
+- Bootstrap + GuildHall EditMode regression: `52/52 passed`;
+- `dotnet build Bootstrap.csproj --no-restore -v:minimal`: `0` warnings, `0` errors.
+
+Manual Hall → accept chain → run → crystal progress → dialogue → restart smoke, player build and external playtest were not run.

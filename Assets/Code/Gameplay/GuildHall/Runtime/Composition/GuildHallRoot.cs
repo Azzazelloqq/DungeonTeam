@@ -33,6 +33,8 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Composition
         private readonly Action _worldMapRequested;
         private readonly Action<string> _contractSelected;
         private Func<string, bool> _contractAccepted;
+        private Func<string, bool> _questAccepted;
+        private Action<string> _dialogueCompleted;
         private readonly Func<GuildProfileEditRequest, GuildProfileEditResult> _profileEditRequested;
 
         private IGuildHallInput _pendingInput;
@@ -113,6 +115,8 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Composition
                 _contractSelected(id);
                 return true;
             };
+            _questAccepted = _ => true;
+            _dialogueCompleted = _ => { };
             _profileEditRequested = profileEditRequested;
         }
 
@@ -139,6 +143,39 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Composition
                 input,
                 interactionRequested,
                 worldMapRequested,
+                contractAccepted,
+                null,
+                null,
+                profileEditRequested,
+                useContractAcceptance)
+        {
+        }
+
+        public GuildHallRoot(
+            GuildHallWorldLoader worldLoader,
+            GuildHallStartContext startContext,
+            GuildHallCatalog catalog,
+            AmbientNpcProfileCatalog ambientProfiles,
+            DialogueCatalog dialogues,
+            ITickHandler tickHandler,
+            IGuildHallInput input,
+            Action<GuildHallInteractionRequest> interactionRequested,
+            Action worldMapRequested,
+            Func<string, bool> contractAccepted,
+            Func<string, bool> questAccepted,
+            Action<string> dialogueCompleted,
+            Func<GuildProfileEditRequest, GuildProfileEditResult> profileEditRequested,
+            bool useContractAcceptance)
+            : this(
+                worldLoader,
+                startContext,
+                catalog,
+                ambientProfiles,
+                dialogues,
+                tickHandler,
+                input,
+                interactionRequested,
+                worldMapRequested,
                 (Action<string>)null,
                 profileEditRequested)
         {
@@ -148,6 +185,8 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Composition
             }
 
             _contractAccepted = contractAccepted ?? throw new ArgumentNullException(nameof(contractAccepted));
+            _questAccepted = questAccepted ?? (_ => true);
+            _dialogueCompleted = dialogueCompleted ?? (_ => { });
         }
 
         internal NoticeBoardViewBase NoticeBoardView => _noticeBoardView;
@@ -179,10 +218,12 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Composition
                 _noticeBoardModel = new NoticeBoardModel(
                     _startContext.Offers,
                     _startContext.SelectedContractId,
-                    _catalog.NoticeBoardText);
+                    _catalog.NoticeBoardText,
+                    _startContext.QuestEntries);
                 _noticeBoardViewModel = new NoticeBoardViewModel(
                     _noticeBoardModel,
                     (Func<string, bool>)HandleContractAccepted,
+                    HandleQuestAccepted,
                     CloseNoticeBoard);
                 _noticeBoardViewModel.Initialize();
                 _noticeBoardView.Initialize(_noticeBoardViewModel, disposeWithViewModel: false);
@@ -290,7 +331,7 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Composition
             _guildProfileViewModel = null;
             _guildProfileModel = null;
 
-            CloseDialogue();
+            CloseDialogue(false);
             _dialogueView?.Dispose();
             _dialogueView = null;
 
@@ -379,7 +420,7 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Composition
                 throw new InvalidOperationException("Ambient NPC dialogue is not initialized.");
             }
 
-            CloseDialogue();
+            CloseDialogue(false);
             var line = _dialogueLineSelector.Select(_dialogues.Require(npc.DialoguePoolId));
             _activeDialogueNpcId = npc.NpcId;
             _ambientNpcSet.PauseAndFace(npc.NpcId, _worldLease.View.PlayerTransform.position);
@@ -387,7 +428,9 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Composition
             _dialogueModel.Show(npc.DisplayName.DisplayText, line.DisplayText);
         }
 
-        internal void CloseDialogue()
+        internal void CloseDialogue() => CloseDialogue(true);
+
+        private void CloseDialogue(bool notifyCompletion)
         {
             var activeNpcId = _activeDialogueNpcId;
             _activeDialogueNpcId = null;
@@ -396,6 +439,7 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Composition
             {
                 _ambientNpcSet?.ResumeRoutine(activeNpcId);
                 SetWorldInputBlocked(false);
+                if (notifyCompletion) _dialogueCompleted(activeNpcId);
             }
         }
 
@@ -440,6 +484,8 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Composition
             HandleContractSelected(contractId);
             return true;
         }
+
+        private bool HandleQuestAccepted(string questId) => _questAccepted(questId);
 
         private void OpenRunSummary()
         {

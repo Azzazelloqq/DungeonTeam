@@ -1,0 +1,6 @@
+{
+  "name": "DungeonTeam.Quests.Runtime",
+  "rootNamespace": "DungeonTeam.Gameplay.Quests.Runtime",
+  "references": ["DungeonTeam.Configuration", "DungeonTeam.Quests.Domain"],
+  "autoReferenced": false
+}

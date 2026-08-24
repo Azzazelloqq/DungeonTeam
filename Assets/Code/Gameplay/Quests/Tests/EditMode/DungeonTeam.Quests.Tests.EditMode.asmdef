@@ -1,0 +1,8 @@
+{
+  "name": "DungeonTeam.Quests.Tests.EditMode",
+  "rootNamespace": "DungeonTeam.Gameplay.Quests.Tests.EditMode",
+  "references": ["DungeonTeam.Quests.Domain", "DungeonTeam.Quests.Application"],
+  "includePlatforms": ["Editor"],
+  "optionalUnityReferences": ["TestAssemblies"],
+  "autoReferenced": false
+}

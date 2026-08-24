@@ -120,6 +120,52 @@ namespace DungeonTeam.Gameplay.GuildHall.Application
         public bool IsCompleted => Status == OfferStatus.Completed;
     }
 
+    public sealed class QuestBoardEntrySnapshot
+    {
+        public enum EntryStatus
+        {
+            Available = 0,
+            Accepted = 1,
+            Completed = 2,
+            Locked = 3
+        }
+
+        public QuestBoardEntrySnapshot(
+            string questId,
+            GuildTextSnapshot title,
+            GuildTextSnapshot summary,
+            GuildTextSnapshot objective,
+            GuildTextSnapshot progress,
+            GuildTextSnapshot statusText,
+            bool canAccept,
+            EntryStatus status)
+        {
+            QuestId = GuildId.Require(questId, nameof(questId));
+            Title = title ?? throw new ArgumentNullException(nameof(title));
+            Summary = summary ?? throw new ArgumentNullException(nameof(summary));
+            Objective = objective ?? throw new ArgumentNullException(nameof(objective));
+            Progress = progress ?? throw new ArgumentNullException(nameof(progress));
+            StatusText = statusText ?? throw new ArgumentNullException(nameof(statusText));
+            if (status == EntryStatus.Available && !canAccept)
+                throw new ArgumentException("An available quest must be acceptable.", nameof(canAccept));
+            if (status != EntryStatus.Available && canAccept)
+                throw new ArgumentException("An accepted or completed quest cannot be acceptable.", nameof(canAccept));
+            CanAccept = canAccept;
+            Status = status;
+        }
+
+        public string QuestId { get; }
+        public GuildTextSnapshot Title { get; }
+        public GuildTextSnapshot Summary { get; }
+        public GuildTextSnapshot Objective { get; }
+        public GuildTextSnapshot Progress { get; }
+        public GuildTextSnapshot StatusText { get; }
+        public bool CanAccept { get; }
+        public EntryStatus Status { get; }
+        public bool IsAccepted => Status == EntryStatus.Accepted;
+        public bool IsCompleted => Status == EntryStatus.Completed;
+    }
+
     public sealed class NoticeBoardTextSnapshot
     {
         public NoticeBoardTextSnapshot(
@@ -128,6 +174,20 @@ namespace DungeonTeam.Gameplay.GuildHall.Application
             GuildTextSnapshot selected,
             GuildTextSnapshot close,
             GuildTextSnapshot empty)
+            : this(header, select, selected, close, empty, select, selected, selected, selected)
+        {
+        }
+
+        public NoticeBoardTextSnapshot(
+            GuildTextSnapshot header,
+            GuildTextSnapshot select,
+            GuildTextSnapshot selected,
+            GuildTextSnapshot close,
+            GuildTextSnapshot empty,
+            GuildTextSnapshot questAccept,
+            GuildTextSnapshot questAccepted,
+            GuildTextSnapshot questCompleted,
+            GuildTextSnapshot questLocked)
         {
             Header = header ?? throw new ArgumentNullException(nameof(header));
             Select = select ?? throw new ArgumentNullException(nameof(select));
@@ -135,6 +195,10 @@ namespace DungeonTeam.Gameplay.GuildHall.Application
             Close = close ?? throw new ArgumentNullException(nameof(close));
             Empty = empty ?? throw new ArgumentNullException(nameof(empty));
             Completed = Selected;
+            QuestAccept = questAccept ?? throw new ArgumentNullException(nameof(questAccept));
+            QuestAccepted = questAccepted ?? throw new ArgumentNullException(nameof(questAccepted));
+            QuestCompleted = questCompleted ?? throw new ArgumentNullException(nameof(questCompleted));
+            QuestLocked = questLocked ?? throw new ArgumentNullException(nameof(questLocked));
         }
 
         public GuildTextSnapshot Header { get; }
@@ -143,6 +207,10 @@ namespace DungeonTeam.Gameplay.GuildHall.Application
         public GuildTextSnapshot Close { get; }
         public GuildTextSnapshot Empty { get; }
         public GuildTextSnapshot Completed { get; }
+        public GuildTextSnapshot QuestAccept { get; }
+        public GuildTextSnapshot QuestAccepted { get; }
+        public GuildTextSnapshot QuestCompleted { get; }
+        public GuildTextSnapshot QuestLocked { get; }
     }
 
     public sealed class GuildRunSummarySnapshot
@@ -243,10 +311,12 @@ namespace DungeonTeam.Gameplay.GuildHall.Application
             IReadOnlyList<NoticeBoardOfferSnapshot> offers,
             string selectedContractId,
             GuildRunSummarySnapshot lastRunSummary,
-            GuildProfileSnapshot profile = null)
+            GuildProfileSnapshot profile = null,
+            IReadOnlyList<QuestBoardEntrySnapshot> quests = null)
         {
             Npcs = Snapshot.Copy(npcs, nameof(npcs));
             Offers = Snapshot.Copy(offers, nameof(offers));
+            QuestEntries = Snapshot.Copy(quests ?? Array.Empty<QuestBoardEntrySnapshot>(), nameof(quests));
             SelectedContractId = selectedContractId == null
                 ? null
                 : GuildId.Require(selectedContractId, nameof(selectedContractId));
@@ -276,6 +346,7 @@ namespace DungeonTeam.Gameplay.GuildHall.Application
 
         public IReadOnlyList<AmbientNpcSnapshot> Npcs { get; }
         public IReadOnlyList<NoticeBoardOfferSnapshot> Offers { get; }
+        public IReadOnlyList<QuestBoardEntrySnapshot> QuestEntries { get; }
         public string SelectedContractId { get; }
         public GuildRunSummarySnapshot LastRunSummary { get; }
         public GuildProfileSnapshot Profile { get; }

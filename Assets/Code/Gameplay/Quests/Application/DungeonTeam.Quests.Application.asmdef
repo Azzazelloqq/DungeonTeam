@@ -1,0 +1,7 @@
+{
+  "name": "DungeonTeam.Quests.Application",
+  "rootNamespace": "DungeonTeam.Gameplay.Quests.Application",
+  "references": ["DungeonTeam.Quests.Domain"],
+  "autoReferenced": false,
+  "noEngineReferences": true
+}

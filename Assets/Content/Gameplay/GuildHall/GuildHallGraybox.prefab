@@ -1184,6 +1184,7 @@ MonoBehaviour:
   _emptyStateText: {fileID: 901000000000000024}
   _itemContainer: {fileID: 901000000000000031}
   _itemTemplate: {fileID: 901000000000000044}
+  _questItemTemplate: {fileID: 901000000000000046}
   _closeButton: {fileID: 901000000000000114}
 --- !u!1 &901000000000000010
 GameObject:
@@ -1507,6 +1508,7 @@ GameObject:
   - component: {fileID: 901000000000000045}
   - component: {fileID: 901000000000000042}
   - component: {fileID: 901000000000000044}
+  - component: {fileID: 901000000000000046}
   m_Layer: 0
   m_Name: OfferItemTemplate
   m_TagString: Untagged
@@ -1594,6 +1596,24 @@ MonoBehaviour:
   _selectLabel: {fileID: 901000000000000104}
   _selectedMarker: {fileID: 901000000000000080}
   _selectButton: {fileID: 901000000000000094}
+--- !u!114 &901000000000000046
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 901000000000000040}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2db318d3eabf4a7d9b8d74f3c1d5e0a2, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: DungeonTeam.GuildHall.Runtime::DungeonTeam.Gameplay.GuildHall.Runtime.Presentation.UI.NoticeBoard.QuestBoardItemView
+  _titleText: {fileID: 901000000000000054}
+  _summaryText: {fileID: 901000000000000064}
+  _progressText: {fileID: 901000000000000074}
+  _acceptLabel: {fileID: 901000000000000104}
+  _completedMarker: {fileID: 901000000000000080}
+  _acceptButton: {fileID: 901000000000000094}
 --- !u!1 &901000000000000050
 GameObject:
   m_ObjectHideFlags: 0

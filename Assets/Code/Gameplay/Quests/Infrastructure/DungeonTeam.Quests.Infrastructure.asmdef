@@ -1,0 +1,6 @@
+{
+  "name": "DungeonTeam.Quests.Infrastructure",
+  "rootNamespace": "DungeonTeam.Gameplay.Quests.Infrastructure",
+  "references": ["DungeonTeam.Quests.Domain", "DungeonTeam.Quests.Application", "LocalSaveSystem"],
+  "autoReferenced": false
+}

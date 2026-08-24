@@ -1,0 +1,55 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c46b3f2d9a1647e2b1d8a0c5f6e7d9b1, type: 3}
+  m_Name: QuestConfig
+  m_EditorClassIdentifier: DungeonTeam.Quests.Runtime::DungeonTeam.Gameplay.Quests.Runtime.QuestConfigPage
+  _quests:
+  - _questId: quest.clear-crypt
+    _titleId: quest.clear-crypt.title
+    _title: "Первая экспедиция"
+    _summaryId: quest.clear-crypt.summary
+    _summary: "Завершить первую экспедицию."
+    _objectiveId: quest.clear-crypt.objective
+    _objective: "Успешно завершить подземелье"
+    _kind: 0
+    _targetId: dungeon.demo.authored
+    _requiredProgress: 1
+    _chainId: chain.first-expedition
+  - _questId: quest.crystal-supply
+    _titleId: quest.crystal-supply.title
+    _title: "Кристаллы для гильдии"
+    _summaryId: quest.crystal-supply.summary
+    _summary: "Принести кристаллы монстров после экспедиции."
+    _objectiveId: quest.crystal-supply.objective
+    _objective: "Получить кристаллы монстров"
+    _kind: 1
+    _targetId: resource.monster-crystal
+    _requiredProgress: 3
+    _chainId: chain.first-expedition
+  - _questId: quest.speak-debater
+    _titleId: quest.speak-debater.title
+    _title: "Разговор в зале"
+    _summaryId: quest.speak-debater.summary
+    _summary: "Выслушать спорщика в зале гильдии."
+    _objectiveId: quest.speak-debater.objective
+    _objective: "Завершить разговор со спорщиком"
+    _kind: 2
+    _targetId: npc.debater
+    _requiredProgress: 1
+    _chainId:
+  _chains:
+  - _chainId: chain.first-expedition
+    _titleId: chain.first-expedition.title
+    _title: "Первые шаги"
+    _questIds:
+    - quest.clear-crypt
+    - quest.crystal-supply

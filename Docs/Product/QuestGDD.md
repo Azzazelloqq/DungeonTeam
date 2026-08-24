@@ -1,6 +1,6 @@
 # DungeonTeam — Quest GDD
 
-**Status:** Q-0 agreed and designed; implementation pending
+**Status:** Q-0 implemented; automated validation passed
 
 ## Q-0 purpose
 

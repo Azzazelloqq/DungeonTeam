@@ -151,6 +151,10 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Config
         [SerializeField] private GuildTextDefinitionConfig _selected = new();
         [SerializeField] private GuildTextDefinitionConfig _close = new();
         [SerializeField] private GuildTextDefinitionConfig _empty = new();
+        [SerializeField] private GuildTextDefinitionConfig _questAccept = new();
+        [SerializeField] private GuildTextDefinitionConfig _questAccepted = new();
+        [SerializeField] private GuildTextDefinitionConfig _questCompleted = new();
+        [SerializeField] private GuildTextDefinitionConfig _questLocked = new();
 
         internal NoticeBoardTextSnapshot ToSnapshot()
         {
@@ -159,7 +163,11 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Config
                 Require(_select, "select label"),
                 Require(_selected, "selected label"),
                 Require(_close, "close label"),
-                Require(_empty, "empty state"));
+                Require(_empty, "empty state"),
+                Require(_questAccept, "quest accept label"),
+                Require(_questAccepted, "quest accepted label"),
+                Require(_questCompleted, "quest completed label"),
+                Require(_questLocked, "quest locked label"));
         }
 
         private static GuildTextSnapshot Require(
