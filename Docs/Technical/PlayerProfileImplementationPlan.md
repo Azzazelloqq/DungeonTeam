@@ -1,6 +1,6 @@
 # DungeonTeam — Player Profile Implementation Plan
 
-**Статус:** PP-0/PP-1/PP-2 COMPLETE; PP-3/PP-4 IMPLEMENTED, AUTOMATED VALIDATION PASSED; PP-5 IMPLEMENTED, AUTOMATED VALIDATION PASSED; manual Unity smoke outstanding
+**Статус:** PP-0/PP-1/PP-2 COMPLETE; PP-3/PP-4/PP-5 IMPLEMENTED, AUTOMATED VALIDATION PASSED; PP-6 DESIGNED
 
 **Версия:** 0.5
 
@@ -26,7 +26,7 @@
 | PP-3 | Unique equipment, stackable resources and three hero slots | Implemented; targeted EditMode passed, manual Guild-to-Run smoke outstanding |
 | PP-4 | Verified result commit, Gold banking and selling | Implemented; targeted EditMode passed, manual failure/selling smoke outstanding |
 | PP-5 | Guild ranks and board gating | Implemented; focused EditMode and compilation passed, manual UI smoke outstanding |
-| PP-6 | Integrated regression and documentation closure | Planned |
+| PP-6 | Integrated regression and documentation closure | Designed; ready for audit implementation |
 
 ## 3. PP-1 — persistent read-only profile
 
@@ -200,12 +200,22 @@ The first broad MCP EditMode request did not start before the runner timeout, so
 
 ## 8. PP-6 — closure
 
-1. Run full EditMode and PlayMode project suites.
-2. Re-run Addressables/prefab/asmdef/GUID mechanical validation.
-3. Audit that Guild Hall UI has no SaveStore/config access and Dungeon Run has no profile persistence access.
-4. Audit legacy save API and raw string Addressable keys: zero new consumers.
-5. Update actual implementation/validation statuses in all profile and Guild Hall docs.
-6. Report compile, automated tests, Unity proof and unverified manual/build paths separately.
+**Scope:** PP-6 does not add player-facing functionality, prefab authoring, player build or external/manual playtest. It closes only evidence and documentation for the implemented profile/hall vertical path.
+
+1. Capture the exact revision and audit the worktree; preserve the user-owned TMP fallback asset and do not use its formatting findings as PP evidence.
+2. Run full available Unity EditMode suites. Run existing PlayMode automation only if the editor runner starts normally; a runner timeout, `0/0` result or unavailable suite is reported as unverified rather than repaired by changing tests or code.
+3. Compile the full Bootstrap solution and run repository-wide mechanical validation (`validate-unity-change.ps1 -AllAssets`) plus a scoped diff check excluding the pre-existing TMP fallback asset.
+4. Audit directed dependencies from actual asmdefs and production source: Guild Hall UI/Runtime has no SaveStore or PlayerProfile session/catalog/config access; Dungeon Run/Rewards has no profile persistence access; only Bootstrap bridges profile ↔ Hall/Board/Run.
+5. Audit prohibited regressions with concrete search evidence: no new `UnityBinaryLocalSaveSystem` consumer, no raw runtime Addressables keys, no `DiContainerProvider.Resolve<T>()` outside documented infrastructure exception, no fixed-count assumptions for roster/items/ranks/contracts/NPC lines.
+6. Reconcile Profile, Guild Hall and application-flow documentation against current production names, save version, validation evidence and known manual gaps. Do not upgrade a historical/unrun check to passed.
+7. Fix only confirmed PP-6 defects that violate the already agreed contracts; add a behavior-focused regression test with each fix. Otherwise leave production code untouched.
+
+### Done when
+
+- the report separates successful compilation, automated test evidence, static/mechanical evidence and unverified manual paths;
+- every PP-3/PP-4/PP-5 contract has either current evidence or a plainly recorded verification gap;
+- no unapproved new feature, content expansion, save field, assembly, root or abstraction is introduced;
+- all documentation status claims link to actual results from PP-6 or retain their earlier bounded status.
 
 ## 9. Implemented PP-1 baseline
 
