@@ -138,7 +138,9 @@ namespace DungeonTeam.Gameplay.GuildHall.Application
             GuildTextSnapshot progress,
             GuildTextSnapshot statusText,
             bool canAccept,
-            EntryStatus status)
+            EntryStatus status,
+            GuildTextSnapshot claimHint = null,
+            bool isRewardClaimed = false)
         {
             QuestId = GuildId.Require(questId, nameof(questId));
             Title = title ?? throw new ArgumentNullException(nameof(title));
@@ -152,6 +154,8 @@ namespace DungeonTeam.Gameplay.GuildHall.Application
                 throw new ArgumentException("An accepted or completed quest cannot be acceptable.", nameof(canAccept));
             CanAccept = canAccept;
             Status = status;
+            ClaimHint = claimHint;
+            IsRewardClaimed = isRewardClaimed;
         }
 
         public string QuestId { get; }
@@ -162,8 +166,110 @@ namespace DungeonTeam.Gameplay.GuildHall.Application
         public GuildTextSnapshot StatusText { get; }
         public bool CanAccept { get; }
         public EntryStatus Status { get; }
+        public GuildTextSnapshot ClaimHint { get; }
+        public bool IsRewardClaimed { get; }
         public bool IsAccepted => Status == EntryStatus.Accepted;
         public bool IsCompleted => Status == EntryStatus.Completed;
+    }
+
+    public enum QuestRewardClaimPointKind
+    {
+        Reception = 0,
+        Npc = 1
+    }
+
+    public sealed class QuestRewardClaimPointSnapshot
+    {
+        public QuestRewardClaimPointSnapshot(QuestRewardClaimPointKind kind, string npcId = null)
+        {
+            if (!Enum.IsDefined(typeof(QuestRewardClaimPointKind), kind))
+                throw new ArgumentOutOfRangeException(nameof(kind));
+            if (kind == QuestRewardClaimPointKind.Npc && string.IsNullOrWhiteSpace(npcId))
+                throw new ArgumentException("NPC claim point requires an NPC ID.", nameof(npcId));
+            if (kind == QuestRewardClaimPointKind.Reception && npcId != null)
+                throw new ArgumentException("Reception claim point cannot target an NPC.", nameof(npcId));
+            Kind = kind;
+            NpcId = npcId;
+        }
+
+        public QuestRewardClaimPointKind Kind { get; }
+        public string NpcId { get; }
+        public bool Matches(QuestRewardClaimPointSnapshot other) =>
+            other != null && Kind == other.Kind &&
+            string.Equals(NpcId, other.NpcId, StringComparison.Ordinal);
+    }
+
+    public sealed class QuestRewardCollectionEntrySnapshot
+    {
+        public QuestRewardCollectionEntrySnapshot(
+            string questId,
+            GuildTextSnapshot title,
+            IReadOnlyList<GuildTextSnapshot> rewardLines,
+            GuildTextSnapshot sourceHint,
+            GuildTextSnapshot receiveText,
+            QuestRewardClaimPointSnapshot claimPoint)
+        {
+            QuestId = GuildId.Require(questId, nameof(questId));
+            Title = title ?? throw new ArgumentNullException(nameof(title));
+            RewardLines = Snapshot.Copy(rewardLines, nameof(rewardLines));
+            SourceHint = sourceHint ?? throw new ArgumentNullException(nameof(sourceHint));
+            ReceiveText = receiveText ?? throw new ArgumentNullException(nameof(receiveText));
+            ClaimPoint = claimPoint ?? throw new ArgumentNullException(nameof(claimPoint));
+        }
+
+        public string QuestId { get; }
+        public GuildTextSnapshot Title { get; }
+        public IReadOnlyList<GuildTextSnapshot> RewardLines { get; }
+        public GuildTextSnapshot SourceHint { get; }
+        public GuildTextSnapshot ReceiveText { get; }
+        public QuestRewardClaimPointSnapshot ClaimPoint { get; }
+    }
+
+    public sealed class QuestRewardCollectionSnapshot
+    {
+        public QuestRewardCollectionSnapshot(
+            QuestRewardClaimPointSnapshot point,
+            IReadOnlyList<QuestRewardCollectionEntrySnapshot> entries,
+            GuildTextSnapshot header,
+            GuildTextSnapshot close)
+        {
+            Point = point ?? throw new ArgumentNullException(nameof(point));
+            if (entries == null) throw new ArgumentNullException(nameof(entries));
+            var copy = new QuestRewardCollectionEntrySnapshot[entries.Count];
+            var questIds = new HashSet<string>(StringComparer.Ordinal);
+            for (var index = 0; index < copy.Length; index++)
+            {
+                var entry = entries[index] ?? throw new ArgumentException(
+                    $"Quest reward collection entry at index {index} is missing.", nameof(entries));
+                if (!questIds.Add(entry.QuestId))
+                    throw new ArgumentException(
+                        $"Quest reward collection repeats quest '{entry.QuestId}'.", nameof(entries));
+                if (!Point.Matches(entry.ClaimPoint))
+                    throw new ArgumentException(
+                        $"Quest reward collection entry '{entry.QuestId}' targets a different claim point.", nameof(entries));
+                copy[index] = entry;
+            }
+            Entries = Array.AsReadOnly(copy);
+            Header = header ?? throw new ArgumentNullException(nameof(header));
+            Close = close ?? throw new ArgumentNullException(nameof(close));
+        }
+
+        public QuestRewardClaimPointSnapshot Point { get; }
+        public IReadOnlyList<QuestRewardCollectionEntrySnapshot> Entries { get; }
+        public GuildTextSnapshot Header { get; }
+        public GuildTextSnapshot Close { get; }
+    }
+
+    public sealed class QuestRewardClaimRequest
+    {
+        public QuestRewardClaimRequest(string questId, QuestRewardClaimPointSnapshot point)
+        {
+            QuestId = GuildId.Require(questId, nameof(questId));
+            Point = point ?? throw new ArgumentNullException(nameof(point));
+        }
+
+        public string QuestId { get; }
+        public QuestRewardClaimPointSnapshot Point { get; }
     }
 
     public sealed class NoticeBoardTextSnapshot

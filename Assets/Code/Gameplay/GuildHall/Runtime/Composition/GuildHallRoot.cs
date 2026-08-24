@@ -16,6 +16,8 @@ using DungeonTeam.Gameplay.GuildHall.Runtime.Presentation.UI.NoticeBoard;
 using DungeonTeam.Gameplay.GuildHall.Runtime.Presentation.UI.RunSummary;
 using DungeonTeam.Gameplay.GuildHall.Runtime.Presentation.UI.GuildProfile;
 using DungeonTeam.Gameplay.GuildHall.Runtime.Presentation.UI.GuildProfile.Base;
+using DungeonTeam.Gameplay.GuildHall.Runtime.Presentation.UI.QuestRewardCollection;
+using DungeonTeam.Gameplay.GuildHall.Runtime.Presentation.UI.QuestRewardCollection.Base;
 using RootPattern;
 using TickHandler;
 
@@ -60,6 +62,11 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Composition
         private GuildProfileViewBase _guildProfileView;
         private GuildProfileModel _guildProfileModel;
         private GuildProfileViewModel _guildProfileViewModel;
+        private QuestRewardCollectionViewBase _questRewardCollectionView;
+        private QuestRewardCollectionModel _questRewardCollectionModel;
+        private QuestRewardCollectionViewModel _questRewardCollectionViewModel;
+        private Func<QuestRewardClaimRequest, bool> _rewardClaimRequested;
+        private Func<QuestRewardClaimPointSnapshot, QuestRewardCollectionSnapshot> _rewardCollectionRequested;
 
         public GuildHallRoot(
             GuildHallWorldLoader worldLoader,
@@ -197,6 +204,14 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Composition
         internal bool IsWorldInputBlocked => _pendingModel?.IsWorldInputBlocked ??
             _presenter?.IsWorldInputBlocked ?? false;
 
+        public void ConfigureQuestRewardCallbacks(
+            Func<QuestRewardClaimRequest, bool> claimRequested,
+            Func<QuestRewardClaimPointSnapshot, QuestRewardCollectionSnapshot> collectionRequested)
+        {
+            _rewardClaimRequested = claimRequested ?? throw new ArgumentNullException(nameof(claimRequested));
+            _rewardCollectionRequested = collectionRequested ?? throw new ArgumentNullException(nameof(collectionRequested));
+        }
+
         public void SetWorldInputBlocked(bool isBlocked)
         {
             _presenter?.SetWorldInputBlocked(isBlocked);
@@ -246,7 +261,8 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Composition
                         _guildProfileModel,
                         CloseGuildProfile,
                         _profileEditRequested ?? throw new InvalidOperationException(
-                            "Guild Profile editing callback is required when a profile is present."));
+                            "Guild Profile editing callback is required when a profile is present."),
+                        OpenReceptionRewards);
                     _guildProfileViewModel.Initialize();
                     _guildProfileView.Initialize(
                         _guildProfileViewModel,
@@ -331,6 +347,13 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Composition
             _guildProfileViewModel = null;
             _guildProfileModel = null;
 
+            CloseQuestRewardCollection();
+            _questRewardCollectionView?.Dispose();
+            _questRewardCollectionView = null;
+            _questRewardCollectionViewModel?.Dispose();
+            _questRewardCollectionViewModel = null;
+            _questRewardCollectionModel = null;
+
             CloseDialogue(false);
             _dialogueView?.Dispose();
             _dialogueView = null;
@@ -410,7 +433,8 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Composition
         {
             if (_noticeBoardModel?.IsVisible.Value == true ||
                 _runSummaryModel?.IsVisible.Value == true ||
-                _guildProfileModel?.IsVisible.Value == true)
+                _guildProfileModel?.IsVisible.Value == true ||
+                _questRewardCollectionModel?.IsVisible.Value == true)
             {
                 return;
             }
@@ -439,7 +463,16 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Composition
             {
                 _ambientNpcSet?.ResumeRoutine(activeNpcId);
                 SetWorldInputBlocked(false);
-                if (notifyCompletion) _dialogueCompleted(activeNpcId);
+                if (notifyCompletion)
+                {
+                    _dialogueCompleted(activeNpcId);
+                    var point = new QuestRewardClaimPointSnapshot(
+                        QuestRewardClaimPointKind.Npc,
+                        activeNpcId);
+                    var collection = _rewardCollectionRequested?.Invoke(point);
+                    if (collection != null && collection.Entries.Count > 0)
+                        InitializeQuestRewardCollection(collection);
+                }
             }
         }
 
@@ -448,7 +481,8 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Composition
             if (_noticeBoardModel == null || _noticeBoardModel.IsVisible.Value ||
                 _activeDialogueNpcId != null ||
                 _runSummaryModel?.IsVisible.Value == true ||
-                _guildProfileModel?.IsVisible.Value == true)
+                _guildProfileModel?.IsVisible.Value == true ||
+                _questRewardCollectionModel?.IsVisible.Value == true)
             {
                 return;
             }
@@ -492,7 +526,8 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Composition
             if (_runSummaryModel == null || _runSummaryModel.IsVisible.Value ||
                 _noticeBoardModel?.IsVisible.Value == true ||
                 _activeDialogueNpcId != null ||
-                _guildProfileModel?.IsVisible.Value == true)
+                _guildProfileModel?.IsVisible.Value == true ||
+                _questRewardCollectionModel?.IsVisible.Value == true)
             {
                 return;
             }
@@ -520,7 +555,8 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Composition
                 _guildProfileModel.IsVisible.Value ||
                 _noticeBoardModel?.IsVisible.Value == true ||
                 _activeDialogueNpcId != null ||
-                _runSummaryModel?.IsVisible.Value == true)
+                _runSummaryModel?.IsVisible.Value == true ||
+                _questRewardCollectionModel?.IsVisible.Value == true)
             {
                 return;
             }
@@ -528,6 +564,50 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Composition
             _interactionController?.SetBlocked(true);
             SetWorldInputBlocked(true);
             _guildProfileViewModel.Open();
+        }
+
+        private void OpenReceptionRewards()
+        {
+            var collection = _rewardCollectionRequested?.Invoke(
+                new QuestRewardClaimPointSnapshot(QuestRewardClaimPointKind.Reception));
+            if (collection == null || collection.Entries.Count == 0)
+                return;
+            CloseGuildProfile();
+            InitializeQuestRewardCollection(collection);
+        }
+
+        private void InitializeQuestRewardCollection(QuestRewardCollectionSnapshot snapshot)
+        {
+            if (_questRewardCollectionViewModel != null)
+            {
+                CloseQuestRewardCollection();
+                _questRewardCollectionView?.Dispose();
+                _questRewardCollectionViewModel.Dispose();
+                _questRewardCollectionView = null;
+                _questRewardCollectionViewModel = null;
+                _questRewardCollectionModel = null;
+            }
+            _questRewardCollectionView = _worldLease.View.QuestRewardCollectionView ??
+                throw new InvalidOperationException("Guild Hall prefab has no Quest Reward Collection view binding.");
+            _questRewardCollectionView.ValidateBindings();
+            _questRewardCollectionModel = new QuestRewardCollectionModel(snapshot);
+            _questRewardCollectionViewModel = new QuestRewardCollectionViewModel(
+                _questRewardCollectionModel,
+                _rewardClaimRequested ?? throw new InvalidOperationException("Quest reward claim callback is required."),
+                CloseQuestRewardCollection);
+            _questRewardCollectionViewModel.Initialize();
+            _questRewardCollectionView.Initialize(_questRewardCollectionViewModel, disposeWithViewModel: false);
+            _interactionController?.SetBlocked(true);
+            SetWorldInputBlocked(true);
+            _questRewardCollectionViewModel.Open();
+        }
+
+        private void CloseQuestRewardCollection()
+        {
+            if (_questRewardCollectionModel?.IsVisible.Value == true)
+                _questRewardCollectionModel.Hide();
+            SetWorldInputBlocked(false);
+            _interactionController?.SetBlocked(false);
         }
 
         private void CloseGuildProfile()

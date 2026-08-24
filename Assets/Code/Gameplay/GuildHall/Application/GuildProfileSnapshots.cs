@@ -167,7 +167,8 @@ namespace DungeonTeam.Gameplay.GuildHall.Application
             GuildTextSnapshot promoteRank = null,
             GuildTextSnapshot rejectedInsufficientGold = null,
             GuildTextSnapshot terminalRank = null,
-            GuildTextSnapshot requiredRankOfferFormat = null)
+            GuildTextSnapshot requiredRankOfferFormat = null,
+            GuildTextSnapshot rewardsAction = null)
         {
             Header = header ?? throw new ArgumentNullException(nameof(header));
             GoldLabel = goldLabel ?? throw new ArgumentNullException(nameof(goldLabel));
@@ -202,6 +203,7 @@ namespace DungeonTeam.Gameplay.GuildHall.Application
             RejectedInsufficientGold = rejectedInsufficientGold;
             TerminalRank = terminalRank;
             RequiredRankOfferFormat = requiredRankOfferFormat;
+            RewardsAction = rewardsAction;
         }
 
         public GuildTextSnapshot Header { get; }
@@ -233,6 +235,7 @@ namespace DungeonTeam.Gameplay.GuildHall.Application
         public GuildTextSnapshot RejectedInsufficientGold { get; }
         public GuildTextSnapshot TerminalRank { get; }
         public GuildTextSnapshot RequiredRankOfferFormat { get; }
+        public GuildTextSnapshot RewardsAction { get; }
     }
 
     public sealed class GuildHeroLoadoutSnapshot
@@ -448,7 +451,9 @@ namespace DungeonTeam.Gameplay.GuildHall.Application
             IReadOnlyList<GuildHeroSnapshot> roster,
             GuildProfileTextSnapshot text,
             IReadOnlyList<GuildResourceSnapshot> resources = null,
-            GuildRankSnapshot rank = null)
+            GuildRankSnapshot rank = null,
+            int receptionRewardCount = 0,
+            GuildTextSnapshot rewardsAction = null)
         {
             Gold = gold >= 0 ? gold : throw new ArgumentOutOfRangeException(nameof(gold));
             RankDisplayText = !string.IsNullOrWhiteSpace(rankDisplayText)
@@ -460,6 +465,10 @@ namespace DungeonTeam.Gameplay.GuildHall.Application
             Text = text ?? throw new ArgumentNullException(nameof(text));
             _resources = Copy(resources);
             Rank = rank;
+            ReceptionRewardCount = receptionRewardCount >= 0
+                ? receptionRewardCount
+                : throw new ArgumentOutOfRangeException(nameof(receptionRewardCount));
+            RewardsAction = rewardsAction;
         }
 
         public long Gold { get; }
@@ -470,6 +479,8 @@ namespace DungeonTeam.Gameplay.GuildHall.Application
         public GuildProfileTextSnapshot Text { get; }
         public IReadOnlyList<GuildResourceSnapshot> Resources => _resources;
         public GuildRankSnapshot Rank { get; }
+        public int ReceptionRewardCount { get; }
+        public GuildTextSnapshot RewardsAction { get; }
 
         private static ReadOnlyCollection<GuildHeroSnapshot> Copy(
             IReadOnlyList<GuildHeroSnapshot> source,

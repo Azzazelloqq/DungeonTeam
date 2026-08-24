@@ -1,6 +1,6 @@
 # DungeonTeam — Quest Q-1 Reward Claim Technical Design
 
-**Status:** approved for implementation
+**Status:** implemented and automation-validated; manual player-flow smoke/build not run
 
 **Scope:** a completed configured quest may be actively claimed at the reception or a configured Guild Hall NPC. Q-1 supports Gold and stacked resource grants only.
 
@@ -71,3 +71,16 @@ Run focused Quests, PlayerProfile, Bootstrap and GuildHall EditMode tests, compi
 4. Author config/prefab bindings and run validation.
 
 No rewards for contracts/chests/mail/shops/achievements; no automatic claims, other point kinds, unique equipment grants, choices/history/refunds, repeatables, generic event bus or localization system.
+
+## 7. Implementation evidence
+
+Implemented the optional Quest reward config, Quest V1→V2 claimed-marker persistence, Player Profile V4→V5 idempotent claim banking and Bootstrap's Profile-first coordinator. The production config contains rewardless `quest.clear-crypt`, Reception reward `quest.crystal-supply`, and `npc.debater` reward `quest.speak-debater`. Guild Hall now has an Editor-authored inactive reward collection panel, row template and binding.
+
+Validation in Unity `6000.7.0a3`:
+
+- focused Quests, PlayerProfile, GuildHall and Bootstrap EditMode tests: `94/94 passed`;
+- `dotnet build Bootstrap.csproj --no-restore -v:minimal`: `0` warnings, `0` errors;
+- production `QuestConfigPage.CreateCatalog()` returned exactly rewardless/reception/NPC variants; prefab reward view binding validated in Editor and starts inactive;
+- Editor console after refresh: `0` errors.
+
+The general mechanical validator reports serialization whitespace in the Unity-authored Quest config/Guild Hall prefab and the pre-existing TMP fallback asset. No prefab YAML was hand-edited. Manual reception/NPC/restart smoke, player build and external playtest remain unrun.

@@ -15,6 +15,8 @@
     "DungeonTeam.Skills.Domain",
     "DungeonTeam.PlayerProfile.Application",
     "DungeonTeam.PlayerProfile.Domain",
+    "DungeonTeam.Quests.Application",
+    "DungeonTeam.Quests.Domain",
     "DungeonTeam.Inventory.Application",
     "DungeonTeam.Inventory.Domain",
     "UnityEngine.TestRunner",

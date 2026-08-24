@@ -101,6 +101,28 @@ namespace DungeonTeam.Gameplay.PlayerProfile.Tests.EditMode
             Assert.That(dto.Gold, Is.EqualTo(12));
             Assert.That(dto.Heroes[0].ActorId, Is.EqualTo("leader"));
         }
+
+        [Test]
+        public void V4ToV5Migrator_AddsEmptyAppliedClaimIds()
+        {
+            var dto = new PlayerProfileSaveV1
+            {
+                Gold = 12,
+                Heroes = new[] { new PlayerProfileHeroSaveV1 { ActorId = "leader", Level = 1, LoadoutId = "loadout" } },
+                LeaderActorId = "leader",
+                CompanionActorIds = Array.Empty<string>(),
+                UniqueItems = Array.Empty<PlayerProfileItemInstanceSaveV2>(),
+                Resources = Array.Empty<PlayerProfileResourceStackSaveV2>(),
+                EquipmentByHero = new[] { new PlayerProfileHeroEquipmentSaveV2 { ActorId = "leader" } }
+            };
+
+            var migrator = new PlayerProfileV4ToV5Migrator();
+            migrator.Migrate(dto);
+
+            Assert.That(migrator.WasApplied, Is.True);
+            Assert.That(dto.AppliedClaimIds, Is.Empty);
+            Assert.That(dto.Gold, Is.EqualTo(12));
+        }
         SaveStore CreateStore() => new(new SaveStoreOptions(_path) { UseTaggedFormat = true, UseAtomicWrite = true });
     }
 }

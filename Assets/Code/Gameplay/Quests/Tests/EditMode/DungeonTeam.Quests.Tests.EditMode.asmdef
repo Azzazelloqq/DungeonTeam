@@ -1,7 +1,7 @@
 {
   "name": "DungeonTeam.Quests.Tests.EditMode",
   "rootNamespace": "DungeonTeam.Gameplay.Quests.Tests.EditMode",
-  "references": ["DungeonTeam.Quests.Domain", "DungeonTeam.Quests.Application"],
+  "references": ["DungeonTeam.Quests.Domain", "DungeonTeam.Quests.Application", "DungeonTeam.Quests.Infrastructure", "LocalSaveSystem"],
   "includePlatforms": ["Editor"],
   "optionalUnityReferences": ["TestAssemblies"],
   "autoReferenced": false

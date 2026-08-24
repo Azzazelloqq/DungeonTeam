@@ -17,6 +17,7 @@ namespace DungeonTeam.Gameplay.Quests.Application
         public bool Accept(string questId, QuestCatalog catalog) => Mutate(candidate => candidate.TryAccept(questId, catalog));
         public bool RecordDungeonCompleted(string dungeonId, QuestCatalog catalog) => Mutate(candidate => candidate.ApplyDungeonCompleted(dungeonId, catalog));
         public bool RecordDialogueCompleted(string npcId, QuestCatalog catalog) => Mutate(candidate => candidate.ApplyDialogueCompleted(npcId, catalog));
+        public bool MarkRewardClaimed(string questId, QuestCatalog catalog) => Mutate(candidate => candidate.TryMarkRewardClaimed(questId, catalog));
         public bool RecordSettledResources(IReadOnlyList<QuestResourceGrant> grants, QuestCatalog catalog)
         {
             if (grants == null) throw new ArgumentNullException(nameof(grants));

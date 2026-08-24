@@ -146,6 +146,13 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Presentation.UI.GuildProfile
         {
             var text = viewModel.Profile.Text;
             var rank = viewModel.Profile.Rank;
+            if (viewModel.Profile.ReceptionRewardCount > 0 && viewModel.Profile.RewardsAction != null)
+            {
+                CreateEditRow(
+                    $"{viewModel.Profile.RewardsAction.DisplayText}: {viewModel.Profile.ReceptionRewardCount}",
+                    () => viewModel.OpenRewardsCommand.Execute(null),
+                    true);
+            }
             if (rank != null && rank.NextRankDisplayName != null && rank.PromotionCost.HasValue)
             {
                 var promoteLabel = text.PromoteRank ?? text.RankLabel;

@@ -6,6 +6,77 @@ namespace DungeonTeam.Gameplay.Quests.Domain
 {
     public enum QuestObjectiveKind { CompleteDungeon, CollectResource, CompleteDialogue }
 
+    public enum QuestRewardClaimPointKind { Reception, Npc }
+
+    public sealed class QuestRewardClaimPoint
+    {
+        private QuestRewardClaimPoint(QuestRewardClaimPointKind kind, string npcId)
+        {
+            if (!Enum.IsDefined(typeof(QuestRewardClaimPointKind), kind))
+                throw new ArgumentOutOfRangeException(nameof(kind));
+            if (kind == QuestRewardClaimPointKind.Npc && string.IsNullOrWhiteSpace(npcId))
+                throw new ArgumentException("NPC reward claim point requires an NPC ID.", nameof(npcId));
+            if (kind == QuestRewardClaimPointKind.Reception && npcId != null)
+                throw new ArgumentException("Reception reward claim point cannot target an NPC.", nameof(npcId));
+            Kind = kind;
+            NpcId = npcId;
+        }
+
+        public QuestRewardClaimPointKind Kind { get; }
+        public string NpcId { get; }
+        public static QuestRewardClaimPoint Reception => new(QuestRewardClaimPointKind.Reception, null);
+        public static QuestRewardClaimPoint Npc(string npcId) => new(QuestRewardClaimPointKind.Npc, QuestText.Require(npcId, nameof(npcId)));
+        public bool Matches(QuestRewardClaimPoint other) =>
+            other != null && Kind == other.Kind && string.Equals(NpcId, other.NpcId, StringComparison.Ordinal);
+    }
+
+    public sealed class QuestRewardResource
+    {
+        public QuestRewardResource(string definitionId, int amount)
+        {
+            DefinitionId = QuestText.Require(definitionId, nameof(definitionId));
+            Amount = amount > 0 ? amount : throw new ArgumentOutOfRangeException(nameof(amount));
+        }
+
+        public string DefinitionId { get; }
+        public int Amount { get; }
+    }
+
+    public sealed class QuestRewardDefinition
+    {
+        private readonly ReadOnlyCollection<QuestRewardResource> _resources;
+
+        public QuestRewardDefinition(
+            long goldAmount,
+            IReadOnlyList<QuestRewardResource> resources,
+            QuestRewardClaimPoint claimPoint,
+            QuestText claimHint)
+        {
+            if (goldAmount < 0) throw new ArgumentOutOfRangeException(nameof(goldAmount));
+            if (resources == null) throw new ArgumentNullException(nameof(resources));
+            ClaimPoint = claimPoint ?? throw new ArgumentNullException(nameof(claimPoint));
+            ClaimHint = claimHint ?? throw new ArgumentNullException(nameof(claimHint));
+
+            var copy = new QuestRewardResource[resources.Count];
+            var ids = new HashSet<string>(StringComparer.Ordinal);
+            for (var index = 0; index < copy.Length; index++)
+            {
+                copy[index] = resources[index] ?? throw new ArgumentException("Reward resource is missing.", nameof(resources));
+                if (!ids.Add(copy[index].DefinitionId))
+                    throw new ArgumentException($"Reward resource '{copy[index].DefinitionId}' is duplicated.", nameof(resources));
+            }
+            if (goldAmount == 0 && copy.Length == 0)
+                throw new ArgumentException("Reward must contain Gold or at least one resource.", nameof(resources));
+            GoldAmount = goldAmount;
+            _resources = Array.AsReadOnly(copy);
+        }
+
+        public long GoldAmount { get; }
+        public IReadOnlyList<QuestRewardResource> Resources => _resources;
+        public QuestRewardClaimPoint ClaimPoint { get; }
+        public QuestText ClaimHint { get; }
+    }
+
     public sealed class QuestText
     {
         public QuestText(string textId, string displayText)
@@ -42,11 +113,16 @@ namespace DungeonTeam.Gameplay.Quests.Domain
     public sealed class QuestDefinition
     {
         public QuestDefinition(string questId, QuestText title, QuestText summary, QuestText objectiveText, QuestObjective objective)
-            : this(questId, title, summary, objectiveText, objective, null)
+            : this(questId, title, summary, objectiveText, objective, null, null)
         {
         }
 
         public QuestDefinition(string questId, QuestText title, QuestText summary, QuestText objectiveText, QuestObjective objective, string chainId)
+            : this(questId, title, summary, objectiveText, objective, chainId, null)
+        {
+        }
+
+        public QuestDefinition(string questId, QuestText title, QuestText summary, QuestText objectiveText, QuestObjective objective, string chainId, QuestRewardDefinition reward)
         {
             QuestId = QuestText.Require(questId, nameof(questId));
             Title = title ?? throw new ArgumentNullException(nameof(title));
@@ -54,6 +130,7 @@ namespace DungeonTeam.Gameplay.Quests.Domain
             ObjectiveText = objectiveText ?? throw new ArgumentNullException(nameof(objectiveText));
             Objective = objective ?? throw new ArgumentNullException(nameof(objective));
             ChainId = string.IsNullOrWhiteSpace(chainId) ? null : QuestText.Require(chainId, nameof(chainId));
+            Reward = reward;
         }
 
         public string QuestId { get; }
@@ -62,6 +139,7 @@ namespace DungeonTeam.Gameplay.Quests.Domain
         public QuestText ObjectiveText { get; }
         public QuestObjective Objective { get; }
         public string ChainId { get; }
+        public QuestRewardDefinition Reward { get; }
     }
 
     public sealed class QuestChainDefinition

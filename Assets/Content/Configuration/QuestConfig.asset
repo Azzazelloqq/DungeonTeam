@@ -15,41 +15,64 @@ MonoBehaviour:
   _quests:
   - _questId: quest.clear-crypt
     _titleId: quest.clear-crypt.title
-    _title: "Первая экспедиция"
+    _title: "\u041F\u0435\u0440\u0432\u0430\u044F \u044D\u043A\u0441\u043F\u0435\u0434\u0438\u0446\u0438\u044F"
     _summaryId: quest.clear-crypt.summary
-    _summary: "Завершить первую экспедицию."
+    _summary: "\u0417\u0430\u0432\u0435\u0440\u0448\u0438\u0442\u044C \u043F\u0435\u0440\u0432\u0443\u044E \u044D\u043A\u0441\u043F\u0435\u0434\u0438\u0446\u0438\u044E."
     _objectiveId: quest.clear-crypt.objective
-    _objective: "Успешно завершить подземелье"
+    _objective: "\u0423\u0441\u043F\u0435\u0448\u043D\u043E \u0437\u0430\u0432\u0435\u0440\u0448\u0438\u0442\u044C \u043F\u043E\u0434\u0437\u0435\u043C\u0435\u043B\u044C\u0435"
     _kind: 0
     _targetId: dungeon.demo.authored
     _requiredProgress: 1
     _chainId: chain.first-expedition
+    _reward:
+      _goldAmount: 0
+      _resources: []
+      _claimPointKind: 0
+      _npcId: 
+      _claimHintId: 
+      _claimHint: 
   - _questId: quest.crystal-supply
     _titleId: quest.crystal-supply.title
-    _title: "Кристаллы для гильдии"
+    _title: "\u041A\u0440\u0438\u0441\u0442\u0430\u043B\u043B\u044B \u0434\u043B\u044F \u0433\u0438\u043B\u044C\u0434\u0438\u0438"
     _summaryId: quest.crystal-supply.summary
-    _summary: "Принести кристаллы монстров после экспедиции."
+    _summary: "\u041F\u0440\u0438\u043D\u0435\u0441\u0442\u0438 \u043A\u0440\u0438\u0441\u0442\u0430\u043B\u043B\u044B \u043C\u043E\u043D\u0441\u0442\u0440\u043E\u0432 \u043F\u043E\u0441\u043B\u0435 \u044D\u043A\u0441\u043F\u0435\u0434\u0438\u0446\u0438\u0438."
     _objectiveId: quest.crystal-supply.objective
-    _objective: "Получить кристаллы монстров"
+    _objective: "\u041F\u043E\u043B\u0443\u0447\u0438\u0442\u044C \u043A\u0440\u0438\u0441\u0442\u0430\u043B\u043B\u044B \u043C\u043E\u043D\u0441\u0442\u0440\u043E\u0432"
     _kind: 1
     _targetId: resource.monster-crystal
     _requiredProgress: 3
     _chainId: chain.first-expedition
+    _reward:
+      _goldAmount: 25
+      _resources:
+      - _definitionId: resource.monster-crystal
+        _amount: 1
+      _claimPointKind: 0
+      _npcId: 
+      _claimHintId: quest.reward.claim.reception
+      _claimHint: "\u041D\u0430\u0433\u0440\u0430\u0434\u0430 \u0434\u043E\u0441\u0442\u0443\u043F\u043D\u0430 \u043D\u0430 \u0440\u0435\u0441\u0435\u043F\u0448\u0435\u043D\u0435"
   - _questId: quest.speak-debater
     _titleId: quest.speak-debater.title
-    _title: "Разговор в зале"
+    _title: "\u0420\u0430\u0437\u0433\u043E\u0432\u043E\u0440 \u0432 \u0437\u0430\u043B\u0435"
     _summaryId: quest.speak-debater.summary
-    _summary: "Выслушать спорщика в зале гильдии."
+    _summary: "\u0412\u044B\u0441\u043B\u0443\u0448\u0430\u0442\u044C \u0441\u043F\u043E\u0440\u0449\u0438\u043A\u0430 \u0432 \u0437\u0430\u043B\u0435 \u0433\u0438\u043B\u044C\u0434\u0438\u0438."
     _objectiveId: quest.speak-debater.objective
-    _objective: "Завершить разговор со спорщиком"
+    _objective: "\u0417\u0430\u0432\u0435\u0440\u0448\u0438\u0442\u044C \u0440\u0430\u0437\u0433\u043E\u0432\u043E\u0440 \u0441\u043E \u0441\u043F\u043E\u0440\u0449\u0438\u043A\u043E\u043C"
     _kind: 2
     _targetId: npc.debater
     _requiredProgress: 1
-    _chainId:
+    _chainId: 
+    _reward:
+      _goldAmount: 10
+      _resources: []
+      _claimPointKind: 1
+      _npcId: npc.debater
+      _claimHintId: quest.reward.claim.debater
+      _claimHint: "\u0417\u0430\u0431\u0435\u0440\u0438\u0442\u0435 \u043D\u0430\u0433\u0440\u0430\u0434\u0443 \u0443 \u0441\u043F\u043E\u0440\u0449\u0438\u043A\u0430"
   _chains:
   - _chainId: chain.first-expedition
     _titleId: chain.first-expedition.title
-    _title: "Первые шаги"
+    _title: "\u041F\u0435\u0440\u0432\u044B\u0435 \u0448\u0430\u0433\u0438"
     _questIds:
     - quest.clear-crypt
     - quest.crystal-supply

@@ -28,7 +28,8 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Presentation.UI.NoticeBoard
             if (text == null) throw new ArgumentNullException(nameof(text));
             ValidateBindings();
             _titleText.SetText(viewModel.Title);
-            _summaryText.SetText($"{viewModel.Summary}\n{viewModel.Objective}");
+            var claimHint = string.IsNullOrWhiteSpace(viewModel.ClaimHint) ? string.Empty : $"\n{viewModel.ClaimHint}";
+            _summaryText.SetText($"{viewModel.Summary}\n{viewModel.Objective}{claimHint}");
             _progressText.SetText(viewModel.IsCompleted ? viewModel.StatusText : viewModel.Progress);
             _acceptButton.interactable = viewModel.CanAccept;
             _acceptLabel.SetText(viewModel.StatusText);

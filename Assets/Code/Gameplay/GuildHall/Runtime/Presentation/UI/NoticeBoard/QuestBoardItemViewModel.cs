@@ -24,6 +24,8 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Presentation.UI.NoticeBoard
         public string Objective => model.Quest.Objective.DisplayText;
         public string Progress => model.Quest.Progress.DisplayText;
         public string StatusText => model.Quest.StatusText.DisplayText;
+        public string ClaimHint => model.Quest.ClaimHint?.DisplayText;
+        public bool IsRewardClaimed => model.Quest.IsRewardClaimed;
         public bool IsCompleted => model.Quest.IsCompleted;
         public bool CanAccept => model.Quest.CanAccept && !model.IsAccepted.Value;
         public IReadOnlyReactiveProperty<bool> IsAccepted => model.IsAccepted;

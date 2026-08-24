@@ -1,6 +1,6 @@
 # DungeonTeam — Quest GDD
 
-**Status:** Q-0 implemented; Q-1 reward-claim design approved for implementation
+**Status:** Q-0 and Q-1 implemented; focused automated validation passed; manual player-flow smoke not run
 
 ## Q-0 purpose
 

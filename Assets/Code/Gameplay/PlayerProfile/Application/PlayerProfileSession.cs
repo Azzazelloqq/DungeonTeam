@@ -84,6 +84,55 @@ namespace DungeonTeam.Gameplay.PlayerProfile.Application
             : throw new ArgumentException("Run ID cannot be empty.", nameof(runId));
     }
 
+    public sealed class ProfileRewardClaimRequest
+    {
+        private readonly ReadOnlyCollection<ProfileResourceGrant> _resourceGrants;
+
+        public ProfileRewardClaimRequest(
+            string claimId,
+            long goldAmount,
+            IReadOnlyList<ProfileResourceGrant> resourceGrants)
+        {
+            ClaimId = !string.IsNullOrWhiteSpace(claimId)
+                ? claimId
+                : throw new ArgumentException("Claim ID cannot be empty.", nameof(claimId));
+            GoldAmount = goldAmount >= 0
+                ? goldAmount
+                : throw new ArgumentOutOfRangeException(nameof(goldAmount));
+            if (resourceGrants == null) throw new ArgumentNullException(nameof(resourceGrants));
+            var copy = new ProfileResourceGrant[resourceGrants.Count];
+            var ids = new HashSet<string>(StringComparer.Ordinal);
+            for (var index = 0; index < copy.Length; index++)
+            {
+                copy[index] = resourceGrants[index];
+                if (!ids.Add(copy[index].DefinitionId))
+                    throw new ArgumentException("Reward resource IDs must be unique.", nameof(resourceGrants));
+            }
+            if (GoldAmount == 0 && copy.Length == 0)
+                throw new ArgumentException("Reward claim must contain Gold or a resource.", nameof(resourceGrants));
+            _resourceGrants = Array.AsReadOnly(copy);
+        }
+
+        public string ClaimId { get; }
+        public long GoldAmount { get; }
+        public IReadOnlyList<ProfileResourceGrant> ResourceGrants => _resourceGrants;
+    }
+
+    public enum ProfileRewardClaimStatus
+    {
+        Applied = 0,
+        AlreadyApplied = 1
+    }
+
+    public sealed class ProfileRewardClaimResult
+    {
+        private ProfileRewardClaimResult(ProfileRewardClaimStatus status) => Status = status;
+        public ProfileRewardClaimStatus Status { get; }
+        public bool IsApplied => Status == ProfileRewardClaimStatus.Applied;
+        internal static ProfileRewardClaimResult Applied() => new(ProfileRewardClaimStatus.Applied);
+        internal static ProfileRewardClaimResult AlreadyApplied() => new(ProfileRewardClaimStatus.AlreadyApplied);
+    }
+
     public sealed class ProfileSettlementReceipt
     {
         private readonly ReadOnlyCollection<ProfileResourceGrant> _resourceGrants;
@@ -266,6 +315,23 @@ namespace DungeonTeam.Gameplay.PlayerProfile.Application
             var candidate = State.ApplyPendingTerminalResult(pending);
             Commit(candidate);
             return ProfileSettlementResult.Applied(new ProfileSettlementReceipt(pending));
+        }
+
+        public ProfileRewardClaimResult ClaimReward(ProfileRewardClaimRequest request)
+        {
+            if (request == null) throw new ArgumentNullException(nameof(request));
+            if (State.HasAppliedClaim(request.ClaimId))
+                return ProfileRewardClaimResult.AlreadyApplied();
+
+            var grants = new ResourceStackState[request.ResourceGrants.Count];
+            for (var index = 0; index < grants.Length; index++)
+            {
+                var grant = request.ResourceGrants[index];
+                grants[index] = new ResourceStackState(grant.DefinitionId, grant.Amount);
+            }
+
+            Commit(State.ApplyRewardClaim(request.ClaimId, request.GoldAmount, grants));
+            return ProfileRewardClaimResult.Applied();
         }
 
         public void RecoverPendingTerminalResult()

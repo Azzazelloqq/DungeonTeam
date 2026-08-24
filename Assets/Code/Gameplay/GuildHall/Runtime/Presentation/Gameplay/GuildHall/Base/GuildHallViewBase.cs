@@ -6,6 +6,7 @@ using DungeonTeam.Gameplay.AmbientNpc.Runtime.Presentation.UI.Dialogue.Base;
 using DungeonTeam.Gameplay.GuildHall.Runtime.Presentation.UI.NoticeBoard;
 using DungeonTeam.Gameplay.GuildHall.Runtime.Presentation.UI.RunSummary;
 using DungeonTeam.Gameplay.GuildHall.Runtime.Presentation.UI.GuildProfile.Base;
+using DungeonTeam.Gameplay.GuildHall.Runtime.Presentation.UI.QuestRewardCollection.Base;
 using MVP;
 using UnityEngine;
 
@@ -23,6 +24,7 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Presentation.Gameplay.GuildHall
         public virtual NoticeBoardViewBase NoticeBoardView => null;
         public virtual RunSummaryViewBase RunSummaryView => null;
         public virtual GuildProfileViewBase GuildProfileView => null;
+        public virtual QuestRewardCollectionViewBase QuestRewardCollectionView => null;
 
         public abstract void ValidateBindings();
         public abstract void ResetPlayer();

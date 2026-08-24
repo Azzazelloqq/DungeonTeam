@@ -12,6 +12,7 @@ using DungeonTeam.Gameplay.GuildHall.Runtime.Presentation.Gameplay.GuildHall.Bas
 using DungeonTeam.Gameplay.GuildHall.Runtime.Presentation.UI.NoticeBoard;
 using DungeonTeam.Gameplay.GuildHall.Runtime.Presentation.UI.RunSummary;
 using DungeonTeam.Gameplay.GuildHall.Runtime.Presentation.UI.GuildProfile.Base;
+using DungeonTeam.Gameplay.GuildHall.Runtime.Presentation.UI.QuestRewardCollection.Base;
 using UnityEngine;
 
 namespace DungeonTeam.Gameplay.GuildHall.Runtime.Presentation.Gameplay.GuildHall
@@ -43,6 +44,7 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Presentation.Gameplay.GuildHall
         [SerializeField] private NoticeBoardViewBase _noticeBoardView;
         [SerializeField] private RunSummaryViewBase _runSummaryView;
         [SerializeField] private GuildProfileViewBase _guildProfileView;
+        [SerializeField] private QuestRewardCollectionViewBase _questRewardCollectionView;
 
         public override Transform PlayerTransform => _player;
         public override Transform CameraTransform => _camera != null ? _camera.transform : null;
@@ -54,6 +56,7 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Presentation.Gameplay.GuildHall
         public override NoticeBoardViewBase NoticeBoardView => _noticeBoardView;
         public override RunSummaryViewBase RunSummaryView => _runSummaryView;
         public override GuildProfileViewBase GuildProfileView => _guildProfileView;
+        public override QuestRewardCollectionViewBase QuestRewardCollectionView => _questRewardCollectionView;
 
         public override void ValidateBindings()
         {
@@ -98,6 +101,11 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Presentation.Gameplay.GuildHall
             }
 
             _guildProfileView.ValidateBindings();
+
+            if (_questRewardCollectionView != null)
+            {
+                _questRewardCollectionView.ValidateBindings();
+            }
 
             var kinds = new HashSet<GuildInteractionKind>();
             for (var index = 0; index < _interactionPoints.Length; index++)

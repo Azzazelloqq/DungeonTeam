@@ -226,6 +226,69 @@ namespace DungeonTeam.Gameplay.PlayerProfile.Tests.EditMode
         }
 
         [Test]
+        public void Session_ClaimReward_IsAtMostOnceAndPersistsAppliedClaimId()
+        {
+            var repository = new RecordingRepository();
+            var session = new PlayerProfileSession(
+                repository,
+                new PlayerProfileSeed(
+                    new[] { new HeroProfileState("leader", 1, "loadout") },
+                    "leader",
+                    Array.Empty<string>()));
+            var request = new ProfileRewardClaimRequest(
+                "quest.reward:one",
+                7,
+                new[] { new ProfileResourceGrant("resource.crystal", 3) });
+
+            var first = session.ClaimReward(request);
+            var saveCount = repository.SaveCount;
+            var second = session.ClaimReward(new ProfileRewardClaimRequest(
+                request.ClaimId,
+                999,
+                new[] { new ProfileResourceGrant("resource.crystal", 99) }));
+
+            Assert.That(first.Status, Is.EqualTo(ProfileRewardClaimStatus.Applied));
+            Assert.That(second.Status, Is.EqualTo(ProfileRewardClaimStatus.AlreadyApplied));
+            Assert.That(session.State.Gold, Is.EqualTo(7));
+            Assert.That(session.State.Inventory.Resources[0].Quantity, Is.EqualTo(3));
+            Assert.That(session.State.AppliedClaimIds, Is.EqualTo(new[] { "quest.reward:one" }));
+            Assert.That(repository.SaveCount, Is.EqualTo(saveCount));
+        }
+
+        [Test]
+        public void Session_ClaimReward_SaveFailureLeavesBalanceAndClaimUnchanged()
+        {
+            var repository = new RecordingRepository();
+            var session = new PlayerProfileSession(
+                repository,
+                new PlayerProfileSeed(
+                    new[] { new HeroProfileState("leader", 1, "loadout") },
+                    "leader",
+                    Array.Empty<string>()));
+            repository.ThrowOnSave = true;
+
+            Assert.Throws<InvalidOperationException>(() => session.ClaimReward(new ProfileRewardClaimRequest(
+                "quest.reward:failed", 5, Array.Empty<ProfileResourceGrant>())));
+            Assert.That(session.State.Gold, Is.EqualTo(0));
+            Assert.That(session.State.AppliedClaimIds, Is.Empty);
+        }
+
+        [Test]
+        public void State_TerminalTransition_PreservesAppliedClaimIds()
+        {
+            var state = CreateThreeHeroState().ApplyRewardClaim(
+                "quest.reward:one",
+                3,
+                Array.Empty<ResourceStackState>());
+
+            var transitioned = state.WithTerminalState(
+                new PendingTerminalResultState("run.one", 1, Array.Empty<ResourceStackState>()),
+                null);
+
+            Assert.That(transitioned.AppliedClaimIds, Is.EqualTo(new[] { "quest.reward:one" }));
+        }
+
+        [Test]
         public void State_SellUnequippedUniqueItem_RemovesItemAndAddsCatalogPriceAtomically()
         {
             var state = new PlayerProfileState(

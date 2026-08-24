@@ -39,7 +39,51 @@ namespace DungeonTeam.Gameplay.Quests.Runtime
         [SerializeField] private string _targetId;
         [SerializeField] private int _requiredProgress = 1;
         [SerializeField] private string _chainId;
-        internal QuestDefinition ToDefinition() => new(_questId, new QuestText(_titleId, _title), new QuestText(_summaryId, _summary), new QuestText(_objectiveId, _objective), new QuestObjective(_kind, _targetId, _requiredProgress), _chainId);
+        [SerializeField] private QuestRewardDefinitionConfig _reward;
+        internal QuestDefinition ToDefinition() => new(_questId, new QuestText(_titleId, _title), new QuestText(_summaryId, _summary), new QuestText(_objectiveId, _objective), new QuestObjective(_kind, _targetId, _requiredProgress), _chainId, _reward?.ToDefinition());
+    }
+
+    [Serializable]
+    public sealed class QuestRewardDefinitionConfig
+    {
+        [SerializeField, Min(0)] private long _goldAmount;
+        [SerializeField] private QuestRewardResourceConfig[] _resources = Array.Empty<QuestRewardResourceConfig>();
+        [SerializeField] private QuestRewardClaimPointKind _claimPointKind;
+        [SerializeField] private string _npcId;
+        [SerializeField] private string _claimHintId;
+        [SerializeField] private string _claimHint;
+
+        internal QuestRewardDefinition ToDefinition()
+        {
+            if (_goldAmount == 0 &&
+                (_resources == null || _resources.Length == 0) &&
+                string.IsNullOrWhiteSpace(_npcId) &&
+                string.IsNullOrWhiteSpace(_claimHintId) &&
+                string.IsNullOrWhiteSpace(_claimHint))
+            {
+                return null;
+            }
+
+            var resources = _resources ?? throw new InvalidOperationException("Quest reward resources cannot be null.");
+            var values = new QuestRewardResource[resources.Length];
+            for (var index = 0; index < values.Length; index++)
+                values[index] = (resources[index] ?? throw new InvalidOperationException($"Quest reward resource at index {index} is missing.")).ToDefinition();
+            var point = _claimPointKind switch
+            {
+                QuestRewardClaimPointKind.Reception => QuestRewardClaimPoint.Reception,
+                QuestRewardClaimPointKind.Npc => QuestRewardClaimPoint.Npc(_npcId),
+                _ => throw new ArgumentOutOfRangeException(nameof(_claimPointKind), _claimPointKind, null)
+            };
+            return new QuestRewardDefinition(_goldAmount, values, point, new QuestText(_claimHintId, _claimHint));
+        }
+    }
+
+    [Serializable]
+    public sealed class QuestRewardResourceConfig
+    {
+        [SerializeField] private string _definitionId;
+        [SerializeField, Min(1)] private int _amount = 1;
+        internal QuestRewardResource ToDefinition() => new(_definitionId, _amount);
     }
 
     [Serializable]

@@ -28,6 +28,7 @@ using DungeonTeam.Gameplay.DungeonRun.Runtime;
 using DungeonTeam.Gameplay.Inventory.Application;
 using DungeonTeam.Gameplay.Inventory.Runtime.Config;
 using DungeonTeam.Gameplay.GuildHall.Application;
+using GuildRewardClaimPointKind = DungeonTeam.Gameplay.GuildHall.Application.QuestRewardClaimPointKind;
 using DungeonTeam.Gameplay.GuildHall.Runtime.Config;
 using DungeonTeam.Gameplay.GuildHall.Runtime.Composition;
 using DungeonTeam.Gameplay.GuildHall.Runtime.Input;
@@ -96,6 +97,7 @@ namespace Code.ApplicationRoot
 		private QuestCatalog _questCatalog;
 		private QuestPersistence _questPersistence;
 		private QuestSession _questSession;
+		private QuestRewardClaimCoordinator _questRewardClaimCoordinator;
 		private GuildRankCatalog _guildRankCatalog;
 		private WorldMapCatalog _worldMapCatalog;
 		private GuildSessionState _guildSessionState;
@@ -207,6 +209,8 @@ namespace Code.ApplicationRoot
 			_questSession = new QuestSession(_questPersistence.Repository);
 			_questSession.State.ValidateAgainst(_questCatalog);
 			ValidateQuestTargets(_questCatalog, _launchPresetCatalog, _itemCatalog, _guildHallCatalog);
+			_questRewardClaimCoordinator = new QuestRewardClaimCoordinator(
+				_questSession, _questCatalog, _playerProfileSession);
 			GuildContentValidator.Validate(
 				_guildHallCatalog,
 				_dialogueCatalog,
@@ -297,6 +301,7 @@ namespace Code.ApplicationRoot
 			_playerProfileSession = null;
 			_contractSession = null;
 			_questSession = null;
+			_questRewardClaimCoordinator = null;
 			_itemCatalog = null;
 			_guildRankCatalog = null;
 			_guildProfileEditHandler = null;
@@ -379,6 +384,7 @@ namespace Code.ApplicationRoot
 #endif
 				_ => { }, OnGuildHallWorldMapRequested, AcceptContract, AcceptQuest,
 				OnDialogueCompleted, _guildProfileEditHandler.Handle, true);
+			hall.ConfigureQuestRewardCallbacks(ClaimQuestReward, BuildRewardCollection);
 			await hall.InitializeAsync(token);
 			_guildHallRoot = hall;
 		}
@@ -409,6 +415,7 @@ namespace Code.ApplicationRoot
 			{
 				var definition = _questCatalog.Definitions[index];
 				var completed = _questSession.State.IsCompleted(definition.QuestId);
+				var claimed = _questSession.State.IsRewardClaimed(definition.QuestId);
 				var accepted = _questSession.State.IsActive(definition.QuestId);
 				var unlocked = _questCatalog.IsQuestUnlocked(definition.QuestId, _questSession.State);
 				var status = completed
@@ -434,7 +441,11 @@ namespace Code.ApplicationRoot
 					new GuildTextSnapshot($"quest.{definition.QuestId}.progress", $"{current}/{definition.Objective.RequiredProgress}"),
 					new GuildTextSnapshot(statusText.TextId, statusText.DisplayText),
 					status == QuestBoardEntrySnapshot.EntryStatus.Available,
-					status);
+					status,
+					completed && definition.Reward != null && !claimed
+						? new GuildTextSnapshot(definition.Reward.ClaimHint.TextId, definition.Reward.ClaimHint.DisplayText)
+						: null,
+					claimed);
 			}
 			return snapshots;
 		}
@@ -449,6 +460,65 @@ namespace Code.ApplicationRoot
 		private void OnDialogueCompleted(string npcId)
 		{
 			_questSession?.RecordDialogueCompleted(npcId, _questCatalog);
+		}
+
+		private QuestRewardCollectionSnapshot BuildRewardCollection(QuestRewardClaimPoint point)
+		{
+			var entries = _questRewardClaimCoordinator.GetClaimableAt(point);
+			var snapshots = new QuestRewardCollectionEntrySnapshot[entries.Count];
+			for (var index = 0; index < snapshots.Length; index++)
+			{
+				var definition = _questCatalog.Require(entries[index]);
+				var lines = new List<GuildTextSnapshot>();
+				if (definition.Reward.GoldAmount > 0)
+					lines.Add(new GuildTextSnapshot("quest.reward.gold", $"Gold: {definition.Reward.GoldAmount}"));
+				for (var resource = 0; resource < definition.Reward.Resources.Count; resource++)
+				{
+					var grant = definition.Reward.Resources[resource];
+					var display = _itemCatalog.TryGetResource(grant.DefinitionId, out var item)
+						? item.DisplayName
+						: grant.DefinitionId;
+					lines.Add(new GuildTextSnapshot(
+						$"quest.reward.{grant.DefinitionId}",
+						$"{display}: {grant.Amount}"));
+				}
+				var claimPoint = point.Kind == DungeonTeam.Gameplay.Quests.Domain.QuestRewardClaimPointKind.Reception
+					? new QuestRewardClaimPointSnapshot(GuildRewardClaimPointKind.Reception)
+					: new QuestRewardClaimPointSnapshot(GuildRewardClaimPointKind.Npc, point.NpcId);
+				snapshots[index] = new QuestRewardCollectionEntrySnapshot(
+					definition.QuestId,
+					new GuildTextSnapshot(definition.Title.TextId, definition.Title.DisplayText),
+					lines,
+					new GuildTextSnapshot(definition.Reward.ClaimHint.TextId, definition.Reward.ClaimHint.DisplayText),
+					new GuildTextSnapshot("quest.reward.receive", "Receive"),
+					claimPoint);
+			}
+			return new QuestRewardCollectionSnapshot(
+				new QuestRewardClaimPointSnapshot(
+					point.Kind == DungeonTeam.Gameplay.Quests.Domain.QuestRewardClaimPointKind.Reception
+						? GuildRewardClaimPointKind.Reception
+						: GuildRewardClaimPointKind.Npc,
+					point.NpcId),
+				snapshots,
+				new GuildTextSnapshot("quest.reward.header", "Quest rewards"),
+				new GuildTextSnapshot("quest.reward.close", "Close"));
+		}
+
+		private QuestRewardCollectionSnapshot BuildRewardCollection(QuestRewardClaimPointSnapshot point)
+		{
+			if (point == null) throw new ArgumentNullException(nameof(point));
+			return BuildRewardCollection(point.Kind == GuildRewardClaimPointKind.Reception
+				? QuestRewardClaimPoint.Reception
+				: QuestRewardClaimPoint.Npc(point.NpcId));
+		}
+
+		private bool ClaimQuestReward(QuestRewardClaimRequest request)
+		{
+			if (request == null) throw new ArgumentNullException(nameof(request));
+			var point = request.Point.Kind == GuildRewardClaimPointKind.Reception
+				? QuestRewardClaimPoint.Reception
+				: QuestRewardClaimPoint.Npc(request.Point.NpcId);
+			return _questRewardClaimCoordinator.Claim(request.QuestId, point).Accepted;
 		}
 
 		private bool AcceptContract(string contractId)
@@ -488,7 +558,9 @@ namespace Code.ApplicationRoot
 				_dungeonRunTeamSetup,
 				_guildHallCatalog.ProfileText,
 				_itemCatalog,
-				_guildRankCatalog);
+				_guildRankCatalog,
+				_questRewardClaimCoordinator?.GetClaimableAt(QuestRewardClaimPoint.Reception).Count ?? 0,
+				new GuildTextSnapshot("quest.reward.action", "Quest rewards"));
 
 		private void OnGuildHallWorldMapRequested() =>
 			TransitionToWorldMapAsync(CancellationToken).Forget(Debug.LogException);
@@ -1047,7 +1119,8 @@ namespace Code.ApplicationRoot
 				throw new ArgumentNullException(nameof(quests));
 			for (var index = 0; index < quests.Definitions.Count; index++)
 			{
-				var objective = quests.Definitions[index].Objective;
+				var definition = quests.Definitions[index];
+				var objective = definition.Objective;
 				switch (objective.Kind)
 				{
 					case QuestObjectiveKind.CompleteDungeon:
@@ -1069,6 +1142,27 @@ namespace Code.ApplicationRoot
 						break;
 					default: throw new ArgumentOutOfRangeException(nameof(objective.Kind), objective.Kind, null);
 				}
+
+				if (definition.Reward == null)
+					continue;
+
+				for (var reward = 0; reward < definition.Reward.Resources.Count; reward++)
+				{
+					var resourceId = definition.Reward.Resources[reward].DefinitionId;
+					if (!items.TryGetResource(resourceId, out _))
+						throw new InvalidOperationException(
+							$"Quest '{definition.QuestId}' reward references unknown resource '{resourceId}'.");
+				}
+
+				if (definition.Reward.ClaimPoint.Kind != DungeonTeam.Gameplay.Quests.Domain.QuestRewardClaimPointKind.Npc)
+					continue;
+
+				var claimNpcExists = false;
+				for (var npc = 0; npc < guildHall.Npcs.Count; npc++)
+					claimNpcExists |= guildHall.Npcs[npc].NpcId == definition.Reward.ClaimPoint.NpcId;
+				if (!claimNpcExists)
+					throw new InvalidOperationException(
+						$"Quest '{definition.QuestId}' reward references unknown NPC '{definition.Reward.ClaimPoint.NpcId}'.");
 			}
 		}
 

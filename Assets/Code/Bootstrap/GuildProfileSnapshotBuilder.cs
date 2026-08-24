@@ -20,9 +20,11 @@ namespace Code.ApplicationRoot
             SkillCatalog skills,
             DungeonRunTeamSetup teamSetup,
             GuildProfileTextSnapshot text,
-            ItemCatalog itemCatalog = null)
+            ItemCatalog itemCatalog = null,
+            int receptionRewardCount = 0,
+            GuildTextSnapshot rewardsAction = null)
         {
-            return Build(profile, actors, skills, teamSetup, text, itemCatalog, null);
+            return Build(profile, actors, skills, teamSetup, text, itemCatalog, null, receptionRewardCount, rewardsAction);
         }
 
         public static GuildProfileSnapshot Build(
@@ -32,7 +34,9 @@ namespace Code.ApplicationRoot
             DungeonRunTeamSetup teamSetup,
             GuildProfileTextSnapshot text,
             ItemCatalog itemCatalog,
-            GuildRankCatalog rankCatalog)
+            GuildRankCatalog rankCatalog,
+            int receptionRewardCount = 0,
+            GuildTextSnapshot rewardsAction = null)
         {
             if (profile == null)
             {
@@ -92,7 +96,9 @@ namespace Code.ApplicationRoot
                 roster,
                 text,
                 BuildResourceRows(profile, itemCatalog),
-                rank);
+                rank,
+                receptionRewardCount,
+                rewardsAction);
         }
 
         private static GuildRankSnapshot BuildRankSnapshot(

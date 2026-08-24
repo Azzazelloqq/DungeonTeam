@@ -8,7 +8,7 @@ using LocalSaveSystem;
 namespace DungeonTeam.Gameplay.PlayerProfile.Infrastructure
 {
     [SaveModel]
-    [SaveVersion(4)]
+    [SaveVersion(5)]
     public sealed class PlayerProfileSaveV1
     {
         [SaveFieldId("gold")] public long Gold;
@@ -21,6 +21,7 @@ namespace DungeonTeam.Gameplay.PlayerProfile.Infrastructure
         [SaveFieldId("inventory_equipment_by_hero")] public PlayerProfileHeroEquipmentSaveV2[] EquipmentByHero;
         [SaveFieldId("pending_terminal_result")] public PlayerProfilePendingTerminalResultSaveV3 PendingTerminalResult;
         [SaveFieldId("last_applied_run_id")] public string LastAppliedRunId;
+        [SaveFieldId("applied_claim_ids")] public string[] AppliedClaimIds;
     }
 
     [SaveModel]
@@ -150,6 +151,22 @@ namespace DungeonTeam.Gameplay.PlayerProfile.Infrastructure
                 value.RankId = GuildRankCatalog.BaseRankId;
             }
 
+            return value;
+        }
+    }
+
+    public sealed class PlayerProfileV4ToV5Migrator : SaveMigrator<PlayerProfileSaveV1>
+    {
+        public bool WasApplied { get; private set; }
+        public void ClearApplied() => WasApplied = false;
+        public override int FromVersion => 4;
+        public override int ToVersion => 5;
+
+        public override PlayerProfileSaveV1 Migrate(PlayerProfileSaveV1 value)
+        {
+            if (value == null) throw new InvalidOperationException("Cannot migrate a missing player profile.");
+            WasApplied = true;
+            value.AppliedClaimIds ??= Array.Empty<string>();
             return value;
         }
     }
@@ -304,8 +321,16 @@ namespace DungeonTeam.Gameplay.PlayerProfile.Infrastructure
                 LeaderActorId = state.LeaderActorId, CompanionActorIds = companions,
                 UniqueItems = items, Resources = resources, EquipmentByHero = equipment,
                 PendingTerminalResult = ToPendingDto(state.PendingTerminalResult),
-                LastAppliedRunId = state.LastAppliedRunId
+                LastAppliedRunId = state.LastAppliedRunId,
+                AppliedClaimIds = CopyStrings(state.AppliedClaimIds)
             };
+        }
+
+        private static string[] CopyStrings(IReadOnlyList<string> values)
+        {
+            var copy = new string[values.Count];
+            for (var index = 0; index < copy.Length; index++) copy[index] = values[index];
+            return copy;
         }
 
         private static PlayerProfilePendingTerminalResultSaveV3 ToPendingDto(
@@ -358,7 +383,8 @@ namespace DungeonTeam.Gameplay.PlayerProfile.Infrastructure
                 dto.CompanionActorIds,
                 inventory,
                 ToPendingState(dto.PendingTerminalResult),
-                dto.LastAppliedRunId);
+                dto.LastAppliedRunId,
+                dto.AppliedClaimIds ?? Array.Empty<string>());
         }
 
         private static PendingTerminalResultState ToPendingState(
@@ -412,7 +438,8 @@ namespace DungeonTeam.Gameplay.PlayerProfile.Infrastructure
         {
             if (expected.Gold != observed.Gold || !string.Equals(expected.RankId, observed.RankId, StringComparison.Ordinal) ||
                 !string.Equals(expected.LeaderActorId, observed.LeaderActorId, StringComparison.Ordinal) ||
-                !string.Equals(expected.LastAppliedRunId, observed.LastAppliedRunId, StringComparison.Ordinal) ||
+                 !string.Equals(expected.LastAppliedRunId, observed.LastAppliedRunId, StringComparison.Ordinal) ||
+                 !EqualStrings(expected.AppliedClaimIds, observed.AppliedClaimIds) ||
                 !EqualStrings(expected.CompanionActorIds, observed.CompanionActorIds) ||
                 expected.Heroes.Count != observed.Heroes.Count ||
                 expected.Inventory.UniqueItems.Count != observed.Inventory.UniqueItems.Count ||
@@ -503,20 +530,23 @@ namespace DungeonTeam.Gameplay.PlayerProfile.Infrastructure
             var v1ToV2 = new PlayerProfileV1ToV2Migrator();
             var v2ToV3 = new PlayerProfileV2ToV3Migrator();
             var v3ToV4 = new PlayerProfileV3ToV4Migrator();
+            var v4ToV5 = new PlayerProfileV4ToV5Migrator();
             _migrators.Register(v1ToV2);
             _migrators.Register(v2ToV3);
             _migrators.Register(v3ToV4);
+            _migrators.Register(v4ToV5);
             _store = CreateStore();
             Repository = new SaveStorePlayerProfileRepository(
                 _store,
                 CreateStore,
                 legacyInventoryFactory,
-                () => v1ToV2.WasApplied || v2ToV3.WasApplied || v3ToV4.WasApplied,
+                 () => v1ToV2.WasApplied || v2ToV3.WasApplied || v3ToV4.WasApplied || v4ToV5.WasApplied,
                 () =>
                 {
-                    v1ToV2.ClearApplied();
-                    v2ToV3.ClearApplied();
-                    v3ToV4.ClearApplied();
+                     v1ToV2.ClearApplied();
+                     v2ToV3.ClearApplied();
+                     v3ToV4.ClearApplied();
+                     v4ToV5.ClearApplied();
                 });
         }
 

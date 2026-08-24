@@ -12,14 +12,17 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Presentation.UI.GuildProfile
     {
         private readonly Action _closed;
         private readonly Func<GuildProfileEditRequest, GuildProfileEditResult> _editRequested;
+        private readonly Action _openRewards;
 
         public GuildProfileViewModel(
             GuildProfileModelBase model,
             Action closed,
-            Func<GuildProfileEditRequest, GuildProfileEditResult> editRequested) : base(model)
+            Func<GuildProfileEditRequest, GuildProfileEditResult> editRequested,
+            Action openRewards = null) : base(model)
         {
             _closed = closed ?? throw new ArgumentNullException(nameof(closed));
             _editRequested = editRequested ?? throw new ArgumentNullException(nameof(editRequested));
+            _openRewards = openRewards;
             SelectHeroCommand = new RelayCommand<string>(model.Select);
             CloseCommand = new RelayCommand<object>(_ => Close());
             SelectHeroCommand.AddTo(compositeDisposable);
@@ -43,6 +46,7 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Presentation.UI.GuildProfile
                 GuildProfileEditKind.SellResource,
                 definitionId: definitionId));
             PromoteRankCommand = new RelayCommand<object>(_ => Edit(GuildProfileEditKind.PromoteRank));
+            OpenRewardsCommand = new RelayCommand<object>(_ => _openRewards?.Invoke());
             SetLeaderCommand.AddTo(compositeDisposable);
             AddCompanionCommand.AddTo(compositeDisposable);
             RemoveCompanionCommand.AddTo(compositeDisposable);
@@ -52,6 +56,7 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Presentation.UI.GuildProfile
             SellUniqueItemCommand.AddTo(compositeDisposable);
             SellResourceCommand.AddTo(compositeDisposable);
             PromoteRankCommand.AddTo(compositeDisposable);
+            OpenRewardsCommand.AddTo(compositeDisposable);
         }
 
         public override GuildProfileSnapshot Profile => model.Profile;
@@ -71,6 +76,7 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Presentation.UI.GuildProfile
         public override IRelayCommand<string> SellUniqueItemCommand { get; }
         public override IRelayCommand<string> SellResourceCommand { get; }
         public override IRelayCommand<object> PromoteRankCommand { get; }
+        public override IRelayCommand<object> OpenRewardsCommand { get; }
         public override void Open() => model.Show();
 
         public override void Close()

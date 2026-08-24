@@ -71,6 +71,7 @@ namespace DungeonTeam.Gameplay.PlayerProfile.Domain
     {
         private readonly ReadOnlyCollection<HeroProfileState> _heroes;
         private readonly ReadOnlyCollection<string> _companionActorIds;
+        private readonly ReadOnlyCollection<string> _appliedClaimIds;
 
         public PlayerProfileState(
             long gold,
@@ -107,7 +108,8 @@ namespace DungeonTeam.Gameplay.PlayerProfile.Domain
             IReadOnlyList<string> companionActorIds,
             InventoryState inventory,
             PendingTerminalResultState pendingTerminalResult,
-            string lastAppliedRunId)
+            string lastAppliedRunId,
+            IReadOnlyList<string> appliedClaimIds = null)
         {
             if (gold < 0)
             {
@@ -184,6 +186,18 @@ namespace DungeonTeam.Gameplay.PlayerProfile.Domain
             }
 
             LastAppliedRunId = lastAppliedRunId;
+            var claimSource = appliedClaimIds ?? Array.Empty<string>();
+            var claimCopy = new string[claimSource.Count];
+            var claimIds = new HashSet<string>(StringComparer.Ordinal);
+            for (var index = 0; index < claimCopy.Length; index++)
+            {
+                claimCopy[index] = !string.IsNullOrWhiteSpace(claimSource[index])
+                    ? claimSource[index]
+                    : throw new ArgumentException("Applied reward claim IDs cannot be empty.", nameof(appliedClaimIds));
+                if (!claimIds.Add(claimCopy[index]))
+                    throw new ArgumentException("Applied reward claim IDs must be unique.", nameof(appliedClaimIds));
+            }
+            _appliedClaimIds = Array.AsReadOnly(claimCopy);
         }
 
         public long Gold { get; }
@@ -194,6 +208,14 @@ namespace DungeonTeam.Gameplay.PlayerProfile.Domain
         public InventoryState Inventory { get; }
         public PendingTerminalResultState PendingTerminalResult { get; }
         public string LastAppliedRunId { get; }
+        public IReadOnlyList<string> AppliedClaimIds => _appliedClaimIds;
+        public bool HasAppliedClaim(string claimId)
+        {
+            if (string.IsNullOrWhiteSpace(claimId)) return false;
+            for (var index = 0; index < _appliedClaimIds.Count; index++)
+                if (string.Equals(_appliedClaimIds[index], claimId, StringComparison.Ordinal)) return true;
+            return false;
+        }
 
         public PlayerProfileState ReplaceInventory(InventoryState inventory)
         {
@@ -205,7 +227,7 @@ namespace DungeonTeam.Gameplay.PlayerProfile.Domain
                 CompanionActorIds,
                 inventory ?? throw new ArgumentNullException(nameof(inventory)),
                 PendingTerminalResult,
-                LastAppliedRunId);
+                LastAppliedRunId, AppliedClaimIds);
         }
 
         public PlayerProfileState WithGold(long gold)
@@ -218,7 +240,7 @@ namespace DungeonTeam.Gameplay.PlayerProfile.Domain
                 CompanionActorIds,
                 Inventory,
                 PendingTerminalResult,
-                LastAppliedRunId);
+                LastAppliedRunId, AppliedClaimIds);
         }
 
         public PlayerProfileState WithRank(string rankId)
@@ -236,7 +258,7 @@ namespace DungeonTeam.Gameplay.PlayerProfile.Domain
                 CompanionActorIds,
                 Inventory,
                 PendingTerminalResult,
-                LastAppliedRunId);
+                LastAppliedRunId, AppliedClaimIds);
         }
 
         public PlayerProfileState WithTerminalState(
@@ -251,7 +273,8 @@ namespace DungeonTeam.Gameplay.PlayerProfile.Domain
                 CompanionActorIds,
                 Inventory,
                 pendingTerminalResult,
-                lastAppliedRunId);
+                lastAppliedRunId,
+                AppliedClaimIds);
         }
 
         public PlayerProfileState ApplyPendingTerminalResult(PendingTerminalResultState pending)
@@ -271,7 +294,7 @@ namespace DungeonTeam.Gameplay.PlayerProfile.Domain
                 CompanionActorIds,
                 inventory,
                 null,
-                pending.RunId);
+                pending.RunId, AppliedClaimIds);
         }
 
         public PlayerProfileState SellUniqueItem(string instanceId, long saleValue)
@@ -289,7 +312,7 @@ namespace DungeonTeam.Gameplay.PlayerProfile.Domain
                 CompanionActorIds,
                 Inventory.RemoveUniqueItem(instanceId),
                 PendingTerminalResult,
-                LastAppliedRunId);
+                LastAppliedRunId, AppliedClaimIds);
         }
 
         public PlayerProfileState SellResource(string definitionId, long saleValue)
@@ -307,7 +330,7 @@ namespace DungeonTeam.Gameplay.PlayerProfile.Domain
                 CompanionActorIds,
                 Inventory.RemoveResourceStack(definitionId),
                 PendingTerminalResult,
-                LastAppliedRunId);
+                LastAppliedRunId, AppliedClaimIds);
         }
 
         public PlayerProfileState ChangeLeader(string actorId)
@@ -327,7 +350,7 @@ namespace DungeonTeam.Gameplay.PlayerProfile.Domain
 
             return new PlayerProfileState(
                 Gold, RankId, Heroes, actorId, companions, Inventory,
-                PendingTerminalResult, LastAppliedRunId);
+                PendingTerminalResult, LastAppliedRunId, AppliedClaimIds);
         }
 
         public PlayerProfileState AddCompanion(string actorId)
@@ -348,7 +371,7 @@ namespace DungeonTeam.Gameplay.PlayerProfile.Domain
             companions[^1] = actorId;
             return new PlayerProfileState(
                 Gold, RankId, Heroes, LeaderActorId, companions, Inventory,
-                PendingTerminalResult, LastAppliedRunId);
+                PendingTerminalResult, LastAppliedRunId, AppliedClaimIds);
         }
 
         public PlayerProfileState RemoveCompanion(string actorId)
@@ -372,7 +395,7 @@ namespace DungeonTeam.Gameplay.PlayerProfile.Domain
 
             return new PlayerProfileState(
                 Gold, RankId, Heroes, LeaderActorId, companions, Inventory,
-                PendingTerminalResult, LastAppliedRunId);
+                PendingTerminalResult, LastAppliedRunId, AppliedClaimIds);
         }
 
         public PlayerProfileState ChangeLoadout(string actorId, string loadoutId)
@@ -403,7 +426,34 @@ namespace DungeonTeam.Gameplay.PlayerProfile.Domain
 
             return new PlayerProfileState(
                 Gold, RankId, heroes, LeaderActorId, CompanionActorIds, Inventory,
-                PendingTerminalResult, LastAppliedRunId);
+                PendingTerminalResult, LastAppliedRunId, AppliedClaimIds);
+        }
+
+        public PlayerProfileState ApplyRewardClaim(
+            string claimId,
+            long goldAmount,
+            IReadOnlyList<ResourceStackState> resourceGrants)
+        {
+            if (string.IsNullOrWhiteSpace(claimId))
+                throw new ArgumentException("Claim ID cannot be empty.", nameof(claimId));
+            if (goldAmount < 0) throw new ArgumentOutOfRangeException(nameof(goldAmount));
+            if (resourceGrants == null) throw new ArgumentNullException(nameof(resourceGrants));
+            if (HasAppliedClaim(claimId)) return this;
+
+            var claimIds = new string[AppliedClaimIds.Count + 1];
+            for (var index = 0; index < AppliedClaimIds.Count; index++)
+                claimIds[index] = AppliedClaimIds[index];
+            claimIds[^1] = claimId;
+            return new PlayerProfileState(
+                checked(Gold + goldAmount),
+                RankId,
+                Heroes,
+                LeaderActorId,
+                CompanionActorIds,
+                Inventory.AddResourceGrants(resourceGrants),
+                PendingTerminalResult,
+                LastAppliedRunId,
+                claimIds);
         }
 
         private void RequireRosterActor(string actorId, string parameterName)
