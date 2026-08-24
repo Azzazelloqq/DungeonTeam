@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using Azzazelloqq.Config;
 using Code.Addressables.Generated;
@@ -16,6 +17,8 @@ using DungeonTeam.Gameplay.Chests.Runtime;
 using DungeonTeam.Gameplay.Dungeon.Application;
 using DungeonTeam.Gameplay.DungeonRun.Application;
 using DungeonTeam.Gameplay.DungeonRun.Runtime;
+using DungeonTeam.Gameplay.Inventory.Application;
+using DungeonTeam.Gameplay.Inventory.Runtime.Config;
 using DungeonTeam.Gameplay.GuildHall.Application;
 using DungeonTeam.Gameplay.GuildHall.Runtime.Config;
 using DungeonTeam.Gameplay.GuildHall.Runtime.Composition;
@@ -31,7 +34,7 @@ using DungeonTeam.Gameplay.Team.Runtime;
 using DungeonTeam.Gameplay.Skills.Runtime;
 using DungeonTeam.Gameplay.PlayerProfile.Application;
 using DungeonTeam.Gameplay.PlayerProfile.Domain;
-using LocalSaveSystem;
+using DungeonTeam.Gameplay.PlayerProfile.Infrastructure;
 using DungeonTeam.UI.WorldMap;
 using DungeonTeam.DeveloperTools;
 using LightDI.Runtime;
@@ -69,8 +72,9 @@ namespace Code.ApplicationRoot
 		private RewardCatalog _rewardCatalog;
 		private EnemyBehaviorCatalog _enemyBehaviorCatalog;
 		private DungeonRunTeamSetup _dungeonRunTeamSetup;
-		private SaveStore _saveStore;
+		private PlayerProfilePersistence _playerProfilePersistence;
 		private PlayerProfileSession _playerProfileSession;
+		private ItemCatalog _itemCatalog;
 		private GuildProfileEditHandler _guildProfileEditHandler;
 		private DungeonRunLaunchPresetCatalog _launchPresetCatalog;
 		private GuildHallCatalog _guildHallCatalog;
@@ -138,7 +142,13 @@ namespace Code.ApplicationRoot
 			_dungeonRunTeamSetup = config
 				.GetConfigPage<DungeonRunConfigPage>()
 				.CreateTeamSetup(_actorCatalog, _skillCatalog);
-			_playerProfileSession = PlayerProfileComposition.Create(_dungeonRunTeamSetup, out _saveStore);
+			_itemCatalog = config
+				.GetConfigPage<ItemConfigPage>()
+				.CreateCatalog(GetRosterActorIds(_dungeonRunTeamSetup));
+			_playerProfileSession = PlayerProfileComposition.Create(
+				_dungeonRunTeamSetup,
+				_itemCatalog,
+				out _playerProfilePersistence);
 			_launchPresetCatalog = config
 				.GetConfigPage<DungeonRunLaunchConfigPage>()
 				.CreateCatalog();
@@ -148,6 +158,7 @@ namespace Code.ApplicationRoot
 				_dungeonRunTeamSetup,
 				_guildHallCatalog.ProfileText,
 				BuildGuildProfileSnapshot,
+				_itemCatalog,
 				Debug.LogException);
 			_dialogueCatalog = config.GetConfigPage<DialogueConfigPage>().CreateCatalog();
 			_ambientNpcProfileCatalog = config.GetConfigPage<AmbientNpcConfigPage>().CreateCatalog();
@@ -237,9 +248,10 @@ namespace Code.ApplicationRoot
 			_enemyBehaviorCatalog = null;
 			_dungeonRunTeamSetup = null;
 			_playerProfileSession = null;
+			_itemCatalog = null;
 			_guildProfileEditHandler = null;
-			_saveStore?.Dispose();
-			_saveStore = null;
+			_playerProfilePersistence?.Dispose();
+			_playerProfilePersistence = null;
 			_launchPresetCatalog = null;
 			_guildHallCatalog = null;
 			_dialogueCatalog = null;
@@ -326,7 +338,8 @@ namespace Code.ApplicationRoot
 				_actorCatalog,
 				_skillCatalog,
 				_dungeonRunTeamSetup,
-				_guildHallCatalog.ProfileText);
+				_guildHallCatalog.ProfileText,
+				_itemCatalog);
 
 		private void OnGuildHallWorldMapRequested() =>
 			TransitionToWorldMapAsync(CancellationToken).Forget(Debug.LogException);
@@ -429,7 +442,7 @@ namespace Code.ApplicationRoot
 					_contractCatalog,
 					_guildSessionState,
 					_launchPresetCatalog,
-					PlayerProfileComposition.MapToTeamSelection(_playerProfileSession.State))
+					PlayerProfileComposition.MapToTeamSelection(_playerProfileSession.State, _itemCatalog))
 					.Resolve(locationId);
 			}
 			catch (Exception exception)
@@ -820,6 +833,17 @@ namespace Code.ApplicationRoot
 				_teamControlSettings,
 				_heroControlSettings,
 				_enemyBehaviorCatalog);
+		}
+
+		private static IReadOnlyCollection<string> GetRosterActorIds(DungeonRunTeamSetup teamSetup)
+		{
+			var actorIds = new string[teamSetup.Members.Count];
+			for (var index = 0; index < actorIds.Length; index++)
+			{
+				actorIds[index] = teamSetup.Members[index].ActorId;
+			}
+
+			return actorIds;
 		}
 
 		private void CreateDeveloperConsole()

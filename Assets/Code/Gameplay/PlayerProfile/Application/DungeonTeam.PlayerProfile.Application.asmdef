@@ -1,7 +1,7 @@
 {
   "name": "DungeonTeam.PlayerProfile.Application",
   "rootNamespace": "DungeonTeam.Gameplay.PlayerProfile.Application",
-  "references": ["DungeonTeam.PlayerProfile.Domain"],
+  "references": ["DungeonTeam.PlayerProfile.Domain", "DungeonTeam.Inventory.Domain"],
   "autoReferenced": false,
   "noEngineReferences": true
 }

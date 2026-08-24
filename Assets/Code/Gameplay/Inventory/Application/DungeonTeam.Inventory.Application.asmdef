@@ -1,0 +1,7 @@
+{
+  "name": "DungeonTeam.Inventory.Application",
+  "rootNamespace": "DungeonTeam.Gameplay.Inventory.Application",
+  "references": ["DungeonTeam.Inventory.Domain"],
+  "autoReferenced": false,
+  "noEngineReferences": true
+}

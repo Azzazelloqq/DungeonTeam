@@ -12,6 +12,7 @@ namespace DungeonTeam.Gameplay.Skills.Runtime
         public SkillProjectileInstance Create(
             string skillId,
             ProjectileDamageSkillLevelDefinition level,
+            int damageBonus,
             ActorInstance source,
             ActorInstance target,
             SkillViewSet views,
@@ -19,6 +20,7 @@ namespace DungeonTeam.Gameplay.Skills.Runtime
             Action<Vector3> onImpact)
         {
             if (level == null) throw new ArgumentNullException(nameof(level));
+            if (damageBonus < 0) throw new ArgumentOutOfRangeException(nameof(damageBonus));
             if (source == null) throw new ArgumentNullException(nameof(source));
             if (target == null) throw new ArgumentNullException(nameof(target));
             if (views == null) throw new ArgumentNullException(nameof(views));
@@ -48,7 +50,7 @@ namespace DungeonTeam.Gameplay.Skills.Runtime
                     spawnRotation,
                     parent);
                 view.name = $"SkillProjectile_{skillId}";
-                var model = new SkillProjectileModel(level.Damage, level.ProjectileSpeed);
+                var model = new SkillProjectileModel(checked(level.Damage + damageBonus), level.ProjectileSpeed);
                 presenter = new SkillProjectilePresenter(
                     view,
                     model,

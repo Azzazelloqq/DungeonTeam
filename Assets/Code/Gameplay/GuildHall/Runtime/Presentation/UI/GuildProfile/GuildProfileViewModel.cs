@@ -30,10 +30,18 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Presentation.UI.GuildProfile
             SetLoadoutCommand = new RelayCommand<string>(loadoutId => Edit(
                 GuildProfileEditKind.SetLoadout,
                 loadoutId));
+            EquipItemCommand = new RelayCommand<string>(instanceId => Edit(
+                GuildProfileEditKind.EquipItem,
+                itemInstanceId: instanceId));
+            UnequipItemCommand = new RelayCommand<object>(slot => Edit(
+                GuildProfileEditKind.UnequipItem,
+                equipmentSlot: (GuildProfileEquipmentSlot)slot));
             SetLeaderCommand.AddTo(compositeDisposable);
             AddCompanionCommand.AddTo(compositeDisposable);
             RemoveCompanionCommand.AddTo(compositeDisposable);
             SetLoadoutCommand.AddTo(compositeDisposable);
+            EquipItemCommand.AddTo(compositeDisposable);
+            UnequipItemCommand.AddTo(compositeDisposable);
         }
 
         public override GuildProfileSnapshot Profile => model.Profile;
@@ -48,6 +56,8 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Presentation.UI.GuildProfile
         public override IRelayCommand<object> AddCompanionCommand { get; }
         public override IRelayCommand<object> RemoveCompanionCommand { get; }
         public override IRelayCommand<string> SetLoadoutCommand { get; }
+        public override IRelayCommand<string> EquipItemCommand { get; }
+        public override IRelayCommand<object> UnequipItemCommand { get; }
         public override void Open() => model.Show();
 
         public override void Close()
@@ -58,10 +68,19 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Presentation.UI.GuildProfile
             }
         }
 
-        private void Edit(GuildProfileEditKind kind, string loadoutId = null)
+        private void Edit(
+            GuildProfileEditKind kind,
+            string loadoutId = null,
+            string itemInstanceId = null,
+            GuildProfileEquipmentSlot? equipmentSlot = null)
         {
             var selected = model.SelectedHero.Value;
-            model.Apply(_editRequested(new GuildProfileEditRequest(kind, selected.ActorId, loadoutId)));
+            model.Apply(_editRequested(new GuildProfileEditRequest(
+                kind,
+                selected.ActorId,
+                loadoutId,
+                itemInstanceId,
+                equipmentSlot)));
         }
 
         protected override void OnInitialize() { }

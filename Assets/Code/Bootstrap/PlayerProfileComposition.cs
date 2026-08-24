@@ -1,6 +1,9 @@
 using System;
 using System.IO;
+using System.Collections.Generic;
 using DungeonTeam.Gameplay.DungeonRun.Application;
+using DungeonTeam.Gameplay.Inventory.Application;
+using DungeonTeam.Gameplay.Inventory.Domain;
 using DungeonTeam.Gameplay.PlayerProfile.Application;
 using DungeonTeam.Gameplay.PlayerProfile.Domain;
 using DungeonTeam.Gameplay.PlayerProfile.Infrastructure;
@@ -11,11 +14,19 @@ namespace Code.ApplicationRoot
 {
     internal static class PlayerProfileComposition
     {
-        public static PlayerProfileSession Create(DungeonRunTeamSetup teamSetup, out SaveStore store)
+        public static PlayerProfileSession Create(
+            DungeonRunTeamSetup teamSetup,
+            ItemCatalog itemCatalog,
+            out PlayerProfilePersistence persistence)
         {
             if (teamSetup == null)
             {
                 throw new ArgumentNullException(nameof(teamSetup));
+            }
+
+            if (itemCatalog == null)
+            {
+                throw new ArgumentNullException(nameof(itemCatalog));
             }
 
             var defaultSelection = teamSetup.DefaultSelection;
@@ -32,36 +43,67 @@ namespace Code.ApplicationRoot
                 companions[index] = defaultSelection.CompanionActorIds[index];
             }
 
-            var seed = new PlayerProfileSeed(heroes, defaultSelection.LeaderActorId, companions);
+            var rosterActorIds = new string[heroes.Length];
+            for (var index = 0; index < rosterActorIds.Length; index++)
+            {
+                rosterActorIds[index] = heroes[index].ActorId;
+            }
+
+            var starterInventory = itemCatalog.CreateStarterInventory(rosterActorIds);
+            var seed = new PlayerProfileSeed(
+                heroes,
+                defaultSelection.LeaderActorId,
+                companions,
+                starterInventory);
             var storagePath = Path.Combine(Application.persistentDataPath, "DungeonTeam");
             Directory.CreateDirectory(storagePath);
-            store = new SaveStore(new SaveStoreOptions(storagePath)
+            persistence = new PlayerProfilePersistence(new SaveStoreOptions(storagePath)
             {
                 UseTaggedFormat = true,
                 UseAtomicWrite = true,
                 SaveOnQuit = true
-            });
-            var session = new PlayerProfileSession(
-                new SaveStorePlayerProfileRepository(store),
-                seed);
-            teamSetup.RequireValid(MapToTeamSelection(session.State));
-            return session;
+            }, heroesToInventory => CreateStarterInventory(itemCatalog, heroesToInventory));
+            try
+            {
+                var session = new PlayerProfileSession(
+                    persistence.Repository,
+                    seed);
+                teamSetup.RequireValid(MapToTeamSelection(session.State, itemCatalog));
+                return session;
+            }
+            catch
+            {
+                persistence.Dispose();
+                persistence = null;
+                throw;
+            }
         }
 
         public static DungeonRunTeamSelection MapToTeamSelection(PlayerProfileState profile)
+        {
+            return MapToTeamSelection(profile, null);
+        }
+
+        public static DungeonRunTeamSelection MapToTeamSelection(
+            PlayerProfileState profile,
+            ItemCatalog itemCatalog)
         {
             if (profile == null)
             {
                 throw new ArgumentNullException(nameof(profile));
             }
 
-            var leader = ToSelection(RequireHero(profile, profile.LeaderActorId));
+            var resolver = itemCatalog != null ? new EquipmentEffectResolver(itemCatalog) : null;
+            resolver?.ValidateInventory(profile.Inventory);
+            var leaderHero = RequireHero(profile, profile.LeaderActorId);
+            var leader = ToSelection(leaderHero, resolver?.Resolve(profile.Inventory, leaderHero.ActorId));
             var companions = new DungeonRunActorSelection[profile.CompanionActorIds.Count];
             for (var index = 0; index < companions.Length; index++)
             {
-                companions[index] = ToSelection(RequireHero(
-                    profile,
-                    profile.CompanionActorIds[index]));
+                var companion = RequireHero(profile, profile.CompanionActorIds[index]);
+                companions[index] = ToSelection(
+                    companion,
+                    resolver?.Resolve(profile.Inventory, companion.ActorId));
             }
 
             return new DungeonRunTeamSelection(leader, companions);
@@ -70,8 +112,32 @@ namespace Code.ApplicationRoot
         private static HeroProfileState ToProfileHero(DungeonRunActorSelection actor) =>
             new(actor.ActorId, actor.Level, actor.LoadoutId);
 
-        private static DungeonRunActorSelection ToSelection(HeroProfileState hero) =>
-            new(hero.ActorId, hero.Level, hero.LoadoutId);
+        private static InventoryState CreateStarterInventory(
+            ItemCatalog itemCatalog,
+            IReadOnlyList<HeroProfileState> heroes)
+        {
+            var actorIds = new string[heroes.Count];
+            for (var index = 0; index < actorIds.Length; index++)
+            {
+                actorIds[index] = heroes[index].ActorId;
+            }
+
+            return itemCatalog.CreateStarterInventory(actorIds);
+        }
+
+        private static DungeonRunActorSelection ToSelection(
+            HeroProfileState hero,
+            EquipmentEffectSnapshot? effect = null) =>
+            new(
+                hero.ActorId,
+                hero.Level,
+                hero.LoadoutId,
+                effect.HasValue
+                    ? new DungeonRunActorBonus(
+                        effect.Value.PrimaryDamageBonus,
+                        effect.Value.MaximumHealthBonus,
+                        effect.Value.MovementSpeedBonus)
+                    : DungeonRunActorBonus.Zero);
 
         private static HeroProfileState RequireHero(PlayerProfileState profile, string actorId)
         {

@@ -1,10 +1,13 @@
 using System;
+using System.Collections.Generic;
 using DungeonTeam.Gameplay.Actors.Runtime;
 using DungeonTeam.Gameplay.GuildHall.Application;
 using DungeonTeam.Gameplay.PlayerProfile.Domain;
 using DungeonTeam.Gameplay.DungeonRun.Application;
 using DungeonTeam.Gameplay.Skills.Domain;
 using DungeonTeam.Gameplay.Skills.Runtime;
+using DungeonTeam.Gameplay.Inventory.Application;
+using DungeonTeam.Gameplay.Inventory.Domain;
 
 namespace Code.ApplicationRoot
 {
@@ -15,7 +18,8 @@ namespace Code.ApplicationRoot
             ActorConfigCatalog actors,
             SkillCatalog skills,
             DungeonRunTeamSetup teamSetup,
-            GuildProfileTextSnapshot text)
+            GuildProfileTextSnapshot text,
+            ItemCatalog itemCatalog = null)
         {
             if (profile == null)
             {
@@ -42,6 +46,8 @@ namespace Code.ApplicationRoot
                 throw new ArgumentNullException(nameof(text));
             }
 
+            var resolver = itemCatalog != null ? new EquipmentEffectResolver(itemCatalog) : null;
+            resolver?.ValidateInventory(profile.Inventory);
             var roster = new GuildHeroSnapshot[profile.Heroes.Count];
             GuildHeroSnapshot leader = null;
             var companions = new GuildHeroSnapshot[profile.CompanionActorIds.Count];
@@ -50,7 +56,7 @@ namespace Code.ApplicationRoot
             {
                 var hero = profile.Heroes[index];
                 var role = ResolveRole(profile, hero.ActorId);
-                var snapshot = BuildHero(hero, role, actors, skills, teamSetup, text);
+                var snapshot = BuildHero(hero, role, actors, skills, teamSetup, text, profile, itemCatalog, resolver);
                 roster[index] = snapshot;
 
                 if (role == GuildHeroRole.Leader)
@@ -70,7 +76,8 @@ namespace Code.ApplicationRoot
                 leader ?? throw new InvalidOperationException("Profile leader was not resolved."),
                 companions,
                 roster,
-                text);
+                text,
+                BuildResourceRows(profile, itemCatalog));
         }
 
         private static GuildHeroRole ResolveRole(PlayerProfileState profile, string actorId)
@@ -100,10 +107,16 @@ namespace Code.ApplicationRoot
             ActorConfigCatalog actors,
             SkillCatalog skills,
             DungeonRunTeamSetup teamSetup,
-            GuildProfileTextSnapshot text)
+            GuildProfileTextSnapshot text,
+            PlayerProfileState profile,
+            ItemCatalog itemCatalog,
+            EquipmentEffectResolver resolver)
         {
             var actor = actors.Require(hero.ActorId);
             var stats = actors.Resolve(hero.ActorId, hero.Level);
+            var effect = resolver != null
+                ? resolver.Resolve(profile.Inventory, hero.ActorId)
+                : EquipmentEffectSnapshot.Zero;
             var loadout = skills.RequireLoadout(hero.LoadoutId);
             var skillRows = new GuildHeroSkillSnapshot[loadout.Slots.Count];
 
@@ -145,12 +158,91 @@ namespace Code.ApplicationRoot
                 actor.DisplayName,
                 role,
                 hero.Level,
-                stats.MaximumHealth,
-                stats.MovementSpeed,
+                checked(stats.MaximumHealth + effect.MaximumHealthBonus),
+                stats.MovementSpeed + effect.MovementSpeedBonus,
                 skillRows,
                 hero.LoadoutId,
-                allowedLoadouts);
+                allowedLoadouts,
+                BuildEquipmentRows(profile.Inventory, hero.ActorId, itemCatalog),
+                BuildInventoryRows(profile.Inventory, hero.ActorId, itemCatalog));
         }
+
+        private static GuildEquipmentSlotSnapshot[] BuildEquipmentRows(
+            InventoryState inventory,
+            string actorId,
+            ItemCatalog itemCatalog)
+        {
+            if (itemCatalog == null || !inventory.TryGetEquipment(actorId, out var equipment))
+                return Array.Empty<GuildEquipmentSlotSnapshot>();
+            return new[]
+            {
+                BuildEquipmentRow(GuildProfileEquipmentSlot.Weapon, EquipmentSlot.Weapon, equipment.WeaponInstanceId, inventory, itemCatalog),
+                BuildEquipmentRow(GuildProfileEquipmentSlot.Armor, EquipmentSlot.Armor, equipment.ArmorInstanceId, inventory, itemCatalog),
+                BuildEquipmentRow(GuildProfileEquipmentSlot.Relic, EquipmentSlot.Relic, equipment.RelicInstanceId, inventory, itemCatalog)
+            };
+        }
+
+        private static GuildEquipmentSlotSnapshot BuildEquipmentRow(
+            GuildProfileEquipmentSlot guildSlot,
+            EquipmentSlot slot,
+            string instanceId,
+            InventoryState inventory,
+            ItemCatalog itemCatalog)
+        {
+            var display = slot.ToString();
+            var itemName = string.Empty;
+            if (!string.IsNullOrWhiteSpace(instanceId) && inventory.TryGetInstance(instanceId, out var item) && itemCatalog.TryGetEquipment(item.DefinitionId, out var definition))
+                itemName = definition.DisplayName;
+            return new GuildEquipmentSlotSnapshot(guildSlot, display, instanceId, itemName);
+        }
+
+        private static GuildInventoryItemSnapshot[] BuildInventoryRows(
+            InventoryState inventory,
+            string actorId,
+            ItemCatalog itemCatalog)
+        {
+            if (itemCatalog == null) return Array.Empty<GuildInventoryItemSnapshot>();
+            var rows = new List<GuildInventoryItemSnapshot>();
+            for (var index = 0; index < inventory.UniqueItems.Count; index++)
+            {
+                var item = inventory.UniqueItems[index];
+                if (!itemCatalog.TryGetEquipment(item.DefinitionId, out var definition) || !definition.IsEligibleFor(actorId))
+                    continue;
+                var equipped = inventory.TryGetEquipment(actorId, out var equipment) &&
+                    (string.Equals(equipment.WeaponInstanceId, item.InstanceId, StringComparison.Ordinal) ||
+                     string.Equals(equipment.ArmorInstanceId, item.InstanceId, StringComparison.Ordinal) ||
+                     string.Equals(equipment.RelicInstanceId, item.InstanceId, StringComparison.Ordinal));
+                rows.Add(new GuildInventoryItemSnapshot(
+                    item.InstanceId,
+                    item.DefinitionId,
+                    definition.DisplayName,
+                    ToGuildSlot(definition.Slot),
+                    equipped));
+            }
+            return rows.ToArray();
+        }
+
+        private static GuildResourceSnapshot[] BuildResourceRows(PlayerProfileState profile, ItemCatalog itemCatalog)
+        {
+            var rows = new GuildResourceSnapshot[profile.Inventory.Resources.Count];
+            for (var index = 0; index < rows.Length; index++)
+            {
+                var resource = profile.Inventory.Resources[index];
+                var display = itemCatalog != null && itemCatalog.TryGetResource(resource.DefinitionId, out var definition)
+                    ? definition.DisplayName
+                    : resource.DefinitionId;
+                rows[index] = new GuildResourceSnapshot(resource.DefinitionId, display, resource.Quantity);
+            }
+            return rows;
+        }
+
+        private static GuildProfileEquipmentSlot ToGuildSlot(EquipmentSlot slot) => slot switch
+        {
+            EquipmentSlot.Weapon => GuildProfileEquipmentSlot.Weapon,
+            EquipmentSlot.Armor => GuildProfileEquipmentSlot.Armor,
+            EquipmentSlot.Relic => GuildProfileEquipmentSlot.Relic,
+            _ => throw new ArgumentOutOfRangeException(nameof(slot), slot, null)
+        };
 
         private static string GetSlotDisplayText(
             SkillSlot slot,

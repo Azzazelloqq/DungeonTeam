@@ -1,7 +1,7 @@
 {
   "name": "DungeonTeam.PlayerProfile.Tests.EditMode",
   "rootNamespace": "DungeonTeam.Gameplay.PlayerProfile.Tests.EditMode",
-  "references": ["DungeonTeam.PlayerProfile.Domain", "DungeonTeam.PlayerProfile.Application", "DungeonTeam.PlayerProfile.Infrastructure", "LocalSaveSystem"],
+  "references": ["DungeonTeam.PlayerProfile.Domain", "DungeonTeam.PlayerProfile.Application", "DungeonTeam.PlayerProfile.Infrastructure", "DungeonTeam.Inventory.Domain", "LocalSaveSystem"],
   "includePlatforms": ["Editor"],
   "optionalUnityReferences": ["TestAssemblies"],
   "autoReferenced": false

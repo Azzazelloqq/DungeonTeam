@@ -498,7 +498,7 @@ Assets/Code/Gameplay/Inventory/
    └─ DungeonTeam.Inventory.Tests.EditMode.asmdef
 ```
 
-`Inventory.Domain` has BCL only and `noEngineReferences`; `Inventory.Application` references only it; `Inventory.Runtime` references `Inventory.Application` and `DungeonTeam.Configuration`. Test asmdefs reference their target and NUnit only. Bootstrap, PlayerProfile Domain/Infrastructure and their EditMode tests receive the smallest required directed references. Neither GuildHall assembly nor DungeonRun Runtime/Application receives an Inventory reference.
+`Inventory.Domain` has BCL only and `noEngineReferences`; `Inventory.Application` references only it; `Inventory.Runtime` references `Inventory.Application`, `Inventory.Domain` and `DungeonTeam.Configuration` because its typed config serializes `EquipmentSlot`. Test asmdefs reference their target and NUnit only. Bootstrap, PlayerProfile Domain/Infrastructure and their EditMode tests receive the smallest required directed references. Neither GuildHall assembly nor DungeonRun Runtime/Application receives an Inventory reference.
 
 #### B. Pure contracts
 

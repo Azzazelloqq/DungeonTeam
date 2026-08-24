@@ -1,6 +1,6 @@
 # DungeonTeam — Player Profile Implementation Plan
 
-**Статус:** PP-0/PP-1/PP-2 COMPLETE; PP-3 DESIGNED, NOT IMPLEMENTED
+**Статус:** PP-0/PP-1/PP-2 COMPLETE; PP-3 IMPLEMENTED, AUTOMATED VALIDATION PASSED; manual Unity smoke outstanding
 
 **Версия:** 0.5
 
@@ -23,7 +23,7 @@
 | PP-0 | Product/technical design, boundaries and order | Complete |
 | PP-1 | Read-only persistent profile vertical slice | Complete |
 | PP-2 | Editable leader/team/loadout and run integration | Complete |
-| PP-3 | Unique equipment, stackable resources and three hero slots | Designed; implementation requires approval |
+| PP-3 | Unique equipment, stackable resources and three hero slots | Implemented; targeted EditMode passed, manual Guild-to-Run smoke outstanding |
 | PP-4 | Verified result commit, Gold banking and selling | Designed; follows PP-3 |
 | PP-5 | Guild ranks and board gating | Requires rank rules/content decision |
 | PP-6 | Integrated regression and documentation closure | Planned |
@@ -132,6 +132,17 @@ PP-2 does not add recruitment, hero purchase, equipment or skill-tree progressio
 - V1 profiles migrate without losing roster, Gold, rank or loadout data;
 - a failed or unverifiable write keeps the previously persisted profile active;
 - no item UI reads SaveStore/config directly and no generic inventory framework is introduced.
+
+### Implemented and validated
+
+- Added isolated `Inventory.Domain`/`.Application`/`.Runtime` assemblies, typed `ItemConfigPage`, one monster-crystal resource and three starter equipment instances with the agreed three slots/effects.
+- Profile V2 retains the historical `PlayerProfileSaveV1` CLR identity, migrates V1 values to deterministic unequipped starter instances, and uses an application-owned `PlayerProfilePersistence` with a fresh-reader verification/recovery path.
+- Guild Profile exposes prepared equipment/resource rows and equip/unequip/transfer actions without receiving a repository, inventory state or config object; Bootstrap remains the cross-feature bridge.
+- The next player run maps effective stats through `DungeonRunActorBonus`; health, speed and damaging Primary direct/area/projectile values change without mutating shared definitions. Default/config/enemy selections remain zero-bonus.
+- Unity Editor compilation is clean after correcting explicit asmdef references. Targeted Unity EditMode: 38/38 passed (`DungeonTeam.Inventory.Tests.EditMode`, `DungeonTeam.PlayerProfile.Tests.EditMode`, `Bootstrap.Tests.EditMode`).
+- `validate-unity-change.ps1` reports only the pre-existing unrelated TMP fallback whitespace; scoped PP-3 diff check is clean.
+
+Manual Guild Profile → equip/transfer/unequip → Map → Run proof remains intentionally unrun. No player build or playtest was run.
 
 ## 6. PP-4 — rewards, Gold and selling
 

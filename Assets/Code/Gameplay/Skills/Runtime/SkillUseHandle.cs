@@ -40,7 +40,8 @@ namespace DungeonTeam.Gameplay.Skills.Runtime
             SkillLevelDefinition level,
             SkillPresentationSequence sequence,
             SkillPresentationPlayer presentation,
-            IReadOnlyList<ActorInstance> areaOpponents)
+            IReadOnlyList<ActorInstance> areaOpponents,
+            int primaryDamageBonus)
         {
             Source = source ?? throw new ArgumentNullException(nameof(source));
             Target = target ?? throw new ArgumentNullException(nameof(target));
@@ -48,6 +49,9 @@ namespace DungeonTeam.Gameplay.Skills.Runtime
             Level = level ?? throw new ArgumentNullException(nameof(level));
             _sequence = sequence ?? throw new ArgumentNullException(nameof(sequence));
             _presentation = presentation ?? throw new ArgumentNullException(nameof(presentation));
+            PrimaryDamageBonus = primaryDamageBonus >= 0
+                ? primaryDamageBonus
+                : throw new ArgumentOutOfRangeException(nameof(primaryDamageBonus));
             _timeline = new SkillUseTimeline(level.UseTiming);
             if (skill is AreaDamageSkillDefinition)
             {
@@ -89,6 +93,7 @@ namespace DungeonTeam.Gameplay.Skills.Runtime
         public ActorInstance Target { get; }
         public SkillDefinition Skill { get; }
         public SkillLevelDefinition Level { get; }
+        public int PrimaryDamageBonus { get; }
         public SkillUsePhase Phase => _timeline.Phase;
         public bool IsActive => !_isDisposed && _timeline.IsActive;
         public bool HasCommitted => _timeline.HasCommitted;

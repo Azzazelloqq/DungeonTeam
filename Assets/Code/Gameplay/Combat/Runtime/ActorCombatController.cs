@@ -88,16 +88,21 @@ namespace DungeonTeam.Gameplay.Combat.Runtime
         private RuntimeSkillSlot _activeRuntimeSlot;
         private bool _activeCooldownConsumed;
         private bool _isDisposed;
+        private readonly int _primaryDamageBonus;
 
         public ActorCombatController(
             ActorInstance actor,
             SkillCatalog catalog,
             string loadoutId,
-            SkillExecutionController execution)
+            SkillExecutionController execution,
+            int primaryDamageBonus = 0)
         {
             _actor = actor ?? throw new ArgumentNullException(nameof(actor));
             if (catalog == null) throw new ArgumentNullException(nameof(catalog));
             _execution = execution ?? throw new ArgumentNullException(nameof(execution));
+            _primaryDamageBonus = primaryDamageBonus >= 0
+                ? primaryDamageBonus
+                : throw new ArgumentOutOfRangeException(nameof(primaryDamageBonus));
 
             var loadout = catalog.RequireLoadout(loadoutId);
             _slots = new Dictionary<SkillSlot, RuntimeSkillSlot>(loadout.Slots.Count);
@@ -265,7 +270,8 @@ namespace DungeonTeam.Gameplay.Combat.Runtime
                     request.Target,
                     areaOpponents,
                     areaSkill,
-                    areaLevel);
+                    areaLevel,
+                    request.Slot == SkillSlot.Primary ? _primaryDamageBonus : 0);
             }
             else
             {
@@ -273,7 +279,8 @@ namespace DungeonTeam.Gameplay.Combat.Runtime
                     _actor,
                     request.Target,
                     runtimeSlot.Skill,
-                    runtimeSlot.Level);
+                    runtimeSlot.Level,
+                    request.Slot == SkillSlot.Primary ? _primaryDamageBonus : 0);
             }
             _activeRuntimeSlot = runtimeSlot;
             _activeCooldownConsumed = false;

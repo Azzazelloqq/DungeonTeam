@@ -19,6 +19,8 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Presentation.UI.GuildProfile.Ba
         public abstract IRelayCommand<object> AddCompanionCommand { get; }
         public abstract IRelayCommand<object> RemoveCompanionCommand { get; }
         public abstract IRelayCommand<string> SetLoadoutCommand { get; }
+        public abstract IRelayCommand<string> EquipItemCommand { get; }
+        public abstract IRelayCommand<object> UnequipItemCommand { get; }
         public abstract void Open();
         public abstract void Close();
     }

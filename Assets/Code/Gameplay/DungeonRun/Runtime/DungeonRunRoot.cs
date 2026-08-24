@@ -564,6 +564,9 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
             var runtimeDefinition = _actorCatalog.Resolve(
                 selection.ActorId,
                 selection.Level);
+            runtimeDefinition = runtimeDefinition.WithBonuses(
+                selection.Bonus.MaximumHealthBonus,
+                selection.Bonus.MovementSpeedBonus);
             return actorFactory.Create(
                 _actorDefinitions.Require(selection.ActorId),
                 runtimeDefinition,
@@ -582,7 +585,8 @@ namespace DungeonTeam.Gameplay.DungeonRun.Runtime
                 actor,
                 _skillCatalog,
                 selection.LoadoutId,
-                _skillExecution);
+                _skillExecution,
+                selection.Bonus.PrimaryDamageBonus);
         }
 
         private void CreateEnemyAiControllers()

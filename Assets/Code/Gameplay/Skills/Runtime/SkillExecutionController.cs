@@ -66,7 +66,8 @@ namespace DungeonTeam.Gameplay.Skills.Runtime
             ActorInstance source,
             ActorInstance target,
             SkillDefinition skill,
-            SkillLevelDefinition level)
+            SkillLevelDefinition level,
+            int primaryDamageBonus = 0)
         {
             if (skill is AreaDamageSkillDefinition)
             {
@@ -74,7 +75,7 @@ namespace DungeonTeam.Gameplay.Skills.Runtime
                     $"Area damage skill '{skill.SkillId}' requires area opponents.");
             }
 
-            return BeginInternal(source, target, skill, level, areaOpponents: null);
+            return BeginInternal(source, target, skill, level, areaOpponents: null, primaryDamageBonus: primaryDamageBonus);
         }
 
         public SkillUseHandle BeginArea(
@@ -82,12 +83,13 @@ namespace DungeonTeam.Gameplay.Skills.Runtime
             ActorInstance target,
             IReadOnlyList<ActorInstance> opponents,
             AreaDamageSkillDefinition skill,
-            AreaDamageSkillLevelDefinition level)
+            AreaDamageSkillLevelDefinition level,
+            int primaryDamageBonus = 0)
         {
             if (opponents == null)
                 throw new ArgumentNullException(nameof(opponents));
 
-            return BeginInternal(source, target, skill, level, opponents);
+            return BeginInternal(source, target, skill, level, opponents, primaryDamageBonus);
         }
 
         private SkillUseHandle BeginInternal(
@@ -95,7 +97,8 @@ namespace DungeonTeam.Gameplay.Skills.Runtime
             ActorInstance target,
             SkillDefinition skill,
             SkillLevelDefinition level,
-            IReadOnlyList<ActorInstance> areaOpponents)
+            IReadOnlyList<ActorInstance> areaOpponents,
+            int primaryDamageBonus)
         {
             if (_isDisposed)
                 throw new ObjectDisposedException(nameof(SkillExecutionController));
@@ -105,6 +108,7 @@ namespace DungeonTeam.Gameplay.Skills.Runtime
             if (target == null) throw new ArgumentNullException(nameof(target));
             if (skill == null) throw new ArgumentNullException(nameof(skill));
             if (level == null) throw new ArgumentNullException(nameof(level));
+            if (primaryDamageBonus < 0) throw new ArgumentOutOfRangeException(nameof(primaryDamageBonus));
 
             ValidateMechanic(skill, level);
             var sequence = _views.RequirePresentation(skill.SkillId);
@@ -120,7 +124,8 @@ namespace DungeonTeam.Gameplay.Skills.Runtime
                 level,
                 sequence,
                 _presentation,
-                areaOpponents);
+                areaOpponents,
+                primaryDamageBonus);
             var handle = new SkillUseHandle(execution);
             _executions.Add(execution);
             try
@@ -141,9 +146,10 @@ namespace DungeonTeam.Gameplay.Skills.Runtime
             ActorInstance source,
             ActorInstance target,
             SkillDefinition skill,
-            SkillLevelDefinition level)
+            SkillLevelDefinition level,
+            int primaryDamageBonus = 0)
         {
-            Begin(source, target, skill, level);
+            Begin(source, target, skill, level, primaryDamageBonus);
         }
 
         public void Dispose()
@@ -216,7 +222,9 @@ namespace DungeonTeam.Gameplay.Skills.Runtime
                         throw LevelTypeMismatch(skill, level);
                     }
 
-                    execution.Target.ApplyDamage(directLevel.Damage, execution.Source);
+                    execution.Target.ApplyDamage(
+                        checked(directLevel.Damage + execution.PrimaryDamageBonus),
+                        execution.Source);
                     var hitAnchor = execution.Target.HitVfxAnchor;
                     execution.PlayPhase(
                         SkillPresentationPhase.Impact,
@@ -243,7 +251,9 @@ namespace DungeonTeam.Gameplay.Skills.Runtime
                             continue;
                         }
 
-                        opponent.ApplyDamage(areaLevel.Damage, execution.Source);
+                        opponent.ApplyDamage(
+                            checked(areaLevel.Damage + execution.PrimaryDamageBonus),
+                            execution.Source);
                     }
 
                     execution.PlayPhase(
@@ -259,6 +269,7 @@ namespace DungeonTeam.Gameplay.Skills.Runtime
                     var projectile = _projectileFactory.Create(
                         skill.SkillId,
                         projectileLevel,
+                        execution.PrimaryDamageBonus,
                         execution.Source,
                         execution.Target,
                         _views,

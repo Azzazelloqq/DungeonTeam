@@ -170,6 +170,32 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Presentation.UI.GuildProfile
                     viewModel.SetLoadoutCommand.Execute(loadoutId),
                     !string.Equals(loadoutId, hero.LoadoutId, StringComparison.Ordinal));
             }
+
+            for (var index = 0; index < hero.Equipment.Count; index++)
+            {
+                var equipment = hero.Equipment[index];
+                var equipmentSlot = equipment.Slot;
+                if (!string.IsNullOrWhiteSpace(equipment.InstanceId))
+                {
+                    CreateEditRow(
+                        $"{equipment.DisplayText}: {equipment.ItemDisplayName} — Unequip",
+                        () => viewModel.UnequipItemCommand.Execute(equipmentSlot),
+                        true);
+                }
+            }
+
+            for (var index = 0; index < hero.InventoryItems.Count; index++)
+            {
+                var item = hero.InventoryItems[index];
+                if (!item.IsEquipped)
+                {
+                    var instanceId = item.InstanceId;
+                    CreateEditRow(
+                        $"Equip: {item.DisplayText}",
+                        () => viewModel.EquipItemCommand.Execute(instanceId),
+                        true);
+                }
+            }
         }
 
         private void CreateEditRow(
@@ -195,6 +221,14 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Presentation.UI.GuildProfile
                 $"{text.HealthLabel.DisplayText}: {hero.MaximumHealth}\n" +
                 $"{text.SpeedLabel.DisplayText}: " +
                 hero.MovementSpeed.ToString("0.##", CultureInfo.InvariantCulture));
+
+            for (var index = 0; index < hero.Equipment.Count; index++)
+            {
+                var equipment = hero.Equipment[index];
+                _detailsText.SetText(
+                    $"{_detailsText.text}\n{equipment.DisplayText}: " +
+                    (string.IsNullOrWhiteSpace(equipment.ItemDisplayName) ? "—" : equipment.ItemDisplayName));
+            }
 
             if (_rejection != null)
             {

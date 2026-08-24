@@ -4,9 +4,34 @@ using System.Collections.ObjectModel;
 
 namespace DungeonTeam.Gameplay.DungeonRun.Application
 {
+    public readonly struct DungeonRunActorBonus
+    {
+        public DungeonRunActorBonus(int primaryDamageBonus, int maximumHealthBonus, float movementSpeedBonus)
+        {
+            PrimaryDamageBonus = primaryDamageBonus >= 0
+                ? primaryDamageBonus
+                : throw new ArgumentOutOfRangeException(nameof(primaryDamageBonus));
+            MaximumHealthBonus = maximumHealthBonus >= 0
+                ? maximumHealthBonus
+                : throw new ArgumentOutOfRangeException(nameof(maximumHealthBonus));
+            MovementSpeedBonus = movementSpeedBonus >= 0f && !float.IsNaN(movementSpeedBonus) && !float.IsInfinity(movementSpeedBonus)
+                ? movementSpeedBonus
+                : throw new ArgumentOutOfRangeException(nameof(movementSpeedBonus));
+        }
+
+        public int PrimaryDamageBonus { get; }
+        public int MaximumHealthBonus { get; }
+        public float MovementSpeedBonus { get; }
+        public static DungeonRunActorBonus Zero => new(0, 0, 0f);
+    }
+
     public readonly struct DungeonRunActorSelection
     {
-        public DungeonRunActorSelection(string actorId, int level, string loadoutId)
+        public DungeonRunActorSelection(
+            string actorId,
+            int level,
+            string loadoutId,
+            DungeonRunActorBonus bonus = default)
         {
             ActorId = !string.IsNullOrWhiteSpace(actorId)
                 ? actorId
@@ -17,11 +42,13 @@ namespace DungeonTeam.Gameplay.DungeonRun.Application
             LoadoutId = !string.IsNullOrWhiteSpace(loadoutId)
                 ? loadoutId
                 : throw new ArgumentException("Loadout ID cannot be empty.", nameof(loadoutId));
+            Bonus = bonus;
         }
 
         public string ActorId { get; }
         public int Level { get; }
         public string LoadoutId { get; }
+        public DungeonRunActorBonus Bonus { get; }
     }
 
     public sealed class DungeonRunTeamSelection

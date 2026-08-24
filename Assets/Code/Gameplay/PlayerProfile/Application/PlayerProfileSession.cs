@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using DungeonTeam.Gameplay.PlayerProfile.Domain;
+using DungeonTeam.Gameplay.Inventory.Domain;
 
 namespace DungeonTeam.Gameplay.PlayerProfile.Application
 {
@@ -16,9 +17,16 @@ namespace DungeonTeam.Gameplay.PlayerProfile.Application
         public PlayerProfileSeed(
             IReadOnlyList<HeroProfileState> heroes,
             string leaderActorId,
-            IReadOnlyList<string> companionActorIds)
+            IReadOnlyList<string> companionActorIds,
+            InventoryState inventory = null)
         {
-            State = new PlayerProfileState(0, null, heroes, leaderActorId, companionActorIds);
+            State = new PlayerProfileState(
+                0,
+                null,
+                heroes,
+                leaderActorId,
+                companionActorIds,
+                inventory ?? InventoryState.Empty);
         }
 
         public PlayerProfileState State { get; }

@@ -93,5 +93,24 @@ namespace DungeonTeam.Gameplay.Actors.Runtime
         public int Level { get; }
         public int MaximumHealth { get; }
         public float MovementSpeed { get; }
+
+        public ActorRuntimeDefinition WithBonuses(int maximumHealthBonus, float movementSpeedBonus)
+        {
+            if (maximumHealthBonus < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(maximumHealthBonus));
+            }
+
+            if (movementSpeedBonus < 0f || float.IsNaN(movementSpeedBonus) || float.IsInfinity(movementSpeedBonus))
+            {
+                throw new ArgumentOutOfRangeException(nameof(movementSpeedBonus));
+            }
+
+            return new ActorRuntimeDefinition(
+                ActorId,
+                Level,
+                checked(MaximumHealth + maximumHealthBonus),
+                MovementSpeed + movementSpeedBonus);
+        }
     }
 }

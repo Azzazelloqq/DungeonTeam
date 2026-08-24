@@ -1,0 +1,6 @@
+{
+  "name": "DungeonTeam.Inventory.Runtime",
+  "rootNamespace": "DungeonTeam.Gameplay.Inventory.Runtime",
+  "references": ["DungeonTeam.Inventory.Application", "DungeonTeam.Inventory.Domain", "DungeonTeam.Configuration"],
+  "autoReferenced": false
+}

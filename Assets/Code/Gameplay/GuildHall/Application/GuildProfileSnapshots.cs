@@ -9,7 +9,16 @@ namespace DungeonTeam.Gameplay.GuildHall.Application
         SetLeader = 0,
         AddCompanion = 1,
         RemoveCompanion = 2,
-        SetLoadout = 3
+        SetLoadout = 3,
+        EquipItem = 4,
+        UnequipItem = 5
+    }
+
+    public enum GuildProfileEquipmentSlot
+    {
+        Weapon = 0,
+        Armor = 1,
+        Relic = 2
     }
 
     public sealed class GuildProfileEditRequest
@@ -17,7 +26,9 @@ namespace DungeonTeam.Gameplay.GuildHall.Application
         public GuildProfileEditRequest(
             GuildProfileEditKind kind,
             string actorId,
-            string loadoutId = null)
+            string loadoutId = null,
+            string itemInstanceId = null,
+            GuildProfileEquipmentSlot? equipmentSlot = null)
         {
             if (!Enum.IsDefined(typeof(GuildProfileEditKind), kind))
             {
@@ -29,22 +40,45 @@ namespace DungeonTeam.Gameplay.GuildHall.Application
                 throw new ArgumentException("Actor ID cannot be empty.", nameof(actorId));
             }
 
-            if (kind == GuildProfileEditKind.SetLoadout !=
-                !string.IsNullOrWhiteSpace(loadoutId))
+            if (equipmentSlot.HasValue && !Enum.IsDefined(typeof(GuildProfileEquipmentSlot), equipmentSlot.Value))
+            {
+                throw new ArgumentOutOfRangeException(nameof(equipmentSlot));
+            }
+
+            if (kind == GuildProfileEditKind.SetLoadout != !string.IsNullOrWhiteSpace(loadoutId))
             {
                 throw new ArgumentException(
                     "Loadout ID is required only for a loadout change.",
                     nameof(loadoutId));
             }
 
+            if (kind == GuildProfileEditKind.EquipItem)
+            {
+                if (string.IsNullOrWhiteSpace(itemInstanceId) || loadoutId != null || equipmentSlot.HasValue)
+                    throw new ArgumentException("Equip requires an item instance and no other edit value.");
+            }
+            else if (kind == GuildProfileEditKind.UnequipItem)
+            {
+                if (!equipmentSlot.HasValue || loadoutId != null || itemInstanceId != null)
+                    throw new ArgumentException("Unequip requires an equipment slot and no other edit value.");
+            }
+            else if (itemInstanceId != null || equipmentSlot.HasValue)
+            {
+                throw new ArgumentException("Item edit values are valid only for equipment edits.");
+            }
+
             Kind = kind;
             ActorId = actorId;
             LoadoutId = loadoutId;
+            ItemInstanceId = itemInstanceId;
+            EquipmentSlot = equipmentSlot;
         }
 
         public GuildProfileEditKind Kind { get; }
         public string ActorId { get; }
         public string LoadoutId { get; }
+        public string ItemInstanceId { get; }
+        public GuildProfileEquipmentSlot? EquipmentSlot { get; }
     }
 
     public sealed class GuildProfileEditResult
@@ -196,10 +230,65 @@ namespace DungeonTeam.Gameplay.GuildHall.Application
                 : throw new ArgumentException("Value cannot be empty.", parameterName);
     }
 
+    public sealed class GuildEquipmentSlotSnapshot
+    {
+        public GuildEquipmentSlotSnapshot(
+            GuildProfileEquipmentSlot slot,
+            string displayText,
+            string instanceId,
+            string itemDisplayName)
+        {
+            if (!Enum.IsDefined(typeof(GuildProfileEquipmentSlot), slot))
+                throw new ArgumentOutOfRangeException(nameof(slot));
+            Slot = slot;
+            DisplayText = Require(displayText, nameof(displayText));
+            InstanceId = instanceId;
+            ItemDisplayName = itemDisplayName;
+        }
+
+        public GuildProfileEquipmentSlot Slot { get; }
+        public string DisplayText { get; }
+        public string InstanceId { get; }
+        public string ItemDisplayName { get; }
+
+        private static string Require(string value, string name) =>
+            !string.IsNullOrWhiteSpace(value) ? value : throw new ArgumentException("Value cannot be empty.", name);
+    }
+
+    public sealed class GuildInventoryItemSnapshot
+    {
+        public GuildInventoryItemSnapshot(
+            string instanceId,
+            string definitionId,
+            string displayText,
+            GuildProfileEquipmentSlot slot,
+            bool isEquipped)
+        {
+            InstanceId = Require(instanceId, nameof(instanceId));
+            DefinitionId = Require(definitionId, nameof(definitionId));
+            DisplayText = Require(displayText, nameof(displayText));
+            if (!Enum.IsDefined(typeof(GuildProfileEquipmentSlot), slot))
+                throw new ArgumentOutOfRangeException(nameof(slot));
+            Slot = slot;
+            IsEquipped = isEquipped;
+        }
+
+        public string InstanceId { get; }
+        public string DefinitionId { get; }
+        public string DisplayText { get; }
+        public GuildProfileEquipmentSlot Slot { get; }
+        public bool IsEquipped { get; }
+
+        private static string Require(string value, string name) =>
+            !string.IsNullOrWhiteSpace(value) ? value : throw new ArgumentException("Value cannot be empty.", name);
+    }
+
     public sealed class GuildHeroSnapshot
     {
         private readonly ReadOnlyCollection<GuildHeroSkillSnapshot> _skills;
         private readonly ReadOnlyCollection<GuildHeroLoadoutSnapshot> _allowedLoadouts;
+        private readonly ReadOnlyCollection<GuildEquipmentSlotSnapshot> _equipment;
+        private readonly ReadOnlyCollection<GuildInventoryItemSnapshot> _inventoryItems;
 
         public GuildHeroSnapshot(
             string actorId,
@@ -210,7 +299,9 @@ namespace DungeonTeam.Gameplay.GuildHall.Application
             float movementSpeed,
             IReadOnlyList<GuildHeroSkillSnapshot> skills,
             string loadoutId,
-            IReadOnlyList<GuildHeroLoadoutSnapshot> allowedLoadouts)
+            IReadOnlyList<GuildHeroLoadoutSnapshot> allowedLoadouts,
+            IReadOnlyList<GuildEquipmentSlotSnapshot> equipment = null,
+            IReadOnlyList<GuildInventoryItemSnapshot> inventoryItems = null)
         {
             ActorId = Require(actorId, nameof(actorId));
             DisplayName = Require(displayName, nameof(displayName));
@@ -244,6 +335,8 @@ namespace DungeonTeam.Gameplay.GuildHall.Application
             _skills = Array.AsReadOnly(copy);
             LoadoutId = Require(loadoutId, nameof(loadoutId));
             _allowedLoadouts = CopyLoadouts(allowedLoadouts, nameof(allowedLoadouts));
+            _equipment = CopyOptional(equipment);
+            _inventoryItems = CopyOptional(inventoryItems);
         }
 
         public string ActorId { get; }
@@ -255,6 +348,8 @@ namespace DungeonTeam.Gameplay.GuildHall.Application
         public IReadOnlyList<GuildHeroSkillSnapshot> Skills => _skills;
         public string LoadoutId { get; }
         public IReadOnlyList<GuildHeroLoadoutSnapshot> AllowedLoadouts => _allowedLoadouts;
+        public IReadOnlyList<GuildEquipmentSlotSnapshot> Equipment => _equipment;
+        public IReadOnlyList<GuildInventoryItemSnapshot> InventoryItems => _inventoryItems;
 
         private static ReadOnlyCollection<GuildHeroLoadoutSnapshot> CopyLoadouts(
             IReadOnlyList<GuildHeroLoadoutSnapshot> source,
@@ -279,12 +374,22 @@ namespace DungeonTeam.Gameplay.GuildHall.Application
             !string.IsNullOrWhiteSpace(value)
                 ? value
                 : throw new ArgumentException("Value cannot be empty.", parameterName);
+
+        private static ReadOnlyCollection<T> CopyOptional<T>(IReadOnlyList<T> source) where T : class
+        {
+            if (source == null) return Array.AsReadOnly(Array.Empty<T>());
+            var copy = new T[source.Count];
+            for (var index = 0; index < copy.Length; index++)
+                copy[index] = source[index] ?? throw new ArgumentException("Collection contains a missing item.");
+            return Array.AsReadOnly(copy);
+        }
     }
 
     public sealed class GuildProfileSnapshot
     {
         private readonly ReadOnlyCollection<GuildHeroSnapshot> _companions;
         private readonly ReadOnlyCollection<GuildHeroSnapshot> _roster;
+        private readonly ReadOnlyCollection<GuildResourceSnapshot> _resources;
 
         public GuildProfileSnapshot(
             long gold,
@@ -292,7 +397,8 @@ namespace DungeonTeam.Gameplay.GuildHall.Application
             GuildHeroSnapshot leader,
             IReadOnlyList<GuildHeroSnapshot> companions,
             IReadOnlyList<GuildHeroSnapshot> roster,
-            GuildProfileTextSnapshot text)
+            GuildProfileTextSnapshot text,
+            IReadOnlyList<GuildResourceSnapshot> resources = null)
         {
             Gold = gold >= 0 ? gold : throw new ArgumentOutOfRangeException(nameof(gold));
             RankDisplayText = !string.IsNullOrWhiteSpace(rankDisplayText)
@@ -302,6 +408,7 @@ namespace DungeonTeam.Gameplay.GuildHall.Application
             _companions = Copy(companions, nameof(companions));
             _roster = Copy(roster, nameof(roster));
             Text = text ?? throw new ArgumentNullException(nameof(text));
+            _resources = Copy(resources);
         }
 
         public long Gold { get; }
@@ -310,6 +417,7 @@ namespace DungeonTeam.Gameplay.GuildHall.Application
         public IReadOnlyList<GuildHeroSnapshot> Companions => _companions;
         public IReadOnlyList<GuildHeroSnapshot> Roster => _roster;
         public GuildProfileTextSnapshot Text { get; }
+        public IReadOnlyList<GuildResourceSnapshot> Resources => _resources;
 
         private static ReadOnlyCollection<GuildHeroSnapshot> Copy(
             IReadOnlyList<GuildHeroSnapshot> source,
@@ -330,5 +438,28 @@ namespace DungeonTeam.Gameplay.GuildHall.Application
 
             return Array.AsReadOnly(copy);
         }
+
+        private static ReadOnlyCollection<GuildResourceSnapshot> Copy(IReadOnlyList<GuildResourceSnapshot> source)
+        {
+            if (source == null) return Array.AsReadOnly(Array.Empty<GuildResourceSnapshot>());
+            var copy = new GuildResourceSnapshot[source.Count];
+            for (var index = 0; index < copy.Length; index++)
+                copy[index] = source[index] ?? throw new ArgumentException("Resource is missing.");
+            return Array.AsReadOnly(copy);
+        }
+    }
+
+    public sealed class GuildResourceSnapshot
+    {
+        public GuildResourceSnapshot(string definitionId, string displayText, int quantity)
+        {
+            DefinitionId = !string.IsNullOrWhiteSpace(definitionId) ? definitionId : throw new ArgumentException("Definition ID cannot be empty.", nameof(definitionId));
+            DisplayText = !string.IsNullOrWhiteSpace(displayText) ? displayText : throw new ArgumentException("Display text cannot be empty.", nameof(displayText));
+            Quantity = quantity > 0 ? quantity : throw new ArgumentOutOfRangeException(nameof(quantity));
+        }
+
+        public string DefinitionId { get; }
+        public string DisplayText { get; }
+        public int Quantity { get; }
     }
 }

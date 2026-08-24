@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using DungeonTeam.Gameplay.Inventory.Domain;
 
 namespace DungeonTeam.Gameplay.PlayerProfile.Domain
 {
@@ -33,6 +34,23 @@ namespace DungeonTeam.Gameplay.PlayerProfile.Domain
             IReadOnlyList<HeroProfileState> heroes,
             string leaderActorId,
             IReadOnlyList<string> companionActorIds)
+            : this(
+                gold,
+                rankId,
+                heroes,
+                leaderActorId,
+                companionActorIds,
+                InventoryState.Empty)
+        {
+        }
+
+        public PlayerProfileState(
+            long gold,
+            string rankId,
+            IReadOnlyList<HeroProfileState> heroes,
+            string leaderActorId,
+            IReadOnlyList<string> companionActorIds,
+            InventoryState inventory)
         {
             if (gold < 0)
             {
@@ -87,6 +105,17 @@ namespace DungeonTeam.Gameplay.PlayerProfile.Domain
                 companionCopy[i] = id;
             }
 
+            Inventory = inventory ?? throw new ArgumentNullException(nameof(inventory));
+            for (var index = 0; index < Inventory.EquipmentByHero.Count; index++)
+            {
+                if (!roster.Contains(Inventory.EquipmentByHero[index].ActorId))
+                {
+                    throw new ArgumentException(
+                        "Inventory equipment mappings must belong to the profile roster.",
+                        nameof(inventory));
+                }
+            }
+
             Gold = gold;
             RankId = rankId;
             _heroes = Array.AsReadOnly(heroCopy);
@@ -98,6 +127,18 @@ namespace DungeonTeam.Gameplay.PlayerProfile.Domain
         public IReadOnlyList<HeroProfileState> Heroes => _heroes;
         public string LeaderActorId { get; }
         public IReadOnlyList<string> CompanionActorIds => _companionActorIds;
+        public InventoryState Inventory { get; }
+
+        public PlayerProfileState ReplaceInventory(InventoryState inventory)
+        {
+            return new PlayerProfileState(
+                Gold,
+                RankId,
+                Heroes,
+                LeaderActorId,
+                CompanionActorIds,
+                inventory ?? throw new ArgumentNullException(nameof(inventory)));
+        }
 
         public PlayerProfileState ChangeLeader(string actorId)
         {
@@ -114,7 +155,7 @@ namespace DungeonTeam.Gameplay.PlayerProfile.Domain
                 companions[selectedCompanionIndex] = LeaderActorId;
             }
 
-            return new PlayerProfileState(Gold, RankId, Heroes, actorId, companions);
+            return new PlayerProfileState(Gold, RankId, Heroes, actorId, companions, Inventory);
         }
 
         public PlayerProfileState AddCompanion(string actorId)
@@ -133,7 +174,7 @@ namespace DungeonTeam.Gameplay.PlayerProfile.Domain
             }
 
             companions[^1] = actorId;
-            return new PlayerProfileState(Gold, RankId, Heroes, LeaderActorId, companions);
+            return new PlayerProfileState(Gold, RankId, Heroes, LeaderActorId, companions, Inventory);
         }
 
         public PlayerProfileState RemoveCompanion(string actorId)
@@ -155,7 +196,7 @@ namespace DungeonTeam.Gameplay.PlayerProfile.Domain
                 }
             }
 
-            return new PlayerProfileState(Gold, RankId, Heroes, LeaderActorId, companions);
+            return new PlayerProfileState(Gold, RankId, Heroes, LeaderActorId, companions, Inventory);
         }
 
         public PlayerProfileState ChangeLoadout(string actorId, string loadoutId)
@@ -184,7 +225,7 @@ namespace DungeonTeam.Gameplay.PlayerProfile.Domain
                     : Heroes[index];
             }
 
-            return new PlayerProfileState(Gold, RankId, heroes, LeaderActorId, CompanionActorIds);
+            return new PlayerProfileState(Gold, RankId, heroes, LeaderActorId, CompanionActorIds, Inventory);
         }
 
         private void RequireRosterActor(string actorId, string parameterName)

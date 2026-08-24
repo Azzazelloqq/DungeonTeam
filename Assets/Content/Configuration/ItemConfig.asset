@@ -1,0 +1,52 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5f4b9f2b1d5c4a7f8e6d3c2b1a0f9e8d, type: 3}
+  m_Name: ItemConfig
+  m_EditorClassIdentifier: DungeonTeam.Inventory.Runtime::DungeonTeam.Gameplay.Inventory.Runtime.Config.ItemConfigPage
+  _equipment:
+  - _definitionId: equipment.training-blade
+    _displayName: Training Blade
+    _saleValue: 10
+    _slot: 0
+    _effect: 0
+    _effectValue: 5
+    _eligibleActorIds:
+    - actor.king
+    - actor.druid
+    - actor.rogue
+    - actor.wizard
+  - _definitionId: equipment.warden-coat
+    _displayName: Warden Coat
+    _saleValue: 10
+    _slot: 1
+    _effect: 1
+    _effectValue: 20
+    _eligibleActorIds:
+    - actor.king
+    - actor.druid
+    - actor.rogue
+    - actor.wizard
+  - _definitionId: equipment.pathfinder-charm
+    _displayName: Pathfinder Charm
+    _saleValue: 10
+    _slot: 2
+    _effect: 2
+    _effectValue: 0.5
+    _eligibleActorIds:
+    - actor.king
+    - actor.druid
+    - actor.rogue
+    - actor.wizard
+  _resources:
+  - _definitionId: resource.monster-crystal
+    _displayName: Monster Crystal
+    _saleValue: 1
