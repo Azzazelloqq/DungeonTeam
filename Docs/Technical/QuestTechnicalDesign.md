@@ -25,9 +25,11 @@ No Quest root, DI scope, event bus, global static dispatcher or generic objectiv
 - `CollectResourceObjective(resourceDefinitionId, requiredAmount)`;
 - `CompleteDialogueObjective(npcId)`.
 
+`QuestChainDefinition` is a second config record with `chainId`, localization-ready title and an ordered non-empty `questIds` array. A `QuestDefinition` either has no `chainId` or belongs to exactly one chain. Its `stepIndex` is inferred from that chain array; the first step is available, and completion unlocks the immediately next step. A chain has no branches, joins or cycles in Q-0.
+
 The catalog validates unique quest IDs, positive required amounts and non-empty target IDs. Bootstrap performs startup cross-content validation: dungeon IDs against launch presets/current terminal content, resource IDs against `ItemCatalog`, NPC IDs against `GuildHallCatalog`.
 
-`QuestState` holds defensive snapshots of accepted quest progress and completed quest IDs. `Accept(questId, catalog)` rejects unknown, duplicate-active and completed IDs. `ApplyDungeonCompleted`, `ApplySettledResources` and `ApplyDialogueCompleted` inspect only accepted Q-0 definitions, increment matching state, and return a mutation result. State completion is idempotent and removes the active progress record only after adding the completed ID.
+`QuestState` holds defensive snapshots of accepted quest progress and completed quest IDs. `Accept(questId, catalog)` rejects unknown, duplicate-active, completed and locked chain steps. `ApplyDungeonCompleted`, `ApplySettledResources` and `ApplyDialogueCompleted` inspect only accepted Q-0 definitions, increment matching state, and return a mutation result. State completion is idempotent and removes the active progress record only after adding the completed ID.
 
 There is intentionally no public generic `ApplyEvent` payload. Three typed methods match the three concrete sources, keeping trigger ownership explicit.
 
@@ -55,7 +57,8 @@ Each quest row exposes title, summary, objective/progress text, state text and a
 
 EditMode:
 
-- catalog validation, defensive state and variable ordered definitions;
+- catalog/chain validation, defensive state and variable ordered definitions;
+- only the first incomplete chain step can be accepted; completion unlocks only its immediate successor;
 - accepted-only progression for each of the three objective types;
 - no progress from wrong dungeon/resource/NPC, defeat, duplicate terminal result or pre-accept action;
 - resource accumulation across multiple settled receipts and one-time completion;
