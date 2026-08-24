@@ -2,7 +2,7 @@
 
 **Статус:** PP-1/PP-2 IMPLEMENTED; PP-3 DESIGNED, NOT IMPLEMENTED
 
-**Версия:** 0.4
+**Версия:** 0.5
 
 **Дата:** 24 августа 2026
 
@@ -386,14 +386,15 @@ The real implementation creates only the required pure assemblies:
 
 ```text
 Inventory.Domain                 (BCL-only ownership/equip invariants)
-Inventory.Application            (catalog validation and use cases)
+Inventory.Application            (catalog and pure effect resolver)
+Inventory.Runtime                (typed ItemConfigPage)
 PlayerProfile.Domain -> Inventory.Domain
-PlayerProfile.Application -> PlayerProfile.Domain, Inventory.Application
+PlayerProfile.Application -> PlayerProfile.Domain
 PlayerProfile.Infrastructure -> PlayerProfile.Application/Domain, Inventory.Domain, LocalSaveSystem
-Bootstrap -> all composition consumers
+Bootstrap -> Inventory.Application/Runtime and composition consumers
 ```
 
-`DungeonRun.Application` receives its own immutable equipment bonus values in the already prepared team selection; it does not reference Inventory. `GuildHall.Application` receives only profile/detail snapshots and edit request/result values. No Inventory root, DI scope, event bus, generic stat-modifier engine or standalone inventory screen is introduced.
+`Inventory.Runtime -> Inventory.Application -> Inventory.Domain`; `Inventory.Domain` never references PlayerProfile. `DungeonRun.Application` receives its own immutable equipment bonus values in the already prepared team selection; it does not reference Inventory. `GuildHall.Application` receives only profile/detail snapshots and edit request/result values. No Inventory root, DI scope, event bus, generic stat-modifier engine or standalone inventory screen is introduced.
 
 ### 14.2. Domain state and rules
 
@@ -465,3 +466,94 @@ The result cannot be applied twice across restart, and failed persistence cannot
 - EditMode: mapping equipped values into two different team fixtures changes only the documented run stats; no fixed production roster or item count assertions.
 - EditMode: verified-write repository keeps session state unchanged when a fresh reader cannot observe the candidate.
 - PlayMode/manual proof: profile shows inventory/equipment, commands update the detail state, and the next run visibly receives each of the three concrete effects.
+
+### 14.7. Implementation blueprint
+
+#### A. New code and assembly graph
+
+Create only these real files/assemblies, with tests adjacent to the pure layers:
+
+```text
+Assets/Code/Gameplay/Inventory/
+├─ Domain/
+│  ├─ EquipmentSlot.cs
+│  ├─ ItemInstanceState.cs
+│  ├─ ResourceStackState.cs
+│  ├─ HeroEquipmentState.cs
+│  ├─ InventoryState.cs
+│  └─ DungeonTeam.Inventory.Domain.asmdef
+├─ Application/
+│  ├─ EquipmentItemDefinition.cs
+│  ├─ ResourceItemDefinition.cs
+│  ├─ ItemCatalog.cs
+│  ├─ EquipmentEffectSnapshot.cs
+│  ├─ EquipmentEffectResolver.cs
+│  └─ DungeonTeam.Inventory.Application.asmdef
+├─ Runtime/Config/
+│  ├─ ItemConfigPage.cs
+│  └─ DungeonTeam.Inventory.Runtime.asmdef
+└─ Tests/EditMode/
+   ├─ InventoryDomainTests.cs
+   ├─ InventoryApplicationTests.cs
+   └─ DungeonTeam.Inventory.Tests.EditMode.asmdef
+```
+
+`Inventory.Domain` has BCL only and `noEngineReferences`; `Inventory.Application` references only it; `Inventory.Runtime` references `Inventory.Application` and `DungeonTeam.Configuration`. Test asmdefs reference their target and NUnit only. Bootstrap, PlayerProfile Domain/Infrastructure and their EditMode tests receive the smallest required directed references. Neither GuildHall assembly nor DungeonRun Runtime/Application receives an Inventory reference.
+
+#### B. Pure contracts
+
+`EquipmentSlot` has exactly `Weapon`, `Armor`, `Relic`. `InventoryState` is immutable and defensive. Its public operations are `Equip(actorId, instanceId, slot)` and `Unequip(actorId, slot)`; they enforce instance ownership, one equip occurrence and deterministic slot replacement, but never query Unity/config. `PlayerProfileState` gains one `InventoryState` and returns a new aggregate from an inventory replacement; it remains the owner that rejects an equipment entry for a non-roster actor.
+
+`ItemCatalog` resolves static definitions. `EquipmentEffectResolver.Resolve(inventory, actorId)` validates definition compatibility and returns one BCL-only `EquipmentEffectSnapshot` with only `PrimaryDamageBonus`, `MaximumHealthBonus` and `MovementSpeedBonus`. It does not inspect loadout, combat types or Unity objects. Bootstrap owns the one conversion of this snapshot into the consumer-specific Dungeon Run and Guild Hall values.
+
+#### C. Config and seed
+
+Add `ItemConfigPage` to the existing config asset. It exposes separate serialized arrays for equipment definitions and resource definitions, so a resource cannot accidentally carry a slot/effect. Catalog validation rejects duplicate IDs, empty text IDs/fallbacks, invalid effect values, duplicate eligible actor IDs, missing current roster actors and an effect incompatible with its declared slot.
+
+Author exactly four initial definitions: the three equipment definitions from section 14.3 and `resource.monster-crystal`. Give the three equipment items non-zero, authored values; crystals have no PP-3 grant or UI action. `PlayerProfileComposition` receives `ItemCatalog` and creates the same three deterministic starter instance IDs for a new profile. The V1→V2 migrator creates those IDs only when the V1 record is read; its first verified rewrite makes later loads ordinary V2 loads.
+
+#### D. Persistence ownership and migration
+
+Replace the `out SaveStore` composition contract with one application-lifetime `PlayerProfilePersistence` disposable owned by `ApplicationRoot`. It owns the live SaveStore, the shared store-options/registry/migrator factory and `SaveStorePlayerProfileRepository`; the session borrows the repository. `ApplicationRoot` disposes `PlayerProfilePersistence` after Guild Hall/Dungeon consumers and never holds or exposes a raw SaveStore.
+
+The stored CLR type stays `PlayerProfileSaveV1` despite its historical name; it receives `[SaveVersion(2)]` and V2 fields. Do not rename it. Add V2 nested save DTOs with stable `SaveFieldId`s for item instances, resource stacks and hero equipment. The migration tracker is created with every store so the repository can immediately verified-rewrite a migrated value. Fresh verifier stores use the identical options, registry, migrators and key, and are disposed in the same synchronous method.
+
+`Save` writes the full candidate, creates a fresh reader and compares canonical Domain state rather than DTO reference/order artifacts. On verification failure it disposes the tainted live store, recreates it from disk, throws a typed persistence exception and leaves `PlayerProfileSession.State` unchanged. This is cold/warm user-action code, not a tick: no coroutine, Update, caching layer or LightDI registration is needed.
+
+#### E. Edit bridge and profile UI
+
+Extend only the existing Guild Profile request/result boundary:
+
+```text
+GuildProfileEditKind += EquipItem | UnequipItem
+GuildProfileEditRequest
+├─ actorId
+├─ itemInstanceId (required only for EquipItem)
+└─ equipmentSlot (required only for UnequipItem)
+```
+
+The constructor rejects irrelevant/missing fields. `GuildProfileEditHandler` stays the Bootstrap cross-feature bridge: it resolves the selected item through `ItemCatalog`, validates actor/slot eligibility, builds the candidate `PlayerProfileState`, commits it, then publishes a rebuilt flat `GuildProfileSnapshot`. It never passes Session, catalog or Inventory objects into GuildHall.
+
+`GuildHeroSnapshot` receives prepared effective health/speed, three prepared equipment-slot rows and the selected hero's applicable inventory-item rows. `GuildProfileSnapshot` receives prepared resource rows. Existing Guild Profile Model/ViewModel owns selection and commands; the existing dynamic row template is reused for equip, transfer and unequip actions, with configured text/rejection snapshots. No new screen, prefab family, serialized binding or inventory grid is introduced unless the existing row template proves insufficient during Unity authoring.
+
+#### F. Dungeon Run integration
+
+Add BCL-only `DungeonRunActorBonus` to `DungeonTeam.DungeonRun.Application` and append it as an optional, default-zero value to `DungeonRunActorSelection`; existing config/dev/enemy selections therefore retain current behavior. The type contains only the three PP-3 additive values and validates non-negative results.
+
+`PlayerProfileComposition.MapToTeamSelection(profile, itemCatalog)` uses `EquipmentEffectResolver`, then creates a selection with the mapped bonus. `GuildProfileSnapshotBuilder` uses the same resolver for effective stats, so the profile and next run cannot diverge.
+
+`DungeonRunRoot` creates a derived `ActorRuntimeDefinition` with the health/speed bonus before `ActorFactory.Create`. It passes `PrimaryDamageBonus` to `ActorCombatController`. The controller carries that value only for `SkillSlot.Primary`; `SkillUseExecution` carries it through the already active execution until commit. Direct, area and projectile damage apply the additive bonus; direct heal is unchanged. Projectile construction receives an explicit resolved damage value rather than mutating static `SkillLevelDefinition`. Enemy selections always use zero.
+
+This keeps the existing combat/skill lifecycle, tick ownership and presentation intact. There are no item lookups, LINQ allocations or config queries in `Tick`, attack execution or hot targeting paths.
+
+#### G. Delivery order and acceptance
+
+1. Add asmdefs and failing pure Inventory Domain tests.
+2. Implement Domain, then ItemCatalog/effect resolver and config validation tests.
+3. Extend Profile Domain/DTO/migration and implement `PlayerProfilePersistence` verified writes with focused filesystem tests.
+4. Update Bootstrap composition and the pure profile-to-run/snapshot mappers.
+5. Extend DungeonRun selection/runtime/skill execution and add focused EditMode plus PlayMode damage/health/speed proof.
+6. Extend Guild snapshots and existing Profile MVVM/View/config; author only required prefab/config bindings.
+7. Run compile, affected EditMode suites, lifecycle/Addressable regression and the Unity mechanical validator. Run manual Guild Profile → equip → Map → Run smoke because prefab/UI/input/runtime effects are not proven by compile.
+
+PP-3 is complete only when a migrated V1 profile remains valid, the three item effects are observable in the next run, an unverifiable write leaves the previous profile active, and no new reverse reference or service locator appears.

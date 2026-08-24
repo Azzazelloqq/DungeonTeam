@@ -2,7 +2,7 @@
 
 **Статус:** PP-0/PP-1/PP-2 COMPLETE; PP-3 DESIGNED, NOT IMPLEMENTED
 
-**Версия:** 0.4
+**Версия:** 0.5
 
 **Дата:** 24 августа 2026
 
@@ -113,14 +113,16 @@ PP-2 does not add recruitment, hero purchase, equipment or skill-tree progressio
 
 ### Work
 
-1. Add only the required Inventory Domain/Application assemblies and directed references.
-2. TDD unique ownership, slot, transfer and stack invariants.
-3. Add typed item/resource config and the three starter definitions.
-4. Move the profile record to V2 without changing its stored CLR type identity; V1 migration creates starter instances exactly once.
-5. Replace the current repository write path with the documented fresh-reader verified write and reset-from-disk failure path.
-6. Map concrete equipped effects into the current Dungeon Run selection without a Dungeon Run → Inventory dependency.
-7. Add equip/unequip detail actions and immutable presentation snapshots to the existing Guild Profile family.
-8. Add focused EditMode behavior/migration/write-verification tests and UI/run PlayMode proof.
+1. Add Inventory Domain/Application/Runtime and test asmdefs exactly as section 14.7.A specifies; do not add an Inventory root or DI scope.
+2. TDD unique ownership, slot replacement/transfer, unequip and stack invariants before config/UI code.
+3. Add typed `ItemConfigPage`, register it in the existing configuration asset, and author only blade, coat, charm and monster-crystal definitions.
+4. Extend PlayerProfile Domain with inventory state; move the single stored DTO to V2 without changing its CLR type identity.
+5. Add the V1→V2 migrator, deterministic starter instances and migration rewrite proof; V1 data may not lose Gold, rank, roster, level or loadout.
+6. Replace raw SaveStore lifetime with application-owned `PlayerProfilePersistence` and the documented fresh-reader verified write/reset path.
+7. Map resolved item effects to `DungeonRunActorBonus`; prove zero-bonus config/dev/enemy paths remain unchanged.
+8. Apply health/speed in actor creation and Primary damage through the current skill execution path without mutating shared definitions.
+9. Extend the existing Guild Profile snapshot/request/MVVM/View family with equip/unequip/transfer rows and configured feedback; no separate inventory UI.
+10. Run focused EditMode/PlayMode/lifecycle regression, compile, Unity mechanical validation and manual Profile → Run smoke.
 
 ### Done when
 
