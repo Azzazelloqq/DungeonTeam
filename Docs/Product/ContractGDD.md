@@ -1,6 +1,6 @@
 # DungeonTeam — Contract GDD
 
-**Статус:** CQ-0 implemented; automated validation passed
+**Статус:** CQ-0 implemented; CQ-1 contract-reward design approved for implementation
 
 ## CQ-0 player loop
 
@@ -19,3 +19,24 @@ Contracts are distinct from Player Profile: they own their own state and save ke
 ## Initial content
 
 `contract.demo` is the initial F-rank contract. `contract.veteran` remains rank E-gated. Both target the current supported dungeon, but are distinct authored contracts.
+
+## CQ-1 — contract rewards
+
+CQ-1 gives a completed contract one optional configured reward that the player explicitly collects from its configured point. The contract's terminal completion remains separate from collection: the Board shows it completed and, if relevant, tells the player where to take the reward.
+
+```text
+accept contract → complete matching production Dungeon Run
+→ existing run rewards are settled
+→ contract becomes completed
+→ player interacts with its configured claim point
+→ chooses Receive
+→ contract reward is banked once into Player Profile
+```
+
+Claim points remain deliberately limited to `Reception` and a concrete Guild Hall `npcId`. The initial content demonstrates Reception on `contract.demo` and NPC collection on the E-gated `contract.veteran`. A reward contains only Gold and stackable resources; a contract without reward is valid.
+
+The existing reward collection UI is renamed from a quest-specific family to a neutral Guild Hall collection because it now has two actual sources: quests and contracts. Its entry carries a typed source identity, so the View neither parses IDs nor knows persistence/config. Contracts and Quests keep their own state, config and save keys.
+
+Profile banking keeps the same stable idempotency rule: Profile records `contract.reward:<contractId>` before Contract state marks the reward claimed. A crash between these saves is recoverable by retry without a duplicate payout. Collection is never automatic on completion, dialogue close, Board open or Reception open.
+
+CQ-1 does not add rewards from chests, shops, mail, achievements or arbitrary objects; unique equipment rewards; choices/history/refunds; repeatable contracts; rank/reputation completion counters; or a general-purpose reward framework.
