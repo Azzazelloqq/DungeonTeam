@@ -4,15 +4,15 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Azzazelloqq.MVVM.ReactiveLibrary;
-using DungeonTeam.Gameplay.GuildHall.Runtime.Presentation.UI.QuestRewardCollection.Base;
+using DungeonTeam.Gameplay.GuildHall.Runtime.Presentation.UI.RewardCollection.Base;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
 
-namespace DungeonTeam.Gameplay.GuildHall.Runtime.Presentation.UI.QuestRewardCollection
+namespace DungeonTeam.Gameplay.GuildHall.Runtime.Presentation.UI.RewardCollection
 {
-    public sealed class QuestRewardCollectionView : QuestRewardCollectionViewBase
+    public sealed class RewardCollectionView : RewardCollectionViewBase
     {
         [SerializeField] private GameObject _panel;
         [SerializeField] private TMP_Text _headerText;
@@ -29,11 +29,11 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Presentation.UI.QuestRewardColl
         {
             if (_panel == null || _headerText == null || _rowsContainer == null ||
                 _rowTemplate == null || _closeButton == null || _closeText == null)
-                throw new InvalidOperationException("Quest Reward Collection view requires all serialized bindings.");
+                throw new InvalidOperationException("Reward Collection view requires all serialized bindings.");
             if (_rowTemplate.gameObject.activeSelf)
-                throw new InvalidOperationException("Quest Reward Collection row template must be inactive.");
+                throw new InvalidOperationException("Reward Collection row template must be inactive.");
             if (_rowTemplate.GetComponentInChildren<TMP_Text>(true) == null)
-                throw new InvalidOperationException("Quest Reward Collection row template requires a TMP label.");
+                throw new InvalidOperationException("Reward Collection row template requires a TMP label.");
         }
 
         protected override void OnInitialize()
@@ -78,8 +78,8 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Presentation.UI.QuestRewardColl
                 builder.Append('\n').Append(entry.SourceHint.DisplayText);
                 builder.Append('\n').Append(entry.ReceiveText.DisplayText);
                 label.SetText(builder.ToString());
-                var questId = entry.QuestId;
-                UnityAction action = () => viewModel.ReceiveCommand.Execute(questId);
+                var identity = entry.Identity;
+                UnityAction action = () => viewModel.ReceiveCommand.Execute(identity);
                 row.onClick.AddListener(action);
                 row.gameObject.SetActive(true);
                 _rows.Add(row);

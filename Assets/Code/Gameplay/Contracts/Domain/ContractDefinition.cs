@@ -4,6 +4,125 @@ using System.Collections.ObjectModel;
 
 namespace DungeonTeam.Gameplay.Contracts.Domain
 {
+    public enum ContractRewardClaimPointKind
+    {
+        Reception = 0,
+        Npc = 1
+    }
+
+    public sealed class ContractRewardClaimPoint
+    {
+        private ContractRewardClaimPoint(ContractRewardClaimPointKind kind, string npcId)
+        {
+            if (!Enum.IsDefined(typeof(ContractRewardClaimPointKind), kind))
+            {
+                throw new ArgumentOutOfRangeException(nameof(kind));
+            }
+
+            if (kind == ContractRewardClaimPointKind.Npc && string.IsNullOrWhiteSpace(npcId))
+            {
+                throw new ArgumentException("NPC reward claim point requires an NPC ID.", nameof(npcId));
+            }
+
+            if (kind == ContractRewardClaimPointKind.Reception && npcId != null)
+            {
+                throw new ArgumentException("Reception reward claim point cannot target an NPC.", nameof(npcId));
+            }
+
+            Kind = kind;
+            NpcId = npcId;
+        }
+
+        public ContractRewardClaimPointKind Kind { get; }
+        public string NpcId { get; }
+
+        public static ContractRewardClaimPoint Reception =>
+            new(ContractRewardClaimPointKind.Reception, null);
+
+        public static ContractRewardClaimPoint Npc(string npcId) =>
+            new(ContractRewardClaimPointKind.Npc, RequireId(npcId, nameof(npcId)));
+
+        public bool Matches(ContractRewardClaimPoint other) =>
+            other != null && Kind == other.Kind &&
+            string.Equals(NpcId, other.NpcId, StringComparison.Ordinal);
+
+        private static string RequireId(string value, string parameterName) =>
+            !string.IsNullOrWhiteSpace(value)
+                ? value
+                : throw new ArgumentException("Stable ID cannot be empty.", parameterName);
+    }
+
+    public sealed class ContractRewardResource
+    {
+        public ContractRewardResource(string definitionId, int amount)
+        {
+            DefinitionId = RequireId(definitionId, nameof(definitionId));
+            Amount = amount > 0 ? amount : throw new ArgumentOutOfRangeException(nameof(amount));
+        }
+
+        public string DefinitionId { get; }
+        public int Amount { get; }
+
+        private static string RequireId(string value, string parameterName) =>
+            !string.IsNullOrWhiteSpace(value)
+                ? value
+                : throw new ArgumentException("Stable ID cannot be empty.", parameterName);
+    }
+
+    public sealed class ContractRewardDefinition
+    {
+        private readonly ReadOnlyCollection<ContractRewardResource> _resources;
+
+        public ContractRewardDefinition(
+            long goldAmount,
+            IReadOnlyList<ContractRewardResource> resources,
+            ContractRewardClaimPoint claimPoint,
+            ContractTextSnapshot claimHint)
+        {
+            if (goldAmount < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(goldAmount));
+            }
+
+            if (resources == null)
+            {
+                throw new ArgumentNullException(nameof(resources));
+            }
+
+            ClaimPoint = claimPoint ?? throw new ArgumentNullException(nameof(claimPoint));
+            ClaimHint = claimHint ?? throw new ArgumentNullException(nameof(claimHint));
+
+            var copy = new ContractRewardResource[resources.Count];
+            var ids = new HashSet<string>(StringComparer.Ordinal);
+            for (var index = 0; index < copy.Length; index++)
+            {
+                copy[index] = resources[index] ?? throw new ArgumentException(
+                    "Reward resource is missing.", nameof(resources));
+                if (!ids.Add(copy[index].DefinitionId))
+                {
+                    throw new ArgumentException(
+                        $"Reward resource '{copy[index].DefinitionId}' is duplicated.",
+                        nameof(resources));
+                }
+            }
+
+            if (goldAmount == 0 && copy.Length == 0)
+            {
+                throw new ArgumentException(
+                    "Reward must contain Gold or at least one resource.",
+                    nameof(resources));
+            }
+
+            GoldAmount = goldAmount;
+            _resources = Array.AsReadOnly(copy);
+        }
+
+        public long GoldAmount { get; }
+        public IReadOnlyList<ContractRewardResource> Resources => _resources;
+        public ContractRewardClaimPoint ClaimPoint { get; }
+        public ContractTextSnapshot ClaimHint { get; }
+    }
+
     public sealed class ContractTextSnapshot
     {
         public ContractTextSnapshot(string textId, string displayText)
@@ -35,7 +154,8 @@ namespace DungeonTeam.Gameplay.Contracts.Domain
             string locationId,
             bool isAuthoredAvailable,
             ContractTextSnapshot authoredDisabledReason,
-            string minimumRankId = null)
+            string minimumRankId = null,
+            ContractRewardDefinition reward = null)
         {
             ContractId = RequireId(contractId, nameof(contractId));
             Title = title ?? throw new ArgumentNullException(nameof(title));
@@ -61,6 +181,7 @@ namespace DungeonTeam.Gameplay.Contracts.Domain
 
             IsAuthoredAvailable = isAuthoredAvailable;
             AuthoredDisabledReason = authoredDisabledReason;
+            Reward = reward;
         }
 
         public string ContractId { get; }
@@ -70,6 +191,7 @@ namespace DungeonTeam.Gameplay.Contracts.Domain
         public bool IsAuthoredAvailable { get; }
         public ContractTextSnapshot AuthoredDisabledReason { get; }
         public string MinimumRankId { get; }
+        public ContractRewardDefinition Reward { get; }
 
         private static string RequireId(string value, string parameterName) =>
             !string.IsNullOrWhiteSpace(value)
@@ -123,6 +245,9 @@ namespace DungeonTeam.Gameplay.Contracts.Domain
 
             return definition;
         }
+
+        public bool Contains(string contractId) =>
+            !string.IsNullOrWhiteSpace(contractId) && _definitionsById.ContainsKey(contractId);
 
         public void ValidateSupportedLocations(IReadOnlyCollection<string> supportedLocationIds)
         {

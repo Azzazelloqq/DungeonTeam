@@ -1,12 +1,43 @@
 using System;
 using DungeonTeam.Gameplay.Contracts.Domain;
 using DungeonTeam.Gameplay.DungeonRun.Application;
+using DungeonTeam.Gameplay.DungeonRun.Runtime;
 using DungeonTeam.UI.WorldMap;
 
 namespace Code.ApplicationRoot
 {
     internal sealed class WorldMapDestinationResolver
     {
+        public static bool MatchesContractTerminalResult(
+            DungeonRunResult result,
+            string activeContractId,
+            DungeonTeam.Gameplay.Contracts.Domain.ContractCatalog contracts,
+            ContractState contractState,
+            WorldMapCatalog locations,
+            DungeonRunLaunchPresetCatalog presets)
+        {
+            if (result.Outcome != DungeonRunOutcome.Completed ||
+                string.IsNullOrWhiteSpace(activeContractId) ||
+                contracts == null ||
+                contractState == null ||
+                locations == null ||
+                presets == null ||
+                !string.Equals(contractState.ActiveContractId, activeContractId, StringComparison.Ordinal))
+            {
+                return false;
+            }
+
+            var contract = contracts.Require(activeContractId);
+            var location = locations.Require(contract.LocationId);
+            if (location.DestinationKind != WorldLocationDestinationKind.DungeonRun)
+            {
+                return false;
+            }
+
+            var preset = presets.Require(location.DestinationId);
+            return string.Equals(preset.DungeonId, result.DungeonId, StringComparison.Ordinal);
+        }
+
         private readonly WorldMapCatalog _locations;
         private readonly DungeonTeam.Gameplay.Contracts.Domain.ContractCatalog _contracts;
         private readonly ContractState _contractState;

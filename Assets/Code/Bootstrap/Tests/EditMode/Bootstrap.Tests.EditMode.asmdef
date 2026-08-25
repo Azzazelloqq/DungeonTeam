@@ -6,6 +6,7 @@
     "DungeonTeam.WorldMap",
     "DungeonTeam.GuildHall.Application",
     "DungeonTeam.Contracts.Domain",
+    "DungeonTeam.Contracts.Application",
     "DungeonTeam.DungeonRun.Application",
     "DungeonTeam.DungeonRun.Runtime",
     "DungeonTeam.Rewards.Runtime",

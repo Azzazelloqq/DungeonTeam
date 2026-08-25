@@ -240,7 +240,7 @@ MonoBehaviour:
   _noticeBoardView: {fileID: 901000000000000004}
   _runSummaryView: {fileID: 839814685649302627}
   _guildProfileView: {fileID: 2103679794589735878}
-  _questRewardCollectionView: {fileID: 4843283532292899969}
+  _rewardCollectionView: {fileID: 4843283532292899969}
 --- !u!1 &295426728849671335
 GameObject:
   m_ObjectHideFlags: 0
@@ -3397,7 +3397,7 @@ GameObject:
   - component: {fileID: 224855043373146024}
   - component: {fileID: 4843283532292899969}
   m_Layer: 0
-  m_Name: QuestRewardCollectionPanel
+  m_Name: RewardCollectionPanel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -3474,7 +3474,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4b7e6d7d91c34c3ea4cb780344b5f3c2, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: DungeonTeam.GuildHall.Runtime::DungeonTeam.Gameplay.GuildHall.Runtime.Presentation.UI.QuestRewardCollection.QuestRewardCollectionView
+  m_EditorClassIdentifier: DungeonTeam.GuildHall.Runtime::DungeonTeam.Gameplay.GuildHall.Runtime.Presentation.UI.RewardCollection.RewardCollectionView
   _panel: {fileID: 2962530184704903499}
   _headerText: {fileID: 382203403897461074}
   _rowsContainer: {fileID: 3818270775198674062}

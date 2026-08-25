@@ -62,6 +62,23 @@ namespace DungeonTeam.Gameplay.Contracts.Tests.EditMode
             Assert.That(loaded.CompletedContractIds, Is.Empty);
         }
 
+        [Test]
+        public void ContractV1ToV2Migration_AddsEmptyClaimMarkersWithoutChangingState()
+        {
+            var dto = new ContractSaveV1
+            {
+                ActiveContractId = "contract.active",
+                CompletedContractIds = new[] { "contract.done" }
+            };
+            var migrator = new ContractV1ToV2Migrator();
+
+            migrator.Migrate(dto);
+
+            Assert.That(dto.ActiveContractId, Is.EqualTo("contract.active"));
+            Assert.That(dto.CompletedContractIds, Is.EqualTo(new[] { "contract.done" }));
+            Assert.That(dto.ClaimedRewardContractIds, Is.Empty);
+        }
+
         private SaveStore CreateStore() => new(new SaveStoreOptions(_path)
         {
             UseTaggedFormat = true,

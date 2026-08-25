@@ -53,5 +53,23 @@ namespace DungeonTeam.Gameplay.Contracts.Application
             State = candidate;
             return result;
         }
+
+        public bool MarkRewardClaimed(string contractId, ContractCatalog catalog)
+        {
+            if (catalog == null)
+            {
+                throw new ArgumentNullException(nameof(catalog));
+            }
+
+            var candidate = State.Clone();
+            if (!candidate.TryMarkRewardClaimed(contractId, catalog))
+            {
+                return false;
+            }
+
+            _repository.Save(candidate);
+            State = candidate;
+            return true;
+        }
     }
 }

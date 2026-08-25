@@ -62,6 +62,48 @@ namespace Code.ApplicationRoot.Tests.EditMode
         }
 
         [Test]
+        public void OfferBuilder_CompletedReward_ExposesClaimHintUntilClaimedThenOnlyMarker()
+        {
+            var reward = new ContractRewardDefinition(
+                3,
+                new[] { new ContractRewardResource("resource.crystal", 2) },
+                ContractRewardClaimPoint.Reception,
+                new ContractTextSnapshot("claim.hint", "Collect at Reception"));
+            var catalog = new ContractCatalog(new[]
+            {
+                new ContractDefinition(
+                    "contract.rewarded",
+                    Text("contract.title"),
+                    Text("contract.summary"),
+                    "location.dungeon",
+                    true,
+                    null,
+                    null,
+                    reward)
+            });
+            var ranks = new GuildRankCatalog(new[] { new GuildRankDefinition("rank.f", "F", 0) });
+            var unclaimed = GuildOfferAvailabilityBuilder.Build(
+                catalog,
+                new ContractState(null, new[] { "contract.rewarded" }),
+                ranks,
+                "rank.f",
+                GuildText("Requires {0}"),
+                NoticeBoardText())[0];
+            var claimed = GuildOfferAvailabilityBuilder.Build(
+                catalog,
+                new ContractState(null, new[] { "contract.rewarded" }, new[] { "contract.rewarded" }),
+                ranks,
+                "rank.f",
+                GuildText("Requires {0}"),
+                NoticeBoardText())[0];
+
+            Assert.That(unclaimed.ClaimHint.DisplayText, Is.EqualTo("Collect at Reception"));
+            Assert.That(unclaimed.IsRewardClaimed, Is.False);
+            Assert.That(claimed.ClaimHint, Is.Null);
+            Assert.That(claimed.IsRewardClaimed, Is.True);
+        }
+
+        [Test]
         public void IsAvailableForAcceptance_RankGatedContractBelowRequiredRank_ReturnsFalse()
         {
             var catalog = new DungeonTeam.Gameplay.Contracts.Domain.ContractCatalog(new[]
@@ -98,6 +140,11 @@ namespace Code.ApplicationRoot.Tests.EditMode
             available,
             available ? null : new ContractTextSnapshot(id + ".disabled", disabledReason),
             minimumRank);
+
+        private static ContractTextSnapshot Text(string value) => new(value.Replace(" ", "."), value);
+
+        private static GuildTextSnapshot GuildText(string value) =>
+            new(value.Replace(" ", "."), value);
 
         private static NoticeBoardTextSnapshot NoticeBoardText() => new(
             new GuildTextSnapshot("notice.header", "Контракты"),

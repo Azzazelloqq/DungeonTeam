@@ -31,7 +31,9 @@ namespace Code.ApplicationRoot
                     offers[index] = ToBoardSnapshot(
                         source, false, null,
                         NoticeBoardOfferSnapshot.OfferStatus.Active,
-                        boardText.Selected);
+                        boardText.Selected,
+                        null,
+                        false);
                     continue;
                 }
 
@@ -40,7 +42,9 @@ namespace Code.ApplicationRoot
                     offers[index] = ToBoardSnapshot(
                         source, false, null,
                         NoticeBoardOfferSnapshot.OfferStatus.Completed,
-                        boardText.Completed);
+                        boardText.Completed,
+                        ToClaimHint(source, state),
+                        state.IsRewardClaimed(source.ContractId));
                     continue;
                 }
 
@@ -51,7 +55,9 @@ namespace Code.ApplicationRoot
                 {
                     offers[index] = ToBoardSnapshot(
                         source, false, source.AuthoredDisabledReason,
-                        NoticeBoardOfferSnapshot.OfferStatus.Disabled, null);
+                        NoticeBoardOfferSnapshot.OfferStatus.Disabled, null,
+                        null,
+                        false);
                     continue;
                 }
 
@@ -59,7 +65,9 @@ namespace Code.ApplicationRoot
                 {
                     offers[index] = ToBoardSnapshot(
                         source, true, null,
-                        NoticeBoardOfferSnapshot.OfferStatus.Available, null);
+                        NoticeBoardOfferSnapshot.OfferStatus.Available, null,
+                        null,
+                        false);
                     continue;
                 }
 
@@ -83,7 +91,9 @@ namespace Code.ApplicationRoot
                 offers[index] = ToBoardSnapshot(
                     source, false,
                     new ContractTextSnapshot(requiredRankFormat.TextId, displayText),
-                    NoticeBoardOfferSnapshot.OfferStatus.Disabled, null);
+                    NoticeBoardOfferSnapshot.OfferStatus.Disabled, null,
+                    null,
+                    false);
             }
 
             return offers;
@@ -94,7 +104,9 @@ namespace Code.ApplicationRoot
             bool isAvailable,
             ContractTextSnapshot disabledReason,
             NoticeBoardOfferSnapshot.OfferStatus status,
-            GuildTextSnapshot statusText)
+            GuildTextSnapshot statusText,
+            GuildTextSnapshot claimHint = null,
+            bool isRewardClaimed = false)
         {
             return new NoticeBoardOfferSnapshot(
                 source.ContractId,
@@ -107,7 +119,26 @@ namespace Code.ApplicationRoot
                     : new GuildTextSnapshot(disabledReason.TextId, disabledReason.DisplayText),
                 source.MinimumRankId,
                 status,
-                statusText);
+                statusText,
+                claimHint,
+                isRewardClaimed);
+        }
+
+        private static GuildTextSnapshot ToClaimHint(
+            ContractDefinition source,
+            ContractState state)
+        {
+            if (source.Reward == null)
+            {
+                return null;
+            }
+
+            var claimed = state.IsRewardClaimed(source.ContractId);
+            return claimed
+                ? null
+                : new GuildTextSnapshot(
+                    source.Reward.ClaimHint.TextId,
+                    source.Reward.ClaimHint.DisplayText);
         }
     }
 }

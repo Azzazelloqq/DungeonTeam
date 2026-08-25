@@ -1,6 +1,6 @@
 # DungeonTeam — Contract CQ-1 Reward Claim Technical Design
 
-**Status:** approved for implementation
+**Status:** implemented and automation-validated; manual player-flow smoke/build not run
 
 ## 1. Scope and ownership
 
@@ -73,3 +73,16 @@ Author config and renamed/bound prefab components through Unity Editor only. Run
 ## 7. Non-goals
 
 No other reward source, automatic award, reward choices/unique equipment/history/refund, repeatability, generic loot framework, contract chains, rank/reputation counts or Q-2 availability conditions.
+
+## 8. Implementation evidence
+
+Implemented Contract reward config/state and `guild.contracts` V1→V2 migration, Profile-first `ContractRewardClaimCoordinator`, explicit terminal availability boundary and the neutral two-source Guild Hall `RewardCollection` family. `contract.demo` grants a Reception reward; `contract.veteran` grants at `npc.registrar`. The former quest-only collection and snapshots were renamed to typed Quest/Contract identities; no source state or persistence moved into a shared module.
+
+Independent validation in Unity `6000.7.0a3`:
+
+- Contracts + Bootstrap EditMode: `46/46 passed`;
+- Quests + PlayerProfile + GuildHall EditMode: `67/67 passed`;
+- `dotnet build Bootstrap.csproj --no-restore -v:minimal`: `0` warnings, `0` errors;
+- Editor parsed both production Contract rewards; `RewardCollectionView` binding validated and panel starts inactive.
+
+The Unity mechanical validator reports only trailing whitespace in the Unity-authored ContractConfig serialization and in the pre-existing user-owned TMP fallback asset. No prefab/config YAML was hand-edited. Manual Reception/NPC/restart smoke, player build and external playtest remain unrun.

@@ -16,8 +16,8 @@ using DungeonTeam.Gameplay.GuildHall.Runtime.Presentation.UI.NoticeBoard;
 using DungeonTeam.Gameplay.GuildHall.Runtime.Presentation.UI.RunSummary;
 using DungeonTeam.Gameplay.GuildHall.Runtime.Presentation.UI.GuildProfile;
 using DungeonTeam.Gameplay.GuildHall.Runtime.Presentation.UI.GuildProfile.Base;
-using DungeonTeam.Gameplay.GuildHall.Runtime.Presentation.UI.QuestRewardCollection;
-using DungeonTeam.Gameplay.GuildHall.Runtime.Presentation.UI.QuestRewardCollection.Base;
+using DungeonTeam.Gameplay.GuildHall.Runtime.Presentation.UI.RewardCollection;
+using DungeonTeam.Gameplay.GuildHall.Runtime.Presentation.UI.RewardCollection.Base;
 using RootPattern;
 using TickHandler;
 
@@ -62,11 +62,11 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Composition
         private GuildProfileViewBase _guildProfileView;
         private GuildProfileModel _guildProfileModel;
         private GuildProfileViewModel _guildProfileViewModel;
-        private QuestRewardCollectionViewBase _questRewardCollectionView;
-        private QuestRewardCollectionModel _questRewardCollectionModel;
-        private QuestRewardCollectionViewModel _questRewardCollectionViewModel;
-        private Func<QuestRewardClaimRequest, bool> _rewardClaimRequested;
-        private Func<QuestRewardClaimPointSnapshot, QuestRewardCollectionSnapshot> _rewardCollectionRequested;
+        private RewardCollectionViewBase _rewardCollectionView;
+        private RewardCollectionModel _rewardCollectionModel;
+        private RewardCollectionViewModel _rewardCollectionViewModel;
+        private Func<RewardClaimRequest, bool> _rewardClaimRequested;
+        private Func<RewardClaimPointSnapshot, RewardCollectionSnapshot> _rewardCollectionRequested;
 
         public GuildHallRoot(
             GuildHallWorldLoader worldLoader,
@@ -204,9 +204,9 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Composition
         internal bool IsWorldInputBlocked => _pendingModel?.IsWorldInputBlocked ??
             _presenter?.IsWorldInputBlocked ?? false;
 
-        public void ConfigureQuestRewardCallbacks(
-            Func<QuestRewardClaimRequest, bool> claimRequested,
-            Func<QuestRewardClaimPointSnapshot, QuestRewardCollectionSnapshot> collectionRequested)
+        public void ConfigureRewardCallbacks(
+            Func<RewardClaimRequest, bool> claimRequested,
+            Func<RewardClaimPointSnapshot, RewardCollectionSnapshot> collectionRequested)
         {
             _rewardClaimRequested = claimRequested ?? throw new ArgumentNullException(nameof(claimRequested));
             _rewardCollectionRequested = collectionRequested ?? throw new ArgumentNullException(nameof(collectionRequested));
@@ -347,12 +347,12 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Composition
             _guildProfileViewModel = null;
             _guildProfileModel = null;
 
-            CloseQuestRewardCollection();
-            _questRewardCollectionView?.Dispose();
-            _questRewardCollectionView = null;
-            _questRewardCollectionViewModel?.Dispose();
-            _questRewardCollectionViewModel = null;
-            _questRewardCollectionModel = null;
+            CloseRewardCollection();
+            _rewardCollectionView?.Dispose();
+            _rewardCollectionView = null;
+            _rewardCollectionViewModel?.Dispose();
+            _rewardCollectionViewModel = null;
+            _rewardCollectionModel = null;
 
             CloseDialogue(false);
             _dialogueView?.Dispose();
@@ -434,7 +434,7 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Composition
             if (_noticeBoardModel?.IsVisible.Value == true ||
                 _runSummaryModel?.IsVisible.Value == true ||
                 _guildProfileModel?.IsVisible.Value == true ||
-                _questRewardCollectionModel?.IsVisible.Value == true)
+                _rewardCollectionModel?.IsVisible.Value == true)
             {
                 return;
             }
@@ -466,12 +466,12 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Composition
                 if (notifyCompletion)
                 {
                     _dialogueCompleted(activeNpcId);
-                    var point = new QuestRewardClaimPointSnapshot(
-                        QuestRewardClaimPointKind.Npc,
+                    var point = new RewardClaimPointSnapshot(
+                        RewardClaimPointKind.Npc,
                         activeNpcId);
                     var collection = _rewardCollectionRequested?.Invoke(point);
                     if (collection != null && collection.Entries.Count > 0)
-                        InitializeQuestRewardCollection(collection);
+                        InitializeRewardCollection(collection);
                 }
             }
         }
@@ -482,7 +482,7 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Composition
                 _activeDialogueNpcId != null ||
                 _runSummaryModel?.IsVisible.Value == true ||
                 _guildProfileModel?.IsVisible.Value == true ||
-                _questRewardCollectionModel?.IsVisible.Value == true)
+                _rewardCollectionModel?.IsVisible.Value == true)
             {
                 return;
             }
@@ -527,7 +527,7 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Composition
                 _noticeBoardModel?.IsVisible.Value == true ||
                 _activeDialogueNpcId != null ||
                 _guildProfileModel?.IsVisible.Value == true ||
-                _questRewardCollectionModel?.IsVisible.Value == true)
+                _rewardCollectionModel?.IsVisible.Value == true)
             {
                 return;
             }
@@ -556,7 +556,7 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Composition
                 _noticeBoardModel?.IsVisible.Value == true ||
                 _activeDialogueNpcId != null ||
                 _runSummaryModel?.IsVisible.Value == true ||
-                _questRewardCollectionModel?.IsVisible.Value == true)
+                _rewardCollectionModel?.IsVisible.Value == true)
             {
                 return;
             }
@@ -569,43 +569,43 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Composition
         private void OpenReceptionRewards()
         {
             var collection = _rewardCollectionRequested?.Invoke(
-                new QuestRewardClaimPointSnapshot(QuestRewardClaimPointKind.Reception));
+                new RewardClaimPointSnapshot(RewardClaimPointKind.Reception));
             if (collection == null || collection.Entries.Count == 0)
                 return;
             CloseGuildProfile();
-            InitializeQuestRewardCollection(collection);
+            InitializeRewardCollection(collection);
         }
 
-        private void InitializeQuestRewardCollection(QuestRewardCollectionSnapshot snapshot)
+        private void InitializeRewardCollection(RewardCollectionSnapshot snapshot)
         {
-            if (_questRewardCollectionViewModel != null)
+            if (_rewardCollectionViewModel != null)
             {
-                CloseQuestRewardCollection();
-                _questRewardCollectionView?.Dispose();
-                _questRewardCollectionViewModel.Dispose();
-                _questRewardCollectionView = null;
-                _questRewardCollectionViewModel = null;
-                _questRewardCollectionModel = null;
+                CloseRewardCollection();
+                _rewardCollectionView?.Dispose();
+                _rewardCollectionViewModel.Dispose();
+                _rewardCollectionView = null;
+                _rewardCollectionViewModel = null;
+                _rewardCollectionModel = null;
             }
-            _questRewardCollectionView = _worldLease.View.QuestRewardCollectionView ??
-                throw new InvalidOperationException("Guild Hall prefab has no Quest Reward Collection view binding.");
-            _questRewardCollectionView.ValidateBindings();
-            _questRewardCollectionModel = new QuestRewardCollectionModel(snapshot);
-            _questRewardCollectionViewModel = new QuestRewardCollectionViewModel(
-                _questRewardCollectionModel,
-                _rewardClaimRequested ?? throw new InvalidOperationException("Quest reward claim callback is required."),
-                CloseQuestRewardCollection);
-            _questRewardCollectionViewModel.Initialize();
-            _questRewardCollectionView.Initialize(_questRewardCollectionViewModel, disposeWithViewModel: false);
+            _rewardCollectionView = _worldLease.View.RewardCollectionView ??
+                throw new InvalidOperationException("Guild Hall prefab has no Reward Collection view binding.");
+            _rewardCollectionView.ValidateBindings();
+            _rewardCollectionModel = new RewardCollectionModel(snapshot);
+            _rewardCollectionViewModel = new RewardCollectionViewModel(
+                _rewardCollectionModel,
+                _rewardClaimRequested ?? throw new InvalidOperationException("Reward claim callback is required."),
+                CloseRewardCollection);
+            _rewardCollectionViewModel.Initialize();
+            _rewardCollectionView.Initialize(_rewardCollectionViewModel, disposeWithViewModel: false);
             _interactionController?.SetBlocked(true);
             SetWorldInputBlocked(true);
-            _questRewardCollectionViewModel.Open();
+            _rewardCollectionViewModel.Open();
         }
 
-        private void CloseQuestRewardCollection()
+        private void CloseRewardCollection()
         {
-            if (_questRewardCollectionModel?.IsVisible.Value == true)
-                _questRewardCollectionModel.Hide();
+            if (_rewardCollectionModel?.IsVisible.Value == true)
+                _rewardCollectionModel.Hide();
             SetWorldInputBlocked(false);
             _interactionController?.SetBlocked(false);
         }

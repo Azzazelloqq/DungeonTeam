@@ -14,7 +14,7 @@ Bootstrap
  ├─ PlayerProfileSession (Gold/resources / player.profile)
  └─ GuildHallRoot
      ├─ GuildProfile MVVM → Reception reward action
-     ├─ QuestRewardCollection MVVM → explicit receive rows
+     ├─ RewardCollection MVVM → explicit receive rows
      └─ AmbientNpc dialogue close → NPC reward collection
 ```
 
@@ -45,7 +45,7 @@ There is no distributed transaction, rollback or optimistic UI update.
 
 Bootstrap prepares immutable `QuestRewardClaimSnapshot` entries (quest ID, title, reward lines, source hint, receive text). `GuildHallStartContext` receives only callbacks for current entries at a point and a claim request. `GuildProfileSnapshot` adds prepared reception reward action/count; it still cannot mutate profile state.
 
-Add one Guild Hall-local MVVM family, `QuestRewardCollection`. Its parent creates/registers/initializes it, owns item ViewModels, sends `(questId, claimPoint)` through the callback, replaces rows only after a successful response, and disposes rows before parent close. It never reads config or persistence.
+CQ-1 supplies a second real source (Contracts), so the Guild Hall-local MVVM family is now neutral `RewardCollection`. Its entry carries a typed source identity (`Quest` or `Contract`) and stable source ID; Bootstrap routes it explicitly. The family creates/registers/initializes under its parent, owns item ViewModels, replaces rows only after a successful response and never reads config or persistence.
 
 Reception opens the filtered collection from Guild Profile after the existing summary/profile policy. NPC flow is unchanged until normal dialogue close: GuildHallRoot first forwards the Q-0 dialogue-completed callback, then asks Bootstrap for entries at that NPC and opens collection only when non-empty. Dialogue close never grants rewards. No new tick, async operation, Addressables owner or AmbientNpc contract is added.
 

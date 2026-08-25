@@ -94,17 +94,60 @@ namespace DungeonTeam.Gameplay.Contracts.Tests.EditMode
             Assert.That(session.State.CompletedContractIds, Is.EqualTo(new[] { "contract.done" }));
         }
 
+        [Test]
+        public void RewardClaim_RequiresCompletedRewardAndMatchingPoint_ThenPersistsOnce()
+        {
+            var repository = new RecordingRepository();
+            var definition = Definition(
+                "contract.rewarded",
+                true,
+                reward: new ContractRewardDefinition(
+                    4,
+                    new[] { new ContractRewardResource("resource.crystal", 2) },
+                    ContractRewardClaimPoint.Npc("npc.registrar"),
+                    Text("reward.hint")));
+            var catalog = new ContractCatalog(new[] { definition });
+            var session = new ContractSession(repository);
+
+            Assert.That(session.State.GetClaimableAt(ContractRewardClaimPoint.Npc("npc.registrar"), catalog), Is.Empty);
+            session.Accept(definition.ContractId, catalog);
+            Assert.That(session.MarkRewardClaimed(definition.ContractId, catalog), Is.False);
+            session.CompleteActive(definition.ContractId);
+            Assert.That(session.State.GetClaimableAt(ContractRewardClaimPoint.Reception, catalog), Is.Empty);
+            Assert.That(session.State.GetClaimableAt(ContractRewardClaimPoint.Npc("npc.registrar"), catalog),
+                Is.EqualTo(new[] { definition.ContractId }));
+            Assert.That(session.MarkRewardClaimed(definition.ContractId, catalog), Is.True);
+            Assert.That(session.MarkRewardClaimed(definition.ContractId, catalog), Is.False);
+            Assert.That(session.State.ClaimedRewardContractIds, Is.EqualTo(new[] { definition.ContractId }));
+        }
+
+        [Test]
+        public void State_RejectsClaimMarkerForIncompleteContract()
+        {
+            Assert.Throws<ArgumentException>(() => new ContractState(
+                null,
+                Array.Empty<string>(),
+                new[] { "contract.incomplete" }));
+        }
+
         private static ContractCatalog Catalog(string id, bool available) =>
             new(new[] { Definition(id, available) });
 
-        private static ContractDefinition Definition(string id, bool available) =>
+        private static ContractDefinition Definition(
+            string id,
+            bool available,
+            ContractRewardDefinition reward = null) =>
             new(
                 id,
                 new ContractTextSnapshot(id + ".title", id + " title"),
                 new ContractTextSnapshot(id + ".summary", id + " summary"),
                 "location.dungeon",
                 available,
-                available ? null : new ContractTextSnapshot(id + ".disabled", "Disabled"));
+                available ? null : new ContractTextSnapshot(id + ".disabled", "Disabled"),
+                null,
+                reward);
+
+        private static ContractTextSnapshot Text(string id) => new(id, id);
 
         private sealed class RecordingRepository : IContractRepository
         {

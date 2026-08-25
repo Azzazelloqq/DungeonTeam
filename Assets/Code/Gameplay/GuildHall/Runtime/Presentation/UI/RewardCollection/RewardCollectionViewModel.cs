@@ -5,35 +5,35 @@ using System.Threading.Tasks;
 using Azzazelloqq.MVVM.Core;
 using Azzazelloqq.MVVM.ReactiveLibrary;
 using DungeonTeam.Gameplay.GuildHall.Application;
-using DungeonTeam.Gameplay.GuildHall.Runtime.Presentation.UI.QuestRewardCollection.Base;
+using DungeonTeam.Gameplay.GuildHall.Runtime.Presentation.UI.RewardCollection.Base;
 
-namespace DungeonTeam.Gameplay.GuildHall.Runtime.Presentation.UI.QuestRewardCollection
+namespace DungeonTeam.Gameplay.GuildHall.Runtime.Presentation.UI.RewardCollection
 {
-    public sealed class QuestRewardCollectionViewModel : QuestRewardCollectionViewModelBase
+    public sealed class RewardCollectionViewModel : RewardCollectionViewModelBase
     {
-        private readonly Func<QuestRewardClaimRequest, bool> _claimRequested;
+        private readonly Func<RewardClaimRequest, bool> _claimRequested;
         private readonly Action _closed;
 
-        public QuestRewardCollectionViewModel(
-            QuestRewardCollectionModelBase model,
-            Func<QuestRewardClaimRequest, bool> claimRequested,
+        public RewardCollectionViewModel(
+            RewardCollectionModelBase model,
+            Func<RewardClaimRequest, bool> claimRequested,
             Action closed) : base(model)
         {
             _claimRequested = claimRequested ?? throw new ArgumentNullException(nameof(claimRequested));
             _closed = closed ?? throw new ArgumentNullException(nameof(closed));
-            ReceiveCommand = new RelayCommand<string>(Receive);
+            ReceiveCommand = new RelayCommand<RewardClaimIdentity>(Receive);
             CloseCommand = new RelayCommand<object>(_ => Close());
             ReceiveCommand.AddTo(compositeDisposable);
             CloseCommand.AddTo(compositeDisposable);
         }
 
-        public override QuestRewardClaimPointSnapshot Point => model.Point;
+        public override RewardClaimPointSnapshot Point => model.Point;
         public override GuildTextSnapshot Header => model.Header;
         public override GuildTextSnapshot CloseText => model.CloseText;
-        public override IReadOnlyList<QuestRewardCollectionEntrySnapshot> Entries => model.Entries;
+        public override IReadOnlyList<RewardCollectionEntrySnapshot> Entries => model.Entries;
         public override IReadOnlyReactiveProperty<bool> IsVisible => model.IsVisible;
         public override IReadOnlyReactiveProperty<int> Revision => model.Revision;
-        public override IRelayCommand<string> ReceiveCommand { get; }
+        public override IRelayCommand<RewardClaimIdentity> ReceiveCommand { get; }
         public override IRelayCommand<object> CloseCommand { get; }
         public override void Open() => model.Show();
         public override void Close()
@@ -41,11 +41,11 @@ namespace DungeonTeam.Gameplay.GuildHall.Runtime.Presentation.UI.QuestRewardColl
             if (model.IsVisible.Value) _closed();
         }
 
-        private void Receive(string questId)
+        private void Receive(RewardClaimIdentity identity)
         {
-            if (string.IsNullOrWhiteSpace(questId)) return;
-            var request = new QuestRewardClaimRequest(questId, model.Point);
-            if (_claimRequested(request)) model.Remove(questId);
+            if (identity == null) return;
+            var request = new RewardClaimRequest(identity, model.Point);
+            if (_claimRequested(request)) model.Remove(identity);
         }
 
         protected override void OnInitialize() { }

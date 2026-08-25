@@ -171,6 +171,45 @@ namespace Code.ApplicationRoot.Tests.EditMode
             Assert.That(resolver.Resolve("location.disabled").IsUnavailable, Is.True);
         }
 
+        [TestCase(DungeonRunOutcome.Completed, "dungeon.one", true)]
+        [TestCase(DungeonRunOutcome.Completed, "dungeon.other", false)]
+        [TestCase(DungeonRunOutcome.Defeated, "dungeon.one", false)]
+        public void ContractTerminalPolicy_OnlyMatchingSuccessfulDungeonCompletesContract(
+            DungeonRunOutcome outcome,
+            string dungeonId,
+            bool expected)
+        {
+            var locations = new WorldMapCatalog(
+                new[] { Location("location.dungeon", WorldLocationDestinationKind.DungeonRun, "preset.one") },
+                new WorldMapUiTextSnapshot(MapText("map.title"), MapText("map.back"), MapText("map.empty")));
+            var contracts = new ContractCatalog(new[] { Offer("contract.one", "location.dungeon", true) });
+            var contractState = new ContractState("contract.one", Array.Empty<string>());
+            var presets = new DungeonRunLaunchPresetCatalog(
+                new[]
+                {
+                    new DungeonRunLaunchPreset(
+                        "preset.one", "Preset", "dungeon.one", "scenario.one", "difficulty.one", 17)
+                },
+                "preset.one");
+            var result = new DungeonRunResult(
+                "run-id",
+                outcome,
+                dungeonId,
+                17,
+                0,
+                Array.Empty<RewardGrant>());
+
+            Assert.That(
+                WorldMapDestinationResolver.MatchesContractTerminalResult(
+                    result,
+                    "contract.one",
+                    contracts,
+                    contractState,
+                    locations,
+                    presets),
+                Is.EqualTo(expected));
+        }
+
         [Test]
         public void ProfileTeamMapper_PreservesLatestLeaderAndCompanionOrderForDifferentCompositions()
         {

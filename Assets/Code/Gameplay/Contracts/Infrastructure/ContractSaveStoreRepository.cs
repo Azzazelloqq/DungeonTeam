@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using DungeonTeam.Gameplay.Contracts.Application;
 using DungeonTeam.Gameplay.Contracts.Domain;
 using LocalSaveSystem;
@@ -7,11 +8,29 @@ using Unity.Scripting.LifecycleManagement;
 namespace DungeonTeam.Gameplay.Contracts.Infrastructure
 {
     [SaveModel]
-    [SaveVersion(1)]
+    [SaveVersion(2)]
     public sealed class ContractSaveV1
     {
         [SaveFieldId("active_contract_id")] public string ActiveContractId;
         [SaveFieldId("completed_contract_ids")] public string[] CompletedContractIds;
+        [SaveFieldId("claimed_reward_contract_ids")] public string[] ClaimedRewardContractIds;
+    }
+
+    public sealed class ContractV1ToV2Migrator : SaveMigrator<ContractSaveV1>
+    {
+        public override int FromVersion => 1;
+        public override int ToVersion => 2;
+
+        public override ContractSaveV1 Migrate(ContractSaveV1 value)
+        {
+            if (value == null)
+            {
+                throw new InvalidOperationException("Cannot migrate a missing contract save.");
+            }
+
+            value.ClaimedRewardContractIds ??= Array.Empty<string>();
+            return value;
+        }
     }
 
     public sealed class ContractPersistenceException : InvalidOperationException
@@ -112,20 +131,25 @@ namespace DungeonTeam.Gameplay.Contracts.Infrastructure
             return new ContractSaveV1
             {
                 ActiveContractId = state.ActiveContractId,
-                CompletedContractIds = completed
+                CompletedContractIds = completed,
+                ClaimedRewardContractIds = Copy(state.ClaimedRewardContractIds)
             };
         }
 
         private static ContractState ToState(ContractSaveV1 dto)
         {
             var completed = dto.CompletedContractIds ?? Array.Empty<string>();
-            return new ContractState(dto.ActiveContractId, completed);
+            return new ContractState(
+                dto.ActiveContractId,
+                completed,
+                dto.ClaimedRewardContractIds ?? Array.Empty<string>());
         }
 
         private static bool Equivalent(ContractState expected, ContractState observed)
         {
             if (!string.Equals(expected.ActiveContractId, observed.ActiveContractId, StringComparison.Ordinal) ||
-                expected.CompletedContractIds.Count != observed.CompletedContractIds.Count)
+                expected.CompletedContractIds.Count != observed.CompletedContractIds.Count ||
+                expected.ClaimedRewardContractIds.Count != observed.ClaimedRewardContractIds.Count)
             {
                 return false;
             }
@@ -141,7 +165,29 @@ namespace DungeonTeam.Gameplay.Contracts.Infrastructure
                 }
             }
 
+            for (var index = 0; index < expected.ClaimedRewardContractIds.Count; index++)
+            {
+                if (!string.Equals(
+                        expected.ClaimedRewardContractIds[index],
+                        observed.ClaimedRewardContractIds[index],
+                        StringComparison.Ordinal))
+                {
+                    return false;
+                }
+            }
+
             return true;
+        }
+
+        private static string[] Copy(IReadOnlyList<string> values)
+        {
+            var copy = new string[values.Count];
+            for (var index = 0; index < copy.Length; index++)
+            {
+                copy[index] = values[index];
+            }
+
+            return copy;
         }
     }
 
@@ -160,6 +206,7 @@ namespace DungeonTeam.Gameplay.Contracts.Infrastructure
                 UseTaggedFormat = _options.UseTaggedFormat
             });
             _migrators = new SaveMigratorRegistry();
+            _migrators.Register(new ContractV1ToV2Migrator());
             _store = CreateStore();
             Repository = new SaveStoreContractRepository(_store, CreateStore);
         }

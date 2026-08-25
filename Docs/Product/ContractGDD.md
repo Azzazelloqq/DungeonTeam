@@ -1,6 +1,6 @@
 # DungeonTeam — Contract GDD
 
-**Статус:** CQ-0 implemented; CQ-1 contract-reward design approved for implementation
+**Статус:** CQ-0/CQ-1 implemented; focused automated validation passed; manual player-flow smoke not run
 
 ## CQ-0 player loop
 
